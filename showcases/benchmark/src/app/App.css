@@ -1,0 +1,95 @@
+.root {
+  flex: 1;
+  max-height: 100vh;
+  background-color: #08111f;
+  flex-direction: column;
+}
+
+.scroll-content {
+  flex: 1;
+  max-height: 100vh;
+  padding: 24px;
+  flex-direction: column;
+}
+
+.page-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 3px;
+  margin-bottom: 6px;
+}
+
+.page-heading {
+  font-size: 26px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 8px;
+}
+
+.page-copy {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 18px;
+  margin-bottom: 18px;
+}
+
+.action-row {
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.action-chip {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #38bdf8;
+  background-color: #0f2037;
+  margin-right: 12px;
+  margin-bottom: 8px;
+}
+
+.action-chip-disabled {
+  opacity: 0.55;
+}
+
+.action-chip-text {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #f8fafc;
+  text-transform: uppercase;
+}
+
+.action-note {
+  flex: 1;
+  min-width: 220px;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.cards-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.panel-grid {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  margin-top: 10px;
+}
+
+.footer {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  text-align: center;
+}

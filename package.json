@@ -1,0 +1,34 @@
+{
+  "name": "lynxtron-show-cases",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run lint",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish",
+    "generate-registry": "node --experimental-strip-types scripts/generate-registry.ts",
+    "local-registry": "node scripts/preview.mjs",
+    "local-registry:build": "node scripts/preview.mjs --no-launch",
+    "preview": "node scripts/preview.mjs",
+    "preview:build": "node scripts/preview.mjs --no-launch"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0",
+    "app-builder-lib": "26.8.1",
+    "dmg-builder": "26.8.1",
+    "verdaccio": "6.3.2"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@lynx-js/lynxtron",
+      "@lynx-js/lynxtron-builder"
+    ]
+  },
+  "packageManager": "pnpm@10.15.1"
+}

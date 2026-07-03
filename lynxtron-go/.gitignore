@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+package-lock.json
+dist/
+build/
+builder-config/
+output/
+!src/app/components/Output/
+!src/app/components/Output/OutputPanel.tsx
+!src/app/components/Output/OutputPanel.css

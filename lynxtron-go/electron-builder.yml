@@ -1,0 +1,61 @@
+productName: Lynxtron Go
+appId: com.lynxtron.go
+directories:
+  buildResources: resources
+  output: dist
+  app: dist/desktop
+files:
+  - index.js
+  - '**/*.lynx.bundle'
+  - '**/*.js'
+  - '**/*.css'
+  - '**/*.html'
+  - '**/*.json'
+  - '**/*.jsn'
+  - '**/*.png'
+  - '**/*.exe'
+  - 'node_modules/**'
+  - '!node_modules/.pnpm/**'
+  - '!node_modules/.cache/**'
+  - '!node_modules/.store/**'
+asar: true
+asarUnpack:
+  - statics/
+  - 'node_modules/@lynx-js/lynxtron/dist/**/*'
+  - 'node_modules/lynxtron-scintilla-editor/**/*.node'
+npmRebuild: false
+extraResources:
+  - from: src/assets
+    to: assets
+icon: lynxtron.png
+electronBranding:
+  projectName: lynxtron
+  productName: Lynxtron
+mac:
+  artifactName: lynxtron-go-v${version}-darwin-${arch}.${ext}
+  extendInfo:
+    CFBundleURLTypes:
+      - CFBundleURLName: Lynxtron Go
+        CFBundleURLSchemes:
+          - lynxtron
+          - Lynxtron
+  identity: null
+win:
+  target:
+    - target: nsis
+      arch: x64
+  artifactName: LynxtronGo-v${version}-win-x64.${ext}
+  asar: false
+  extraFiles:
+    - from: node_modules/@lynx-js/lynxtron/dist/win32/x64/lynxtron.exe
+      to: lynxtron.exe
+    - from: dist/desktop/node_modules/@lynx-js/lynxtron
+      to: resources/app/node_modules/@lynx-js/lynxtron
+nsis:
+  include: resources/installer.nsh
+  artifactName: LynxtronGo-v${version}-win-x64-Setup.${ext}
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true

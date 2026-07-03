@@ -1,0 +1,107 @@
+/* ── Quick File Picker ───────────────────────────────────────────────────── */
+.PickerOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.PickerModal {
+  margin-top: 80px;
+  width: 520px;
+  background-color: #252526;
+  border: 1px solid #454545;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.PickerInput {
+  height: 42px;
+  padding: 0 14px;
+  background-color: #3c3c3c;
+  color: #cccccc;
+  font-size: 14px;
+  border-bottom: 1px solid #454545;
+  width: 100%;
+}
+
+.PickerResults {
+  max-height: 360px;
+}
+
+.PickerItem {
+  height: 44px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 14px;
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.PickerIcon {
+  font-size: 16px;
+  width: 22px;
+  margin-right: 10px;
+}
+
+.PickerItemInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.PickerFileName {
+  color: #cccccc;
+  font-size: 13px;
+}
+
+.PickerFilePath {
+  color: #666666;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.PickerCommand .PickerIcon {
+  color: #007aff;
+}
+
+.PickerShowcase .PickerIcon {
+  color: #e5c07b;
+}
+
+.PickerShowcaseHeader {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.PickerBadge {
+  font-size: 9px;
+  color: #28a745;
+  background-color: rgba(40, 167, 69, 0.15);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.PickerTags {
+  color: #555555;
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+.PickerHint {
+  padding: 14px;
+}
+
+.PickerHintText {
+  color: #888888;
+  font-size: 12px;
+}

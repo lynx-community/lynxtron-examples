@@ -1,0 +1,24 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#101826"/>
+      <stop offset="1" stop-color="#1E293B"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="140" y1="140" x2="1060" y2="540" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F97316"/>
+      <stop offset="1" stop-color="#FACC15"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="48" fill="url(#bg)"/>
+  <circle cx="990" cy="120" r="120" fill="rgba(249,115,22,0.16)"/>
+  <circle cx="1025" cy="540" r="160" fill="rgba(250,204,21,0.12)"/>
+  <rect x="72" y="68" width="1056" height="540" rx="36" stroke="rgba(255,255,255,0.10)" stroke-width="2"/>
+  <text x="112" y="170" fill="#E2E8F0" font-size="58" font-weight="700" font-family="Arial, Helvetica, sans-serif">COUNTER</text>
+  <text x="112" y="232" fill="#94A3B8" font-size="32" font-weight="500" font-family="Arial, Helvetica, sans-serif">Minimal state demo</text>
+  <rect x="112" y="288" width="320" height="200" rx="36" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+  <text x="162" y="418" fill="#F8FAFC" font-size="112" font-weight="700" font-family="Arial, Helvetica, sans-serif">1</text>
+  <rect x="468" y="288" width="584" height="200" rx="36" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+  <rect x="534" y="348" width="450" height="16" rx="8" fill="rgba(255,255,255,0.10)"/>
+  <rect x="534" y="348" width="210" height="16" rx="8" fill="url(#accent)"/>
+  <text x="534" y="430" fill="#94A3B8" font-size="24" font-family="Arial, Helvetica, sans-serif">Tap the button to increment state.</text>
+</svg>

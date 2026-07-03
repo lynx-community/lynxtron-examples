@@ -1,0 +1,33 @@
+/* ── Activity Bar ────────────────────────────────────────────────────────── */
+.ActivityBar {
+  width: 48px;
+  height: 100%;
+  background-color: #333333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 4px;
+  flex-shrink: 0;
+}
+
+.ActivityBarItem {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 2px solid transparent;
+}
+
+.ActivityBarItemActive {
+  border-left: 2px solid #ffffff;
+}
+
+.ActivityBarIcon {
+  font-size: 22px;
+  color: #858585;
+}
+
+.ActivityBarItemActive .ActivityBarIcon {
+  color: #ffffff;
+}

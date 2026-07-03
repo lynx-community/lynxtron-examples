@@ -1,0 +1,32 @@
+{
+  "name": "@lynxtron-showcases/config",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./lynx": {
+      "types": "./dist/lynx.config.d.ts",
+      "default": "./dist/lynx.config.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@lynx-js/config-rsbuild-plugin": "catalog:",
+    "@lynx-js/react-rsbuild-plugin": "catalog:",
+    "@lynx-js/rspeedy": "catalog:",
+    "@lynx-js/type-config": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

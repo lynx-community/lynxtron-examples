@@ -1,0 +1,25 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#071018"/>
+      <stop offset="1" stop-color="#14213D"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="150" y1="130" x2="1050" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="48" fill="url(#bg)"/>
+  <rect x="72" y="68" width="1056" height="540" rx="36" stroke="rgba(255,255,255,0.10)" stroke-width="2"/>
+  <rect x="112" y="120" width="976" height="86" rx="22" fill="rgba(255,255,255,0.05)"/>
+  <text x="148" y="172" fill="#E2E8F0" font-size="48" font-weight="700" font-family="Arial, Helvetica, sans-serif">LYNXTRON GO</text>
+  <text x="148" y="236" fill="#94A3B8" font-size="28" font-family="Arial, Helvetica, sans-serif">Gallery + runner for showcases</text>
+  <rect x="112" y="258" width="430" height="264" rx="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+  <rect x="570" y="258" width="518" height="264" rx="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+  <rect x="156" y="304" width="340" height="18" rx="9" fill="url(#accent)"/>
+  <rect x="156" y="352" width="220" height="18" rx="9" fill="rgba(255,255,255,0.20)"/>
+  <rect x="156" y="392" width="280" height="18" rx="9" fill="rgba(255,255,255,0.14)"/>
+  <text x="620" y="348" fill="#E2E8F0" font-size="40" font-weight="700" font-family="Arial, Helvetica, sans-serif">Cmd+P</text>
+  <text x="620" y="398" fill="#94A3B8" font-size="24" font-family="Arial, Helvetica, sans-serif">Open Showcase</text>
+  <text x="620" y="440" fill="#94A3B8" font-size="24" font-family="Arial, Helvetica, sans-serif">Run Showcase</text>
+</svg>

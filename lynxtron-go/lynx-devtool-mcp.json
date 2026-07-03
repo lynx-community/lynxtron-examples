@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "lynx-devtool": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "--registry=https://bnpm.byted.org",
+        "@byted-lynx/devtool-mcp-server@latest"
+      ]
+    }
+  }
+}

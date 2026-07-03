@@ -1,0 +1,62 @@
+.long-list-scroll {
+  height: 360px;
+  margin-top: 14px;
+  border-radius: 16px;
+  background-color: #08111f;
+  border: 1px solid #1f2937;
+  overflow: hidden;
+}
+
+.long-list-row {
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid #142033;
+}
+
+.long-list-row-active {
+  background-color: rgba(56, 189, 248, 0.12);
+}
+
+.long-list-index {
+  width: 44px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.long-list-body {
+  flex: 1;
+  margin-right: 12px;
+}
+
+.long-list-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 4px;
+}
+
+.long-list-subtitle {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.long-list-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background-color: #0f172a;
+  border: 1px solid #223044;
+}
+
+.long-list-badge-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.long-list-footer {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 12px;
+}

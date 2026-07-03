@@ -1,0 +1,58 @@
+
+.app-container {
+  flex: 1;
+  flex-direction: column;
+  background-color: transparent;
+}
+
+.title-bar-drag-area {
+  display: flex;
+  flex-direction: row;
+  height: 36px;
+  background-color: rgba(0, 0, 0, 0.3);
+  align-items: center;
+  justify-content: center; 
+  padding-left: 12px;
+  padding-right: 12px;
+  flex-shrink: 0;
+  -x-app-region: drag;
+}
+
+.title-bar-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.title-bar-button {
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 95, 87, 0.8);
+}
+
+.title-bar-button-text {
+  font-size: 14px;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 14px;
+}
+
+.clock-container {
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  -x-app-region: drag;
+}
+
+.clock-text {
+  font-size: 72px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-variant-numeric: tabular-nums;
+}

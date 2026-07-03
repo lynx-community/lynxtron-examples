@@ -1,0 +1,36 @@
+{
+  "name": "lynxtron-native-texture-canvas",
+  "author": "Lynxtron Authors",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "index.cjs",
+  "description": "Lynxtron native texture canvas extension",
+  "scripts": {
+    "build": "node scripts/build.js"
+  },
+  "keywords": [
+    "lynx",
+    "lynxtron",
+    "native",
+    "texture",
+    "canvas"
+  ],
+  "files": [
+    "bindings/**/*",
+    "module/**/*",
+    "index.cjs",
+    "CMakeLists.txt",
+    "scripts/**/*",
+    "build/Release/*.node"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "node-addon-api": "^7.0.0"
+  },
+  "devDependencies": {
+    "@lynx-js/lynx-library-headers": "0.0.3",
+    "cmake-js": "^7.3.0"
+  }
+}

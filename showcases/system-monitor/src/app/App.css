@@ -1,0 +1,74 @@
+.container {
+  flex: 1;
+  padding: 20px;
+  gap: 16px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.card {
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  padding: 16px;
+  gap: 8px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.card-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #007aff;
+}
+
+.progress-bar {
+  height: 12px;
+  background-color: #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #007aff;
+  border-radius: 6px;
+}
+
+.sub-text {
+  font-size: 14px;
+  color: #666666;
+}
+
+.interval-buttons {
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.interval-button {
+  padding: 8px 16px;
+  background-color: #e0e0e0;
+  border-radius: 8px;
+}
+
+.interval-button.active {
+  background-color: #007aff;
+}
+
+.interval-button-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333333;
+}
+
+.interval-button.active .interval-button-text {
+  color: #ffffff;
+}

@@ -1,0 +1,46 @@
+/* ── Status Bar ──────────────────────────────────────────────────────────── */
+.StatusBar {
+  height: 22px;
+  background-color: #007acc;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.StatusBarLeft {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.StatusBarCenter {
+  flex: 1;
+  color: #ffffff;
+  font-size: 12px;
+  padding: 0 8px;
+}
+
+.StatusBarRight {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.StatusBarItem {
+  padding: 0 6px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.StatusBarItemClickable {
+  border-radius: 3px;
+}
+
+.StatusBarItemText {
+  color: #ffffff;
+  font-size: 12px;
+  opacity: 0.9;
+}

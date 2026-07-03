@@ -1,0 +1,29 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#07111F"/>
+      <stop offset="1" stop-color="#172554"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="160" y1="140" x2="1040" y2="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#34D399"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="48" fill="url(#bg)"/>
+  <circle cx="1036" cy="118" r="130" fill="rgba(96,165,250,0.14)"/>
+  <circle cx="180" cy="560" r="180" fill="rgba(52,211,153,0.10)"/>
+  <rect x="72" y="68" width="1056" height="540" rx="36" stroke="rgba(255,255,255,0.10)" stroke-width="2"/>
+  <text x="112" y="170" fill="#E2E8F0" font-size="58" font-weight="700" font-family="Arial, Helvetica, sans-serif">CROSS-PLATFORM</text>
+  <text x="112" y="232" fill="#94A3B8" font-size="32" font-weight="500" font-family="Arial, Helvetica, sans-serif">Desktop + Web, same Lynx UI code</text>
+  <rect x="112" y="282" width="976" height="22" rx="11" fill="rgba(255,255,255,0.08)"/>
+  <rect x="112" y="282" width="622" height="22" rx="11" fill="url(#accent)"/>
+  <rect x="112" y="344" width="292" height="182" rx="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+  <rect x="430" y="344" width="292" height="182" rx="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+  <rect x="748" y="344" width="340" height="182" rx="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+  <text x="148" y="410" fill="#F8FAFC" font-size="46" font-weight="700" font-family="Arial, Helvetica, sans-serif">Desktop</text>
+  <text x="148" y="452" fill="#94A3B8" font-size="22" font-family="Arial, Helvetica, sans-serif">Filesystem storage</text>
+  <text x="468" y="410" fill="#F8FAFC" font-size="46" font-weight="700" font-family="Arial, Helvetica, sans-serif">Web</text>
+  <text x="468" y="452" fill="#94A3B8" font-size="22" font-family="Arial, Helvetica, sans-serif">localStorage fallback</text>
+  <text x="786" y="410" fill="#F8FAFC" font-size="46" font-weight="700" font-family="Arial, Helvetica, sans-serif">Shared UI</text>
+  <text x="786" y="452" fill="#94A3B8" font-size="22" font-family="Arial, Helvetica, sans-serif">One code path</text>
+</svg>

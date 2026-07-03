@@ -1,0 +1,54 @@
+.LoadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 160;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(15, 23, 42, 0.48);
+  cursor: wait;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.LoadingOverlayContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: wait;
+}
+
+.LoadingOverlaySpinner {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  border-width: 4px;
+  border-style: solid;
+  border-color: rgba(148, 163, 184, 0.2);
+  border-top-color: rgba(255, 255, 255, 0.95);
+  animation: LoadingOverlaySpin 0.9s linear infinite;
+  box-sizing: border-box;
+}
+
+.LoadingOverlayMessage {
+  color: rgba(248, 250, 252, 0.92);
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  max-width: 280px;
+}
+
+@keyframes LoadingOverlaySpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

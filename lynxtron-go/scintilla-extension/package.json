@@ -1,0 +1,38 @@
+{
+  "name": "lynxtron-scintilla-editor",
+  "author": "Lynxtron Authors",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "index.cjs",
+  "description": "Lynxtron Scintilla Editor Extension",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "postinstall": "node scripts/prepare.js"
+  },
+  "keywords": [
+    "lynx",
+    "extension",
+    "scintilla"
+  ],
+  "files": [
+    "include/**/*",
+    "module/**/*",
+    "bindings/**/*",
+    "scintilla/**/*",
+    "index.cjs",
+    "CMakeLists.txt",
+    "README.md",
+    "scripts/**/*",
+    "build/Release/*.node"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "node-addon-api": "^7.0.0"
+  },
+  "devDependencies": {
+    "@lynx-js/lynx-library-headers": "catalog:",
+    "cmake-js": "^7.3.0"
+  }
+}

@@ -1,0 +1,28 @@
+.container {
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.actions {
+  flex-direction: row;
+  gap: 16px;
+}
+
+.button {
+  padding: 12px 24px;
+  background-color: #007aff;
+  border-radius: 8px;
+}
+
+.button-text {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: bold;
+}

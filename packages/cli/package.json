@@ -1,0 +1,21 @@
+{
+  "name": "@lynxtron-showcases/cli",
+  "version": "0.0.1",
+  "type": "module",
+  "bin": {
+    "lynxtron-showcases": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "tar": "^7.0.0"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "^3.2.4",
+    "@types/node": "^22.0.0"
+  }
+}

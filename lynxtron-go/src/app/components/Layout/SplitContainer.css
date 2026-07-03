@@ -1,0 +1,85 @@
+/* ── Split Container ─────────────────────────────────────────────────────── */
+.SplitContainer {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.SplitH {
+  flex-direction: row;
+}
+
+.SplitV {
+  flex-direction: column;
+}
+
+/* ── Panes ───────────────────────────────────────────────────────────────── */
+.SplitPane {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Sash (draggable divider) ────────────────────────────────────────────── */
+.Sash {
+  background-color: transparent;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.SashH {
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+.SashV {
+  height: 4px;
+  width: 100%;
+  cursor: row-resize;
+}
+
+/* Visible line in the center of the sash */
+.Sash::after {
+  content: '';
+  position: absolute;
+  background-color: transparent;
+}
+
+.SashH::after {
+  width: 1px;
+  height: 100%;
+  left: 1px;
+}
+
+.SashV::after {
+  height: 1px;
+  width: 100%;
+  top: 1px;
+}
+
+/* Show accent color on hover/drag */
+.Sash:hover::after,
+.Sash:active::after {
+  background-color: #007fd4;
+}
+
+/* ── Drag overlay (captures mouse during drag) ──────────────────────────── */
+.SashOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  background-color: transparent;
+}
+
+.SashOverlayH {
+  cursor: col-resize;
+}
+
+.SashOverlayV {
+  cursor: row-resize;
+}

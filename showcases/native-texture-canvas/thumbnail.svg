@@ -1,0 +1,22 @@
+<svg width="640" height="360" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#081120" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" />
+      <stop offset="100%" stop-color="#f97316" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" rx="28" fill="url(#bg)" />
+  <rect x="34" y="34" width="572" height="292" rx="22" fill="#0f172a" fill-opacity="0.82" stroke="#94a3b8" stroke-opacity="0.16" />
+  <rect x="58" y="64" width="156" height="238" rx="18" fill="#020617" fill-opacity="0.86" stroke="#94a3b8" stroke-opacity="0.18" />
+  <rect x="238" y="64" width="344" height="58" rx="16" fill="#020617" fill-opacity="0.86" stroke="#94a3b8" stroke-opacity="0.18" />
+  <rect x="238" y="138" width="344" height="164" rx="16" fill="#020617" fill-opacity="0.86" stroke="#94a3b8" stroke-opacity="0.18" />
+  <circle cx="130" cy="145" r="44" fill="#22d3ee" fill-opacity="0.9" />
+  <text x="101" y="155" fill="#f8fafc" font-size="34" font-weight="800" font-family="Inter, Arial, sans-serif">TC</text>
+  <text x="262" y="100" fill="#e2e8f0" font-size="22" font-weight="800" font-family="Inter, Arial, sans-serif">Native Texture Canvas</text>
+  <text x="262" y="176" fill="#94a3b8" font-size="16" font-family="Inter, Arial, sans-serif">Texture canvas extension</text>
+  <text x="262" y="212" fill="#94a3b8" font-size="16" font-family="Inter, Arial, sans-serif">Native drawing surface</text>
+</svg>

@@ -1,0 +1,28 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#101826"/>
+      <stop offset="1" stop-color="#1E293B"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="140" y1="140" x2="1060" y2="540" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" rx="48" fill="url(#bg)"/>
+  <circle cx="990" cy="120" r="120" fill="rgba(59,130,246,0.16)"/>
+  <circle cx="1025" cy="540" r="160" fill="rgba(6,182,212,0.12)"/>
+  <rect x="72" y="68" width="1056" height="540" rx="36" stroke="rgba(255,255,255,0.10)" stroke-width="2"/>
+  <text x="112" y="170" fill="#E2E8F0" font-size="58" font-weight="700" font-family="Arial, Helvetica, sans-serif">FILE EXPLORER</text>
+  <text x="112" y="232" fill="#94A3B8" font-size="32" font-weight="500" font-family="Arial, Helvetica, sans-serif">NativeModules.nodejs.exposed</text>
+  <rect x="112" y="288" width="440" height="200" rx="36" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+  <rect x="140" y="320" width="384" height="48" rx="12" fill="rgba(255,255,255,0.10)"/>
+  <text x="156" y="354" fill="#38BDF8" font-size="24" font-family="Arial, Helvetica, sans-serif">📁 Documents</text>
+  <rect x="140" y="384" width="384" height="48" rx="12" fill="rgba(255,255,255,0.08)"/>
+  <text x="156" y="418" fill="#F8FAFC" font-size="24" font-family="Arial, Helvetica, sans-serif">📄 notes.txt</text>
+  <rect x="584" y="288" width="468" height="200" rx="36" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+  <text x="612" y="344" fill="#94A3B8" font-size="20" font-family="Arial, Helvetica, sans-serif">NativeModules.nodejs</text>
+  <text x="612" y="380" fill="#22D3EE" font-size="24" font-family="Arial, Helvetica, sans-serif">exposed</text>
+  <rect x="612" y="420" width="412" height="48" rx="8" fill="rgba(255,255,255,0.10)"/>
+  <text x="628" y="452" fill="#94A3B8" font-size="18" font-family="Arial, Helvetica, sans-serif">readdir, readFile, writeFile...</text>
+</svg>

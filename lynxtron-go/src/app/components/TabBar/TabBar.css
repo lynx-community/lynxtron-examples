@@ -1,0 +1,53 @@
+/* ── Tab Bar ─────────────────────────────────────────────────────────────── */
+.TabBar {
+  height: 35px;
+  background-color: #2d2d2d;
+  border-bottom: 1px solid #252526;
+  flex-shrink: 0;
+}
+
+.Tab {
+  height: 35px;
+  width: 150px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 10px;
+  background-color: #2d2d2d;
+  border-right: 1px solid #252526;
+}
+
+.ActiveTab {
+  background-color: #1e1e1e;
+  border-top: 1px solid #007acc;
+}
+
+.TabName {
+  flex: 1;
+  color: #969696;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  lines: 1;
+}
+
+.ActiveTab .TabName {
+  color: #ffffff;
+}
+
+.TabClose {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+
+.TabCloseText {
+  color: #969696;
+  font-size: 14px;
+  line-height: 18px;
+}

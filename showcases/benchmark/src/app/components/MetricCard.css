@@ -1,0 +1,37 @@
+.metric-card {
+  flex: 1;
+  min-width: 220px;
+  background-color: #101826;
+  border: 1px solid #1f2937;
+  border-radius: 16px;
+  padding: 18px;
+  margin: 6px;
+}
+
+.metric-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.metric-value {
+  font-size: 38px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.metric-subtitle {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.metric-extra {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+}

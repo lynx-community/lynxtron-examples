@@ -1,0 +1,39 @@
+.OutputPanel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: #1e1e1e;
+}
+
+.OutputDim {
+  color: #666666;
+}
+
+.OutputTime {
+  color: #555555;
+}
+
+.OutputTag-info {
+  color: #3794ff;
+}
+
+.OutputTag-warn {
+  color: #cca700;
+}
+
+.OutputTag-error {
+  color: #f44747;
+}
+
+.OutputMsg {
+  color: #cccccc;
+}
+
+.OutputMsg-error {
+  color: #f44747;
+}
+
+.OutputMsg-warn {
+  color: #cca700;
+}

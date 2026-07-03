@@ -1,0 +1,17 @@
+{
+  "name": "lynxtron-go",
+  "version": "0.0.1",
+  "main": "main.js",
+  "private": true,
+  "dependencies": {
+    "@lynx-js/lynxtron": "0.0.3",
+    "@lynxtron-showcases/cli": "0.0.1",
+    "lynxtron-scintilla-editor": "0.0.1",
+    "typescript": "^5.9.3",
+    "vscode-css-languageservice": "^6.3.10",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "vscode-languageserver-types": "^3.17.5"
+  },
+  "__commented_out_dependencies": {
+  }
+}

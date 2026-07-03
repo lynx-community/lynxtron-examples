@@ -1,0 +1,36 @@
+{
+  "name": "@lynxtron-examples/counter",
+  "version": "0.0.1",
+  "main": "main.js",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lynx-community/lynxtron-examples"
+  },
+  "scripts": {
+    "build": "rspeedy build && rspack build",
+    "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
+    "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop"
+  },
+  "showcase": {
+    "description": "Minimal counter example demonstrating state management",
+    "thumbnail": "thumbnail.svg",
+    "tags": ["beginner"],
+    "minToolchainVersion": "0.0.1"
+  },
+  "dependencies": {
+    "@lynx-js/lynxtron": "catalog:"
+  },
+  "devDependencies": {
+    "@lynxtron-showcases/config": "workspace:*",
+    "@lynx-js/react": "catalog:",
+    "@lynx-js/rspeedy": "catalog:",
+    "@lynx-js/types": "catalog:",
+    "@rspack/cli": "catalog:",
+    "@rspack/core": "catalog:",
+    "@lynx-js/lynxtron-dev-plugins": "catalog:",
+    "concurrently": "catalog:",
+    "cross-env": "catalog:",
+    "typescript": "catalog:"
+  }
+}
