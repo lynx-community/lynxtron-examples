@@ -1,15 +1,9 @@
-import { execFileSync } from 'child_process';
+import { execFileSync, spawn } from 'child_process';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { DEBUG_LOG } from './preload-log';
 import { readConfig, writeConfig } from './preload-config-store';
-
-// eslint-disable-next-line no-control-regex
-const ANSI_RE = /\x1B\[[\x30-\x3F]*[\x20-\x2F]*[\x40-\x7E]|\x1B[PX^_][\s\S]*?\x1B\\|\x1B[^[\]()#;?PX^_]/g;
-
-function stripAnsi(value: string): string {
-  return value.replace(ANSI_RE, '');
-}
 
 function isBinary(buf: Buffer): boolean {
   for (let index = 0; index < Math.min(buf.length, 512); index += 1) {
@@ -30,6 +24,42 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
       },
     },
     echo: (message: string) => `Echo from PC Service Thread: ${message}`,
+    // Enough for the UI to respawn this exact app (new-window-as-new-process):
+    // the lynxtron executable plus the app dir it was launched with.
+    runtime: {
+      execPath: process.execPath,
+      appDir: __dirname,
+      // Runtime version for the commands-bar version button — only what the
+      // engine itself reports (no package-manifest probing: a manifest found
+      // on disk isn't necessarily the binary that's running). This service
+      // thread's process.versions lacks the lynxtron key, so main.ts hands
+      // the value over via LYNXTRON_RUNTIME_VERSION.
+      version: (() => {
+        const versions = process.versions as Record<string, string | undefined>;
+        return versions.lynxtron ?? versions.electron
+          ?? process.env.LYNXTRON_RUNTIME_VERSION ?? null;
+      })(),
+    },
+    clipboard: {
+      // Lynx <text> has no selection on desktop — copy goes through the OS
+      // clipboard tool instead (pbcopy/clip/xclip all read stdin).
+      writeText: (text: string): boolean => {
+        try {
+          const cmd = process.platform === 'darwin' ? 'pbcopy'
+            : process.platform === 'win32' ? 'clip' : 'xclip';
+          const args = process.platform === 'darwin' || process.platform === 'win32'
+            ? [] : ['-selection', 'clipboard'];
+          const child = spawn(cmd, args, { stdio: ['pipe', 'ignore', 'ignore'] });
+          child.on('error', (error) => dbg?.(`clipboard spawn failed: ${error}`));
+          child.stdin.write(text);
+          child.stdin.end();
+          return true;
+        } catch (error) {
+          dbg?.(`clipboard write failed: ${error}`);
+          return false;
+        }
+      },
+    },
     fs: {
       readdir: (dir: string) => {
         try {
@@ -50,13 +80,15 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
           return [];
         }
       },
-      readFile: (filePath: string) => {
+      readFile: (filePath: string): string | null => {
         try {
           // Return UTF-8 to avoid ArrayBuffer serialization through the BTS bridge.
           return fs.readFileSync(filePath, 'utf-8');
         } catch (error) {
           console.error('[Preload] readFile error:', error);
-          return '';
+          // null, not '' — callers must be able to tell "missing/unreadable"
+          // from "empty file" or a failed read silently wipes content.
+          return null;
         }
       },
       writeFile: (filePath: string, content: string) => {
@@ -68,6 +100,21 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
           return false;
         }
       },
+      mkdirp: (dir: string) => {
+        try {
+          fs.mkdirSync(dir, { recursive: true });
+          return true;
+        } catch (error) {
+          console.error('[Preload] mkdirp error:', error);
+          return false;
+        }
+      },
+      tmpdir: () => os.tmpdir(),
+      homedir: () => os.homedir(),
+      exists: (p: string) => {
+        try { return fs.existsSync(p); } catch (_) { return false; }
+      },
+      join: (...args: string[]) => path.join(...args),
       resolve: (...args: string[]) => path.resolve(...args),
       dirname: (targetPath: string) => path.dirname(targetPath),
       basename: (targetPath: string) => path.basename(targetPath),
@@ -100,7 +147,10 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
           }
         }
       },
+      // Dev-only verification surfaces (macOS `screencapture`). Gated the
+      // same way as the /tmp command channels: never active in user builds.
       screenshotToFile: (outPath: string) => {
+        if (process.env.LYNXTRON_FIDDLE_DEV !== '1') return false;
         try {
           execFileSync('/usr/sbin/screencapture', ['-x', '-t', 'png', outPath]);
           return true;
@@ -110,11 +160,11 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
         }
       },
       screenshotToBase64: () => {
+        if (process.env.LYNXTRON_FIDDLE_DEV !== '1') return '';
         try {
-          const tmpPath = '/tmp/lynxtron_screenshot_tmp.png';
+          const tmpPath = path.join(os.tmpdir(), 'lynxtron_screenshot_tmp.png');
           execFileSync('/usr/sbin/screencapture', ['-x', '-t', 'png', tmpPath]);
-          const buffer = fs.readFileSync(tmpPath);
-          return stripAnsi(buffer.toString('base64'));
+          return fs.readFileSync(tmpPath).toString('base64');
         } catch (error) {
           console.error('[Preload] screenshotToBase64 error:', error);
           return '';
@@ -207,6 +257,47 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
 
         searchDir(rootPath);
         return results;
+      },
+    },
+    exec: {
+      /**
+       * Streams stdout/stderr line-by-line to onLine callbacks and resolves on exit.
+       * Runs asynchronously and returns a handle with a `kill()` method.
+       */
+      runAsync: (
+        cmd: string,
+        args: string[],
+        opts: {
+          cwd?: string;
+          env?: Record<string, string>;
+          onLine?: (stream: 'stdout' | 'stderr', line: string) => void;
+          onExit?: (code: number | null) => void;
+        } = {},
+      ) => {
+        const child = spawn(cmd, args, {
+          cwd: opts.cwd,
+          env: { ...process.env, ...(opts.env ?? {}) },
+          stdio: ['ignore', 'pipe', 'pipe'],
+        });
+        const emit = (stream: 'stdout' | 'stderr') => {
+          let buf = '';
+          return (chunk: Buffer) => {
+            buf += chunk.toString('utf-8');
+            let idx = buf.indexOf('\n');
+            while (idx >= 0) {
+              opts.onLine?.(stream, buf.slice(0, idx));
+              buf = buf.slice(idx + 1);
+              idx = buf.indexOf('\n');
+            }
+          };
+        };
+        child.stdout?.on('data', emit('stdout'));
+        child.stderr?.on('data', emit('stderr'));
+        child.on('close', (code) => opts.onExit?.(code));
+        return {
+          pid: child.pid,
+          kill: () => { try { child.kill('SIGTERM'); } catch (_) {} },
+        };
       },
     },
   };

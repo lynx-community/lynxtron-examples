@@ -303,10 +303,12 @@ describe('showcase install helpers', () => {
   });
 
   it('formats a user-facing node version mismatch error', () => {
+    // npm runs with Lynxtron-as-node — the message must blame the runtime,
+    // not the system Node install.
     expect(formatNodeVersionRequirementError({ range: '>=22', sourceKind: 'engines' }, '20.11.1'))
-      .toBe('System Node.js 20.11.1 does not satisfy required version >=22. Install Node.js 22 or newer and retry.');
+      .toBe("Lynxtron's Node.js version 20.11.1 does not satisfy required version >=22. Update Lynxtron to a build shipping Node 22 or newer.");
     expect(formatNodeVersionRequirementError({ range: '22', sourceKind: 'nvmrc' }, null))
-      .toBe('System Node.js was not found in PATH. Install Node.js 22.x and retry.');
+      .toBe("Lynxtron's Node.js runtime was not detected. Reinstall or update Lynxtron and retry.");
   });
 
   it('detects saved source changes newer than dist', () => {

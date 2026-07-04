@@ -21,6 +21,14 @@ export function createPreloadBridge() {
   });
 
   return {
+    // Dev-only automation surfaces (command files, window capture) are gated
+    // on an explicit env opt-in — a shipped build must not poll /tmp for
+    // commands any local process can write.
+    devMode: process.env.LYNXTRON_FIDDLE_DEV === '1',
+    // 'ide' when this instance was spawned as a dedicated IDE window
+    // (Gallery IDE action) — the UI hides Fiddle-centric chrome like the
+    // route-back chevrons in that mode.
+    bootTarget: process.env.LYNXTRON_BOOT_TARGET ?? null,
     ...createFoundationBridge(dbg),
     ls: extensionHost.bridge,
     pty: pty.bridge,

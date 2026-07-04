@@ -1,9 +1,16 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import crypto from 'crypto';
 import type { DebugLogger } from './preload-log';
 
-const CONFIG_PATH = path.join(os.homedir(), '.lynxtron-ide.json');
+// Namespace the config file per app checkout: a global ~/.lynxtron-ide.json
+// is shared by EVERY build of this app on the machine (parallel worktrees,
+// self-hosted children), and their 1.5s session writers overwrite each other.
+// Same-worktree instances still share one file — the session writer lease
+// (fiddle.session.writer) arbitrates those.
+const workspaceTag = crypto.createHash('sha1').update(__dirname).digest('hex').slice(0, 8);
+const CONFIG_PATH = path.join(os.homedir(), `.lynxtron-ide.${workspaceTag}.json`);
 const INSTALL_STATE_PATH = path.join(os.homedir(), '.lynxtron-go-install-state.json');
 
 export function readConfig(): Record<string, any> {

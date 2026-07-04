@@ -252,6 +252,25 @@ async function ensureShowcaseDependencies(
   return true;
 }
 
+
+// Only the app itself (lynxtron-go) gets the self-host flag: it badges the
+// child window and waives the singleton lock. Leaking it into every showcase
+// spawn would silently disable single-instance for unrelated apps.
+function isSelfHostTarget(showcasePath: string): boolean {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(showcasePath, 'package.json'), 'utf-8'));
+    return pkg?.name === 'lynxtron-go';
+  } catch (_) {
+    return false;
+  }
+}
+
+function showcaseSpawnEnv(showcasePath: string): NodeJS.ProcessEnv {
+  return isSelfHostTarget(showcasePath)
+    ? { ...process.env, LYNXTRON_FIDDLE_SELF_HOST: '1' }
+    : { ...process.env };
+}
+
 function runInstallCommand(options: {
   command: string;
   args: string[];
@@ -264,7 +283,7 @@ function runInstallCommand(options: {
       cwd: options.cwd,
       env: options.env,
       stdio: ['ignore', 'pipe', 'pipe'],
-      detached: false,
+      detached: true,
     });
     if (options.outputBuffer) {
       attachProcessOutput(child, 'showcase.install', options.outputBuffer);
@@ -330,7 +349,7 @@ function runBufferedCommand(options: {
       cwd: options.cwd,
       env: options.env,
       stdio: ['ignore', 'pipe', 'pipe'],
-      detached: false,
+      detached: true,
     });
     if (options.outputBuffer) {
       attachProcessOutput(child, options.source, options.outputBuffer);
@@ -486,6 +505,26 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
 
       readProcessOutput: (): ShowcaseProcessOutputEntry[] => processOutputBuffer.splice(0, processOutputBuffer.length),
 
+      isRunning: (pid: number): boolean => runningShowcases.has(pid),
+
+      stop: (pid: number): boolean => {
+        const child = runningShowcases.get(pid);
+        if (!child) return false;
+        // Children spawn detached (own process group), so kill the group:
+        // signalling only the direct child orphans `sh -c "build && launch"`
+        // chains — the launched app survived Stop with its window open.
+        if (process.platform === 'win32') {
+          try {
+            spawn('taskkill', ['/pid', String(pid), '/T', '/F']);
+            return true;
+          } catch (_) { /* fall through */ }
+        }
+        let ok = false;
+        try { process.kill(-pid, 'SIGTERM'); ok = true; } catch (_) {}
+        try { child.kill('SIGTERM'); ok = true; } catch (_) {}
+        return ok;
+      },
+
       run: (showcasePath: string): number => {
         dbg(`showcase.run called with showcasePath: ${showcasePath}`);
         try {
@@ -505,8 +544,8 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
           const child = spawn(lynxtronExecutable, [distDesktop], {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
-            detached: false,
-            env: { ...process.env },
+            detached: true,
+            env: showcaseSpawnEnv(showcasePath),
           });
           dbg(`showcase.run: process spawned, pid: ${child.pid}`);
           attachProcessOutput(child, 'showcase.run', processOutputBuffer);
@@ -529,8 +568,8 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
           const child = spawn(npmCommand, ['start'], {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
-            detached: false,
-            env: { ...process.env },
+            detached: true,
+            env: showcaseSpawnEnv(showcasePath),
           });
           attachProcessOutput(child, 'showcase.start', processOutputBuffer);
           return trackRunningShowcase('showcase.start', child, `cwd=${showcasePath}`, runningShowcases, dbg);
@@ -549,8 +588,8 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
           const child = spawn(npmCommand, ['run', 'dev'], {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
-            detached: false,
-            env: { ...process.env },
+            detached: true,
+            env: showcaseSpawnEnv(showcasePath),
           });
           attachProcessOutput(child, 'showcase.dev', processOutputBuffer);
           return trackRunningShowcase('showcase.dev', child, `cwd=${showcasePath}`, runningShowcases, dbg);
@@ -626,7 +665,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
           const child = spawn(lynxtronExecutable, [serverScript, distWeb], {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-            detached: false,
+            detached: true,
             env: { ...process.env, LYNXTRON_RUN_AS_NODE: '1' },
           });
           attachUrlOpener(child, 'showcase.runWeb', dbg);
@@ -656,7 +695,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
           const child = spawn(npmCommand, ['run', 'start:web'], {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
-            detached: false,
+            detached: true,
             env: { ...process.env },
           });
           attachUrlOpener(child, 'showcase.startWeb', dbg);
@@ -680,7 +719,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
           const child = spawn(npmCommand, ['run', 'dev:web'], {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
-            detached: false,
+            detached: true,
             env: { ...process.env },
           });
           attachUrlOpener(child, 'showcase.devWeb', dbg);
