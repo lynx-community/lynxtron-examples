@@ -10,6 +10,7 @@
 #include <vector>
 #include <tuple>
 #include <map>
+#include <set>
 #include <mutex>
 #include <atomic>
 
@@ -51,6 +52,9 @@ class ScintillaView : public lynx::pub::LynxNativeView {
   // Hover dwell support.
   struct DwellInfo { bool active; int bytePos; float x; float y; };
   void UpdateLayoutPosition(float left, float top);
+  // Record the full layout rect under the same lock — AttachToWindow reads
+  // these fields from another thread to restore the frame.
+  void RecordLayoutRect(float left, float top, float width, float height);
   void OnDwellStart(int bytePos, int x, int y);
   void OnDwellEnd();
   DwellInfo GetDwellInfo() const;
@@ -63,13 +67,27 @@ class ScintillaView : public lynx::pub::LynxNativeView {
   void GotoLine(int line);
   void SetSelection(int anchor, int caret);
   void ScrollCaret();
+  // Give the editor keyboard focus (sidebar file select → focus that pane).
+  void FocusEditor();
   void RepositionForParentMove();
   void HideForParentTransition();
   bool ShouldStayHiddenForParentTransition() const;
 
   // Detach the Cocoa editor view from the host window while preserving the
-  // editor instance for a later layout pass to reattach it.
+  // editor instance for a later layout pass to reattach it. Idempotent and
+  // safe on never-attached views (the pending-detach path in Register uses
+  // it directly).
   void DetachFromWindow();
+
+  // Re-attach a previously detached editor view (inverse of DetachFromWindow).
+  // Needed explicitly: layout passes don't fire when an absolutely-positioned
+  // overlay closes, so OnLayoutChanged's lazy attach never runs.
+  void AttachToWindow();
+
+  // Re-apply the full editor theme (base colors, token palette, gutter,
+  // caret/selection/calltip) + font size at runtime. dark=false selects the
+  // VS-Light-style palette on Fiddle Light backgrounds.
+  void ApplyTheme(bool dark, int size_pt);
 
 private:
   void* cocoa_view_ = nullptr; // Pointer to ScintillaCocoa (NSView)
@@ -85,37 +103,65 @@ private:
   bool has_pending_content_ = false;
   std::string editor_id_;
   std::atomic<bool> content_changed_{false};
+  // Host-driven detach (dialogs/overlays/drags): while set, OnLayoutChanged's
+  // lazy attach must NOT re-add the view — it would float above the overlay.
+  std::atomic<bool> detached_by_host_{false};
+  // Last layout rect (pt) so AttachToWindow can restore the frame even when
+  // layout changed while detached. Guarded by dwell_mutex_ (written on the
+  // layout thread, read from AttachToWindow callers).
+  float last_layout_w_ = 0.0f;
+  float last_layout_h_ = 0.0f;
+  bool theme_dark_ = true;
+  int font_size_pt_ = 14;
   mutable std::mutex dwell_mutex_;
   DwellInfo dwell_info_{false, -1, 0.0f, 0.0f};
   float layout_left_ = 0.0f;
   float layout_top_ = 0.0f;
 };
 
-// Global Registry for N-API access
+// Global Registry for N-API access.
+//
+// LOCKING RULE: mutex_ protects the maps ONLY. View methods are always
+// invoked OUTSIDE the lock — most of them hop onto the platform UI thread
+// (dispatch_sync / SendMessageW), and calling them while holding mutex_
+// deadlocks against any UI-thread path that enters the registry (e.g.
+// OnPropertiesChanged → Register). LIFETIME CAVEAT: a pointer copied out of
+// the map can race ~ScintillaView on the element-teardown thread; the window
+// is tiny (methods immediately dispatch blocks that retain the platform
+// view, not `this`) but a full fix needs the Lynx-owned-child-view hosting
+// rework tracked as gap 2b.
 class ScintillaRegistry {
 public:
     static ScintillaRegistry& Get() {
         static ScintillaRegistry instance;
         return instance;
     }
-    
-    void Register(const std::string& id, ScintillaView* view) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        views_[id] = view;
 
-        // Apply pending content first, then pending styles (order matters)
-        auto cit = pending_content_.find(id);
-        if (cit != pending_content_.end()) {
-            view->SetContent(cit->second.data(), cit->second.size());
-            pending_content_.erase(cit);
+    void Register(const std::string& id, ScintillaView* view) {
+        std::string content; bool has_content = false;
+        PendingStyles styles{0, {}}; bool has_styles = false;
+        bool host_detached = false;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            views_[id] = view;
+            auto cit = pending_content_.find(id);
+            if (cit != pending_content_.end()) {
+                content = std::move(cit->second); has_content = true;
+                pending_content_.erase(cit);
+            }
+            auto sit = pending_styles_.find(id);
+            if (sit != pending_styles_.end()) {
+                styles = std::move(sit->second); has_styles = true;
+                pending_styles_.erase(sit);
+            }
+            host_detached = pending_host_detach_.erase(id) > 0;
         }
-        auto sit = pending_styles_.find(id);
-        if (sit != pending_styles_.end()) {
-            view->ApplyStyles(sit->second.startPos,
-                              sit->second.data.data(),
-                              sit->second.data.size());
-            pending_styles_.erase(sit);
-        }
+        // Apply pending content first, then pending styles (order matters).
+        if (has_content) view->SetContent(content.data(), content.size());
+        if (has_styles) view->ApplyStyles(styles.startPos, styles.data.data(), styles.data.size());
+        // Full detach, not just a flag: an already-attached view re-registered
+        // under this id (editor-id change) must actually leave the window.
+        if (host_detached) view->DetachFromWindow();
     }
 
     void Unregister(const std::string& id, ScintillaView* view) {
@@ -126,34 +172,41 @@ public:
             views_.erase(it);
         }
     }
-    
+
     // Returns true if content was set (either to view or pending)
     bool SetContent(const std::string& id, const char* data, size_t length) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = views_.find(id);
-        if (it != views_.end()) {
-            it->second->SetContent(data, length);
-            return true;
-        } else {
-            // Store pending content
-            pending_content_[id] = std::string(data, length);
-            return true;
+        ScintillaView* view = nullptr;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            auto it = views_.find(id);
+            if (it == views_.end()) {
+                pending_content_[id] = std::string(data, length);
+                EvictPendingIfNeededLocked();
+                return true;
+            }
+            view = it->second;
         }
-    }
-    
-    // Apply styles to a view (or queue as pending if view not yet registered)
-    bool ApplyStyles(const std::string& id, int startPos, const char* styles, size_t length) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = views_.find(id);
-        if (it != views_.end()) {
-            it->second->ApplyStyles(startPos, styles, length);
-            return true;
-        }
-        // View not ready yet — store as pending, applied in Register()
-        pending_styles_[id] = { startPos, std::string(styles, length) };
+        view->SetContent(data, length);
         return true;
     }
-    
+
+    // Apply styles to a view (or queue as pending if view not yet registered)
+    bool ApplyStyles(const std::string& id, int startPos, const char* styles, size_t length) {
+        ScintillaView* view = nullptr;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            auto it = views_.find(id);
+            if (it == views_.end()) {
+                pending_styles_[id] = { startPos, std::string(styles, length) };
+                EvictPendingIfNeededLocked();
+                return true;
+            }
+            view = it->second;
+        }
+        view->ApplyStyles(startPos, styles, length);
+        return true;
+    }
+
     ScintillaView* GetView(const std::string& id) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = views_.find(id);
@@ -164,59 +217,59 @@ public:
     }
 
     bool ShowCalltip(const std::string& id, int bytePos, const std::string& text) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = views_.find(id);
-        if (it == views_.end()) return false;
-        it->second->ShowCalltip(bytePos, text);
+        ScintillaView* view = Find(id);
+        if (!view) return false;
+        view->ShowCalltip(bytePos, text);
         return true;
     }
 
     bool HideCalltip(const std::string& id) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = views_.find(id);
-        if (it == views_.end()) return false;
-        it->second->HideCalltip();
+        ScintillaView* view = Find(id);
+        if (!view) return false;
+        view->HideCalltip();
         return true;
     }
 
     bool SetIndicators(const std::string& id,
                        const std::vector<std::tuple<int,int,int>>& ranges) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = views_.find(id);
-        if (it == views_.end()) return false;
-        it->second->SetIndicators(ranges);
+        ScintillaView* view = Find(id);
+        if (!view) return false;
+        view->SetIndicators(ranges);
         return true;
     }
 
     bool ClearIndicators(const std::string& id) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = views_.find(id);
-        if (it == views_.end()) return false;
-        it->second->ClearIndicators();
+        ScintillaView* view = Find(id);
+        if (!view) return false;
+        view->ClearIndicators();
         return true;
     }
 
     bool GotoLine(const std::string& id, int line) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = views_.find(id);
-        if (it == views_.end()) return false;
-        it->second->GotoLine(line);
+        ScintillaView* view = Find(id);
+        if (!view) return false;
+        view->GotoLine(line);
         return true;
     }
 
     bool SetSelection(const std::string& id, int anchor, int caret) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = views_.find(id);
-        if (it == views_.end()) return false;
-        it->second->SetSelection(anchor, caret);
+        ScintillaView* view = Find(id);
+        if (!view) return false;
+        view->SetSelection(anchor, caret);
         return true;
     }
 
     bool ScrollCaret(const std::string& id) {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = views_.find(id);
-        if (it == views_.end()) return false;
-        it->second->ScrollCaret();
+        ScintillaView* view = Find(id);
+        if (!view) return false;
+        view->ScrollCaret();
+        return true;
+    }
+
+    bool Focus(const std::string& id) {
+        ScintillaView* view = Find(id);
+        if (!view) return false;
+        view->FocusEditor();
         return true;
     }
 
@@ -225,10 +278,41 @@ public:
         {
             std::lock_guard<std::mutex> lock(mutex_);
             auto it = views_.find(id);
-            if (it == views_.end()) return false;
+            if (it == views_.end()) {
+                // Not registered yet — remember the request (symmetric with
+                // pending_content_). Without this, a detach issued while the
+                // pane was still initializing was a silent no-op and the view
+                // lazily attached ABOVE the overlay moments later.
+                pending_host_detach_.insert(id);
+                return true;
+            }
+            pending_host_detach_.erase(id);
             view = it->second;
         }
         view->DetachFromWindow();
+        return true;
+    }
+
+    bool AttachToWindow(const std::string& id) {
+        ScintillaView* view = nullptr;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            // Erasing the pending detach IS the attach for a not-yet-
+            // registered view: with no pending flag it lazily attaches on
+            // its first layout pass.
+            pending_host_detach_.erase(id);
+            auto it = views_.find(id);
+            if (it == views_.end()) return false;
+            view = it->second;
+        }
+        view->AttachToWindow();
+        return true;
+    }
+
+    bool ApplyTheme(const std::string& id, bool dark, int size_pt) {
+        ScintillaView* view = Find(id);
+        if (!view) return false;
+        view->ApplyTheme(dark, size_pt);
         return true;
     }
 
@@ -245,9 +329,31 @@ private:
         int startPos;
         std::string data;
     };
+
+    ScintillaView* Find(const std::string& id) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto it = views_.find(id);
+        return it == views_.end() ? nullptr : it->second;
+    }
+
+    // Pending buffers hold FULL file contents for ids that may never
+    // register (pane closed mid-init, renamed files) — bound them so a long
+    // session can't accumulate megabytes of orphaned text. Eviction order is
+    // arbitrary (map order); at this cap it only ever hits pathological ids.
+    static constexpr size_t kMaxPendingEntries = 64;
+    void EvictPendingIfNeededLocked() {
+        while (pending_content_.size() > kMaxPendingEntries) {
+            pending_content_.erase(pending_content_.begin());
+        }
+        while (pending_styles_.size() > kMaxPendingEntries) {
+            pending_styles_.erase(pending_styles_.begin());
+        }
+    }
+
     std::map<std::string, ScintillaView*> views_;
     std::map<std::string, std::string> pending_content_;
     std::map<std::string, PendingStyles> pending_styles_;
+    std::set<std::string> pending_host_detach_;
     std::mutex mutex_;
 };
 
