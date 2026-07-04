@@ -1,4 +1,5 @@
 import { app, LynxWindow } from '@lynx-js/lynxtron';
+import { nudgeFramedWindowViewport } from '@lynxtron-showcases/config/window';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 import path from 'path';
 import {
@@ -14,7 +15,7 @@ let secondWindow: LynxWindow | null = null;
 let secondWindowDelta: MemoryUsageDelta | null = null;
 
 function createBenchmarkWindow(title: string, width: number, height: number) {
-  return new LynxWindow({
+  const w = new LynxWindow({
     width,
     height,
     title,
@@ -22,6 +23,8 @@ function createBenchmarkWindow(title: string, width: number, height: number) {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
+  nudgeFramedWindowViewport(w);
+  return w;
 }
 
 function attachWindowBridge(w: LynxWindow) {

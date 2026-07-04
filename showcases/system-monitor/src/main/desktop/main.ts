@@ -1,4 +1,5 @@
 import { app, LynxWindow } from '@lynx-js/lynxtron';
+import { nudgeFramedWindowViewport } from '@lynxtron-showcases/config/window';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 import path from 'path';
 import os from 'os';
@@ -24,10 +25,6 @@ function getSystemInfo(): SystemInfo {
   const totalMemory = os.totalmem();
   const freeMemory = os.freemem();
   const memoryUsage = ((totalMemory - freeMemory) / totalMemory) * 100;
-  // console.log('freeMemory', (freeMemory / (1024 * 1024 * 1024)).toFixed(2));
-  // console.log('memoryUsage', memoryUsage);
-  // console.log('totalMemory', (totalMemory / (1024 * 1024 * 1024)).toFixed(2));
-  // console.log('freeMemory', (freeMemory / (1024 * 1024 * 1024)).toFixed(2));
 
   const cpus = os.cpus();
   let totalIdle = 0;
@@ -81,6 +78,8 @@ app.whenReady().then(() => {
 
   w.show();
   w.loadFile(LYNX_BUNDLE_PATH);
+  nudgeFramedWindowViewport(w);
+
 
   interval = setInterval(() => {
     w.sendGlobalEvent('systemInfoUpdate', getSystemInfo());

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from '@lynx-js/react';
+import '@lynxtron-showcases/config/tokens.css';
 import './App.css';
 import { getNotesApi, type NoteRecord, type NoteSummary, type PlatformInfo } from './api';
 
@@ -175,19 +176,14 @@ export function App() {
     <view className="notes-root">
       <view className="notes-shell">
         <view className="notes-sidebar">
-          <text className="eyebrow">CROSS-PLATFORM NOTES</text>
-          <text className="headline">One shared Lynx UI, two host adapters</text>
-          <text className="subcopy">
-            Desktop stores notes in local files. Web stores notes in browser-local persistence. The
-            UI stays the same.
-          </text>
+          <text className="sidebar-title">Notes</text>
 
           <view className="sidebar-actions">
-            <view className="sidebar-button sidebar-button-primary" bindtap={handleCreate}>
-              <text className="sidebar-button-text">New note</text>
+            <view className="notes-button notes-button-primary" bindtap={handleCreate}>
+              <text className="notes-button-text-accent">New note</text>
             </view>
-            <view className="sidebar-button" bindtap={handleSave}>
-              <text className="sidebar-button-text">{isDirty ? 'Save draft' : 'Saved'}</text>
+            <view className="notes-button" bindtap={handleSave}>
+              <text className="notes-button-text">{isDirty ? 'Save' : 'Saved'}</text>
             </view>
           </view>
 
@@ -198,8 +194,8 @@ export function App() {
                 key={note.id}
                 bindtap={() => handleSelect(note.id)}
               >
-                <text className="note-title">{note.title}</text>
-                <text className="note-excerpt">{note.excerpt || 'Empty note'}</text>
+                <text className="note-title" text-maxline="1">{note.title}</text>
+                <text className="note-excerpt" text-maxline="1">{note.excerpt || 'Empty note'}</text>
                 <text className="note-meta">{formatTimestamp(note.updatedAt)}</text>
               </view>
             ))}
@@ -207,7 +203,6 @@ export function App() {
         </view>
 
         <view className="notes-editor">
-          <text className="editor-kicker">Markdown source</text>
           <input
             className="title-input"
             {...inputValueProp(title)}
@@ -222,25 +217,25 @@ export function App() {
           />
 
           <view className="editor-preview">
-            <text className="preview-label">Current note</text>
+            <text className="preview-label">Preview</text>
             <text className="preview-title">{title || 'Untitled note'}</text>
             <text className="preview-content">{content || '# Empty note'}</text>
           </view>
 
           <view className="editor-actions">
-            <view className="editor-button editor-button-primary" bindtap={handleSave}>
-              <text className="editor-button-text">{isDirty ? 'Save changes' : 'Saved'}</text>
+            <view className="notes-button notes-button-primary" bindtap={handleSave}>
+              <text className="notes-button-text-accent">{isDirty ? 'Save' : 'Saved'}</text>
             </view>
-            <view className="editor-button editor-button-danger" bindtap={handleRemove}>
-              <text className="editor-button-text">Delete note</text>
+            <view className="notes-button" bindtap={handleRemove}>
+              <text className="notes-button-text-error">Delete</text>
             </view>
           </view>
         </view>
       </view>
 
       <view className="notes-footer">
-        <text className="footer-platform">
-          {platformInfo ? `${platformInfo.kind.toUpperCase()} · ${platformInfo.runtime}` : 'Loading platform...'}
+        <text className="footer-copy">
+          {platformInfo ? `${platformInfo.kind} · ${platformInfo.runtime}` : 'Loading platform...'}
         </text>
         <text className="footer-copy">
           {platformInfo ? `${platformInfo.storage} · ${platformInfo.detail}` : 'Detecting host adapter'}

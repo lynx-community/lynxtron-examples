@@ -1,28 +1,36 @@
 <svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#101826"/>
-      <stop offset="1" stop-color="#1E293B"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="140" y1="140" x2="1060" y2="540" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#3B82F6"/>
-      <stop offset="1" stop-color="#06B6D4"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="675" rx="48" fill="url(#bg)"/>
-  <circle cx="990" cy="120" r="120" fill="rgba(59,130,246,0.16)"/>
-  <circle cx="1025" cy="540" r="160" fill="rgba(6,182,212,0.12)"/>
-  <rect x="72" y="68" width="1056" height="540" rx="36" stroke="rgba(255,255,255,0.10)" stroke-width="2"/>
-  <text x="112" y="170" fill="#E2E8F0" font-size="58" font-weight="700" font-family="Arial, Helvetica, sans-serif">FILE EXPLORER</text>
-  <text x="112" y="232" fill="#94A3B8" font-size="32" font-weight="500" font-family="Arial, Helvetica, sans-serif">NativeModules.nodejs.exposed</text>
-  <rect x="112" y="288" width="440" height="200" rx="36" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
-  <rect x="140" y="320" width="384" height="48" rx="12" fill="rgba(255,255,255,0.10)"/>
-  <text x="156" y="354" fill="#38BDF8" font-size="24" font-family="Arial, Helvetica, sans-serif">📁 Documents</text>
-  <rect x="140" y="384" width="384" height="48" rx="12" fill="rgba(255,255,255,0.08)"/>
-  <text x="156" y="418" fill="#F8FAFC" font-size="24" font-family="Arial, Helvetica, sans-serif">📄 notes.txt</text>
-  <rect x="584" y="288" width="468" height="200" rx="36" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
-  <text x="612" y="344" fill="#94A3B8" font-size="20" font-family="Arial, Helvetica, sans-serif">NativeModules.nodejs</text>
-  <text x="612" y="380" fill="#22D3EE" font-size="24" font-family="Arial, Helvetica, sans-serif">exposed</text>
-  <rect x="612" y="420" width="412" height="48" rx="8" fill="rgba(255,255,255,0.10)"/>
-  <text x="628" y="452" fill="#94A3B8" font-size="18" font-family="Arial, Helvetica, sans-serif">readdir, readFile, writeFile...</text>
+  <rect width="1200" height="675" fill="#1d2427"/>
+  <rect x="1.5" y="1.5" width="1197" height="672" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+
+  <!-- flat accent illustration: directory listing panel -->
+  <rect x="380" y="120" width="440" height="330" rx="6" fill="#2c2e3b" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  <!-- breadcrumb strip -->
+  <rect x="380" y="120" width="440" height="52" fill="#21232d"/>
+  <line x1="380" y1="172" x2="820" y2="172" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  <text x="408" y="154" fill="#608291" font-size="20" font-family="Menlo, monospace">~/projects/lynxtron</text>
+  <!-- rows -->
+  <rect x="396" y="188" width="408" height="48" rx="3" fill="rgba(9,71,113,0.6)"/>
+  <rect x="420" y="202" width="26" height="20" fill="#48aff0"/>
+  <rect x="420" y="198" width="12" height="6" fill="#48aff0"/>
+  <text x="464" y="219" fill="#48aff0" font-size="20" font-family="Menlo, monospace">src</text>
+  <text x="740" y="219" fill="#48aff0" font-size="16" font-family="Menlo, monospace">DIR</text>
+  <line x1="396" y1="248" x2="804" y2="248" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  <rect x="420" y="266" width="26" height="20" fill="#48aff0"/>
+  <rect x="420" y="262" width="12" height="6" fill="#48aff0"/>
+  <text x="464" y="283" fill="#48aff0" font-size="20" font-family="Menlo, monospace">node_modules</text>
+  <text x="740" y="283" fill="#48aff0" font-size="16" font-family="Menlo, monospace">DIR</text>
+  <line x1="396" y1="312" x2="804" y2="312" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  <rect x="422" y="326" width="22" height="26" fill="none" stroke="#a7b6c2" stroke-width="2"/>
+  <text x="464" y="347" fill="#f5f8fa" font-size="20" font-family="Menlo, monospace">lynx.config.ts</text>
+  <text x="726" y="347" fill="#608291" font-size="16" font-family="Menlo, monospace">FILE</text>
+  <line x1="396" y1="376" x2="804" y2="376" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  <rect x="422" y="390" width="22" height="26" fill="none" stroke="#a7b6c2" stroke-width="2"/>
+  <text x="464" y="411" fill="#f5f8fa" font-size="20" font-family="Menlo, monospace">package.json</text>
+  <text x="726" y="411" fill="#608291" font-size="16" font-family="Menlo, monospace">FILE</text>
+
+  <!-- api note -->
+  <text x="380" y="496" fill="#608291" font-size="20" font-family="Menlo, monospace">NativeModules.nodejs.exposed → readdir()</text>
+
+  <!-- app name bottom-left -->
+  <text x="48" y="615" fill="#a7b6c2" font-size="28" font-weight="600" letter-spacing="3" font-family="Menlo, monospace">FILE EXPLORER</text>
 </svg>

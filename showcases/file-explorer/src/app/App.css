@@ -1,10 +1,17 @@
 .container {
   flex: 1;
-  padding: 16px;
-  gap: 12px;
   height: 100%;
+  padding: 16px;
+  gap: 10px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background-color: var(--bg);
+  width: 100%;
 }
+
+/* ---- header ---- */
 
 .header {
   display: flex;
@@ -15,133 +22,144 @@
 }
 
 .title {
-  font-size: 24px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
 }
 
 .nav-buttons {
+  display: flex;
   flex-direction: row;
   gap: 8px;
-  display: flex;
 }
 
-.nav-button, .button, .back-button, .save-button, .edit-button, .new-button, .small-button {
-  padding: 8px 16px;
-  background-color: #007aff;
-  border-radius: 6px;
+.nav-button,
+.back-button {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
+  padding: 5px 12px;
+  background-color: #394b59;
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+}
+
+.nav-button:hover,
+.back-button:hover {
+  background-color: #30404d;
 }
 
 .button-text {
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
+/* ---- path bar ---- */
+
 .path-bar {
-  padding: 8px 12px;
-  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 6px 10px;
+  background-color: var(--deep);
+  border: 1px solid var(--hairline);
   border-radius: 6px;
 }
 
 .path-text {
+  font-family: var(--font-mono);
   font-size: 12px;
-  color: #666;
+  line-height: 1.4;
+  color: var(--muted);
 }
 
-.actions-bar {
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-
-.new-item-container {
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.new-item-input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-}
+/* ---- listing panel ---- */
 
 .file-list {
   flex: 1;
-  gap: 4px;
-  overflow: scroll;
   min-height: 0;
-  max-height: 400px;
+  overflow: scroll;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
+  padding: 4px;
+  background-color: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
 }
 
 .list-item {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: flex-start;
-  padding: 12px;
-  background-color: #f9f9f9;
-  border-radius: 6px;
+  justify-content: space-between;
   gap: 10px;
+  height: 28px;
+  padding: 0px 8px;
+  border-radius: 3px;
+  background-color: var(--hit-fill);
+  border-bottom: 1px solid var(--hairline);
 }
 
-.list-item.directory {
-  background-color: #e8f4ff;
+.list-item:hover {
+  background-color: var(--surface);
 }
 
-.item-icon {
-  font-size: 20px;
+.list-item:active {
+  background-color: rgba(9, 71, 113, 0.6);
 }
 
 .item-name {
-  font-size: 15px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.list-item.directory .item-name {
+  color: var(--accent);
+}
+
+.item-kind {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--dim);
 }
 
 .loading {
-  text-align: center;
-  padding: 20px;
-  font-size: 15px;
-  color: #666;
+  padding: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
 }
 
 .error {
-  padding: 12px;
-  background-color: #ffebee;
-  color: #d32f2f;
+  padding: 8px 10px;
+  background-color: var(--deep);
+  border: 1px solid var(--error);
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--error);
 }
+
+/* ---- file viewer ---- */
 
 .file-content {
   flex: 1;
-  padding: 12px;
-  background-color: #f9f9f9;
-  border-radius: 6px;
-  max-height: 400px;
+  min-height: 0;
   overflow: scroll;
+  padding: 12px;
+  background-color: var(--deep);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
 }
 
 .content-text {
-  font-size: 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
   line-height: 1.6;
-}
-
-.editor {
-  flex: 1;
-  padding: 12px;
-  background-color: #ffffff;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  line-height: 1.6;
+  color: var(--muted);
 }

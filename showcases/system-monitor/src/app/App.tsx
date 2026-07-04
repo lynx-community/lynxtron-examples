@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from '@lynx-js/react';
+import '@lynxtron-showcases/config/tokens.css';
 import './App.css';
 
 interface SystemInfo {
@@ -55,7 +56,6 @@ export function App() {
     loadSystemInfo();
 
     const handleSystemInfoUpdate = (data: SystemInfo) => {
-      console.log('systemInfoUpdate', data);
       setSystemInfo(data);
       setIsLoading(false);
     };
@@ -70,69 +70,83 @@ export function App() {
   if (isLoading) {
     return (
       <view className="container">
-        <text className="title">Loading...</text>
+        <text className="body-text">Loading system data…</text>
       </view>
     );
   }
 
   return (
     <view className="container">
-      <text className="title">System Monitor</text>
-      
-      <view className="card">
-        <text className="card-title">CPU Usage</text>
-        <text className="card-value">{systemInfo?.cpuUsage.toFixed(1)}%</text>
-        <view className="progress-bar">
-          <view 
-            className="progress-fill" 
+      <text className="app-title">System Monitor</text>
+
+      <view className="panel">
+        <text className="panel-title">Processor</text>
+        <text className="metric-value">{systemInfo?.cpuUsage.toFixed(1)}%</text>
+        <view className="progress-track">
+          <view
+            className="progress-fill"
             style={{ width: `${Math.min(systemInfo?.cpuUsage || 0, 100)}%` }}
           />
         </view>
       </view>
 
-      <view className="card">
-        <text className="card-title">Memory Usage</text>
-        <text className="card-value">{systemInfo?.memoryUsage.toFixed(1)}%</text>
-        <view className="progress-bar">
-          <view 
-            className="progress-fill" 
+      <view className="panel">
+        <text className="panel-title">Memory</text>
+        <text className="metric-value">{systemInfo?.memoryUsage.toFixed(1)}%</text>
+        <view className="progress-track">
+          <view
+            className="progress-fill"
             style={{ width: `${Math.min(systemInfo?.memoryUsage || 0, 100)}%` }}
           />
         </view>
-        <text className="sub-text">
-          Total: {systemInfo?.totalMemory.toFixed(2)} GB | Free: {systemInfo?.freeMemory.toFixed(2)} GB
-        </text>
+        <view className="info-row">
+          <text className="info-key">Total</text>
+          <text className="info-value">{systemInfo?.totalMemory.toFixed(2)} GB</text>
+        </view>
+        <view className="info-row">
+          <text className="info-key">Free</text>
+          <text className="info-value">{systemInfo?.freeMemory.toFixed(2)} GB</text>
+        </view>
       </view>
 
-      <view className="card">
-        <text className="card-title">System Info</text>
-        <text className="sub-text">Platform: {systemInfo?.platform}</text>
-        <text className="sub-text">Architecture: {systemInfo?.arch}</text>
-        <text className="sub-text">Uptime: {systemInfo ? formatUptime(systemInfo.uptime) : ''}</text>
+      <view className="panel">
+        <text className="panel-title">System</text>
+        <view className="info-row">
+          <text className="info-key">Platform</text>
+          <text className="info-value">{systemInfo?.platform}</text>
+        </view>
+        <view className="info-row">
+          <text className="info-key">Architecture</text>
+          <text className="info-value">{systemInfo?.arch}</text>
+        </view>
+        <view className="info-row">
+          <text className="info-key">Uptime</text>
+          <text className="info-value">{systemInfo ? formatUptime(systemInfo.uptime) : ''}</text>
+        </view>
       </view>
 
-      <view className="card">
-        <text className="card-title">Refresh Interval</text>
+      <view className="panel">
+        <text className="panel-title">Refresh interval</text>
         <view className="interval-buttons">
-          <view 
+          <view
             className={`interval-button ${refreshInterval === 500 ? 'active' : ''}`}
             bindtap={() => handleSetInterval(500)}
           >
             <text className="interval-button-text">500ms</text>
           </view>
-          <view 
+          <view
             className={`interval-button ${refreshInterval === 1000 ? 'active' : ''}`}
             bindtap={() => handleSetInterval(1000)}
           >
             <text className="interval-button-text">1s</text>
           </view>
-          <view 
+          <view
             className={`interval-button ${refreshInterval === 2000 ? 'active' : ''}`}
             bindtap={() => handleSetInterval(2000)}
           >
             <text className="interval-button-text">2s</text>
           </view>
-          <view 
+          <view
             className={`interval-button ${refreshInterval === 5000 ? 'active' : ''}`}
             bindtap={() => handleSetInterval(5000)}
           >

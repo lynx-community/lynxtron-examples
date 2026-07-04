@@ -1,4 +1,5 @@
 import { useState, useCallback } from '@lynx-js/react';
+import '@lynxtron-showcases/config/tokens.css';
 import './App.css';
 
 export function App() {
@@ -14,13 +15,13 @@ export function App() {
 
   return (
     <view className="container">
-      <text className="title">Counter: {count}</text>
+      <text className="count">{count}</text>
       <view className="actions">
         <view className="button" bindtap={handleDecrement}>
-          <text className="button-text">-</text>
+          <text className="button-text">−</text>
         </view>
-        <view className="button" bindtap={handleIncrement}>
-          <text className="button-text">+</text>
+        <view className="button button--primary" bindtap={handleIncrement}>
+          <text className="button-text button-text--primary">+</text>
         </view>
       </view>
     </view>

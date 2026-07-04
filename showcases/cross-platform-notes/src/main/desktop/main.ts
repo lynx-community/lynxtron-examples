@@ -1,4 +1,5 @@
 import { app, LynxWindow } from '@lynx-js/lynxtron';
+import { nudgeFramedWindowViewport } from '@lynxtron-showcases/config/window';
 import path from 'path';
 import { DESKTOP_BUNDLE_PATH } from './vendorPaths';
 
@@ -18,6 +19,8 @@ function bootstrapDesktopHost(): void {
     const window = createDesktopWindow();
     window.show();
     window.loadFile(DESKTOP_BUNDLE_PATH);
+  nudgeFramedWindowViewport(window);
+
   });
 }
 

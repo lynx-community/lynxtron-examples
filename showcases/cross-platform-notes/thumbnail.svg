@@ -1,29 +1,40 @@
 <svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#07111F"/>
-      <stop offset="1" stop-color="#172554"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="160" y1="140" x2="1040" y2="560" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#60A5FA"/>
-      <stop offset="1" stop-color="#34D399"/>
-    </linearGradient>
-  </defs>
-  <rect width="1200" height="675" rx="48" fill="url(#bg)"/>
-  <circle cx="1036" cy="118" r="130" fill="rgba(96,165,250,0.14)"/>
-  <circle cx="180" cy="560" r="180" fill="rgba(52,211,153,0.10)"/>
-  <rect x="72" y="68" width="1056" height="540" rx="36" stroke="rgba(255,255,255,0.10)" stroke-width="2"/>
-  <text x="112" y="170" fill="#E2E8F0" font-size="58" font-weight="700" font-family="Arial, Helvetica, sans-serif">CROSS-PLATFORM</text>
-  <text x="112" y="232" fill="#94A3B8" font-size="32" font-weight="500" font-family="Arial, Helvetica, sans-serif">Desktop + Web, same Lynx UI code</text>
-  <rect x="112" y="282" width="976" height="22" rx="11" fill="rgba(255,255,255,0.08)"/>
-  <rect x="112" y="282" width="622" height="22" rx="11" fill="url(#accent)"/>
-  <rect x="112" y="344" width="292" height="182" rx="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
-  <rect x="430" y="344" width="292" height="182" rx="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
-  <rect x="748" y="344" width="340" height="182" rx="28" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
-  <text x="148" y="410" fill="#F8FAFC" font-size="46" font-weight="700" font-family="Arial, Helvetica, sans-serif">Desktop</text>
-  <text x="148" y="452" fill="#94A3B8" font-size="22" font-family="Arial, Helvetica, sans-serif">Filesystem storage</text>
-  <text x="468" y="410" fill="#F8FAFC" font-size="46" font-weight="700" font-family="Arial, Helvetica, sans-serif">Web</text>
-  <text x="468" y="452" fill="#94A3B8" font-size="22" font-family="Arial, Helvetica, sans-serif">localStorage fallback</text>
-  <text x="786" y="410" fill="#F8FAFC" font-size="46" font-weight="700" font-family="Arial, Helvetica, sans-serif">Shared UI</text>
-  <text x="786" y="452" fill="#94A3B8" font-size="22" font-family="Arial, Helvetica, sans-serif">One code path</text>
+  <rect width="1200" height="675" fill="#1d2427"/>
+  <rect x="0.5" y="0.5" width="1199" height="674" stroke="rgba(255,255,255,0.1)"/>
+
+  <!-- Flat accent illustration: two-pane notes window, list + editor split by a hairline -->
+  <g>
+    <rect x="330" y="120" width="540" height="360" rx="6" fill="#2c2e3b" stroke="rgba(255,255,255,0.1)"/>
+    <!-- hairline pane split -->
+    <line x1="510.5" y1="120.5" x2="510.5" y2="479.5" stroke="rgba(255,255,255,0.1)"/>
+
+    <!-- list pane rows -->
+    <rect x="346" y="140" width="60" height="8" rx="2" fill="#a7b6c2"/>
+    <rect x="342" y="166" width="156" height="44" rx="3" fill="rgba(9,71,113,0.6)"/>
+    <rect x="354" y="178" width="96" height="8" rx="2" fill="#f5f8fa"/>
+    <rect x="354" y="192" width="120" height="6" rx="2" fill="#608291"/>
+    <rect x="354" y="232" width="84" height="8" rx="2" fill="#a7b6c2"/>
+    <rect x="354" y="246" width="112" height="6" rx="2" fill="#608291"/>
+    <rect x="354" y="286" width="104" height="8" rx="2" fill="#a7b6c2"/>
+    <rect x="354" y="300" width="92" height="6" rx="2" fill="#608291"/>
+
+    <!-- editor pane: markdown lines + accent cursor -->
+    <rect x="530" y="140" width="72" height="8" rx="2" fill="#a7b6c2"/>
+    <rect x="530" y="170" width="220" height="10" rx="2" fill="#48aff0"/>
+    <rect x="530" y="200" width="304" height="8" rx="2" fill="#608291"/>
+    <rect x="530" y="222" width="272" height="8" rx="2" fill="#608291"/>
+    <rect x="530" y="244" width="296" height="8" rx="2" fill="#608291"/>
+    <rect x="530" y="266" width="188" height="8" rx="2" fill="#608291"/>
+    <rect x="530" y="304" width="240" height="8" rx="2" fill="#608291"/>
+    <rect x="530" y="326" width="140" height="8" rx="2" fill="#608291"/>
+    <rect x="676" y="322" width="3" height="16" fill="#48aff0"/>
+
+    <!-- quiet buttons -->
+    <rect x="530" y="432" width="92" height="26" rx="3" fill="rgba(19,124,189,0.16)" stroke="rgba(255,255,255,0.1)"/>
+    <rect x="546" y="443" width="60" height="5" rx="2" fill="#48aff0"/>
+    <rect x="634" y="432" width="92" height="26" rx="3" fill="#394b59" stroke="rgba(255,255,255,0.1)"/>
+    <rect x="650" y="443" width="60" height="5" rx="2" fill="#a7b6c2"/>
+  </g>
+
+  <text x="48" y="627" fill="#a7b6c2" font-size="26" font-weight="600" letter-spacing="4" font-family="Menlo, monospace">CROSS-PLATFORM NOTES</text>
 </svg>

@@ -9,12 +9,12 @@ interface StressDemoProps {
 }
 
 const STRESS_MODES: Array<{ id: StressMode; label: string; hint: string }> = [
-  { id: 24, label: '24 Nodes', hint: 'light' },
-  { id: 36, label: '36 Nodes', hint: 'balanced' },
-  { id: 48, label: '48 Nodes', hint: 'dense' },
+  { id: 24, label: '24 nodes', hint: 'light' },
+  { id: 36, label: '36 nodes', hint: 'balanced' },
+  { id: 48, label: '48 nodes', hint: 'dense' },
 ];
 
-const BAR_COLORS = ['#38bdf8', '#22c55e', '#f97316', '#eab308'];
+const BAR_COLORS = ['#48aff0', '#137cbd', '#3dd68c', '#608291'];
 
 function calcHeight(frame: number, index: number): number {
   return 20 + Math.round((Math.sin((frame + index) / 3) + 1) * 16);
@@ -42,9 +42,8 @@ export function StressDemo({ onInteractionStart }: StressDemoProps) {
   return (
     <view className="benchmark-panel">
       <view className="benchmark-panel-header">
-        <view>
-          <text className="benchmark-panel-kicker">DYNAMIC STRESS</text>
-          <text className="benchmark-panel-title">Pulsing Render Wall</text>
+        <view className="benchmark-panel-header-main">
+          <text className="benchmark-panel-title">Pulsing render wall</text>
           <text className="benchmark-panel-copy">
             A simplified responsiveness demo: no exact FPS counter, just a steady state update loop.
           </text>
@@ -74,18 +73,18 @@ export function StressDemo({ onInteractionStart }: StressDemoProps) {
 
       <view className="benchmark-stats">
         <view className="benchmark-stat">
-          <text className="benchmark-stat-label">Nodes</text>
           <text className="benchmark-stat-value">{totalNodes}</text>
+          <text className="benchmark-stat-label">Nodes</text>
           <text className="benchmark-stat-note">More nodes = more repeated layout and paint work.</text>
         </view>
         <view className="benchmark-stat">
-          <text className="benchmark-stat-label">Tick</text>
           <text className="benchmark-stat-value">{frame}</text>
+          <text className="benchmark-stat-label">Tick</text>
           <text className="benchmark-stat-note">Updated every 80ms.</text>
         </view>
         <view className="benchmark-stat">
-          <text className="benchmark-stat-label">Grid</text>
           <text className="benchmark-stat-value">4-up</text>
+          <text className="benchmark-stat-label">Grid</text>
           <text className="benchmark-stat-note">{rows} rows of moving nodes.</text>
         </view>
       </view>
@@ -96,7 +95,6 @@ export function StressDemo({ onInteractionStart }: StressDemoProps) {
           const color = BAR_COLORS[index % BAR_COLORS.length];
           return (
             <view key={index} className="stress-cell">
-              <text className="stress-label">Node {String(index + 1).padStart(2, '0')}</text>
               <view
                 className="stress-meter"
                 style={{
@@ -110,9 +108,6 @@ export function StressDemo({ onInteractionStart }: StressDemoProps) {
         })}
       </view>
 
-      <text className="stress-note">
-        This is a lightweight stress loop, chosen to show repeated state-driven updates without relying on an exact FPS API.
-      </text>
     </view>
   );
 }

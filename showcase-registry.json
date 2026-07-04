@@ -93,7 +93,7 @@
       "name": "pc-mouse-cursor",
       "description": "Single-screen desktop demo for mouse move, hover, and cursor states",
       "path": "showcases/pc-mouse-cursor",
-      "thumbnail": null,
+      "thumbnail": "showcases/pc-mouse-cursor/thumbnail.svg",
       "tags": [
         "desktop",
         "cursor",

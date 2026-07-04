@@ -1,4 +1,5 @@
 import { app, LynxWindow } from '@lynx-js/lynxtron';
+import { nudgeFramedWindowViewport } from '@lynxtron-showcases/config/window';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 import path from 'path';
 
@@ -14,4 +15,6 @@ app.whenReady().then(() => {
 
   w.show();
   w.loadFile(LYNX_BUNDLE_PATH);
+  nudgeFramedWindowViewport(w);
+
 });

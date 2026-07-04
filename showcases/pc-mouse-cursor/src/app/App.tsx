@@ -1,6 +1,7 @@
 import lynxLogo from './assets/lynx-logo.png';
 import desktopFrame from './assets/desktop-frame.png';
 import { useDesktopDrag } from './useDesktopDrag';
+import '@lynxtron-showcases/config/tokens.css';
 import './App.css';
 
 export function App() {
@@ -23,6 +24,8 @@ export function App() {
     top: `${logoPos.y}px`,
     cursor: dragging ? 'grabbing' : 'grab',
   };
+  const pointerState = dragging ? 'dragging' : docked ? 'docked' : 'idle';
+  const targetState = desktopHot ? 'hot' : docked ? 'occupied' : 'armed';
 
   return (
     <page
@@ -34,24 +37,43 @@ export function App() {
       bindtouchcancel={cancelDrag}
       bindmouseleave={cancelDrag}
     >
-      <view className="PageBackdrop">
-        <view className="PageOrb" />
-        <view className="BackdropGlow BackdropGlow--a" />
-        <view className="BackdropGlow BackdropGlow--b" />
-        <view className="BackdropGlow BackdropGlow--accent" />
-      </view>
-      <view className="Poster">
+      <view className="Shell">
         <view className="Header">
           <text className="Title">Bringing Lynx to desktop</text>
+          <text className="Caption">Drag the chip to the dock target.</text>
         </view>
 
         <view className="Stage" bindlayoutchange={handleStageLayout}>
+          <text className="TargetTag">Dock target</text>
+
+          <view className="HomeSlot" />
+          <text className="HomeTag">Home</text>
+
           <view className={desktopFrameClassName} bindlayoutchange={handleDesktopLayout}>
             <image src={desktopFrame} className="DesktopFrameImage" />
           </view>
 
           <view className={logoCardClassName} style={logoCardStyle} bindmousedown={handleLogoDown} bindtouchstart={handleLogoDown}>
             <image src={lynxLogo} className="LogoImage" />
+          </view>
+        </view>
+
+        <view className="Readout">
+          <view className="ReadoutItem">
+            <text className="ReadoutKey">x</text>
+            <text className={`ReadoutValue ${dragging ? 'ReadoutValue--live' : ''}`}>{Math.round(logoPos.x)}</text>
+          </view>
+          <view className="ReadoutItem">
+            <text className="ReadoutKey">y</text>
+            <text className={`ReadoutValue ${dragging ? 'ReadoutValue--live' : ''}`}>{Math.round(logoPos.y)}</text>
+          </view>
+          <view className="ReadoutItem">
+            <text className="ReadoutKey">state</text>
+            <text className={`ReadoutValue ${dragging ? 'ReadoutValue--live' : ''} ${docked ? 'ReadoutValue--ok' : ''}`}>{pointerState}</text>
+          </view>
+          <view className="ReadoutItem">
+            <text className="ReadoutKey">target</text>
+            <text className={`ReadoutValue ${desktopHot ? 'ReadoutValue--live' : ''} ${docked ? 'ReadoutValue--ok' : ''}`}>{targetState}</text>
           </view>
         </view>
       </view>

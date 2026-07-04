@@ -1,4 +1,5 @@
 import { useEffect, useState } from '@lynx-js/react';
+import '@lynxtron-showcases/config/tokens.css';
 import './App.css';
 
 declare const NativeModules: any;
@@ -68,12 +69,10 @@ export function App() {
   return (
     <view className="shell">
       <view className="topbar">
-        <view className="title-block">
-          <text className="app-kicker">NATIVE TEXTURE CANVAS</text>
-          <text className="app-title">Paint Surface</text>
-        </view>
-        <view className={`native-pill ${nativeReady ? 'native-pill-ready' : 'native-pill-pending'}`}>
-          <text className="native-pill-text">{nativeReady ? 'Native canvas ready' : 'Native canvas pending'}</text>
+        <text className="app-title">Native texture canvas</text>
+        <view className="native-status">
+          <view className={`native-dot ${nativeReady ? 'native-dot-ready' : 'native-dot-pending'}`} />
+          <text className="native-status-text">{nativeReady ? 'Native ready' : 'Native pending'}</text>
         </view>
       </view>
 
@@ -102,7 +101,7 @@ export function App() {
                   className={`segment ${brushSize === size ? 'segment-active' : ''}`}
                   bindtap={() => setBrushSize(size)}
                 >
-                  <text className={`segment-text ${brushSize === size ? 'segment-text-active' : ''}`}>{size}</text>
+                  <text className={`segment-text ${brushSize === size ? 'segment-text-active' : ''}`}>{size}px</text>
                 </view>
               ))}
             </view>
@@ -118,7 +117,7 @@ export function App() {
                   bindtap={() => setOpacity(value)}
                 >
                   <text className={`segment-text ${opacity === value ? 'segment-text-active' : ''}`}>
-                    {Math.round(value * 100)}
+                    {Math.round(value * 100)}%
                   </text>
                 </view>
               ))}
@@ -126,7 +125,7 @@ export function App() {
           </view>
 
           <view className="tool-section tool-section-action">
-            <text className="section-title">Canvas</text>
+            <text className="section-title">Surface</text>
             <view className="clear-button" bindtap={clearCanvas}>
               <text className="clear-button-text">Clear</text>
             </view>
@@ -135,10 +134,7 @@ export function App() {
 
         <view className="canvas-panel">
           <view className="canvas-header">
-            <view>
-              <text className="canvas-title">Native Canvas Texture</text>
-              <text className="canvas-subtitle">Platform shared texture buffer</text>
-            </view>
+            <text className="canvas-title">Native texture</text>
             <text className="canvas-status">{status}</text>
           </view>
 
