@@ -138,6 +138,9 @@ importers:
       '@testing-library/jest-dom':
         specifier: ^6.9.0
         version: 6.9.1
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.0
       '@types/prismjs':
         specifier: ^1.26.6
         version: 1.26.6

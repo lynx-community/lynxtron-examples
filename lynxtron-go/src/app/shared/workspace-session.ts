@@ -34,11 +34,11 @@ export interface ExampleArtifactWorkspaceSessionInput {
   title?: string;
 }
 
-export function createFolderWorkspaceSession(rootPath: string, activeFile?: string): WorkspaceSession {
+export function createFolderWorkspaceSession(rootPath: string, activeFile?: string): ResumableWorkspaceSession {
   return { kind: 'folder', rootPath, activeFile };
 }
 
-export function createShowcaseWorkspaceSession(rootPath: string, activeFile?: string): WorkspaceSession {
+export function createShowcaseWorkspaceSession(rootPath: string, activeFile?: string): ResumableWorkspaceSession {
   return { kind: 'showcase', rootPath, activeFile };
 }
 

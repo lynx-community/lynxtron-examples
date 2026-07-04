@@ -123,7 +123,7 @@ export function GalleryHome({
                 <view className="GalleryCardAction" bindtap={() => onOpenShowcaseLegacy(entry)}>
                   <text className="GalleryCardActionText">IDE</text>
                 </view>
-                {entry.targets.includes('web') ? (
+                {entry.targets?.includes('web') ? (
                   <view className="GalleryCardAction GalleryCardAction--web" bindtap={() => onRunShowcaseOnWeb(entry)}>
                     <text className="GalleryCardActionText GalleryCardActionText--web">Web</text>
                   </view>

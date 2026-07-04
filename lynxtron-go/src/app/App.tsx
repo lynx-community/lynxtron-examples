@@ -146,7 +146,10 @@ function loadLayoutValue<T>(key: string, defaultValue: T): T {
   return defaultValue;
 }
 
-export function App() {
+export function App(props: { onRender?: () => void } = {}) {
+  // Test-harness hook (see __tests__/index.test.tsx): fires once after the
+  // first background-thread render.
+  useEffect(() => { props.onRender?.(); }, []);
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [routeNavigation, setRouteNavigation] = useState<RouteNavigationState<WorkspaceSession>>(
     () => createRouteNavigationState<WorkspaceSession>(),
@@ -1401,7 +1404,7 @@ export function App() {
           reject(new Error(`Example fetch timed out after ${EXAMPLE_FETCH_BRIDGE_TIMEOUT_MS}ms`));
         }, EXAMPLE_FETCH_BRIDGE_TIMEOUT_MS);
         try {
-          bridge.call('fetchExampleArtifact', { relativePath }, (payload: ExampleArtifactFetchResult | null) => {
+          bridge.call?.('fetchExampleArtifact', { relativePath }, (payload: ExampleArtifactFetchResult | null) => {
             clearTimeout(timeout);
             resolve(payload ?? {
               ok: false,
@@ -2327,7 +2330,7 @@ export function App() {
       openFolder,
       setPickerOpen,
       setPickerQuery,
-      getIdeMode: () => workspaceSessionRef.current,
+      getWorkspaceSession: () => workspaceSessionRef.current,
       hasCurrentShowcaseWebTarget: () => {
         const mode = workspaceSessionRef.current;
         return !!mode && mode.kind === 'showcase' && hasShowcaseWebTarget(mode.rootPath);

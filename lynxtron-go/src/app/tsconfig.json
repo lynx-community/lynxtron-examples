@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "@byted-lynx/react",
+    "jsxImportSource": "@lynx-js/react",
 
     "module": "ESNext",
     "moduleResolution": "Bundler",

@@ -25,6 +25,7 @@
     "build": "npm run build:http-service-extension && npm run build:scintilla-extension && rspeedy build && rspack build",
     "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit -p src/app/tsconfig.json && tsc --noEmit -p src/main/desktop/tsconfig.json",
     "pack:win": "npm run build && npm run prepare:runtime-deps && npm run prepare:builder-patches && lynxtron-builder --win --x64 --publish never --config.electronDist=node_modules/@lynx-js/lynxtron/dist/win32/x64",
     "pack": "npm run build && npm run prepare:runtime-deps && npm run prepare:builder-patches && lynxtron-builder --publish never"
   },
@@ -68,6 +69,7 @@
     "@rspack/core": "catalog:",
     "patch-package": "^6.4.7",
     "@testing-library/jest-dom": "^6.9.0",
+    "@types/node": "^22.0.0",
     "@types/prismjs": "^1.26.6",
     "compressing": "^1.10.0",
     "concurrently": "catalog:",

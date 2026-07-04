@@ -421,6 +421,8 @@ export interface ShowcaseService {
     fetch: (url: string) => Promise<string>;
     resolveRegistryPath: (relativePath: string) => string | null;
     readProcessOutput: () => ShowcaseProcessOutputEntry[];
+    isRunning: (pid: number) => boolean;
+    stop: (pid: number) => boolean;
     run: (showcasePath: string) => number;
     start: (showcasePath: string) => Promise<number>;
     dev: (showcasePath: string) => Promise<number>;

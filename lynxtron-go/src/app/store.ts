@@ -78,7 +78,7 @@ export interface ShowcaseEntry {
   name: string;
   description: string;
   tags: string[];
-  targets: ShowcaseTarget[];
+  targets?: ShowcaseTarget[];
   url: string;  // preview: file:///path/to.tgz, remote: https://github.com/.../tree/...
   path?: string;
   thumbnail?: string | null;
