@@ -7,6 +7,54 @@
   flex-direction: column;
   background-color: #1e1e1e;
   position: relative;
+  /* Upstream Fiddle theme tokens (themes-defaults.ts defaultDark.common). */
+  --foreground-1: #9feafa;
+  --foreground-2: #8ac7d6;
+  --foreground-3: #608291;
+  --background-4: #21232d;
+  --background-3: #2c2e3b;
+  --background-2: #1d2427;
+  --background-1: #2f3241;
+  --border-color-2: #1e2527;
+  --border-color-1: #5c5f71;
+  --button-text-color: #000;
+  --text-color-1: #ffffff;
+  --text-color-2: #1e2527;
+  --text-color-3: #dcdcdc;
+  --error-color: #df3434;
+  /* Blueprint chrome tokens (dark ⇄ light values from Blueprint 3) */
+  --bp-text: #f5f8fa;
+  --bp-text-muted: #a7b6c2;
+  --bp-surface: #30404d;
+  --bp-button-bg: #394b59;
+  --bp-surface-deep: #1a1a1a;
+  --bp-selected-bg: #094771;
+  --hairline: rgba(255, 255, 255, 0.1);
+}
+
+/* themes-defaults.ts defaultLight.common */
+.IDE.theme-light {
+  --foreground-1: #9feafa;
+  --foreground-2: #256e80;
+  --foreground-3: #608291;
+  --background-4: #fbfbfb;
+  --background-3: #fbfbfb;
+  --background-2: #d6dde0;
+  --background-1: #f5f5f5;
+  --border-color-2: #1e2527;
+  --border-color-1: #d8dae2;
+  --button-text-color: #fff;
+  --text-color-1: #000000;
+  --text-color-2: #1e2527;
+  --text-color-3: #0e0e0e;
+  --error-color: #df3434;
+  --bp-text: #182026;
+  --bp-text-muted: #5c7080;
+  --bp-surface: #ffffff;
+  --bp-button-bg: #f5f8fa;
+  --bp-surface-deep: #ebf1f5;
+  --bp-selected-bg: #cfe3f5;
+  --hairline: rgba(16, 22, 26, 0.12);
 }
 
 .IDEStage {
@@ -17,6 +65,24 @@
   min-height: 0;
   position: relative;
   overflow: hidden;
+}
+
+/* Gallery renders above the still-mounted Fiddle (whose native editors are
+   detached while the overlay is up) — unmounting the Fiddle would kill its
+   editor buffers. Opaque: the Fiddle underneath must not shine through. */
+.GalleryOverlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  /* Above the Fiddle's bp3 dialogs (z 100/200) — they'd bleed through. */
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  /* CSS-variable probe: if Lynx drops var(), the overlay goes transparent. */
+  --gallery-overlay-bg: #0b1220;
+  background-color: var(--gallery-overlay-bg);
 }
 
 .IDEBody {

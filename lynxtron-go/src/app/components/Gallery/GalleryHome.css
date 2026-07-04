@@ -1,3 +1,9 @@
+/* Gallery — the app's quiet "library room". Same design language as the
+   Fiddle (Blueprint dark on the Fiddle Dark tokens) with go-web's detailing:
+   monospace uppercase micro-labels, hairline rules, tinted 12%-alpha tag
+   chips, small radii, and restrained hover shifts. All colors come from the
+   theme tokens so light mode works for free. */
+
 .GalleryHome {
   flex: 1;
   min-width: 0;
@@ -6,11 +12,8 @@
   height: 100%;
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(circle at top left, rgba(52, 211, 153, 0.18), transparent 28%),
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.22), transparent 24%),
-    linear-gradient(180deg, #08111f 0%, #0b1220 52%, #09101b 100%);
-  color: #ecf2ff;
+  background-color: var(--background-2);
+  color: var(--text-color-3);
 }
 
 .GalleryScroll {
@@ -21,196 +24,110 @@
   height: 100%;
 }
 
-.GalleryBackdrop {
-  position: absolute;
-  pointer-events: none;
-  border-radius: 999px;
-  filter: blur(6px);
-}
-
-.GalleryBackdropOne {
-  top: 16px;
-  right: 48px;
-  width: 220px;
-  height: 220px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.16) 0%, rgba(56, 189, 248, 0.02) 70%, transparent 100%);
-}
-
-.GalleryBackdropTwo {
-  left: -40px;
-  bottom: 140px;
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.02) 72%, transparent 100%);
-}
-
-.GalleryHero {
-  position: relative;
-  padding: 40px 36px 24px 36px;
-}
-
-.GalleryHeroTop {
+/* ── Slim top bar: the real commands bar sits above this layer ─────────── */
+.GalleryTopBar {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  margin-bottom: 14px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 14px 22px 8px 22px;
 }
 
-.GalleryKicker {
-  color: rgba(226, 232, 240, 0.7);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 2px;
-}
-
-.GalleryBadge {
-  margin-left: 12px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background-color: rgba(59, 130, 246, 0.18);
-  color: #93c5fd;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
+.GalleryTopBarTitleGroup {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-right: 16px;
 }
 
 .GalleryTitle {
-  display: block;
-  color: #f8fbff;
-  font-size: 30px;
-  line-height: 38px;
-  font-weight: 800;
-  margin-bottom: 10px;
-}
-
-.GallerySubtitle {
-  display: block;
-  max-width: 820px;
-  color: rgba(226, 232, 240, 0.72);
-  font-size: 14px;
+  color: var(--bp-text);
+  font-size: 15px;
   line-height: 22px;
+  font-weight: 600;
 }
 
-.GalleryActions {
+.GalleryBadge {
+  margin-left: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background-color: rgba(19, 124, 189, 0.18);
+  color: #48aff0;
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+}
+
+.GalleryTopBarActions {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
-  margin-top: 22px;
+  align-items: center;
+  column-gap: 6px;
 }
 
-.GalleryButton {
-  margin-right: 12px;
-  margin-bottom: 12px;
-  padding: 12px 16px;
-  border-radius: 14px;
-  border-width: 1px;
-  border-style: solid;
-}
-
-.GalleryButtonPrimary {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(37, 99, 235, 0.8));
-  border-color: rgba(96, 165, 250, 0.34);
-}
-
-.GalleryButtonSecondary {
-  background-color: rgba(15, 23, 42, 0.75);
-  border-color: rgba(148, 163, 184, 0.18);
-}
-
-.GalleryButtonGhost {
-  background-color: rgba(15, 23, 42, 0.45);
-  border-color: rgba(94, 234, 212, 0.18);
-}
-
-.GalleryButtonDebug {
-  background-color: rgba(15, 23, 42, 0.35);
-  border-color: rgba(251, 191, 36, 0.24);
-}
-
-.GalleryButtonText {
-  color: #f8fbff;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.GalleryInfoRow {
+/* ── Section rule: micro-label + hairline running to the edge ───────────── */
+.GallerySectionRule {
   display: flex;
-  flex-wrap: wrap;
-  padding: 0 36px 10px 36px;
+  flex-direction: row;
+  align-items: center;
+  padding: 6px 22px 4px 22px;
 }
 
-.GalleryInfoCard {
-  min-width: 170px;
+.GallerySectionLabel {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  color: var(--bp-text-muted);
   margin-right: 14px;
-  margin-bottom: 14px;
-  padding: 16px 18px;
-  border-radius: 18px;
-  background-color: rgba(15, 23, 42, 0.58);
-  border-width: 1px;
-  border-style: solid;
-  border-color: rgba(148, 163, 184, 0.16);
+  flex-shrink: 0;
 }
 
-.GalleryInfoValue {
-  display: block;
-  color: #f8fbff;
-  font-size: 22px;
-  line-height: 28px;
-  font-weight: 800;
-  margin-bottom: 4px;
+.GallerySectionLine {
+  flex: 1;
+  height: 1px;
+  background-color: var(--hairline);
 }
 
-.GalleryInfoLabel {
-  display: block;
-  color: rgba(226, 232, 240, 0.7);
-  font-size: 12px;
-  line-height: 18px;
-}
-
-.GallerySectionHeader {
-  padding: 18px 36px 10px 36px;
-}
-
-.GallerySectionTitle {
-  display: block;
-  color: #f8fbff;
-  font-size: 18px;
-  line-height: 24px;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-
-.GallerySectionCaption {
-  display: block;
-  color: rgba(226, 232, 240, 0.62);
-  font-size: 12px;
-  line-height: 18px;
-}
-
+/* ── Card grid ───────────────────────────────────────────────────────────── */
 .GalleryGrid {
   display: flex;
   flex-wrap: wrap;
-  padding: 8px 28px 36px 28px;
+  padding: 8px 16px 24px 16px;
 }
 
 .GalleryCard {
   width: 31.5%;
   min-width: 260px;
-  margin: 8px;
-  border-radius: 24px;
+  margin: 6px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
   overflow: hidden;
-  background: rgba(15, 23, 42, 0.82);
+  background-color: var(--background-3);
   border-width: 1px;
   border-style: solid;
-  border-color: rgba(148, 163, 184, 0.16);
-  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.28);
+  border-color: var(--hairline);
+}
+
+.GalleryCard:hover {
+  border-color: var(--border-color-1);
+  background-color: var(--bp-surface);
 }
 
 .GalleryThumb {
   position: relative;
-  height: 148px;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.24), transparent 30%),
-    radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.2), transparent 28%),
-    linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.82));
+  width: 100%;
+  /* Thumbnails are authored 16:9 (1200x675) — the slot must match or
+     aspectFill crops/stretches the art. */
+  aspect-ratio: 1.7778;
+  background-color: var(--background-4);
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--hairline);
 }
 
 .GalleryThumbImage {
@@ -227,123 +144,155 @@
 }
 
 .GalleryThumbFallbackText {
-  color: rgba(248, 251, 255, 0.78);
-  font-size: 34px;
-  line-height: 34px;
-  font-weight: 900;
-  letter-spacing: 2px;
+  color: var(--foreground-3);
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 26px;
+  line-height: 26px;
+  font-weight: 600;
+  letter-spacing: 3px;
 }
 
 .GalleryThumbOverlay {
   position: absolute;
-  right: 14px;
-  top: 14px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background-color: rgba(15, 23, 42, 0.64);
-  border-width: 1px;
-  border-style: solid;
-  border-color: rgba(148, 163, 184, 0.18);
+  right: 10px;
+  top: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background-color: rgba(0, 0, 0, 0.45);
 }
 
 .GalleryThumbOverlayText {
-  color: #e2e8f0;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
 }
 
+/* ── Card body ───────────────────────────────────────────────────────────── */
+/* Fixed height (1-line title + 2-line clamped description): flex:1 inside an
+   auto-height parent collapses to 0 in Lynx, and a fixed body keeps every
+   card in the grid exactly the same height anyway. */
 .GalleryCardBody {
-  padding: 16px 16px 18px 16px;
-}
-
-.GalleryCardHeader {
-  margin-bottom: 14px;
+  height: 84px;
+  overflow: hidden;
+  padding: 12px 14px 0 14px;
 }
 
 .GalleryCardTitleRow {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
 }
 
 .GalleryCardTitle {
-  color: #f8fbff;
-  font-size: 18px;
-  line-height: 24px;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-
-.GalleryCardPath {
-  color: rgba(147, 197, 253, 0.82);
-  font-size: 11px;
-  line-height: 16px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  color: var(--bp-text);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  flex-shrink: 1;
+  min-width: 0;
+  margin-right: 8px;
 }
 
 .GalleryCardDescription {
   display: block;
-  color: rgba(226, 232, 240, 0.74);
-  font-size: 13px;
-  line-height: 20px;
+  color: var(--bp-text-muted);
+  font-size: 12px;
+  line-height: 18px;
+  max-height: 36px;
+  overflow: hidden;
 }
 
+/* ── Tag chips: go-web's 12%-alpha tint + solid tint text ────────────────── */
 .GalleryTagRow {
   display: flex;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .GalleryTag {
-  margin-right: 8px;
-  margin-bottom: 8px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background-color: rgba(30, 41, 59, 0.88);
-  border-width: 1px;
-  border-style: solid;
-  border-color: rgba(148, 163, 184, 0.12);
+  margin-left: 4px;
+  padding: 1px 5px;
+  border-radius: 3px;
 }
 
 .GalleryTagText {
-  color: #cbd5e1;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 9px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
-.GalleryCardActions {
+.GalleryTag--blue   { background-color: rgba(59, 130, 246, 0.14); }
+.GalleryTagText--blue   { color: #6ea8fe; }
+.GalleryTag--green  { background-color: rgba(16, 185, 129, 0.14); }
+.GalleryTagText--green  { color: #3dd68c; }
+.GalleryTag--orange { background-color: rgba(249, 115, 22, 0.14); }
+.GalleryTagText--orange { color: #f5a623; }
+.GalleryTag--violet { background-color: rgba(167, 139, 250, 0.14); }
+.GalleryTagText--violet { color: #b197fc; }
+.GalleryTag--teal   { background-color: rgba(45, 212, 191, 0.14); }
+.GalleryTagText--teal   { color: #3fd2c7; }
+
+/* ── Card footer: quiet action row above a hairline ─────────────────────── */
+.GalleryCardFooter {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
+  align-items: center;
+  padding: 8px 10px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--hairline);
 }
 
 .GalleryCardAction {
-  margin-right: 10px;
-  margin-bottom: 10px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border-width: 1px;
-  border-style: solid;
+  margin-right: 6px;
+  padding: 3px 10px;
+  border-radius: 3px;
 }
 
-.GalleryCardActionPrimary {
-  background-color: rgba(59, 130, 246, 0.16);
-  border-color: rgba(96, 165, 250, 0.28);
-}
-
-.GalleryCardActionSecondary {
-  background-color: rgba(15, 23, 42, 0.62);
-  border-color: rgba(148, 163, 184, 0.14);
-}
-
-.GalleryCardActionWeb {
-  background-color: rgba(16, 185, 129, 0.16);
-  border-color: rgba(52, 211, 153, 0.28);
+.GalleryCardAction:hover {
+  background-color: var(--background-4);
 }
 
 .GalleryCardActionText {
-  color: #f8fbff;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
+  color: var(--bp-text-muted);
+  font-size: 11px;
+  font-weight: 600;
 }
+
+.GalleryCardAction--primary {
+  background-color: rgba(19, 124, 189, 0.16);
+}
+
+.GalleryCardAction--primary:hover {
+  background-color: rgba(19, 124, 189, 0.3);
+}
+
+.GalleryCardActionText--primary {
+  color: #48aff0;
+}
+
+.GalleryCardAction--web:hover {
+  background-color: rgba(45, 212, 191, 0.14);
+}
+
+.GalleryCardActionText--web {
+  color: #3fd2c7;
+}
+
+/* ── Light theme: tinted text needs darker variants for contrast ────────── */
+.theme-light .GalleryBadge { color: #106ba3; }
+.theme-light .GalleryTagText--blue   { color: #1d63c9; }
+.theme-light .GalleryTagText--green  { color: #0f8a5f; }
+.theme-light .GalleryTagText--orange { color: #c05f00; }
+.theme-light .GalleryTagText--violet { color: #6f4bd8; }
+.theme-light .GalleryTagText--teal   { color: #0d8079; }
+.theme-light .GalleryCardActionText--primary { color: #106ba3; }
+.theme-light .GalleryCardActionText--web { color: #0d8079; }
+.theme-light .GalleryThumbOverlay { background-color: rgba(255, 255, 255, 0.7); }
+.theme-light .GalleryThumbOverlayText { color: rgba(16, 22, 26, 0.7); }
