@@ -12,8 +12,10 @@ interface SplitContainerProps {
   minSizePx?: number;
   children: [JSX.Element, JSX.Element];
   onRatioChange?: (ratio: number) => void;
-  /** When true, first pane fills 100% and sash/second pane are hidden (but still mounted). */
+  /** When true, one pane fills 100% and the sash + other pane hide (still mounted). */
   collapsed?: boolean;
+  /** Which pane hides when collapsed. Default 'second' (legacy IDE bottom panel). */
+  collapseTarget?: 'first' | 'second';
 }
 
 /**
@@ -28,22 +30,35 @@ export function SplitContainer({
   children,
   onRatioChange,
   collapsed = false,
+  collapseTarget = 'second',
 }: SplitContainerProps) {
   const [ratio, setRatio] = useState(initialRatio);
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef({ startPos: 0, startRatio: 0, containerSize: 0 });
   const containerRef = useRef<{ size: number }>({ size: 0 });
+  // Throttle drag moves: every mousemove used to setState → full re-render of
+  // both panes per pointer event, which lagged the sash and made the release
+  // feel unstable. One update per frame-ish window is plenty.
+  const lastMoveRef = useRef(0);
 
   const isH = direction === 'horizontal';
+
+  // Track our own measured size via layout events — nested splits must NOT
+  // use the screen size or drag deltas convert to ratios with the wrong
+  // denominator (sash lags the pointer, min-size clamps are off).
+  const onLayout = useCallback((e: any) => {
+    const w = e?.detail?.width;
+    const h = e?.detail?.height;
+    const size = isH ? w : h;
+    if (typeof size === 'number' && size > 0) containerRef.current.size = size;
+  }, [isH]);
 
   const getContainerSize = useCallback(() => {
     if (containerRef.current.size > 0) return containerRef.current.size;
     try {
-      // @ts-ignore — Lynx global
+      // @ts-ignore — Lynx global (fallback until first layout event fires)
       const info = lynx?.getSystemInfoSync?.() || {};
-      const size = isH ? (info.screenWidth || 1200) : (info.screenHeight || 800);
-      containerRef.current.size = size;
-      return size;
+      return isH ? (info.screenWidth || 1200) : (info.screenHeight || 800);
     } catch {
       return isH ? 1200 : 800;
     }
@@ -71,6 +86,13 @@ export function SplitContainer({
   }, [isH, ratio, getContainerSize]);
 
   const onDragMove = useCallback((e: any) => {
+    // A move event with no pressed button means we missed the mouseup
+    // (released over a native view / outside the window) — end the drag.
+    const buttons = e?.detail?.buttons ?? e?.buttons;
+    if (typeof buttons === 'number' && buttons === 0) { onDragEndRef.current?.(); return; }
+    const now = Date.now();
+    if (now - lastMoveRef.current < 16) return;
+    lastMoveRef.current = now;
     const pos = getPos(e);
     if (pos == null) return;
     const { startPos, startRatio, containerSize } = dragRef.current;
@@ -90,12 +112,15 @@ export function SplitContainer({
     setDragging(false);
     log(`[Sash] end ratio=${ratio}`);
   }, [ratio]);
+  // Stable handle so onDragMove (declared above) can end a dead drag.
+  const onDragEndRef = useRef(onDragEnd);
+  onDragEndRef.current = onDragEnd;
 
-  const pct1 = collapsed ? '100%' : `${(ratio * 100).toFixed(2)}%`;
-  const pct2 = collapsed ? '0%'   : `${((1 - ratio) * 100).toFixed(2)}%`;
+  const pct1 = collapsed ? (collapseTarget === 'first' ? '0%' : '100%') : `${(ratio * 100).toFixed(2)}%`;
+  const pct2 = collapsed ? (collapseTarget === 'first' ? '100%' : '0%') : `${((1 - ratio) * 100).toFixed(2)}%`;
 
   return (
-    <view className={`SplitContainer ${isH ? 'SplitH' : 'SplitV'}`}>
+    <view className={`SplitContainer ${isH ? 'SplitH' : 'SplitV'}`} bindlayoutchange={onLayout}>
       <view
         className="SplitPane SplitFirst"
         style={isH ? { width: pct1, height: '100%' } : { height: pct1, width: '100%' }}

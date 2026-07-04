@@ -1,0 +1,77 @@
+/* Ported from fiddle/src/less/components/commands.less (.commands) —
+   flex space-between, 30px content row inside the 50px header.
+   Upstream: the WHOLE commands bar is the window drag region
+   (-webkit-app-region: drag) with no-drag holes punched over controls. */
+.commands {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 30px;
+  flex-wrap: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -x-app-region: drag;
+}
+/* no-drag IS supported (used by lynxtron's own browser-demo), just
+   undocumented — controls must not be swallowed by the drag region. */
+.commands .bp3-button,
+.commands .bp3-input-group,
+.commands .bp3-input {
+  -x-app-region: no-drag;
+}
+.commands-drag {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.commands-left,
+.commands-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+}
+/* upstream: .commands .bp3-control-group { margin-right: 0.5rem; } */
+.commands-left .bp3-control-group {
+  margin-right: 8px;
+}
+.commands-right {
+  column-gap: 5px;
+}
+/* upstream: .commands > .title — centered, ellipsized, max-width 20vw */
+.commands-title {
+  flex-shrink: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-color-3); /* text-color-3 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 10px;
+}
+/* upstream: .address-bar width min(max(200px, 30vw), 420px); empty →
+   min(max(160px, 25vw), 300px). Lynx has no min()/max() CSS — approximate
+   with flex-basis clamps. */
+.commands-address {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: 380px;
+  min-width: 200px;
+  max-width: 420px;
+  transition: flex-basis 0.4s;
+}
+.commands-address.empty {
+  flex-basis: 280px;
+  min-width: 160px;
+  max-width: 300px;
+}

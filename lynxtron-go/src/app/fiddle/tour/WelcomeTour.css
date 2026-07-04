@@ -1,0 +1,23 @@
+.WelcomeTour {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.WelcomeTour-Body {
+  color: var(--bp-text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.WelcomeTour-Dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 12px;
+}
+.WelcomeTour-Dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background-color: rgba(138,155,168,0.4);
+}
+.WelcomeTour-Dot--active { background-color: #137cbd; }
