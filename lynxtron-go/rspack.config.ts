@@ -71,6 +71,8 @@ const desktopConfig = defineConfig({
     new rspack.CopyRspackPlugin({
       patterns: [
         { from: './src/main/desktop/package.runtime.json', to: 'package.json' },
+        // Static help page, opened in the system browser (Help button / menu).
+        { from: './src/main/desktop/help.html', to: 'help.html' },
         { from: './output/bundle/lynx/', to: '.' },
         // Keep only the Scintilla extension runtime closure in dist/desktop.
         ...scintillaRuntimePatterns,

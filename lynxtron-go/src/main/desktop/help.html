@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lynxtron Fiddle — Help</title>
+<style>
+  /* Fiddle Dark — the same palette the app renders with. */
+  :root {
+    --bg: #1d2427;
+    --surface: #2c2e3b;
+    --deep: #21232d;
+    --panel: #2f3241;
+    --text: #f5f8fa;
+    --muted: #a7b6c2;
+    --dim: #608291;
+    --accent: #48aff0;
+    --accent-bg: rgba(19, 124, 189, 0.16);
+    --hairline: rgba(255, 255, 255, 0.1);
+    --ok: #3dd68c;
+    --font-mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 800px; margin: 0 auto; padding: 56px 28px 96px; }
+
+  /* Bilingual: every translated node carries .L-en or .L-zh; the body's
+     data-lang picks one. Elements keep their natural display when shown. */
+  body[data-lang="en"] .L-zh { display: none !important; }
+  body[data-lang="zh"] .L-en { display: none !important; }
+
+  header { margin-bottom: 56px; }
+  .masthead {
+    display: flex; align-items: baseline; gap: 12px;
+    border-bottom: 1px solid var(--hairline); padding-bottom: 20px;
+  }
+  .masthead h1 { font-size: 26px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+  .masthead .tag {
+    font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+    background: var(--accent-bg); border-radius: 3px; padding: 2px 7px;
+    position: relative; top: -2px;
+  }
+  .lang-switch { margin-left: auto; display: flex; gap: 2px; }
+  .lang-switch button {
+    font: 600 11px/1 var(--font-mono); color: var(--muted);
+    background: none; border: 1px solid transparent; border-radius: 3px;
+    padding: 5px 9px; cursor: pointer;
+  }
+  .lang-switch button:hover { color: var(--text); }
+  .lang-switch button[aria-pressed="true"] {
+    color: var(--accent); background: var(--accent-bg);
+  }
+  .lede { color: var(--muted); margin: 18px 0 0; max-width: 620px; }
+  .lede strong { color: var(--text); font-weight: 600; }
+
+  h2 {
+    font-size: 13px; font-weight: 650; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--dim);
+    margin: 52px 0 16px; padding-top: 20px; border-top: 1px solid var(--hairline);
+  }
+  h3 { font-size: 15px; font-weight: 650; margin: 0 0 6px; }
+  p { margin: 0 0 10px; }
+  section p, .card p, li { color: var(--muted); }
+  section p strong, li strong, .card p strong { color: var(--text); font-weight: 600; }
+
+  kbd {
+    font-family: var(--font-mono); font-size: 12px; color: var(--text);
+    background: var(--panel); border: 1px solid var(--hairline);
+    border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px;
+    white-space: nowrap;
+  }
+  code {
+    font-family: var(--font-mono); font-size: 13px; color: var(--text);
+    background: var(--deep); border-radius: 3px; padding: 1px 5px;
+  }
+  pre {
+    font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7;
+    color: var(--muted); background: var(--deep);
+    border: 1px solid var(--hairline); border-radius: 3px;
+    padding: 12px 16px; overflow-x: auto; margin: 10px 0 0;
+  }
+  pre b { color: var(--text); font-weight: 600; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .step {
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 3px; padding: 16px 18px;
+  }
+  .step .n {
+    font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+    display: block; margin-bottom: 8px;
+  }
+  .step p { font-size: 13.5px; margin: 0; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 3px; padding: 16px 18px;
+  }
+  .card.wide { grid-column: 1 / -1; }
+  .card p { font-size: 13.5px; margin: 0; }
+  .card p + p { margin-top: 6px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--hairline); vertical-align: top; color: var(--muted); }
+  td:first-child { width: 180px; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td .also { color: var(--dim); font-size: 12px; margin-left: 6px; }
+
+  ul { margin: 6px 0 0; padding-left: 20px; }
+  li { font-size: 13.5px; margin-bottom: 5px; }
+
+  .note {
+    border-left: 2px solid var(--accent); background: var(--surface);
+    border-radius: 0 3px 3px 0; padding: 12px 16px; font-size: 13.5px;
+    color: var(--muted); margin-top: 14px;
+  }
+
+  footer {
+    margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--hairline);
+    color: var(--dim); font-size: 12.5px; display: flex; justify-content: space-between;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    .steps, .grid { grid-template-columns: 1fr; }
+    .card.wide { grid-column: auto; }
+  }
+</style>
+</head>
+<body data-lang="en">
+<main>
+  <header>
+    <div class="masthead">
+      <h1>Lynxtron Fiddle</h1>
+      <span class="tag">HELP</span>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button id="btn-en" aria-pressed="true" onclick="setLang('en')">EN</button>
+        <button id="btn-zh" aria-pressed="false" onclick="setLang('zh')">中文</button>
+      </div>
+    </div>
+    <p class="lede L-en">
+      The easiest way to try <strong>Lynxtron</strong> — an Electron-style desktop runtime
+      that renders <strong>Lynx</strong> UI instead of a browser. Write a small fiddle,
+      press Run, and it launches as a real desktop app. No project setup, nothing to configure.
+    </p>
+    <p class="lede L-zh">
+      体验 <strong>Lynxtron</strong> 最简单的方式 —— 一个 Electron 风格的桌面运行时,
+      用 <strong>Lynx</strong> 渲染界面而不是浏览器。写一个小小的 fiddle,按下 Run,
+      它就会作为真正的桌面应用启动。无需搭建工程,无需任何配置。
+    </p>
+  </header>
+
+  <h2><span class="L-en">Quick start</span><span class="L-zh">快速开始</span></h2>
+  <div class="steps">
+    <div class="step">
+      <span class="n">01 · <span class="L-en">PICK</span><span class="L-zh">选模板</span></span>
+      <p class="L-en">Start from <strong>Hello Lynxtron</strong> (<kbd>⌘N</kbd>), or open any showcase
+      from the <strong>Gallery</strong> as your starting point.</p>
+      <p class="L-zh">从 <strong>Hello Lynxtron</strong> 模板开始(<kbd>⌘N</kbd>),
+      或从 <strong>Gallery</strong> 打开任意 showcase 作为起点。</p>
+    </div>
+    <div class="step">
+      <span class="n">02 · <span class="L-en">EDIT</span><span class="L-zh">写代码</span></span>
+      <p class="L-en">Edit <code>renderer.tsx</code> for the UI and <code>main.js</code> for the window.
+      Panes highlight as you type; toggle files from the sidebar.</p>
+      <p class="L-zh">在 <code>renderer.tsx</code> 里写界面,在 <code>main.js</code> 里控制窗口。
+      编辑器实时高亮;侧边栏可以增删和显隐文件。</p>
+    </div>
+    <div class="step">
+      <span class="n">03 · <span class="L-en">RUN</span><span class="L-zh">运行</span></span>
+      <p class="L-en">Press <kbd>⌘R</kbd>. Your fiddle builds and opens in its own window;
+      build output and logs stream into the Console below.</p>
+      <p class="L-zh">按 <kbd>⌘R</kbd>。fiddle 构建后在独立窗口中打开;
+      构建输出和运行日志实时流入下方 Console。</p>
+    </div>
+  </div>
+
+  <h2><span class="L-en">A fiddle is a Lynx app, not a web page</span><span class="L-zh">Fiddle 是 Lynx 应用,不是网页</span></h2>
+  <div class="card wide">
+    <p class="L-en">Lynxtron windows load a compiled Lynx bundle — there is no Chromium, no DOM,
+    and no <code>index.html</code>. Three things to keep in mind:</p>
+    <p class="L-zh">Lynxtron 窗口加载的是编译后的 Lynx bundle —— 没有 Chromium、没有 DOM、
+    也没有 <code>index.html</code>。三件事需要记住:</p>
+    <ul>
+      <li><span class="L-en">UI is <strong>ReactLynx</strong>: <code>&lt;view&gt;</code> / <code>&lt;text&gt;</code> /
+          <code>&lt;image&gt;</code> elements. All text must live inside <code>&lt;text&gt;</code>.</span>
+          <span class="L-zh">界面用 <strong>ReactLynx</strong> 编写:<code>&lt;view&gt;</code> /
+          <code>&lt;text&gt;</code> / <code>&lt;image&gt;</code> 等元素。所有文字必须放在
+          <code>&lt;text&gt;</code> 里。</span></li>
+      <li><span class="L-en"><code>main.js</code> runs in the main process and calls
+          <code>win.loadFile('main.lynx.bundle')</code> — the bundle the Fiddle builds from your renderer.</span>
+          <span class="L-zh"><code>main.js</code> 运行在主进程,调用
+          <code>win.loadFile('main.lynx.bundle')</code> —— 也就是 Fiddle 从你的 renderer 构建出的 bundle。</span></li>
+      <li><span class="L-en">CSS is Lynx CSS: flexbox and CSS variables work; browser-isms
+          (<code>:hover</code> layout tricks, <code>overflow:&nbsp;scroll</code>, DOM APIs) don't.</span>
+          <span class="L-zh">CSS 是 Lynx CSS:flexbox 和 CSS 变量可用;浏览器特有的写法
+          (<code>:hover</code> 布局技巧、<code>overflow:&nbsp;scroll</code>、DOM API)不可用。</span></li>
+    </ul>
+  </div>
+
+  <h2><span class="L-en">What's in the app</span><span class="L-zh">功能一览</span></h2>
+  <div class="grid">
+    <div class="card">
+      <h3><span class="L-en">Editor mosaic</span><span class="L-zh">编辑器网格</span></h3>
+      <p class="L-en">Each file is a live native editor pane with syntax highlighting.
+      Add, rename, hide or maximize panes; drag the sashes to resize the grid.</p>
+      <p class="L-zh">每个文件都是一块带语法高亮的原生编辑器。可以新增、重命名、
+      隐藏或最大化任意一块;拖动分隔条调整网格布局。</p>
+    </div>
+    <div class="card">
+      <h3>Run &amp; Console</h3>
+      <p class="L-en">Run writes your edits to a workspace, rebuilds only when the source
+      actually changed, and launches a real process. Stop kills it; the shared
+      Console streams every build and runtime line, with Copy.</p>
+      <p class="L-zh">Run 会把编辑写入 workspace,仅在源码真正变化时重新构建,
+      然后启动真实进程;Stop 终止它。共享 Console 实时输出全部构建与运行日志,支持一键复制。</p>
+    </div>
+    <div class="card">
+      <h3><span class="L-en">Showcase gallery</span><span class="L-zh">Showcase 画廊</span></h3>
+      <p class="L-en">Built-in examples — from a floating clock to native-texture canvas.
+      <strong>Open</strong> loads one into the editors, <strong>Run</strong> launches it as-is,
+      <strong>Web</strong> serves the cross-platform ones in your browser,
+      <strong>IDE</strong> opens the workspace in a separate window.</p>
+      <p class="L-zh">内置示例覆盖悬浮时钟到原生纹理画布。<strong>Open</strong> 载入编辑器、
+      <strong>Run</strong> 直接运行、<strong>Web</strong> 在浏览器中运行跨端示例、
+      <strong>IDE</strong> 在独立窗口打开整个 workspace。</p>
+    </div>
+    <div class="card">
+      <h3><span class="L-en">Share via Gist</span><span class="L-zh">用 Gist 分享</span></h3>
+      <p class="L-en">Publish your fiddle as a GitHub Gist and update it in place; load any
+      gist by pasting its URL into the address bar. History lets you check out
+      earlier revisions. (Add a token in Settings → GitHub.)</p>
+      <p class="L-zh">把 fiddle 发布为 GitHub Gist 并原地更新;把任意 gist 的 URL
+      粘贴进地址栏即可载入。History 可以检出历史版本。(在 Settings → GitHub 配置 token。)</p>
+    </div>
+    <div class="card">
+      <h3><span class="L-en">Runtime versions</span><span class="L-zh">运行时版本</span></h3>
+      <p class="L-en">The version button shows the bundled Lynxtron runtime. Point the
+      chooser at local runtime builds to run your fiddle against a different
+      Lynxtron than the one shipped with the app.</p>
+      <p class="L-zh">版本按钮显示内置的 Lynxtron 运行时。在版本选择器中指向本地的
+      运行时构建,即可用不同版本的 Lynxtron 运行你的 fiddle。</p>
+    </div>
+    <div class="card">
+      <h3><span class="L-en">Appearance</span><span class="L-zh">外观</span></h3>
+      <p class="L-en">Dark and light themes cover the whole app including the native editors,
+      live from Settings — editor font size too. The welcome tour can be replayed
+      from the Help menu.</p>
+      <p class="L-zh">深浅两套主题覆盖整个应用(包括原生编辑器),在 Settings 中即时切换,
+      编辑器字号同样如此。欢迎导览可从 Help 菜单重新播放。</p>
+    </div>
+  </div>
+
+  <h2><span class="L-en">Keyboard shortcuts</span><span class="L-zh">快捷键</span></h2>
+  <table>
+    <tr><td><kbd>⌘N</kbd></td><td><span class="L-en">New fiddle from a template</span><span class="L-zh">从模板新建 fiddle</span></td></tr>
+    <tr><td><kbd>⌘R</kbd></td><td><span class="L-en">Run — or Stop while running</span><span class="L-zh">运行 —— 运行中则为停止</span></td></tr>
+    <tr><td><kbd>⌘S</kbd></td><td><span class="L-en">Save to the fiddle's workspace (or pick a folder)</span><span class="L-zh">保存到 fiddle 的 workspace(或选择文件夹)</span></td></tr>
+    <tr><td><kbd>⌘P</kbd></td><td><span class="L-en">Quick open — jump to any showcase or action</span><span class="L-zh">快速打开 —— 跳转到任意 showcase 或操作</span></td></tr>
+    <tr><td><kbd>⌘,</kbd></td><td><span class="L-en">Settings</span><span class="L-zh">设置</span></td></tr>
+    <tr><td><kbd>⌘Q</kbd></td><td><span class="L-en">Quit</span><span class="L-zh">退出</span>
+      <span class="also L-en">your session is flushed first and restored on next launch</span>
+      <span class="also L-zh">会话会先落盘,下次启动自动恢复</span></td></tr>
+  </table>
+
+  <h2><span class="L-en">Deep links</span><span class="L-zh">深链</span></h2>
+  <div class="card wide">
+    <p class="L-en">Other tools (and the docs site) can drive the Fiddle through its URL scheme:</p>
+    <p class="L-zh">其他工具(以及文档站)可以通过 URL scheme 驱动 Fiddle:</p>
+<pre class="L-en"><b>lynxtron://showcase/open?id=</b>counter            open a showcase in the Fiddle
+<b>lynxtron://showcase/open?id=</b>counter<b>&amp;target=ide</b>  …in a separate IDE window
+<b>lynxtron://lynxview_page?bundle=</b>https://…/x.lynx.bundle   preview a hosted bundle</pre>
+<pre class="L-zh"><b>lynxtron://showcase/open?id=</b>counter            在 Fiddle 中打开 showcase
+<b>lynxtron://showcase/open?id=</b>counter<b>&amp;target=ide</b>  ……在独立 IDE 窗口中打开
+<b>lynxtron://lynxview_page?bundle=</b>https://…/x.lynx.bundle   预览托管的 bundle</pre>
+  </div>
+
+  <div class="note">
+    <span class="L-en">Everything is autosaved: the Fiddle restores your last session — files, layout
+    and edits — every time it starts. Run also writes your edits back into the
+    showcase workspace on disk, so treat opened showcases as working copies.</span>
+    <span class="L-zh">一切自动保存:每次启动时 Fiddle 都会恢复上次会话 —— 文件、布局和编辑内容。
+    Run 也会把编辑写回磁盘上的 showcase workspace,请把打开的 showcase 当作工作副本对待。</span>
+  </div>
+
+  <footer>
+    <span>Lynxtron Fiddle</span>
+    <span><a href="https://github.com/icecreamx10/lynxtron-showcases">github.com/icecreamx10/lynxtron-showcases</a></span>
+  </footer>
+</main>
+<script>
+  var LANG_KEY = 'lynxtron-fiddle-help-lang';
+  function setLang(lang) {
+    document.body.setAttribute('data-lang', lang);
+    document.documentElement.setAttribute('lang', lang === 'zh' ? 'zh-CN' : 'en');
+    document.getElementById('btn-en').setAttribute('aria-pressed', String(lang === 'en'));
+    document.getElementById('btn-zh').setAttribute('aria-pressed', String(lang === 'zh'));
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  }
+  (function () {
+    var saved = null;
+    try { saved = localStorage.getItem(LANG_KEY); } catch (e) {}
+    var lang = saved === 'zh' || saved === 'en'
+      ? saved
+      : (String(navigator.language || '').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en');
+    setLang(lang);
+  })();
+</script>
+</body>
+</html>
