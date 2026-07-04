@@ -3,6 +3,7 @@ packages:
   - 'showcases/*'
   - 'lynxtron-go'
   - 'lynxtron-go/scintilla-extension'
+  - 'lynxtron-go/http-service-extension'
 
 catalog:
   '@lynx-js/lynxtron': 0.0.3

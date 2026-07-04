@@ -11,6 +11,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isDev = process.env.NODE_ENV === 'development';
 const scintillaNativeModulePath = path.resolve(__dirname, './scintilla-extension/build/Release/lynx_scintilla_module.node');
+const httpServiceNativeModulePath = path.resolve(__dirname, './http-service-extension/build/Release/lynx_http_service_module.node');
+const httpServiceRuntimePatterns: Array<{ from: string; to: string }> = [
+  { from: './http-service-extension/package.json', to: 'node_modules/lynxtron-http-service/package.json' },
+  { from: './http-service-extension/index.cjs', to: 'node_modules/lynxtron-http-service/index.cjs' },
+  ...(fs.existsSync(httpServiceNativeModulePath)
+    ? [{
+        from: httpServiceNativeModulePath,
+        to: 'node_modules/lynxtron-http-service/build/Release/lynx_http_service_module.node',
+      }]
+    : []),
+];
 const scintillaRuntimePatterns: Array<{ from: string; to: string }> = [
   { from: './scintilla-extension/package.json', to: 'node_modules/lynxtron-scintilla-editor/package.json' },
   { from: './scintilla-extension/index.cjs', to: 'node_modules/lynxtron-scintilla-editor/index.cjs' },
@@ -63,6 +74,7 @@ const desktopConfig = defineConfig({
         { from: './output/bundle/lynx/', to: '.' },
         // Keep only the Scintilla extension runtime closure in dist/desktop.
         ...scintillaRuntimePatterns,
+        ...httpServiceRuntimePatterns,
         // Keep appPackage dependencies physically present under dist/desktop/node_modules
         // so lynxtron-builder/electron-builder dependency collection can resolve paths.
         { from: './node_modules/prismjs/', to: 'node_modules/prismjs/' },
@@ -86,6 +98,7 @@ const desktopConfig = defineConfig({
   },
   externals: {
     'lynxtron-scintilla-editor': 'commonjs lynxtron-scintilla-editor',
+    'lynxtron-http-service': 'commonjs lynxtron-http-service',
     'lynxtron': 'commonjs lynxtron',
     '@lynx-js/lynxtron': 'commonjs @lynx-js/lynxtron',
     '@lynx-js/lynxtron/context-bridge': 'commonjs @lynx-js/lynxtron/context-bridge',

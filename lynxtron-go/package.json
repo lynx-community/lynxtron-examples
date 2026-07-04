@@ -16,12 +16,13 @@
   ],
   "scripts": {
     "build:scintilla-extension": "pnpm --dir ./scintilla-extension run build",
+    "build:http-service-extension": "pnpm --dir ./http-service-extension run build",
     "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
     "run-dev": "lynxtron ./dist/desktop --inspect=9222",
     "debug:detached": "node scripts/start_debug.js",
     "prepare:runtime-deps": "node scripts/prepare-runtime-deps.js",
     "prepare:builder-patches": "node scripts/ensure-builder-patches.js",
-    "build": "npm run build:scintilla-extension && rspeedy build && rspack build",
+    "build": "npm run build:http-service-extension && npm run build:scintilla-extension && rspeedy build && rspack build",
     "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop",
     "test": "vitest run",
     "pack:win": "npm run build && npm run prepare:runtime-deps && npm run prepare:builder-patches && lynxtron-builder --win --x64 --publish never --config.electronDist=node_modules/@lynx-js/lynxtron/dist/win32/x64",
@@ -39,6 +40,7 @@
   },
   "dependencies": {
     "@lynxtron-showcases/cli": "workspace:*",
+    "lynxtron-http-service": "workspace:*",
     "lynxtron-scintilla-editor": "workspace:*",
     "prismjs": "^1.30.0",
     "typescript": "catalog:",
