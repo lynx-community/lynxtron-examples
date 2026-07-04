@@ -14,7 +14,7 @@
   },
   "showcase": {
     "description": "File explorer demonstrating NativeModules.nodejs.exposed usage with Node.js fs API",
-    "thumbnail": "thumbnail.svg",
+    "thumbnail": "thumbnail.png",
     "tags": ["nodejs", "filesystem", "intermediate"],
     "minToolchainVersion": "0.0.1"
   },

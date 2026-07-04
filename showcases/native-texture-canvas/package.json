@@ -9,7 +9,8 @@
   },
   "files": [
     "dist/desktop/**/*",
-    "thumbnail.svg"
+    "thumbnail.svg",
+    "thumbnail.png"
   ],
   "scripts": {
     "build:native-texture": "node native-texture-extension/scripts/build.js",

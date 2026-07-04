@@ -14,7 +14,7 @@
   },
   "showcase": {
     "description": "Lynxtron runtime benchmarks — app size, startup time, and memory usage",
-    "thumbnail": "thumbnail.svg",
+    "thumbnail": "thumbnail.png",
     "tags": ["benchmark", "performance"],
     "minToolchainVersion": "0.0.1"
   },

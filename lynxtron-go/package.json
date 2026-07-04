@@ -31,7 +31,7 @@
   "private": true,
   "showcase": {
     "description": "Lynxtron GO — IDE playground for Lynxtron showcases",
-    "thumbnail": "thumbnail.svg",
+    "thumbnail": "thumbnail.png",
     "tags": [
       "ide",
       "self-host"
