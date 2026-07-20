@@ -10,17 +10,17 @@ catalogs:
       specifier: 0.0.2
       version: 0.0.2
     '@lynx-js/lynx-library-headers':
-      specifier: 0.0.3
-      version: 0.0.3
+      specifier: 0.0.5
+      version: 0.0.5
     '@lynx-js/lynxtron':
-      specifier: 0.0.3
-      version: 0.0.3
+      specifier: 0.0.5
+      version: 0.0.5
     '@lynx-js/lynxtron-builder':
-      specifier: 0.0.3
-      version: 0.0.3
+      specifier: 0.0.5
+      version: 0.0.5
     '@lynx-js/lynxtron-dev-plugins':
-      specifier: 0.0.3
-      version: 0.0.3
+      specifier: 0.0.5
+      version: 0.0.5
     '@lynx-js/react':
       specifier: 0.120.0
       version: 0.120.0
@@ -101,13 +101,13 @@ importers:
         version: 0.1.4
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
       '@lynx-js/lynxtron-builder':
         specifier: 'catalog:'
-        version: 0.0.3(electron-builder-squirrel-windows@26.8.1)
+        version: 0.0.5(electron-builder-squirrel-windows@26.8.1)
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.3(@rsbuild/core@1.7.5)
+        version: 0.0.5(@rsbuild/core@1.7.5)
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
@@ -171,7 +171,7 @@ importers:
     devDependencies:
       '@lynx-js/lynx-library-headers':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
       cmake-js:
         specifier: ^7.3.0
         version: 7.4.0
@@ -215,11 +215,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.3(@rsbuild/core@1.7.5)
+        version: 0.0.5(@rsbuild/core@1.7.5)
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
@@ -252,11 +252,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.3(@rsbuild/core@1.7.5)
+        version: 0.0.5(@rsbuild/core@1.7.5)
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
@@ -289,11 +289,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.3(@rsbuild/core@1.7.5)
+        version: 0.0.5(@rsbuild/core@1.7.5)
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
@@ -326,11 +326,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.3(@rsbuild/core@1.7.5)
+        version: 0.0.5(@rsbuild/core@1.7.5)
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
@@ -363,11 +363,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.3(@rsbuild/core@1.7.5)
+        version: 0.0.5(@rsbuild/core@1.7.5)
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
@@ -400,14 +400,14 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
     devDependencies:
       '@lynx-js/lynx-library-headers':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.3(@rsbuild/core@1.7.5)
+        version: 0.0.5(@rsbuild/core@1.7.5)
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
@@ -446,11 +446,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.3(@rsbuild/core@1.7.5)
+        version: 0.0.5(@rsbuild/core@1.7.5)
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
@@ -483,11 +483,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.3(@rsbuild/core@1.7.5)
+        version: 0.0.5(@rsbuild/core@1.7.5)
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
@@ -1037,22 +1037,22 @@ packages:
   '@lynx-js/lynx-core@0.1.4':
     resolution: {integrity: sha512-JxpAoDhpR8dJ6PFR2KOsFQyWt6SKiU+Bp701/miy5exqZHd+SlCd3UCfMtJy3nRlz3gy1O1xsObK7+x+jArdAQ==}
 
-  '@lynx-js/lynx-library-headers@0.0.3':
-    resolution: {integrity: sha512-MZzW6Jyu25P6No7F3SaB2YnHjG1IDzBuoMd0pp42ImwoJ/AQboEJ2R8lq+4y6P9+H9/sEQSNa7IsNCj4v9wuCg==}
+  '@lynx-js/lynx-library-headers@0.0.5':
+    resolution: {integrity: sha512-BerKP+gDam7/f65pphvKwt8BH44z6nDiVuPNYgVW1XF5URw9iDu2enDBCHF3EHlgRtgoR1aJ72eZ44Bv5Yhjfg==}
     engines: {node: '>=18'}
 
-  '@lynx-js/lynxtron-builder@0.0.3':
-    resolution: {integrity: sha512-ETWhrZIpnqd6Ch7C5X22hVULyQFVZr5CFOZ5oQ0I90WKDR5PfNkz71zz1ggojEB7tvZgC/DACGVTCFKsKM/8MA==}
+  '@lynx-js/lynxtron-builder@0.0.5':
+    resolution: {integrity: sha512-H+nnDCxB++/MyrzvLZ3aEaxw2FFP2dwwFZ2X1xzRmEQJUwLRzmvyhdDfOgcF9MHlgIMdOr7XojMdaO5Zn2/uUA==}
     hasBin: true
 
-  '@lynx-js/lynxtron-dev-plugins@0.0.3':
-    resolution: {integrity: sha512-1RnGNywnLcCF4des6ZqDyYwnmAOQ1P9u7myBzZSfSPLQczScV2rQs8OrXMKU3PCkdRvuAFIpAQW0pT+LFP17mg==}
+  '@lynx-js/lynxtron-dev-plugins@0.0.5':
+    resolution: {integrity: sha512-mwX/8GQ0SHpg4zGaRtSZpfsWmhRD4TUBv0l0rw4VTADr215YnIaDJpQkuMK0S1Nkp+9+bsumduVHN8dfnE23IQ==}
     hasBin: true
     peerDependencies:
-      '@rsbuild/core': ^1.6.0
+      '@rsbuild/core': ^2.1.5
 
-  '@lynx-js/lynxtron@0.0.3':
-    resolution: {integrity: sha512-0bOrMAN9l1ch421Y05FoLczLeOxsvzddFId0lnuayLRw0nv5RyVI8QHV49tLS/nlrgsfr4xFabE14igrc+pHcA==}
+  '@lynx-js/lynxtron@0.0.5':
+    resolution: {integrity: sha512-EKcqw5JX9+zQvQUCs5ujuU0DiYB06zOZfys47MnWpUpDn7MHshaoDahkMSsxjr72youA05h4VflEEZTCLhEdig==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -1261,66 +1261,79 @@ packages:
     resolution: {integrity: sha512-n1GJHPOvpIfhi3TmrCeh6S6URt9BFCt0KQE3qvexyGCTAKpR4Lg+eWvNZEqu7epxwus/8ElT3hacYEucm49SZg==}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm-musleabihf@4.62.2':
     resolution: {integrity: sha512-JqgflS8wEB+UXV/vS1RpRbifGBeN4D5lz8D8oOFbFZw4vedvdOgCFAjfBmIMdW3yL10XpQQ0Ambepw6MXrhOnA==}
     cpu: [arm]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-arm64-gnu@4.62.2':
     resolution: {integrity: sha512-wnFJkogWvN4jm/hQRF2UBaeUmk20j5+DmHvoyWii2b8HJDyvz1MF2OU/6ynXt2KR63rbZLWkFpoytpdc/yBuSA==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm64-musl@4.62.2':
     resolution: {integrity: sha512-HVu2bp0zhvJ8xHEV9+UUs7S90VadmBSY3LcIMvozbPo4AuMGDWlz3ymHLHZPX4hR67TKTt8Qp5PJ5RBg/i+RMQ==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-loong64-gnu@4.62.2':
     resolution: {integrity: sha512-mQqqAV8QaoSgr9I2fKDLY2BAVvmKjWoGiu/cSYQonsLvtqwEn1E4QYfnCOcp5zoEqNhsDYin1s6jx/VJmrxlZg==}
     cpu: [loong64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-loong64-musl@4.62.2':
     resolution: {integrity: sha512-IxKLoxCQ2IWi6bT2akyDUBGsOImDKB+sPp4EsTmwFQ/fMwpCKm8uLSSgP/Kx/QYUgKis6SEZ5/Nlhup0DIA0PQ==}
     cpu: [loong64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-ppc64-gnu@4.62.2':
     resolution: {integrity: sha512-Mk5ha2RQSgyFfmYYLkBpPnUk8D8FriBxesO1u9O75X0mHgXL1UQcH5Itl2lurWL2tj0RxV9b9tJgipac0hRY9A==}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-ppc64-musl@4.62.2':
     resolution: {integrity: sha512-CjvEnqJL/0/TQ3TXX3OPIJ/kmBellrWd4heXUmHeJlTnmwjKpSJzoehLaL6Xk0ZnMHBu9dZuFADNOrtjF4v+2w==}
     cpu: [ppc64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-riscv64-gnu@4.62.2':
     resolution: {integrity: sha512-1SiZbzwdkaDURsew/tSOrooKiYy7EQGT6m8ufavAi9NEyQb/6VuIxFXAL1fqa4iZe3g4NbNk4P7J32z2tw5Mgg==}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-musl@4.62.2':
     resolution: {integrity: sha512-nQts12zJ3NQRoE6uYljOH89v7szzLDvG2JD/vsX+vGXU8w/At1GowTZ5/7qeFQ8m7L55rpR8Okugnuo5bgjy2Q==}
     cpu: [riscv64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-s390x-gnu@4.62.2':
     resolution: {integrity: sha512-E9/ll019jhPIJgpzfZoIkBGhcz+kKNgVWYRY0zr9srBdPPFVpvOKW8VaJKUbeK+eZXyQF9ltME+Kk6affeaPgg==}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-gnu@4.62.2':
     resolution: {integrity: sha512-5BqxR/pshjey51iliyzTD5Xi3EN0aLmQ2lZ3lvefVV9c82BvrLo2/6OT55iifpWBufs6kdwWbuOKS841DrmK9A==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-musl@4.62.2':
     resolution: {integrity: sha512-uNN83XxQrRAh/w0/pmAfibcwyb6YWt4gP+dpnQKPVJshAloQ785ii8CT8ZCIxkGg9opVsvAlGhFitSm6D1Jjpg==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-openbsd-x64@4.62.2':
     resolution: {integrity: sha512-srjEIxSH3LRnJN6THczDHWQplqEMFiAJrTab0msUryh9kwNpkICf3Ea6q6MN/2cZwRFUNx5w+h6Hpi4QuHS6Zg==}
@@ -1429,21 +1442,25 @@ packages:
     resolution: {integrity: sha512-C8owWG+yvo7X0oVLIXetkoJhIFBP1LYNcAQqtgLmJnQLQDklGuP83dKC+zISGQWpjawHfZ1ER96vLgoTrxKZdw==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@rspack/binding-linux-arm64-musl@1.7.12':
     resolution: {integrity: sha512-i51WWI64aRpsfSki6rN0aepPqXkVfS+vZM7+4bWDcmnhUmdMvhIPcYg0QRk3DtyJnu33jqNLM0WHY78k00NyfA==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@rspack/binding-linux-x64-gnu@1.7.12':
     resolution: {integrity: sha512-MSos0FuPEefqo9V92ULd5hggKG29EkSNg1zDcypy0OkpsKh5pfjVxTLYFXgTcVyFoUQQbdG8zFBzYbwmJ8V4ew==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@rspack/binding-linux-x64-musl@1.7.12':
     resolution: {integrity: sha512-JcAMVKXOnjfpC3coWjCFPWD3Yl8RBw6a+IXQQ8mfRlHaHMIiOv8IfZqx15XRxMUn49CtP7Z0Na8iiAg2aKrcfw==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@rspack/binding-wasm32-wasi@1.7.12':
     resolution: {integrity: sha512-n+ZqP6ZMc0nhOgvadg5VhEs9ojtbES80AcWeFnmGkbzIszvGSO63GKNiRkXtjJ9KFuRzytbbmsCqkUVH+Tywxg==}
@@ -1508,21 +1525,25 @@ packages:
     resolution: {integrity: sha512-wGvkxm2G4mNTztslaOzLzx5JuySQSy5DcOWEZxHcjJJzp5L3ODbYLK18HtUc6cvmaVOmjaGrrYPrqJJ0hHTVFg==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@rspack/resolver-binding-linux-arm64-musl@0.2.8':
     resolution: {integrity: sha512-EqRJ9zLQsLAvyDKJKVZ45BSqRIMS12f5HtJdy3KkAHU14ZmsGv8e5IKkwUZN5CNBRad8xVlOMMx3dOfF4whJzg==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@rspack/resolver-binding-linux-x64-gnu@0.2.8':
     resolution: {integrity: sha512-eXbeotNCTntL4/+mxJRVCxK63YeWzTfp0F3POeHJFSs6Nt0f2J/mZNFlasJmd6xm7zvE80h/HWOwbwjRBLcElA==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@rspack/resolver-binding-linux-x64-musl@0.2.8':
     resolution: {integrity: sha512-KWFHlOWGkT+eMngoUgPGXrDi+rU04VCh9jyk0U6Ot2RTWvhGxwKykjmLS+CWZI/EBrzr9A6g2U3jzKTMNz9oCw==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@rspack/resolver-binding-wasm32-wasi@0.2.8':
     resolution: {integrity: sha512-I6GIhgICFViE88jejIV74oiiWHnpLpQ5ogaZM1ozM9KDnfqcHoX0IVEyrIh5KqA8iLDyhuoFSW+Hf0qN7VTBBQ==}
@@ -6241,13 +6262,13 @@ snapshots:
 
   '@lynx-js/lynx-core@0.1.4': {}
 
-  '@lynx-js/lynx-library-headers@0.0.3':
+  '@lynx-js/lynx-library-headers@0.0.5':
     dependencies:
-      '@lynx-js/lynxtron': 0.0.3
+      '@lynx-js/lynxtron': 0.0.5
     transitivePeerDependencies:
       - supports-color
 
-  '@lynx-js/lynxtron-builder@0.0.3(electron-builder-squirrel-windows@26.8.1)':
+  '@lynx-js/lynxtron-builder@0.0.5(electron-builder-squirrel-windows@26.8.1)':
     dependencies:
       '@electron/universal': 1.5.1
       app-builder-lib: 26.8.1(dmg-builder@26.8.1)(electron-builder-squirrel-windows@26.8.1)
@@ -6259,11 +6280,11 @@ snapshots:
       - electron-builder-squirrel-windows
       - supports-color
 
-  '@lynx-js/lynxtron-dev-plugins@0.0.3(@rsbuild/core@1.7.5)':
+  '@lynx-js/lynxtron-dev-plugins@0.0.5(@rsbuild/core@1.7.5)':
     dependencies:
       '@rsbuild/core': 1.7.5
 
-  '@lynx-js/lynxtron@0.0.3':
+  '@lynx-js/lynxtron@0.0.5':
     dependencies:
       extract-zip: 2.0.1
       node-fetch: 3.3.2
