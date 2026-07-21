@@ -6,6 +6,7 @@ import {
   fromPersisted,
   visibleEditorIds, isSafeRelativePath } from './FiddleState';
 import { DEFAULT_EDITORS } from '../types';
+import { diagnosticUriForFiddleFile } from './fiddleDiagnostics';
 
 describe('fiddle session persistence', () => {
   it('round-trips the default template', () => {
@@ -63,5 +64,31 @@ describe('isSafeRelativePath', () => {
     expect(isSafeRelativePath('a//b.js')).toBe(false);
     expect(isSafeRelativePath('./x.js')).toBe(false);
     expect(isSafeRelativePath('')).toBe(false);
+  });
+});
+
+describe('diagnosticUriForFiddleFile', () => {
+  const pathApi = {
+    tmpdir: () => '/tmp',
+    join: (...parts: string[]) => parts.join('/').replace(/\/{2,}/g, '/'),
+  };
+
+  it('uses the real workspace path for showcases', () => {
+    const snap = helloLynxtronFiddle();
+    snap.source = { kind: 'showcase', ref: '/workspace/example' };
+    expect(diagnosticUriForFiddleFile(snap, 'src/app/App.tsx', pathApi))
+      .toBe('/workspace/example/src/app/App.tsx');
+  });
+
+  it('uses a stable virtual path for in-memory templates', () => {
+    const snap = helloLynxtronFiddle();
+    expect(diagnosticUriForFiddleFile(snap, 'renderer.js', pathApi))
+      .toBe('/tmp/lynxtron-fiddle-diagnostics/template-hello-lynxtron/renderer.js');
+  });
+
+  it('rejects paths that could escape the diagnostics root', () => {
+    const snap = blankFiddle();
+    expect(diagnosticUriForFiddleFile(snap, '../outside.ts', pathApi)).toBeNull();
+    expect(diagnosticUriForFiddleFile(snap, '/absolute.ts', pathApi)).toBeNull();
   });
 });

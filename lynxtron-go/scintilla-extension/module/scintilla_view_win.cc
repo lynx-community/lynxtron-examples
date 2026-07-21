@@ -921,10 +921,11 @@ ScintillaView::DwellInfo ScintillaView::GetDwellInfo() const {
   return dwell_info_;
 }
 
-void ScintillaView::ShowCalltip(int bytePos, const std::string& text) {
+bool ScintillaView::ShowCalltip(int bytePos, const std::string& text) {
   HWND hwnd = AsHwnd(win_view_);
-  if (!hwnd) return;
+  if (!hwnd) return false;
   SciSend(hwnd, SCI_CALLTIPSHOW, bytePos, AsLParam(text.c_str()));
+  return SciSend(hwnd, SCI_CALLTIPACTIVE, 0, 0) != 0;
 }
 
 void ScintillaView::HideCalltip() {

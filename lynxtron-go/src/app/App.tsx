@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from '@lynx-js/react'; // eslint-disable-line
 import './App.css';
 import { detectLanguage, computeStyles, LANG_TO_LSP_ID, type Language } from './syntax';
-import { markerToIndicator, packIndicators } from './diagnostics';
+import { indicatorContainsBytePosition, markerToIndicator, packIndicators } from './diagnostics';
 import type { DiagnosticsMsg } from '../extension-host/types';
 import {
   type Tab,
@@ -533,7 +533,7 @@ export function App(props: { onRender?: () => void } = {}) {
           scintillaApi()?.getDwellInfo(EDITOR_ID);
         if (di?.active) {
           const markers = currentMarkersRef.current;
-          const hit = markers.find(m => di.bytePos >= m.start && di.bytePos < m.start + m.length);
+          const hit = markers.find(m => indicatorContainsBytePosition(m, di.bytePos));
           if (hit) {
             if (calltipActiveRef.current !== hit.message) {
               calltipActiveRef.current = hit.message;

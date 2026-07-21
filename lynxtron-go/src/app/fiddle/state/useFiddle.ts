@@ -1,7 +1,14 @@
 import { useState, useCallback, useEffect, useRef } from '@lynx-js/react';
 import { scintillaApi, getExposed, foundationApi, appendFiddleOutput as appendOutput } from '../../store';
-import { computeStyles, detectLanguage } from '../../syntax';
-import { bytesToBase64 } from '../../shared/native-bridge-encoding';
+import { computeStyles, detectLanguage, LANG_TO_LSP_ID } from '../../syntax';
+import {
+  indicatorContainsBytePosition,
+  markerToIndicator,
+  packIndicators,
+  type IndicatorRange,
+} from '../../diagnostics';
+import { arrayBufferToBase64, bytesToBase64 } from '../../shared/native-bridge-encoding';
+import type { DiagnosticsMsg } from '../../../extension-host/types';
 import {
   emptyFiddle,
   helloLynxtronFiddle,
@@ -15,6 +22,7 @@ import {
   type FiddleSnapshot,
   type EditorId,
 } from './FiddleState';
+import { diagnosticUriForFiddleFile } from './fiddleDiagnostics';
 
 const SESSION_KEY = 'fiddle.lastSession';
 // All instances of this app share one config store (same app name), so a
@@ -23,6 +31,21 @@ const SESSION_KEY = 'fiddle.lastSession';
 // instances run with persistence read-only until the lease goes stale.
 const WRITER_KEY = 'fiddle.session.writer';
 const WRITER_STALE_MS = 5000;
+
+interface FiddleDiagnosticRequest {
+  uri: string;
+  text: string;
+  languageId: string;
+}
+
+interface FiddleDiagnosticIndicator extends IndicatorRange {
+  message: string;
+  severity: string;
+}
+
+function logFiddleDiagnostics(message: string): void {
+  try { getExposed()?.utils?.log(`[Fiddle LS] ${message}`); } catch (_) {}
+}
 
 function restoreLastSession(): FiddleSnapshot | null {
   try {
@@ -54,7 +77,7 @@ export interface UseFiddleResult {
   loadTemplate: (kind: 'blank' | 'hello-lynxtron') => void;
   loadSnapshot: (snap: FiddleSnapshot) => void;
   flushAll: () => void;
-  /** Push a file's state text + highlight into its native editor (pane mount). */
+  /** Push a file's state text, highlight, and diagnostics into its native editor. */
   pushContent: (id: EditorId) => void;
   addFile: (id: EditorId) => void;
   removeFile: (id: EditorId) => void;
@@ -90,6 +113,14 @@ export function useFiddle(): UseFiddleResult {
   const snapRef = useRef(snap);
   snapRef.current = snap;
   const highlightTimers = useRef<Map<EditorId, any>>(new Map());
+  const diagnosticTimers = useRef<Map<EditorId, any>>(new Map());
+  const diagnosticVersions = useRef<Map<string, number>>(new Map());
+  const lastDiagnosticRequests = useRef<Map<EditorId, FiddleDiagnosticRequest>>(new Map());
+  const lastDiagnosticJson = useRef<Map<EditorId, string>>(new Map());
+  const pendingDiagnostics = useRef<Set<EditorId>>(new Set());
+  const diagnosticIndicators = useRef<Map<EditorId, FiddleDiagnosticIndicator[]>>(new Map());
+  const indicatorApplicationPending = useRef<Set<EditorId>>(new Set());
+  const activeCalltips = useRef<Map<EditorId, string>>(new Map());
   const lastPersisted = useRef<string | null>(null);
   // Live native text per visible editor. The 100ms poll updates THIS (a ref)
   // instead of React state — a setSnap per keystroke re-rendered the whole
@@ -194,6 +225,120 @@ export function useFiddle(): UseFiddleResult {
     for (const id of visibleEditorIds(snapRef.current)) flushEditor(id);
   }, [flushEditor]);
 
+  const clearPaneDiagnostics = useCallback((id: EditorId) => {
+    const timer = diagnosticTimers.current.get(id);
+    if (timer) clearTimeout(timer);
+    diagnosticTimers.current.delete(id);
+    pendingDiagnostics.current.delete(id);
+
+    const request = lastDiagnosticRequests.current.get(id);
+    if (request) {
+      try { getExposed()?.ls?.clearDiagnostics?.(request.uri); } catch (_) {}
+    }
+    lastDiagnosticRequests.current.delete(id);
+    lastDiagnosticJson.current.delete(id);
+    diagnosticIndicators.current.delete(id);
+    indicatorApplicationPending.current.delete(id);
+    activeCalltips.current.delete(id);
+
+    const editorId = scintillaIdFor(id);
+    try { scintillaApi()?.hideCalltip?.(editorId); } catch (_) {}
+    try { scintillaApi()?.clearIndicators?.(editorId); } catch (_) {}
+  }, []);
+
+  useEffect(() => () => {
+    for (const id of [...lastDiagnosticRequests.current.keys()]) clearPaneDiagnostics(id);
+  }, [clearPaneDiagnostics]);
+
+  const sendToLanguageService = useCallback((
+    id: EditorId,
+    text: string,
+    snapshot: FiddleSnapshot,
+  ): boolean => {
+    const file = snapshot.files.get(id);
+    const languageId = file ? LANG_TO_LSP_ID[file.language] : undefined;
+    if (!file || !languageId) return false;
+
+    const fsApi = foundationApi()?.fs;
+    const uri = diagnosticUriForFiddleFile(snapshot, id, fsApi);
+    if (!uri) return false;
+
+    const ls = getExposed()?.ls;
+    if (typeof ls?.updateFile !== 'function') return false;
+
+    const previous = lastDiagnosticRequests.current.get(id);
+    if (previous?.uri === uri && previous.text === text && previous.languageId === languageId) {
+      pendingDiagnostics.current.delete(id);
+      return true;
+    }
+    if (previous && previous.uri !== uri) {
+      try { ls.clearDiagnostics?.(previous.uri); } catch (_) {}
+    }
+
+    // The preload cache is keyed only by URI. Remove the previous response
+    // before sending a new version so the poller cannot repaint stale ranges.
+    try { ls.clearDiagnostics?.(uri); } catch (_) {}
+    lastDiagnosticJson.current.delete(id);
+
+    const version = (diagnosticVersions.current.get(uri) ?? 0) + 1;
+    diagnosticVersions.current.set(uri, version);
+    try {
+      ls.updateFile(uri, text, version, languageId);
+      lastDiagnosticRequests.current.set(id, { uri, text, languageId });
+      pendingDiagnostics.current.delete(id);
+      logFiddleDiagnostics(`sent id=${id} lang=${languageId} version=${version}`);
+      return true;
+    } catch (error) {
+      logFiddleDiagnostics(`send failed id=${id}: ${error}`);
+      return false;
+    }
+  }, []);
+
+  const scheduleDiagnostics = useCallback((id: EditorId, text: string) => {
+    const existing = diagnosticTimers.current.get(id);
+    if (existing) clearTimeout(existing);
+    pendingDiagnostics.current.add(id);
+    indicatorApplicationPending.current.delete(id);
+    activeCalltips.current.delete(id);
+    try { scintillaApi()?.hideCalltip?.(scintillaIdFor(id)); } catch (_) {}
+
+    diagnosticTimers.current.set(id, setTimeout(() => {
+      diagnosticTimers.current.delete(id);
+      const latest = snapRef.current.files.get(id);
+      if (!latest?.visible) {
+        pendingDiagnostics.current.delete(id);
+        return;
+      }
+      const currentText = liveText.current.get(id) ?? text;
+      sendToLanguageService(id, currentText, snapRef.current);
+    }, 500));
+  }, [sendToLanguageService]);
+
+  const applyPaneIndicators = useCallback((id: EditorId): boolean => {
+    const indicators = diagnosticIndicators.current.get(id);
+    const api = scintillaApi();
+    if (!indicators || !api) return false;
+
+    const editorId = scintillaIdFor(id);
+    let result: boolean | undefined;
+    try {
+      if (indicators.length === 0) {
+        result = api.clearIndicators?.(editorId);
+      } else if (getExposed()?.platform === 'win32') {
+        result = api.setIndicators?.(editorId, arrayBufferToBase64(packIndicators(indicators)));
+      } else {
+        result = api.setIndicators?.(editorId, packIndicators(indicators));
+      }
+    } catch (error) {
+      logFiddleDiagnostics(`indicator apply failed id=${id}: ${error}`);
+      result = false;
+    }
+
+    if (result === false) indicatorApplicationPending.current.add(id);
+    else indicatorApplicationPending.current.delete(id);
+    return result !== false;
+  }, []);
+
   const pushToScintilla = useCallback((id: EditorId, snapshot: FiddleSnapshot) => {
     const f = snapshot.files.get(id);
     if (!f) return;
@@ -204,8 +349,10 @@ export function useFiddle(): UseFiddleResult {
       scintillaApi()?.setText(scintillaIdFor(id), text);
       liveText.current.set(id, text);
       pushHighlight(id, text, f.language);
+      sendToLanguageService(id, text, snapshot);
+      applyPaneIndicators(id);
     } catch (_) { /* not attached */ }
-  }, []);
+  }, [applyPaneIndicators, sendToLanguageService]);
 
   /** Push all visible files' content into their (possibly pending) native editors. */
   const pushAll = useCallback((snapshot: FiddleSnapshot) => {
@@ -214,51 +361,118 @@ export function useFiddle(): UseFiddleResult {
     }
   }, [pushToScintilla]);
 
-  // ── Content + highlight poll loop over visible panes (fiddle-scoped; the
-  // legacy App.tsx loop only ever serviced the old IDE's 'main-editor'). ──
+  // ── Content, highlight, diagnostics, and dwell polling per visible pane. ──
   useEffect(() => {
     const timer = setInterval(() => {
       const api = scintillaApi();
       if (!api) return;
       for (const id of visibleEditorIds(snapRef.current)) {
-        try {
-          if (!api.hasContentChanged(scintillaIdFor(id))) continue;
-        } catch (_) { continue; }
-        let text: string | undefined;
-        try { text = api.getText(scintillaIdFor(id)); } catch (_) { continue; }
-        if (typeof text !== 'string') continue;
         const f = snapRef.current.files.get(id);
         if (!f) continue;
-        // Ref-only update — React state is untouched unless dirty flips.
-        liveText.current.set(id, text);
-        const dirty = text !== f.savedContent;
-        if (dirty !== f.isDirty) {
-          setSnap(prev => {
-            const cur = prev.files.get(id);
-            if (!cur || cur.isDirty === dirty) return prev;
-            const next = new Map(prev.files);
-            next.set(id, { ...cur, isDirty: dirty });
-            return { ...prev, files: next };
-          });
+        const editorId = scintillaIdFor(id);
+
+        let changed = false;
+        try { changed = !!api.hasContentChanged(editorId); } catch (_) { continue; }
+        let text = liveText.current.get(id) ?? f.currentText;
+        if (changed) {
+          try {
+            const current = api.getText(editorId);
+            if (typeof current !== 'string') continue;
+            text = current;
+          } catch (_) { continue; }
+
+          // Ref-only update — React state is untouched unless dirty flips.
+          liveText.current.set(id, text);
+          const dirty = text !== f.savedContent;
+          if (dirty !== f.isDirty) {
+            setSnap(prev => {
+              const cur = prev.files.get(id);
+              if (!cur || cur.isDirty === dirty) return prev;
+              const next = new Map(prev.files);
+              next.set(id, { ...cur, isDirty: dirty });
+              return { ...prev, files: next };
+            });
+          }
+
+          // Debounce re-highlight and language-service updates independently.
+          const timers = highlightTimers.current;
+          const existing = timers.get(id);
+          if (existing) clearTimeout(existing);
+          const captured = text;
+          timers.set(id, setTimeout(() => {
+            timers.delete(id);
+            const latest = snapRef.current.files.get(id);
+            if (latest?.visible) pushHighlight(id, liveText.current.get(id) ?? captured, latest.language);
+          }, 150));
+          scheduleDiagnostics(id, text);
+        } else if (!lastDiagnosticRequests.current.has(id)) {
+          // Initial content may have been pushed before the preload bridge was
+          // ready. Retry from the poller until the first request is accepted.
+          sendToLanguageService(id, text, snapRef.current);
         }
-        // debounce re-highlight per editor (150ms after last change tick)
-        const timers = highlightTimers.current;
-        const existing = timers.get(id);
-        if (existing) clearTimeout(existing);
-        const captured = text;
-        timers.set(id, setTimeout(() => {
-          timers.delete(id);
-          const latest = snapRef.current.files.get(id);
-          if (latest?.visible) pushHighlight(id, liveText.current.get(id) ?? captured, latest.language);
-        }, 150));
+
+        // Apply the newest diagnostics only when no newer edit is waiting for
+        // its debounce. This prevents stale ranges flashing after a keystroke.
+        const request = lastDiagnosticRequests.current.get(id);
+        if (request && !pendingDiagnostics.current.has(id)) {
+          try {
+            const json: string | null = getExposed()?.ls?.getDiagnostics?.(request.uri) ?? null;
+            if (json && json !== lastDiagnosticJson.current.get(id)) {
+              const message: DiagnosticsMsg = JSON.parse(json);
+              if (message.uri === request.uri) {
+                lastDiagnosticJson.current.set(id, json);
+                const indicators = message.markers.map(marker => markerToIndicator(request.text, marker));
+                const enriched = indicators.map((indicator, index) => ({
+                  ...indicator,
+                  message: message.markers[index].message,
+                  severity: message.markers[index].severity,
+                }));
+                diagnosticIndicators.current.set(id, enriched);
+                applyPaneIndicators(id);
+                logFiddleDiagnostics(`received id=${id} markers=${message.markers.length}`);
+              }
+            }
+          } catch (error) {
+            logFiddleDiagnostics(`poll failed id=${id}: ${error}`);
+          }
+        }
+
+        if (indicatorApplicationPending.current.has(id)
+          && !pendingDiagnostics.current.has(id)) {
+          applyPaneIndicators(id);
+        }
+
+        // Preserve the legacy IDE's diagnostic hover behavior for each pane.
+        try {
+          const dwell = api.getDwellInfo?.(editorId);
+          const markers = pendingDiagnostics.current.has(id)
+            ? []
+            : diagnosticIndicators.current.get(id) ?? [];
+          const hit = dwell?.active
+            ? markers.find(marker => indicatorContainsBytePosition(marker, dwell.bytePos))
+            : undefined;
+          const activeMessage = activeCalltips.current.get(id) ?? '';
+          if (hit && activeMessage !== hit.message) {
+            const shown = api.showCalltip?.(editorId, hit.start, hit.message);
+            if (shown !== false) {
+              activeCalltips.current.set(id, hit.message);
+              logFiddleDiagnostics(`calltip shown id=${id} byte=${dwell.bytePos} message=${hit.message}`);
+            }
+          } else if (!hit && activeMessage) {
+            activeCalltips.current.delete(id);
+            api.hideCalltip?.(editorId);
+          }
+        } catch (_) { /* pane may be between detach and reattach */ }
       }
     }, 100);
     return () => {
       clearInterval(timer);
       for (const t of highlightTimers.current.values()) clearTimeout(t);
       highlightTimers.current.clear();
+      for (const t of diagnosticTimers.current.values()) clearTimeout(t);
+      diagnosticTimers.current.clear();
     };
-  }, [flushEditor]);
+  }, [applyPaneIndicators, scheduleDiagnostics, sendToLanguageService]);
 
   const setVisible = useCallback((id: EditorId, visible: boolean) => {
     setSnap(prev => {
@@ -274,20 +488,15 @@ export function useFiddle(): UseFiddleResult {
     setVisible(id, true);
     // Content push happens via pending buffers: safe even before the native
     // view registers (ScintillaRegistry applies pending content at mount).
-    const f = snapRef.current.files.get(id);
-    if (f) {
-      try {
-        scintillaApi()?.setText(scintillaIdFor(id), f.currentText);
-        pushHighlight(id, f.currentText, f.language);
-      } catch (_) {}
-    }
-  }, [setVisible]);
+    pushToScintilla(id, snapRef.current);
+  }, [pushToScintilla, setVisible]);
 
   const hideEditor = useCallback((id: EditorId) => {
     // Native buffer dies with the pane — capture live text first.
     flushEditor(id);
+    clearPaneDiagnostics(id);
     setVisible(id, false);
-  }, [flushEditor, setVisible]);
+  }, [clearPaneDiagnostics, flushEditor, setVisible]);
 
   const toggleEditor = useCallback((id: EditorId) => {
     const f = snapRef.current.files.get(id);
@@ -300,6 +509,10 @@ export function useFiddle(): UseFiddleResult {
       important files — not every file side by side. */
   const resetLayout = useCallback(() => {
     flushAll();
+    const visibleAfterReset = defaultVisibleIds(snapRef.current.files);
+    for (const id of visibleEditorIds(snapRef.current)) {
+      if (!visibleAfterReset.has(id)) clearPaneDiagnostics(id);
+    }
     setSnap(prev => {
       const show = defaultVisibleIds(prev.files);
       const next = new Map(prev.files);
@@ -309,7 +522,7 @@ export function useFiddle(): UseFiddleResult {
       }
       return { ...prev, files: next };
     });
-  }, [flushAll]);
+  }, [clearPaneDiagnostics, flushAll]);
 
   const selectEditor = useCallback((id: EditorId) => {
     // Sidebar click: focus the file; if hidden, show it first (upstream setFocusedFile).
@@ -336,11 +549,12 @@ export function useFiddle(): UseFiddleResult {
   }, [flushAll]);
 
   const loadFresh = useCallback((fresh: FiddleSnapshot) => {
+    for (const id of snapRef.current.files.keys()) clearPaneDiagnostics(id);
     liveText.current.clear();
     setSnap(fresh);
     snapRef.current = fresh;
     pushAll(fresh);
-  }, [pushAll]);
+  }, [clearPaneDiagnostics, pushAll]);
 
   const resetToTemplate = useCallback(() => loadFresh(emptyFiddle()), [loadFresh]);
 
@@ -400,6 +614,7 @@ export function useFiddle(): UseFiddleResult {
   /** Permanently delete a file — upstream sidebar context-menu Delete. */
   const removeFile = useCallback((id: EditorId) => {
     flushEditor(id);
+    clearPaneDiagnostics(id);
     liveText.current.delete(id);
     setSnap(prev => {
       if (!prev.files.has(id)) return prev;
@@ -408,11 +623,12 @@ export function useFiddle(): UseFiddleResult {
       const active = prev.activeEditorId === id ? (next.keys().next().value ?? null) : prev.activeEditorId;
       return { ...prev, files: next, activeEditorId: active };
     });
-  }, [flushEditor]);
+  }, [clearPaneDiagnostics, flushEditor]);
 
   /** Rename a file preserving content/visibility — upstream context-menu Rename. */
   const renameFile = useCallback((oldId: EditorId, newId: EditorId) => {
     flushEditor(oldId);
+    clearPaneDiagnostics(oldId);
     liveText.current.delete(oldId);
     setSnap(prev => {
       const cur = prev.files.get(oldId);
@@ -425,7 +641,7 @@ export function useFiddle(): UseFiddleResult {
       const active = prev.activeEditorId === oldId ? newId : prev.activeEditorId;
       return { ...prev, files: next, activeEditorId: active };
     });
-  }, [flushEditor]);
+  }, [clearPaneDiagnostics, flushEditor]);
 
   return {
     snap,

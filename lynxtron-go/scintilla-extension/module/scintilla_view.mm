@@ -506,16 +506,21 @@ ScintillaView::DwellInfo ScintillaView::GetDwellInfo() const {
     return dwell_info_;
 }
 
-void ScintillaView::ShowCalltip(int bytePos, const std::string& text) {
+bool ScintillaView::ShowCalltip(int bytePos, const std::string& text) {
 #ifdef __APPLE__
-    if (!cocoa_view_) return;
+    if (!cocoa_view_) return false;
     ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
     std::string textCopy = text;
+    __block bool active = false;
     auto doShow = ^{
         [container.scintillaView message:SCI_CALLTIPSHOW wParam:bytePos lParam:(sptr_t)textCopy.c_str()];
+        active = [container.scintillaView message:SCI_CALLTIPACTIVE wParam:0 lParam:0] != 0;
     };
     if ([NSThread isMainThread]) doShow();
-    else dispatch_async(dispatch_get_main_queue(), doShow);
+    else dispatch_sync(dispatch_get_main_queue(), doShow);
+    return active;
+#else
+    return false;
 #endif
 }
 
@@ -527,7 +532,7 @@ void ScintillaView::HideCalltip() {
         [container.scintillaView message:SCI_CALLTIPCANCEL wParam:0 lParam:0];
     };
     if ([NSThread isMainThread]) doHide();
-    else dispatch_async(dispatch_get_main_queue(), doHide);
+    else dispatch_sync(dispatch_get_main_queue(), doHide);
 #endif
 }
 

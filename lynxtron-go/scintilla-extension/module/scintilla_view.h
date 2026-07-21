@@ -60,7 +60,7 @@ class ScintillaView : public lynx::pub::LynxNativeView {
   DwellInfo GetDwellInfo() const;
 
   // Calltip (native Scintilla hover popup).
-  void ShowCalltip(int bytePos, const std::string& text);
+  bool ShowCalltip(int bytePos, const std::string& text);
   void HideCalltip();
 
   // Navigation: go to line (0-based), set selection (byte positions), scroll caret visible
@@ -219,8 +219,7 @@ public:
     bool ShowCalltip(const std::string& id, int bytePos, const std::string& text) {
         ScintillaView* view = Find(id);
         if (!view) return false;
-        view->ShowCalltip(bytePos, text);
-        return true;
+        return view->ShowCalltip(bytePos, text);
     }
 
     bool HideCalltip(const std::string& id) {
