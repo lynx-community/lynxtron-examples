@@ -47,12 +47,29 @@
 @end
 
 @interface LynxtronScintillaView : ScintillaView
+- (void)syncBounceBackgroundWithStyleDefault;
 @end
 
 @implementation LynxtronScintillaView
 
 + (Class)contentViewClass {
     return [LynxtronSCIContentView class];
+}
+
+- (void)syncBounceBackgroundWithStyleDefault {
+    // Scintilla paints the document itself, but elastic overscroll exposes
+    // AppKit's scroll/clip view background. Derive that native background
+    // from STYLE_DEFAULT so it stays aligned with every editor palette.
+    const unsigned long bgr =
+        (unsigned long)[self message:SCI_STYLEGETBACK wParam:STYLE_DEFAULT lParam:0];
+    NSColor* backgroundColor = [NSColor colorWithSRGBRed:(bgr & 0xFF) / 255.0
+                                                   green:((bgr >> 8) & 0xFF) / 255.0
+                                                    blue:((bgr >> 16) & 0xFF) / 255.0
+                                                   alpha:1.0];
+    self.scrollView.drawsBackground = YES;
+    self.scrollView.backgroundColor = backgroundColor;
+    self.scrollView.contentView.drawsBackground = YES;
+    self.scrollView.contentView.backgroundColor = backgroundColor;
 }
 
 @end
@@ -167,6 +184,7 @@ ScintillaView::ScintillaView() {
             [container.scintillaView message:SCI_STYLESETFORE wParam:STYLE_DEFAULT lParam:0xD4D4D4]; // fg #D4D4D4
             [container.scintillaView message:SCI_STYLESETSIZE wParam:STYLE_DEFAULT lParam:14];
             [container.scintillaView message:SCI_STYLECLEARALL wParam:0 lParam:0]; // propagate to all
+            [(LynxtronScintillaView*)container.scintillaView syncBounceBackgroundWithStyleDefault];
 
             // 2. Syntax styles (Scintilla uses BGR color format)
             // Style 0: Default
@@ -645,6 +663,7 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
         [container.scintillaView message:SCI_STYLESETFORE wParam:STYLE_DEFAULT lParam:fg];
         [container.scintillaView message:SCI_STYLESETSIZE wParam:STYLE_DEFAULT lParam:size];
         [container.scintillaView message:SCI_STYLECLEARALL wParam:0 lParam:0];
+        [(LynxtronScintillaView*)container.scintillaView syncBounceBackgroundWithStyleDefault];
         [container.scintillaView message:SCI_STYLESETFORE wParam:0 lParam:fg];
         [container.scintillaView message:SCI_STYLESETFORE wParam:1 lParam:kw];
         [container.scintillaView message:SCI_STYLESETBOLD wParam:1 lParam:1];
