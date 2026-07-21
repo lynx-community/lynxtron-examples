@@ -4,6 +4,8 @@ This manual is the canonical process for porting a Web, Electron, or React produ
 
 A one-shot port delivers one complete, useful product flow in a single implementation effort. It does **not** mean full upstream feature parity or a line-by-line translation. Preserve the source product's behavior and information architecture, then reimplement the platform-dependent parts for Lynxtron. A port is successful when its core flow runs from the real target distribution, handles failure, and cleans up correctly.
 
+Lynx looks Web-shaped, but unsupported browser assumptions often fail as a silent no-op rather than an actionable exception. Typecheck and build success are therefore screening signals, not acceptance. Every critical capability must be exercised end to end in the declared distribution and inspected through its visible runtime effect.
+
 ## 1. Define the port contract
 
 Before changing code, write a workflow document for the task and fill in this contract:
@@ -89,6 +91,16 @@ Apply these repository-specific rules:
 - Verify images, SVG, data URLs, text wrapping, flex behavior, and other browser-shaped assumptions in the real runtime.
 - Never hide a missing critical bridge behind optional chaining or a silent no-op. Fail with an actionable error.
 
+Before and after adapting a Web UI, scan the touched source for high-risk browser-shaped constructs. This is a probe list, not a permanent claim that every match is unsupported:
+
+```bash
+rg -n \
+  "inline-flex|inline-block|flex:\\s*1|:hover|:first-child|:last-child|:nth-child|text-transform|\\bmin\\(|\\bmax\\(|\\.svg" \
+  <ported-ui>
+```
+
+For each relevant match, either replace it with an already verified Lynx pattern or record a minimal runtime probe. In particular, verify row direction explicitly, flexible children under auto-sized parents, selector-driven structural changes, line truncation, asset decoding, and hit testing. Prefer state-driven rendering over CSS-only visibility changes for critical interaction. For native-view hosts, start with `min-width: 0`, `min-height: 0`, and `overflow: hidden`, then verify the native frame and clipping in the real window.
+
 Prefer a small compatibility layer for the subset of a source component library that the port actually uses. Do not recreate or import an entire Web component system merely to preserve source-level APIs.
 
 ## 4. Establish the target architecture
@@ -118,6 +130,8 @@ The UI owns presentation, user interaction, product state, input validation, and
 ### Preload
 
 Preload translates a small product-facing API into Node or Lynxtron operations. Expose specific operations such as `readProject`, `saveSettings`, `run`, `stop`, and `readOutput`; do not expose unrestricted `fs`, `child_process`, or arbitrary command execution. Validate the bridge contract at startup or at its boundary so missing capabilities fail loudly.
+
+Do not infer the bridge transport from Electron precedent or TypeScript declarations. Inspect the implementation and prove whether each call is synchronous, callback-based, Promise-based, or event-driven. Wrap that transport once and test success, failure, and timeout or cancellation behavior. Probe the actual object exposed to the UI: declarations and intended namespaces do not prove that a capability was not flattened, renamed, omitted, or left `undefined` at runtime.
 
 ### Host
 
@@ -182,6 +196,8 @@ interface OutputEntry {
 
 Use a monotonic cursor or equivalent ordering mechanism. Preserve useful diagnostics, apply bounded retention, and perform a final drain after process exit so the last stderr lines are not lost.
 
+If the underlying read operation destructively clears a process buffer, assign it exactly one owner. That owner drains into a shared bounded log, while terminals, consoles, diagnostics, and other consumers use a non-destructive `readSince(cursor)`-style API. Search for every caller of the destructive primitive before changing output behavior; competing drains can silently steal one another's lines.
+
 ### Stop and cleanup
 
 Launch an owned process group when the platform supports it and terminate the full tree, not only the immediate shell child. Make Stop idempotent. Clear tracked state only after exit is observed, handle escalation when graceful termination fails, and clean up owned children when the parent application exits. State explicitly whether any detached child is allowed to outlive the app.
@@ -197,7 +213,19 @@ For every run, answer all four questions:
 
 When necessary, compare timestamps or hashes between intermediate and distributed files. Account for port conflicts, singleton locks, and leftover processes before diagnosing a framework failure.
 
-## 7. Manage native views explicitly
+## 7. Diagnose across layer boundaries
+
+When behavior disappears silently, trace the complete operation instead of patching the visible symptom:
+
+```text
+UI action -> bridge wrapper -> preload handler -> host/native boundary -> runtime effect
+```
+
+Assign one operation ID to the path and include it in bounded diagnostics at every participating layer. Verify payload shape, handler arrival, return or callback delivery, state mutation, and the final visible effect. Keep large payloads such as data URLs out of logs or truncate them so diagnostics do not block the channel being investigated.
+
+For performance problems, measure before changing rendering code. Use the platform profiler or process sampler, and repeat the measurement with screenshots, polling, DevTool presets, and other observation machinery disabled. Instrumentation can itself occupy the main thread and create the apparent regression.
+
+## 8. Manage native views explicitly
 
 A native view has its own rendering order and lifecycle. Implement and reason about every transition:
 
@@ -219,7 +247,9 @@ Verify all of the following when a native view is present:
 
 Lynx inspection tools may not capture an operating-system child view. Use a real window, system-level screenshot, or high-frame-rate screen recording for first-frame flashes, scrolling, and z-order issues.
 
-## 8. Control scope with priorities
+Synthetic touch or protocol events are not proof that real mouse, keyboard, focus, drag, or native hit-testing paths work. Verify critical desktop interactions with real input or an automation path known to exercise the same operating-system pipeline. Prefer deterministic per-instance command channels over focus-dependent shortcuts in multi-instance tests.
+
+## 9. Control scope with priorities
 
 Assign every capability one priority and do not promote it silently.
 
@@ -247,13 +277,15 @@ Assign every capability one priority and do not promote it silently.
 
 If P0 is incomplete, the port is incomplete even when many P1 or P2 surfaces look finished.
 
-## 9. Verify in layers
+## 10. Verify in layers
 
 Verification is part of each slice and must target the declared artifact and distribution.
 
 ### Static checks
 
 Run the narrowest applicable typecheck and lint checks. Search for HTML elements, DOM/BOM calls, hooks imported from `react`, browser globals, and silent bridge fallbacks. Confirm package imports and exports exist rather than relying on remembered APIs.
+
+Run the CSS risk scan from section 3 and resolve every relevant match through replacement, a recorded runtime probe, or an explicit non-applicable note.
 
 ### Unit and contract tests
 
@@ -283,9 +315,11 @@ Inspect for residual processes, ports, files, and locks. Verify the final log ou
 
 Use the real application window to check first frame, overlay order, truncation, icons, resizing, themes, and native views. Do not infer Windows behavior from macOS or infer native-view behavior from a Lynx-only screenshot.
 
+Record where synthetic automation was used and which critical interactions were repeated with real input. A DevTool screenshot that omits an operating-system child view is not evidence that the child is correctly rendered or layered.
+
 Docs-only changes require Markdown review and `git diff --check`; they do not require runtime verification. Record that fact in the workflow rather than claiming a runtime test.
 
-## 10. Definition of Done
+## 11. Definition of Done
 
 A one-shot port is complete only when all applicable statements are true:
 
@@ -301,6 +335,9 @@ A one-shot port is complete only when all applicable statements are true:
 - Persisted state has explicit ownership, corruption behavior, and multi-instance isolation where applicable.
 - Native views, when present, pass lifecycle and real-window verification on supported platforms.
 - Known gaps are listed honestly and assigned a priority; deferred parity is not reported as supported.
+- Every intentional divergence from upstream records the source behavior, target behavior, reason, and verification, so later work does not accidentally "restore" the wrong behavior.
+- Critical bridge calls have a verified transport and exposed runtime shape; declarations alone are not treated as evidence.
+- Destructive output reads, when present, have one owner and all other consumers use a non-destructive cursor-based view.
 - The workflow records exact verification commands and results, including any blocked checks.
 - No `node_modules`, build output, vendored dependency, temporary workspace, or generated artifact is committed unless explicitly required.
 - The implementation is split into traceable commits only after its required verification passes.
@@ -312,9 +349,12 @@ Use this compact prompt for future ports. Fill in the contract instead of copyin
 ```text
 One-shot port <SOURCE_PRODUCT> into <TARGET_PATH>.
 
-Before implementation, read AGENTS.md, docs/port-manual.md, docs/product-plan.md
-when present, and the relevant artifact-development documentation. Follow the
-manual as the acceptance process, not merely as background reading.
+Before implementation, read AGENTS.md, docs/port-manual.md,
+docs/port-field-notes.md, docs/product-plan.md when present, and the relevant
+artifact-development documentation. docs/port-manual.md is the normative
+acceptance process. docs/port-field-notes.md is an advisory probe checklist:
+apply entries matching the declared runtime/platform baseline and re-verify
+them instead of treating version-specific observations as permanent facts.
 
 Port Contract
 - Source: <repository/path/revision and references>
@@ -326,8 +366,9 @@ Port Contract
 
 First create a workflow document containing the contract, a
 COPY/ADAPT/REPLACE/DEFER/DROP inventory, architecture, vertical slices, and
-verification plan. Then implement Boot -> Input -> Execute -> Output/Stop ->
-Persistence -> Polish, prioritizing the golden flow over upstream parity.
+verification plan. Include an Intentional Divergences section. Then implement
+Boot -> Input -> Execute -> Output/Stop -> Persistence -> Polish, prioritizing
+the golden flow over upstream parity.
 
 Verify the narrowest applicable static checks and tests, the target build, the
 actual distribution/runtime path, one successful golden flow, one useful
