@@ -23,6 +23,40 @@
 #define SCLEX_CONTAINER 0
 #endif
 
+// Scintilla's default Cocoa content view snaps vertical scrolling to whole
+// lines in -adjustScroll:. That makes small trackpad and mouse-wheel deltas
+// feel sticky. Keep its horizontal whole-point alignment (which avoids Retina
+// drawing debris), but allow a partially visible line vertically.
+@interface LynxtronSCIContentView : SCIContentView
+@end
+
+@implementation LynxtronSCIContentView
+
+- (NSRect)adjustScroll:(NSRect)proposedVisibleRect {
+    NSRect adjustedRect = proposedVisibleRect;
+    NSRect contentRect = self.bounds;
+    if ((adjustedRect.origin.x > 0) &&
+        (NSMaxX(adjustedRect) < contentRect.size.width)) {
+        // Preserve Scintilla's horizontal whole-point snapping for positions
+        // inside the document, while leaving overscroll untouched.
+        adjustedRect.origin.x = std::round(adjustedRect.origin.x);
+    }
+    return adjustedRect;
+}
+
+@end
+
+@interface LynxtronScintillaView : ScintillaView
+@end
+
+@implementation LynxtronScintillaView
+
++ (Class)contentViewClass {
+    return [LynxtronSCIContentView class];
+}
+
+@end
+
 // Helper to bridge C++ and ObjC.
 // Conforms to ScintillaNotificationProtocol so it receives SCN_MODIFIED and
 // other Scintilla notifications directly without a separate WndProc.
@@ -45,7 +79,7 @@
     self = [super initWithFrame:frameRect];
     if (self) {
         _owner = owner;
-        _scintillaView = [[ScintillaView alloc] initWithFrame:self.bounds];
+        _scintillaView = [[LynxtronScintillaView alloc] initWithFrame:self.bounds];
         [_scintillaView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         _scintillaView.delegate = self;  // receive SCN_MODIFIED etc.
         [self addSubview:_scintillaView];
