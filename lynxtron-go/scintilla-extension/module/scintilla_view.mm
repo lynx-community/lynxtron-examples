@@ -167,11 +167,12 @@ ScintillaView::ScintillaView() {
     // Initialize Scintilla
     if (cocoa_view_) {
         ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
-        // Dispatch config to main thread if needed, but since we are in constructor and just created it,
-        // we might be on any thread. Safest to dispatch.
-        // Actually the container creation above ensures we have the view.
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
+        // Install the compiled defaults before the constructor returns. This
+        // must not be queued asynchronously: OnPropertiesChanged may apply
+        // the element's target theme on the main thread immediately after
+        // construction, and a delayed default pass would overwrite it with
+        // the 14pt fallback long enough to paint a visible flash.
+        auto initializeScintilla = ^{
             // Set Lexer to Container (styling driven from JS)
             [container.scintillaView message:SCI_SETLEXER wParam:SCLEX_CONTAINER lParam:0];
 
@@ -233,7 +234,12 @@ ScintillaView::ScintillaView() {
             [container.scintillaView message:SCI_INDICSETFORE wParam:0 lParam:0x3232FA];
             [container.scintillaView message:SCI_INDICSETFORE wParam:1 lParam:0x00BBFF];
             [container.scintillaView message:SCI_INDICSETFORE wParam:2 lParam:0xFF8800];
-        });
+        };
+        if ([NSThread isMainThread]) {
+            initializeScintilla();
+        } else {
+            dispatch_sync(dispatch_get_main_queue(), initializeScintilla);
+        }
     }
 #endif
 }
@@ -678,8 +684,11 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
         [container.scintillaView message:SCI_CALLTIPSETBACK wParam:ctBack lParam:0];
         [container.scintillaView message:SCI_CALLTIPSETFORE wParam:ctFore lParam:0];
     };
+    // Theme properties are part of native element construction. Finish the
+    // main-thread update before returning so layout cannot attach and paint
+    // an intermediate background/font size.
     if ([NSThread isMainThread]) doApply();
-    else dispatch_async(dispatch_get_main_queue(), doApply);
+    else dispatch_sync(dispatch_get_main_queue(), doApply);
 #endif
 }
 
