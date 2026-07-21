@@ -16,7 +16,13 @@ import {
   SHOWCASE_REGISTRY,
   SHOWCASE_LOCAL_WORKSPACE,
   appendOutput,
+  appendProcessLine,
+  ensureProcessLogPolling,
+  readProcessLogSince,
+  subscribeProcessLog,
+  foundationApi,
 } from './store';
+import { pickDefaultFile } from './ide/default-file';
 import {
   buildExampleArtifactWorkspaceView,
   buildExampleArtifactLoadingState,
@@ -54,10 +60,14 @@ import {
 } from './shared/deep-link-dispatch';
 import { checkDeepLinkActionReadiness } from './shared/deep-link-runtime';
 import { registerStatusBarItem } from './components/StatusBar/statusbar-registry';
-import { StatusBar } from './components/StatusBar/StatusBar';
 import { QuickPicker } from './components/QuickPicker/QuickPicker';
 import { GalleryHome } from './components/Gallery/GalleryHome';
+import { Fiddle } from './fiddle/Fiddle';
+import { DEV_PRESET, isDevMode, drainCommandFile } from './fiddle/dev-preset';
+import { isDarkTheme } from './fiddle/theme';
 import { LoadingOverlay } from './components/shared/LoadingOverlay';
+// Fiddle is the main page; the legacy IDE shell stays mountable behind the
+// gallery's per-card "IDE" action (old open-showcase-in-workspace route).
 import { IDE } from './components/IDE/IDE';
 import { RouteNavigationControls } from './components/IDE/RouteNavigationControls';
 import { CurrentFileFindBar } from './components/FindBar/CurrentFileFindBar';
@@ -67,7 +77,7 @@ import {
   type CurrentFileMatch,
 } from './shared/current-file-search';
 import { arrayBufferToBase64, bytesToBase64 } from './shared/native-bridge-encoding';
-import type { DeepLinkFileNavigation, HostDeepLinkPayload } from '../shared/deep-link';
+import { buildShowcaseIdeDeepLink, type DeepLinkFileNavigation, type HostDeepLinkPayload } from '../shared/deep-link';
 
 const DEEP_LINK_STARTUP_RETRY_DELAY_MS = 160;
 const DEEP_LINK_APPLY_RETRY_DELAY_MS = 160;
@@ -136,7 +146,10 @@ function loadLayoutValue<T>(key: string, defaultValue: T): T {
   return defaultValue;
 }
 
-export function App() {
+export function App(props: { onRender?: () => void } = {}) {
+  // Test-harness hook (see __tests__/index.test.tsx): fires once after the
+  // first background-thread render.
+  useEffect(() => { props.onRender?.(); }, []);
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [routeNavigation, setRouteNavigation] = useState<RouteNavigationState<WorkspaceSession>>(
     () => createRouteNavigationState<WorkspaceSession>(),
@@ -159,6 +172,14 @@ export function App() {
   const [pickerMode, setPickerMode] = useState<'files' | 'commands' | 'showcases' | 'url' | 'bundleUrl' | 'example' | undefined>(undefined);
   const [runningPid, setRunningPid] = useState<number | null>(null);
   const [bottomPanelTab, setBottomPanelTab] = useState<string | undefined>(undefined);
+  const [isGalleryOpen, setGalleryOpen] = useState(false);
+  // Fiddle theme tokens live on `.IDE` as CSS variables; light theme swaps
+  // them via this class (see App.css). Driven by fiddle.settings.theme.
+  const [uiThemeDark, setUiThemeDark] = useState(() => isDarkTheme());
+  // Showcase handed from the gallery's Open into the Fiddle (new chain).
+  const [pendingShowcaseTemplate, setPendingShowcaseTemplate] = useState<ShowcaseEntry | null>(null);
+  // Legacy chain: mount the old IDE shell for the current workspace route.
+  const [legacyIdeOpen, setLegacyIdeOpen] = useState(false);
   const [currentFileFind, setCurrentFileFind] = useState<CurrentFileFindState>({
     visible: false,
     query: '',
@@ -321,19 +342,12 @@ export function App() {
 
   // ── Logging ────────────────────────────────────────────────────────────────
   const log = useCallback((msg: string) => {
-    console.log('[App.log] called with:', msg);
-    try { 
-      const exposed = getExposed();
-      console.log('[App.log] getExposed():', !!exposed);
-      console.log('[App.log] exposed.utils:', !!exposed?.utils);
-      exposed?.utils?.log(msg); 
-      
+    try {
+      getExposed()?.utils?.log(msg);
       // 根据官方文档，使用 NativeModules.bridge.send 发送单向通知到 main.ts
       // @ts-ignore
       NativeModules.bridge.send('logFromUi', { message: msg });
-    } catch (error) { 
-      console.error('[App.log] error:', error);
-    }
+    } catch (_) { /* logging must never throw into callers */ }
   }, []);
 
   // ── Syntax highlighting ────────────────────────────────────────────────────
@@ -368,13 +382,36 @@ export function App() {
   // ── Load file content from disk into Scintilla ──────────────────────────
   const loadFileIntoEditor = useCallback((fullPath: string, lang: Language): string | null => {
     try {
-      const text: string = getExposed().fs.readFile(fullPath);
+      const text = getExposed().fs.readFile(fullPath);
+      if (text == null) { log(`loadFile failed (unreadable): ${fullPath}`); return null; }
       if (!setEditorText(text, lang)) return null;
       return text;
     } catch (e) {
       log(`loadFile error: ${e}`);
       return null;
     }
+  }, [log, setEditorText]);
+
+  // Re-attach + re-push the active tab's content into the native editor. Called
+  // once after the scintilla-view's first layout. Two problems are healed here:
+  //  1. detach asymmetry — the effect below detaches the editor whenever we are
+  //     not in a workspace (Fiddle/gallery). On an IDE-boot instance the Fiddle
+  //     shows first, so a detach is issued before `main-editor` even registers;
+  //     the registry honors that pending detach on register, leaving
+  //     detached_by_host_=true so OnLayoutChanged's lazy attach is skipped
+  //     (blank pane). attachToWindow clears the flag and force-attaches.
+  //  2. paint race — content applied before the view's first attach/paint lands
+  //     in the document but doesn't repaint. setText is idempotent, so
+  //     re-pushing identical text only forces the paint.
+  const repushActiveEditor = useCallback(() => {
+    const id = activeTabIdRef.current;
+    if (!id) return;
+    const tab = tabsRef.current.find(t => t.id === id);
+    if (!tab) return;
+    log(`[IDE] repushActiveEditor: ${tab.name}`);
+    try { scintillaApi()?.attachToWindow?.(EDITOR_ID); } catch (_) { /* ignore */ }
+    setEditorText(tab.currentText, tab.language);
+    try { scintillaApi()?.gotoLine?.(EDITOR_ID, 0); } catch (_) { /* ignore */ }
   }, [log, setEditorText]);
 
   // ── Snapshot current editor text into active tab state ────────────────────
@@ -688,10 +725,10 @@ export function App() {
     const lang = detectLanguage(name);
 
     if (!activeTabIdRef.current) {
-      let text = '';
-      try {
-        text = getExposed().fs.readFile(fullPath);
-      } catch (e) { setStatus(`Failed to open ${name}`); return; }
+      // readFile reports failure as null (it never throws across the bridge).
+      const maybeText = getExposed().fs.readFile(fullPath);
+      if (maybeText == null) { setStatus(`Failed to open ${name}`); return; }
+      const text = maybeText;
       applyHighlight(text, lang);
       lastHighlightedTextRef.current = text;
       activeTabLangRef.current = lang;
@@ -883,20 +920,24 @@ export function App() {
     setBottomPanelTab('output');
   }, []);
 
+  // Mirror process output into the legacy IDE's output log. MUST read from
+  // the shared store, never from readProcessOutput directly: that call DRAINS
+  // the preload buffer and this loop used to race the console's poller and
+  // steal most of its lines (Run/download output vanished from the console).
+  // Subscription, not a second poll — the log lives in this JS context.
   useEffect(() => {
-    const interval = setInterval(() => {
+    ensureProcessLogPolling();
+    let cursor = readProcessLogSince(0).cursor; // skip history, mirror new lines only
+    return subscribeProcessLog(() => {
       try {
-        const entries = showcaseApi()?.readProcessOutput?.();
-        if (!Array.isArray(entries) || entries.length === 0) return;
-        for (const entry of entries) {
-          const level = entry?.level === 'error' || entry?.level === 'warn' ? entry.level : 'info';
-          const source = typeof entry?.source === 'string' && entry.source ? `[${entry.source}] ` : '';
-          const message = typeof entry?.message === 'string' ? entry.message : String(entry?.message ?? '');
-          if (message) appendOutput(level, `${source}${message}`);
+        const read = readProcessLogSince(cursor);
+        cursor = read.cursor;
+        for (const entry of read.entries) {
+          const level = entry.stream === 'stderr' ? 'warn' : 'info';
+          if (entry.message) appendOutput(level, entry.message);
         }
       } catch (_) {}
-    }, 200);
-    return () => clearInterval(interval);
+    });
   }, []);
 
   const openWorkspaceFileFromDeepLink = useCallback((
@@ -907,12 +948,10 @@ export function App() {
     const relativePath = navigation.filePath;
     const fullPath = joinWorkspaceRootAndRelativeFile(rootPath, relativePath);
 
-    let text = '';
-    try {
-      text = getExposed().fs.readFile(fullPath);
-    } catch (e) {
+    const maybeDeepLinkText = getExposed().fs.readFile(fullPath);
+    if (maybeDeepLinkText == null) {
       const message = `Deep link file not found: ${relativePath}`;
-      log(`[IDE] deep link file open failed path=${fullPath} source=${sourceLabel} error=${String(e)}`);
+      log(`[IDE] deep link file open failed path=${fullPath} source=${sourceLabel}`);
       showOutput('error', message);
       setStatus(message);
       return false;
@@ -925,7 +964,7 @@ export function App() {
       return true;
     }
 
-    const resolved = clampDeepLinkEditorNavigation(text, navigation);
+    const resolved = clampDeepLinkEditorNavigation(maybeDeepLinkText, navigation);
     openFileAt(fullPath, {
       line: resolved.line,
       column: resolved.column,
@@ -1055,7 +1094,10 @@ export function App() {
   }, [route.kind, setEditorText]);
 
   // ── Capture window to base64 (for DevTool / AI inspection) ────────────────
+  // Dev-only surfaces, same gate as the /tmp command channels: user builds
+  // must not carry screenshot/open-file hooks on globalThis.
   useEffect(() => {
+    if (!isDevMode()) return;
     try {
       // @ts-ignore
       globalThis.__ide_captureScreenshot = () => {
@@ -1362,7 +1404,7 @@ export function App() {
           reject(new Error(`Example fetch timed out after ${EXAMPLE_FETCH_BRIDGE_TIMEOUT_MS}ms`));
         }, EXAMPLE_FETCH_BRIDGE_TIMEOUT_MS);
         try {
-          bridge.call('fetchExampleArtifact', { relativePath }, (payload: ExampleArtifactFetchResult | null) => {
+          bridge.call?.('fetchExampleArtifact', { relativePath }, (payload: ExampleArtifactFetchResult | null) => {
             clearTimeout(timeout);
             resolve(payload ?? {
               ok: false,
@@ -1576,6 +1618,32 @@ export function App() {
     return await fetchShowcaseByUrl(entry.url, 'showcase', { showLoading: false });
   }, [fetchShowcaseByUrl, openFolder, showOutput, log]);
 
+  // A workspace opened without explicit file navigation (the Gallery "IDE"
+  // action's deep link carries only a showcase id + target=ide) still needs a
+  // file in the editor — otherwise EditorPanel sits on its "Open Folder" empty
+  // state even though the Explorer tree is populated. Pick a sensible entry file
+  // (real source over config) and open it into a tab.
+  const autoOpenDefaultFile = useCallback((workspacePath: string) => {
+    const exposed = getExposed();
+    if (!exposed) return;
+    let topLevelFiles: string[] = [];
+    try {
+      const entries: Array<{ name: string; isDirectory: boolean }> = exposed.fs.readdirStat(workspacePath);
+      topLevelFiles = entries.filter(e => !e.isDirectory && !HIDDEN.has(e.name)).map(e => e.name);
+    } catch (e) {
+      log(`[IDE] autoOpenDefaultFile readdir error: ${e}`);
+      return;
+    }
+    // fs.exists, not readFile-in-try: bridge readFile reports failure as
+    // null instead of throwing, so the old catch-probe always said true.
+    const exists = (rel: string): boolean => !!exposed.fs.exists?.(`${workspacePath}/${rel}`);
+    const rel = pickDefaultFile({ topLevelFiles, exists });
+    if (rel) {
+      log(`[IDE] autoOpenDefaultFile: ${rel}`);
+      openFile(`${workspacePath}/${rel}`);
+    }
+  }, [log, openFile]);
+
   const openShowcaseEntry = useCallback(async (entry: ShowcaseEntry, navigation?: DeepLinkFileNavigation) => {
     const localPath = SHOWCASE_LOCAL_WORKSPACE && entry.path
       ? showcaseApi()?.resolveRegistryPath?.(entry.path)
@@ -1587,13 +1655,102 @@ export function App() {
     setStatus(`Opening showcase: ${entry.name}`);
     try {
       const workspacePath = await resolveShowcaseEntryWorkspacePath(entry);
-      if (workspacePath && navigation) {
-        openWorkspaceFileFromDeepLink(workspacePath, navigation, `deep-link showcase ${entry.name}`);
+      if (workspacePath) {
+        if (navigation) {
+          openWorkspaceFileFromDeepLink(workspacePath, navigation, `deep-link showcase ${entry.name}`);
+        } else {
+          autoOpenDefaultFile(workspacePath);
+        }
       }
     } finally {
       clearShowcaseLoading();
     }
-  }, [clearShowcaseLoading, openWorkspaceFileFromDeepLink, resolveShowcaseEntryWorkspacePath, showOutput, startShowcaseLoading]);
+  }, [autoOpenDefaultFile, clearShowcaseLoading, openWorkspaceFileFromDeepLink, resolveShowcaseEntryWorkspacePath, showOutput, startShowcaseLoading]);
+
+  // New chain (default): close the gallery and hand the showcase to the
+  // Fiddle, which downloads/resolves the workspace and loads the source into
+  // its editor mosaic.
+  const openShowcaseInFiddle = useCallback((entry: ShowcaseEntry) => {
+    setGalleryOpen(false);
+    setLegacyIdeOpen(false);
+    setPendingShowcaseTemplate(entry);
+  }, []);
+
+  // Legacy chain: the old IDE workspace route mounted IN this window —
+  // still used by Open Folder / Resume / route chevrons.
+  const openShowcaseInLegacyIde = useCallback((entry: ShowcaseEntry) => {
+    setGalleryOpen(false);
+    setLegacyIdeOpen(true);
+    void openShowcaseEntry(entry);
+  }, [openShowcaseEntry]);
+
+  // Gallery "IDE" action: open the workspace in a NEW WINDOW. New window =
+  // new PROCESS on purpose: the Scintilla registry, its keyWindow-based
+  // attach, and the config-store writer lease all assume one window per
+  // process. The child is this same app spawned with a target=ide deep link
+  // in argv (consumed by the existing startup deep-link pipeline).
+  const openShowcaseInIdeWindow = useCallback((entry: ShowcaseEntry) => {
+    const rt = (foundationApi() as any)?.runtime;
+    const exec = (foundationApi() as any)?.exec;
+    if (!rt?.execPath || !rt?.appDir || !exec?.runAsync) {
+      showOutput('warn', '[IDE] spawn bridge unavailable — opening in this window instead');
+      openShowcaseInLegacyIde(entry);
+      return;
+    }
+    const url = buildShowcaseIdeDeepLink(entry.name);
+    const handle = exec.runAsync(rt.execPath, [rt.appDir, url], {
+      env: {
+        LYNXTRON_ALLOW_MULTI: '1',
+        LYNXTRON_WINDOW_CASCADE: '1',
+        LYNXTRON_BOOT_TARGET: 'ide',
+        // Children must NOT inherit the dev automation channels — two pollers
+        // on the same /tmp command files steal each other's commands.
+        LYNXTRON_FIDDLE_DEV: '0',
+      },
+      onExit: (code: number | null) => {
+        showOutput('info', `[IDE] window for "${entry.name}" exited (code=${code})`);
+      },
+    });
+    if (handle?.pid) {
+      setGalleryOpen(false);
+      showOutput('info', `[IDE] opened "${entry.name}" in a new window (pid=${handle.pid})`);
+      setStatus(`Opened ${entry.name} in new IDE window`);
+    } else {
+      showOutput('warn', '[IDE] spawn failed — opening in this window instead');
+      openShowcaseInLegacyIde(entry);
+    }
+  }, [openShowcaseInLegacyIde, showOutput]);
+
+  // Dev-only: app-level command file for page navigation. The Fiddle-level
+  // poller (DEV_PRESET.commandFile) dies with the Fiddle when the gallery or
+  // legacy IDE is showing, so navigation commands are drained here instead.
+  useEffect(() => {
+    const cmdFile = DEV_PRESET?.appCommandFile;
+    if (!cmdFile || !isDevMode()) return;
+    const t = setInterval(() => {
+      for (const cmd of drainCommandFile(cmdFile)) {
+        const { name, data, raw: trimmed } = cmd;
+        const entry = data?.name ? SHOWCASE_REGISTRY.find(e => e.name === data.name) : undefined;
+        appendOutput('info', `[DevCmd:app] ${trimmed}`);
+        try {
+        if (name === 'app:openGallery') setGalleryOpen(true);
+        else if (name === 'app:galleryBack') setGalleryOpen(false);
+        else if (name === 'app:openShowcase' && entry) openShowcaseInFiddle(entry);
+        else if (name === 'app:openShowcaseLegacy' && entry) openShowcaseInIdeWindow(entry);
+        else if (name === 'app:routeBack') handleRouteBack();
+        else if (name === 'app:routeForward') handleRouteForward();
+        else if (name === 'app:quickOpen') { setPickerQuery(''); setPickerMode(undefined); setPickerOpen(true); }
+        else if (name === 'app:runShowcase' && entry) void runShowcaseEntry(entry);
+        else if (name === 'app:runShowcaseWeb' && entry) void runShowcaseEntryOnWeb(entry);
+        else if (name === 'app:quickClose') { setPickerOpen(false); setPickerMode(undefined); }
+        else appendOutput('warn', `[DevCmd:app] unknown: ${trimmed}`);
+        } catch (e: any) {
+          appendOutput('error', `[DevCmd:app] ${name} failed: ${e?.message ?? String(e)}`);
+        }
+      }
+    }, 500);
+    return () => clearInterval(t);
+  }, [handleRouteBack, handleRouteForward, openShowcaseInFiddle, openShowcaseInIdeWindow]);
 
   const readDeepLinkRuntimeReadiness = useCallback(() => {
     let showcaseReady = false;
@@ -1636,7 +1793,16 @@ export function App() {
     if (action.kind === 'open-showcase') {
       log(`[IDE] deep link applying showcase action: ${action.entry.name} [${source}]`);
       showOutput('info', `Deep link opening showcase: ${action.entry.name} [${source}]`);
-      void openShowcaseEntry(action.entry, action.navigation);
+      if (action.navigation || action.target === 'ide') {
+        // file:line navigation and target=ide are old-IDE capabilities —
+        // mount it visibly (target=ide is how a spawned Gallery-IDE window
+        // boots straight into the workspace).
+        setGalleryOpen(false);
+        setLegacyIdeOpen(true);
+        void openShowcaseEntry(action.entry, action.navigation);
+      } else {
+        openShowcaseInFiddle(action.entry);
+      }
       return true;
     }
 
@@ -1651,7 +1817,7 @@ export function App() {
     showOutput('info', `Deep link opening example: ${action.examplePath} [${source}]`);
     openExampleArtifactDirect(action.examplePath, action.navigation);
     return true;
-  }, [detachNativeEditorView, log, openExampleArtifactDirect, openShowcaseEntry, readDeepLinkRuntimeReadiness, showOutput, runBundleUrlDirect]);
+  }, [detachNativeEditorView, log, openExampleArtifactDirect, openShowcaseEntry, openShowcaseInFiddle, readDeepLinkRuntimeReadiness, showOutput, runBundleUrlDirect]);
 
   const drainPendingDeepLinkAction = useCallback(() => {
     clearDeepLinkApplyRetry();
@@ -1704,6 +1870,13 @@ export function App() {
     }
   }, [queueHostDeepLinkPayload, showOutput]);
 
+  const stopGalleryRun = useCallback(() => {
+    if (runningPid == null) return;
+    const ok = showcaseApi()?.stop?.(runningPid) ?? false;
+    appendProcessLine('command', ok ? `Stopped (pid ${runningPid})` : `Stop failed (pid ${runningPid})`);
+    if (ok) setRunningPid(null);
+  }, [runningPid]);
+
   const runShowcaseEntry = useCallback(async (entry: ShowcaseEntry) => {
     console.log('[runShowcaseEntry] Starting, entry:', entry);
     log(`[runShowcaseEntry] Starting, entry: ${JSON.stringify(entry)}`);
@@ -1728,6 +1901,7 @@ export function App() {
       return;
     }
     startShowcaseLoading(`Preparing workspace for ${entry.name}...`);
+    appendProcessLine('command', `Run showcase: ${entry.name}`);
     try {
       log(`[runShowcaseEntry] Calling resolveShowcaseEntryWorkspacePath...`);
       const showcasePath = await resolveShowcaseEntryWorkspacePath(entry);
@@ -1742,6 +1916,7 @@ export function App() {
       log(`[runShowcaseEntry] isBuilt: ${isBuilt}`);
       if (!isBuilt) {
         showOutput('error', 'Showcase not built — dist/desktop/main.js not found');
+        appendProcessLine('stderr', 'Not built — dist/desktop/main.js not found. Open it in the Fiddle and Run to build from source.');
         setStatus('Not built');
         return;
       }
@@ -1754,11 +1929,13 @@ export function App() {
       log(`[runShowcaseEntry] api.run returned pid: ${pid}`);
       setRunningPid(pid);
       showOutput('info', `Showcase launched (pid ${pid})`);
+      appendProcessLine('command', `Launched (pid ${pid})`);
       setStatus(`Running (pid ${pid})`);
     } catch (e: any) {
       console.error('[runShowcaseEntry] Error:', e);
       log(`[runShowcaseEntry] Error: ${e.message}, stack: ${e.stack}`);
       showOutput('error', `Run failed: ${e.message}`);
+      appendProcessLine('stderr', `Run failed: ${e.message}`);
       setStatus('Run failed');
     } finally {
       clearShowcaseLoading();
@@ -1782,10 +1959,12 @@ export function App() {
     }
     if (!hasShowcaseWebTarget(showcasePath)) {
       showOutput('error', 'This showcase does not support Web');
+      appendProcessLine('stderr', 'This showcase does not support Web');
       setStatus('Web target unavailable');
       return;
     }
 
+    appendProcessLine('command', `Run on Web: ${showcasePath}`);
     const shouldRunFromSource =
       !api.isWebBuilt?.(showcasePath) || !!api.needsWebSourceRun?.(showcasePath);
     try {
@@ -1808,6 +1987,7 @@ export function App() {
         const pid = await api.startWeb(showcasePath);
         setRunningPid(pid);
         showOutput('info', `Web run command started (pid ${pid})`);
+        appendProcessLine('command', `Web run building from source (pid ${pid}) — browser opens when the server is ready`);
         setStatus(`Web run starting (pid ${pid})`);
         return;
       }
@@ -1823,9 +2003,11 @@ export function App() {
       const pid = api.runWeb(showcasePath);
       setRunningPid(pid);
       showOutput('info', `Built web run launched (pid ${pid})`);
+      appendProcessLine('command', `Serving built web output (pid ${pid}) — browser opens when the server is ready`);
       setStatus(`Web run running (pid ${pid})`);
     } catch (e: any) {
       showOutput('error', `Web run failed: ${e.message}`);
+      appendProcessLine('stderr', `Web run failed: ${e.message}`);
       setStatus('Web run failed');
     }
   }, [hasShowcaseWebTarget, showOutput]);
@@ -1903,8 +2085,8 @@ export function App() {
   const handleSelectShowcase = useCallback((entry: ShowcaseEntry) => {
     setPickerOpen(false);
     setPickerMode(undefined);
-    void openShowcaseEntry(entry);
-  }, [openShowcaseEntry]);
+    openShowcaseInFiddle(entry);
+  }, [openShowcaseInFiddle]);
 
   const handleRunCurrentWorkspace = useCallback(async () => {
     const target = resolveWorkspaceRunTarget(workspaceSessionRef.current);
@@ -2148,7 +2330,7 @@ export function App() {
       openFolder,
       setPickerOpen,
       setPickerQuery,
-      getIdeMode: () => workspaceSessionRef.current,
+      getWorkspaceSession: () => workspaceSessionRef.current,
       hasCurrentShowcaseWebTarget: () => {
         const mode = workspaceSessionRef.current;
         return !!mode && mode.kind === 'showcase' && hasShowcaseWebTarget(mode.rootPath);
@@ -2253,18 +2435,35 @@ export function App() {
     saveLayout('layout.bottomPanelOpen', false);
   }, [saveLayout]);
 
-  const mainContent = route.kind === 'home' ? (
-    <GalleryHome
-      lastWorkspacePath={lastWorkspacePath}
-      onOpenFolder={openFolderDialog}
-      onOpenShowcasePicker={startShowcaseList}
-      onResumeWorkspace={handleResumeWorkspace}
-      onOpenShowcase={openShowcaseEntry}
-      onRunShowcase={runShowcaseEntry}
-      onRunShowcaseOnWeb={runShowcaseEntryOnWeb}
-      onDebugExampleRoute={() => openExampleArtifactDirect('view')}
-    />
-  ) : (
+  // Fiddle is the main content and stays MOUNTED under the gallery, which
+  // renders as a full-page overlay (unmounting the Fiddle kills its native
+  // editor buffers; overlayActive detaches them instead — same machinery as
+  // dialogs). Per-instance scoping falls out structurally: each Fiddle
+  // instance owns its overlay, so gallery "Open" always targets the instance
+  // it was opened from — never another (self-hosted) Fiddle. The per-card
+  // "IDE" action keeps the legacy open-showcase-in-workspace route alive by
+  // mounting the old IDE shell — the route back-chevron leaves it again.
+  const showLegacyIde = legacyIdeOpen && route.kind === 'workspace';
+  // One props object for both gallery hosts — the in-shell page and the
+  // legacy full overlay must never drift apart callback-by-callback.
+  const galleryProps = {
+    onBack: () => setGalleryOpen(false),
+    onOpenFolder: () => { setGalleryOpen(false); setLegacyIdeOpen(true); openFolderDialog(); },
+    onOpenShowcase: openShowcaseInFiddle,
+    onOpenShowcaseLegacy: openShowcaseInIdeWindow,
+    onRunShowcase: runShowcaseEntry,
+    onRunShowcaseOnWeb: runShowcaseEntryOnWeb,
+    onDebugExampleRoute: () => { setGalleryOpen(false); setLegacyIdeOpen(true); openExampleArtifactDirect('view'); },
+  };
+  const galleryNode = isGalleryOpen ? <GalleryHome {...galleryProps} /> : null;
+  // Legacy IDE has no Fiddle shell to host the gallery — full overlay fallback
+  // (standalone: the page carries its own Back since there is no commands bar).
+  const galleryOverlay = showLegacyIde && isGalleryOpen ? (
+    <view className="GalleryOverlay">
+      <GalleryHome {...galleryProps} standalone />
+    </view>
+  ) : null;
+  const mainContent = showLegacyIde ? (
     <IDE
       rootPath={currentRootPath}
       tabs={tabs}
@@ -2277,38 +2476,52 @@ export function App() {
       dirContents={dirContents}
       expandedDirs={expandedDirs}
       onSelectSidebarPanel={handleSelectSidebarPanel}
-      onSidebarRatioChange={(ratio) => { setSidebarRatio(ratio); debouncedSaveRatio('layout.sidebarRatio', ratio); }}
-      onEditorBottomRatioChange={(ratio) => { setEditorBottomRatio(ratio); debouncedSaveRatio('layout.editorBottomRatio', ratio); }}
+      onSidebarRatioChange={(r) => { setSidebarRatio(r); debouncedSaveRatio('layout.sidebarRatio', r); }}
+      onEditorBottomRatioChange={(r) => { setEditorBottomRatio(r); debouncedSaveRatio('layout.editorBottomRatio', r); }}
       onCloseBottomPanel={handleCloseBottomPanel}
       onToggleDir={toggleDir}
       onOpenFile={openFile}
       onOpenFileAt={openFileAt}
+      onEditorLayout={repushActiveEditor}
       onOpenFolderDialog={openFolderDialog}
       onSwitchTab={switchTab}
       onCloseTab={closeTab}
-      findBar={currentFileFind.visible ? (
-        <CurrentFileFindBar
-          query={currentFileFind.query}
-          currentIndex={currentFileFind.activeMatchIndex}
-          total={currentFileFind.matches.length}
-          hasActiveFile={!!activeTabId}
-          focusKey={currentFileFindFocusKey}
-          onQueryChange={updateCurrentFileFindQuery}
-          onNext={() => navigateCurrentFileFind('next')}
-          onPrevious={() => navigateCurrentFileFind('previous')}
-          onClose={closeCurrentFileFind}
-        />
-  ) : null}
+    />
+  ) : (
+    <Fiddle
+      rootPath={currentRootPath}
+      onOpenGallery={() => setGalleryOpen(true)}
+      onRunShowcase={(entry) => { void runShowcaseEntry(entry); }}
+      pendingShowcaseTemplate={pendingShowcaseTemplate}
+      onShowcaseTemplateConsumed={() => setPendingShowcaseTemplate(null)}
+      // Quick Open (Cmd+P) is an App-level overlay just like the gallery —
+      // native editors float above every Lynx layer, so the Fiddle must
+      // detach them while the palette is up or it renders half-hidden.
+      overlayActive={isGalleryOpen || pickerOpen}
+      galleryOpen={isGalleryOpen}
+      gallery={galleryNode}
+      onCloseGallery={() => setGalleryOpen(false)}
+      externalRunPid={runningPid}
+      onStopExternalRun={stopGalleryRun}
+      onThemeChange={() => setUiThemeDark(isDarkTheme())}
     />
   );
   const activeLoading = showcaseLoading ?? exampleArtifactLoading;
   const canGoBack = canNavigateRouteBack(routeNavigation);
   const canGoForward = canNavigateRouteForward(routeNavigation);
+  // A window spawned as a dedicated IDE (Gallery IDE action) has no Fiddle to
+  // navigate back to — route chevrons are meaningless chrome there.
+  const isIdeBootWindow = (() => {
+    try { return (getExposed() as any)?.bootTarget === 'ide'; } catch (_) { return false; }
+  })();
 
   return (
-    <view className="IDE">
+    <view className={'IDE' + (uiThemeDark ? '' : ' theme-light')}>
       <view className="IDEStage">
-        {canGoBack || canGoForward ? (
+        {/* Route chevrons belong to the legacy IDE only — the Fiddle is the
+            home page and must carry no route chrome (a floating disabled
+            back-arrow over the Fiddle read as a mystery control). */}
+        {showLegacyIde && !isIdeBootWindow && (canGoBack || canGoForward) ? (
           <RouteNavigationControls
             canGoBack={canGoBack}
             canGoForward={canGoForward}
@@ -2317,10 +2530,9 @@ export function App() {
           />
         ) : null}
         {mainContent}
+        {galleryOverlay}
         <LoadingOverlay visible={!!activeLoading} message={activeLoading?.message} />
       </view>
-
-      <StatusBar status={status} />
 
       {pickerOpen && (
         <QuickPicker

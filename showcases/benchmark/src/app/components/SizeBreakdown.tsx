@@ -48,10 +48,10 @@ export function SizeBreakdown({ runtime, business, extensions }: SizeBreakdownPr
 
   return (
     <view className="size-breakdown">
-      <text className="breakdown-title">APP SIZE BREAKDOWN</text>
-      <BarRow label="Runtime" size={runtime} total={total} color="#3b82f6" />
-      <BarRow label="Business Code (Lynx bundle + host)" size={business} total={total} color="#22c55e" />
-      <BarRow label="Native Extensions" size={extensions} total={total} color="#f97316" />
+      <text className="breakdown-title">App size breakdown</text>
+      <BarRow label="Runtime" size={runtime} total={total} color="#137cbd" />
+      <BarRow label="Business code (Lynx bundle + host)" size={business} total={total} color="#48aff0" />
+      <BarRow label="Native extensions" size={extensions} total={total} color="#3dd68c" />
     </view>
   );
 }

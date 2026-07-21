@@ -1,0 +1,42 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="675" fill="#1d2427"/>
+  <rect x="1.5" y="1.5" width="1197" height="672" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+
+  <!-- flat drag-to-dock calibration illustration -->
+
+  <!-- home slot (empty outline) -->
+  <rect x="240" y="240" width="150" height="150" rx="6" stroke="rgba(255,255,255,0.1)" stroke-width="2" stroke-dasharray="8 8"/>
+  <text x="240" y="424" fill="#608291" font-size="16" font-weight="600" letter-spacing="2" font-family="Menlo, monospace">HOME</text>
+
+  <!-- drag path ticks -->
+  <rect x="430" y="314" width="24" height="2" fill="#608291"/>
+  <rect x="474" y="314" width="24" height="2" fill="#608291"/>
+  <rect x="518" y="314" width="24" height="2" fill="#48aff0"/>
+  <rect x="562" y="314" width="24" height="2" fill="#48aff0"/>
+
+  <!-- chip mid-drag -->
+  <rect x="620" y="240" width="150" height="150" rx="6" fill="#2c2e3b" stroke="#48aff0" stroke-width="2"/>
+  <path d="M660 350 L700 300 L688 300 L730 268 L706 300 L718 300 Z" fill="#48aff0"/>
+
+  <!-- cursor pointer on chip corner -->
+  <path d="M756 376 L756 428 L768 416 L778 438 L790 432 L780 411 L796 410 Z" fill="#f5f8fa" stroke="#1d2427" stroke-width="3"/>
+
+  <!-- dock target (hot) -->
+  <rect x="850" y="200" width="240" height="230" rx="6" fill="rgba(19,124,189,0.16)" stroke="#48aff0" stroke-width="2"/>
+  <text x="850" y="184" fill="#608291" font-size="16" font-weight="600" letter-spacing="2" font-family="Menlo, monospace">DOCK TARGET</text>
+  <!-- corner ticks -->
+  <rect x="862" y="212" width="18" height="2" fill="#48aff0"/>
+  <rect x="862" y="212" width="2" height="18" fill="#48aff0"/>
+  <rect x="1060" y="212" width="18" height="2" fill="#48aff0"/>
+  <rect x="1076" y="212" width="2" height="18" fill="#48aff0"/>
+  <rect x="862" y="416" width="18" height="2" fill="#48aff0"/>
+  <rect x="862" y="400" width="2" height="18" fill="#48aff0"/>
+  <rect x="1060" y="416" width="18" height="2" fill="#48aff0"/>
+  <rect x="1076" y="400" width="2" height="18" fill="#48aff0"/>
+
+  <!-- readout line -->
+  <text x="240" y="500" fill="#a7b6c2" font-size="18" font-weight="600" letter-spacing="2" font-family="Menlo, monospace">CHIP.X <tspan fill="#48aff0">640</tspan>  CHIP.Y <tspan fill="#48aff0">252</tspan>  STATE <tspan fill="#48aff0">DRAGGING</tspan>  TARGET <tspan fill="#3dd68c">HOT</tspan></text>
+
+  <!-- app name -->
+  <text x="56" y="619" fill="#a7b6c2" font-size="28" font-weight="600" letter-spacing="4" font-family="Menlo, monospace">PC-MOUSE-CURSOR</text>
+</svg>

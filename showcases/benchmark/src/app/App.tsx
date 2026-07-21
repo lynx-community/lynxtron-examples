@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from '@lynx-js/react';
+import '@lynxtron-showcases/config/tokens.css';
 import './App.css';
 import { MetricCard } from './components/MetricCard';
 import { SizeBreakdown } from './components/SizeBreakdown';
@@ -82,9 +83,9 @@ function getDefaultMemoryLabels(platform: PlatformInfo | null): Pick<
 }
 
 function startupColor(ms: number): string {
-  if (ms < 200) return '#22c55e';
-  if (ms < 500) return '#eab308';
-  return '#ef4444';
+  if (ms < 200) return '#3dd68c';
+  if (ms < 500) return '#f5f8fa';
+  return '#df3434';
 }
 
 export function App() {
@@ -227,54 +228,57 @@ export function App() {
   return (
     <view className="root">
       <scroll-view scroll-y className="scroll-content">
-        <text className="page-title">LIGHT-WEIGHT AND FAST</text>
-        <text className="page-heading">LYNXTRON BENCHMARK</text>
+        <text className="page-title">Runtime benchmark</text>
         <text className="page-copy">
           Minimal runtime baseline for a Lynxtron app: package size, startup latency, physical
           memory counters, and JS heap without extra stress widgets layered on top.
         </text>
 
+        <text className="section-label">Second window probe</text>
+
         <view className="action-row" style={{ flexDirection: 'row' }}>
           <view
-            className={secondWindowBusy ? 'action-chip action-chip-disabled' : 'action-chip'}
+            className={secondWindowBusy ? 'action-chip action-chip-busy' : 'action-chip'}
             bindtap={openSecondWindow}
           >
-            <text className="action-chip-text">
-              {secondWindowBusy ? 'Measuring…' : secondWindowOpen ? 'Show 2nd Window Delta' : 'Open 2nd Window'}
+            <text className={secondWindowBusy ? 'action-chip-text action-chip-text-busy' : 'action-chip-text'}>
+              {secondWindowBusy ? 'Measuring…' : secondWindowOpen ? 'Show second window delta' : 'Open second window'}
             </text>
           </view>
           <text className="action-note">{secondWindowStatus}</text>
         </view>
 
+        <text className="section-label">Live metrics</text>
+
         <view className="cards-row" style={{ flexDirection: 'row' }}>
           <MetricCard
-            title="APP SIZE"
+            title="App size"
             value={appSize != null ? formatMB(appSize.total) : '—'}
-            subtitle="Runtime"
+            subtitle="Total on disk"
           />
           <MetricCard
-            title="STARTUP"
+            title="Startup"
             value={startupTime > 0 ? formatMS(startupTime) : '—'}
-            subtitle="Preload → First Call"
-            accentColor={startupTime > 0 ? startupColor(startupTime) : '#ffffff'}
+            subtitle="Preload to first call"
+            accentColor={startupTime > 0 ? startupColor(startupTime) : '#f5f8fa'}
           />
           <MetricCard
-            title="MEMORY"
+            title="Memory"
             value={memValue}
             subtitle={memorySubtitle}
             extraInfo={memHeapInfo}
           />
           <MetricCard
-            title="PLATFORM"
+            title="Platform"
             value={platform != null ? `${platform.platform}` : '—'}
             subtitle={platform != null ? `${platform.arch} · v${platform.version}` : 'Loading runtime info'}
           />
           <MetricCard
-            title="SECOND WINDOW"
+            title="Second window"
             value={secondWindowValue}
             subtitle={secondWindowSubtitle}
             extraInfo="Measured after one extra LynxWindow finishes loading."
-            accentColor={secondWindowDelta != null ? '#f97316' : '#ffffff'}
+            accentColor={secondWindowDelta != null ? '#48aff0' : '#f5f8fa'}
           />
         </view>
 

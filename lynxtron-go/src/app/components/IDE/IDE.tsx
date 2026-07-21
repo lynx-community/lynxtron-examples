@@ -25,6 +25,7 @@ export interface IDEProps {
   onToggleDir: (dirPath: string) => void;
   onOpenFile: (fullPath: string) => void;
   onOpenFileAt: (fullPath: string, options: { line: number; column: number; selectLength: number }) => void;
+  onEditorLayout?: () => void;
   onOpenFolderDialog: () => void;
   onSwitchTab: (tabId: string) => void;
   onCloseTab: (tabId: string) => void;
@@ -81,7 +82,7 @@ export function IDE(props: IDEProps) {
               collapsed={!props.bottomPanelOpen}
               onRatioChange={props.onEditorBottomRatioChange}
             >
-              <EditorPanel activeTabId={props.activeTabId} />
+              <EditorPanel activeTabId={props.activeTabId} onEditorLayout={props.onEditorLayout} />
               <BottomPanel
                 onClose={props.onCloseBottomPanel}
                 rootPath={props.rootPath || undefined}

@@ -1,37 +1,40 @@
 .root {
   flex: 1;
+  height: 100%;
   max-height: 100vh;
-  background-color: #08111f;
+  background-color: var(--bg);
   flex-direction: column;
+  width: 100%;
 }
 
 .scroll-content {
   flex: 1;
   max-height: 100vh;
-  padding: 24px;
+  padding: 24px 28px;
   flex-direction: column;
 }
 
 .page-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #38bdf8;
-  letter-spacing: 3px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
   margin-bottom: 6px;
-}
-
-.page-heading {
-  font-size: 26px;
-  font-weight: 700;
-  color: #f8fafc;
-  margin-bottom: 8px;
 }
 
 .page-copy {
   font-size: 13px;
-  color: #94a3b8;
-  line-height: 18px;
-  margin-bottom: 18px;
+  color: var(--muted);
+  line-height: 19px;
+  max-width: 640px;
+  margin-bottom: 20px;
+}
+
+.section-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 12px;
+  margin-bottom: 10px;
 }
 
 .action-row {
@@ -41,33 +44,44 @@
 }
 
 .action-chip {
-  padding: 10px 14px;
-  border-radius: 999px;
+  padding: 5px 12px;
+  border-radius: 3px;
   border-width: 1px;
   border-style: solid;
-  border-color: #38bdf8;
-  background-color: #0f2037;
+  border-color: var(--hairline);
+  background-color: #394b59;
   margin-right: 12px;
   margin-bottom: 8px;
 }
 
-.action-chip-disabled {
-  opacity: 0.55;
+.action-chip:hover {
+  background-color: #30404d;
+}
+
+.action-chip-busy {
+  background-color: var(--accent-bg);
+}
+
+.action-chip-busy:hover {
+  background-color: var(--accent-bg);
 }
 
 .action-chip-text {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #f8fafc;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.action-chip-text-busy {
+  color: var(--accent);
 }
 
 .action-note {
   flex: 1;
   min-width: 220px;
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--muted);
   margin-bottom: 8px;
 }
 
@@ -87,9 +101,8 @@
 }
 
 .footer {
-  font-size: 11px;
-  color: #64748b;
-  margin-top: 16px;
+  font-size: 12px;
+  color: var(--dim);
+  margin-top: 20px;
   margin-bottom: 8px;
-  text-align: center;
 }

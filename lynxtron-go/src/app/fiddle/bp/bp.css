@@ -1,0 +1,622 @@
+.bp-muted { color: var(--bp-text-muted); }
+/* Minimal Blueprint 3 dark theme subset. Class names mirror upstream for
+   compatibility with copied LESS from electron-fiddle's src/less/. */
+
+/* ── Button ───────────────────────────────────────────────────────────── */
+.bp3-button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  column-gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  flex-grow: 0;
+  flex-basis: content;
+  width: fit-content;
+  background-color: var(--background-1);   /* background-1 */
+  background-image: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0));
+  color: var(--text-color-1);              /* text-color-1 */
+  border: none;
+  cursor: pointer;
+  min-width: 30px;
+  font-size: 14px;
+  line-height: 1;
+  box-shadow: inset 0 0 0 1px rgba(16,22,26,0.4);
+}
+.bp3-button:hover { background-color: rgba(138,155,168,0.15); }  /* fiddle blueprint.less dark override */
+.bp3-button:active,
+.bp3-button.bp3-active {
+  background-color: #202b33;               /* stock bp3-dark active */
+  background-image: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(16,22,26,0.6),
+    inset 0 1px 2px rgba(16,22,26,0.2);
+}
+.bp3-button.bp3-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.bp3-button.bp3-large { height: 40px; padding: 5px 15px; font-size: 16px; min-width: 40px; }
+.bp3-button.bp3-small { height: 24px; padding: 0 7px; font-size: 12px; min-width: 24px; }
+
+.bp3-button.bp3-minimal {
+  background: none;
+  background-image: none;
+  box-shadow: none;
+  color: var(--text-color-3);              /* text-color-3 */
+}
+.bp3-button.bp3-minimal:hover {
+  background-color: rgba(138,155,168,0.15);   /* stock bp3-dark minimal hover */
+  color: var(--text-color-1);
+}
+.bp3-button.bp3-minimal.bp3-active {
+  background-color: rgba(138,155,168,0.3);
+  color: var(--bp-text);
+}
+
+/* Light theme: upstream only re-colors Blueprint inside `.fiddle.bp3-dark`
+   (blueprint.less) — light mode is stock Blueprint 3. Values below are from
+   @blueprintjs/core 3.x blueprint.css. This block must stay ABOVE the intent
+   rules: `.theme-light .bp3-button` ties them on specificity, so source order
+   is what keeps intent buttons colored in light mode. */
+.theme-light .bp3-button {
+  background-color: #f5f8fa;
+  background-image: linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0));
+  color: #182026;
+  box-shadow:
+    inset 0 0 0 1px rgba(16,22,26,0.2),
+    inset 0 -1px 0 rgba(16,22,26,0.1);
+}
+.theme-light .bp3-button:hover {
+  background-color: #ebf1f5;
+  box-shadow:
+    inset 0 0 0 1px rgba(16,22,26,0.2),
+    inset 0 -1px 0 rgba(16,22,26,0.1);
+}
+.theme-light .bp3-button:active,
+.theme-light .bp3-button.bp3-active {
+  background-color: #d8e1e8;
+  background-image: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(16,22,26,0.2),
+    inset 0 1px 2px rgba(16,22,26,0.2);
+}
+.theme-light .bp3-button.bp3-minimal {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+.theme-light .bp3-button.bp3-minimal:hover {
+  background-color: rgba(167,182,194,0.3);
+  color: #182026;
+}
+.theme-light .bp3-button.bp3-minimal.bp3-active {
+  background-color: rgba(115,134,148,0.3);
+  color: #182026;
+}
+
+.bp3-button.bp3-intent-primary {
+  background-color: #137cbd;
+  background-image: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0));
+  color: var(--text-color-1);
+  box-shadow:
+    inset 0 0 0 1px rgba(16,22,26,0.4),
+    inset 0 -1px 0 rgba(16,22,26,0.2);
+}
+.bp3-button.bp3-intent-primary:hover { background-color: #106ba3; }
+.bp3-button.bp3-intent-primary:active,
+.bp3-button.bp3-intent-primary.bp3-active { background-color: #0e5a8a; }
+.bp3-button.bp3-intent-danger {
+  background-color: #db3737;
+  background-image: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0));
+  color: var(--text-color-1);
+}
+.bp3-button.bp3-intent-danger:hover { background-color: #c23030; }
+.bp3-button.bp3-intent-danger:active,
+.bp3-button.bp3-intent-danger.bp3-active { background-color: #a82a2a; }
+
+.bp3-button.bp3-intent-success { background-color: #0f9960; color: var(--text-color-1); }
+.bp3-button.bp3-intent-success:hover { background-color: #0d8050; }
+
+.bp3-button.bp3-intent-warning { background-color: #d9822b; color: var(--text-color-1); }
+.bp3-button.bp3-intent-warning:hover { background-color: #bf7326; }
+
+.bp3-button.bp3-intent-danger { background-color: #db3737; color: var(--text-color-1); }
+.bp3-button.bp3-intent-danger:hover { background-color: #c23030; }
+
+.bp3-button-text {
+  color: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  lines: 1;
+  flex-shrink: 0;
+}
+.bp3-button-icon { color: inherit; font-size: 14px; flex-shrink: 0; }
+
+/* ── Icon ─────────────────────────────────────────────────────────────── */
+.bp3-icon { display: inline-block; font-size: 16px; line-height: 1; color: var(--bp-text); }
+
+/* ── ButtonGroup ──────────────────────────────────────────────────────── */
+.bp3-button-group {
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  align-items: stretch;
+}
+.bp3-button-group.bp3-vertical { flex-direction: column; }
+.bp3-button-group.bp3-fill { display: flex; width: 100%; }
+.bp3-button-group .bp3-button { border-radius: 0; }
+.bp3-button-group .bp3-button:first-child { border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
+.bp3-button-group .bp3-button:last-child { border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
+.bp3-button-group.bp3-vertical .bp3-button:first-child { border-radius: 3px 3px 0 0; }
+.bp3-button-group.bp3-vertical .bp3-button:last-child { border-radius: 0 0 3px 3px; }
+
+/* ── ControlGroup ─────────────────────────────────────────────────────── */
+.bp3-control-group {
+  /* Lynx has no inline-flex; plain flex row sizes to content inside a row parent */
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  flex-shrink: 0;
+  gap: 0;
+}
+.bp3-control-group.bp3-fill { display: flex; width: 100%; }
+.bp3-control-group.bp3-vertical { flex-direction: column; }
+/* Fused segments: only the group's outer corners are rounded. Positional
+   classes (set by ControlGroup) — :first-child/:last-child don't apply here. */
+.bp3-cg-item { display: flex; align-items: stretch; }
+.bp3-control-group .bp3-button { border-radius: 0; }
+.bp3-cg-item--first .bp3-button { border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
+.bp3-cg-item--last .bp3-button { border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
+
+/* ── InputGroup ───────────────────────────────────────────────────────── */
+.bp3-input-group {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 30px;
+}
+.bp3-input-group.bp3-fill { display: flex; width: 100%; }
+.bp3-input-group.bp3-disabled { opacity: 0.4; }
+.bp3-input-group .bp3-input {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 3px;
+  border: none;
+  background-color: var(--background-2);   /* background-2 */
+  color: var(--text-color-1);
+  font-size: 14px;
+  flex: 1;
+  min-width: 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(16,22,26,0.3),
+    inset 0 1px 1px rgba(16,22,26,0.4);
+}
+.bp3-input-group .bp3-input::placeholder { color: var(--bp-text-muted); opacity: 0.6; }
+.bp3-input-group .bp3-input:focus {
+  box-shadow:
+    inset 0 0 0 1px var(--foreground-1),      /* foreground-1 focus ring */
+    inset 0 0 0 3px rgba(159,234,250,0.2);
+  outline: none;
+}
+.theme-light .bp3-input-group .bp3-input {
+  background-color: #ffffff;
+  box-shadow:
+    inset 0 0 0 1px rgba(16,22,26,0.15),
+    inset 0 1px 1px rgba(16,22,26,0.2);
+}
+.theme-light .bp3-input-group .bp3-input:focus {
+  box-shadow:
+    inset 0 0 0 1px #137cbd,
+    inset 0 0 0 3px rgba(19,124,189,0.3);
+}
+.bp3-input-group .bp3-input-icon {
+  position: absolute;
+  left: 8px;
+  color: var(--bp-text-muted);
+  pointer-events: none;
+}
+.bp3-input-group .bp3-input-icon ~ .bp3-input { padding-left: 26px; }
+.bp3-input-group .bp3-input-action { position: absolute; right: 4px; top: 3px; }
+
+/* ── Dialog ───────────────────────────────────────────────────────────── */
+.bp3-dialog-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(16,22,26,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.bp3-dialog {
+  width: 500px;
+  max-height: 80%;
+  background-color: var(--background-3);   /* background-3 — matches upstream .dialog */
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color-1);   /* border-color-1 */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+.bp3-dialog-header {
+  height: 44px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color-1);  /* match the dialog's own border */
+  background-color: var(--background-1);   /* background-1 */
+  border-radius: 6px 6px 0 0;
+}
+.bp3-dialog-title {
+  font-size: 15px;
+  color: var(--bp-text);
+  font-weight: 500;
+}
+.bp3-dialog-body {
+  /* NOTE: no `flex: 1` here — the dialog has auto height, and Lynx flex
+     treats basis-0 children of auto-height containers as 0-height. */
+  padding: 20px;
+}
+.bp3-dialog-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--bp-surface-deep);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ── Callout ──────────────────────────────────────────────────────────── */
+.bp3-callout {
+  padding: 12px;
+  border-radius: 3px;
+  background-color: rgba(138,155,168,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bp3-callout.bp3-intent-primary { background-color: rgba(19,124,189,0.15); }
+.bp3-callout.bp3-intent-success { background-color: rgba(15,153,96,0.15); }
+.bp3-callout.bp3-intent-warning { background-color: rgba(217,130,43,0.15); }
+.bp3-callout.bp3-intent-danger  { background-color: rgba(219,55,55,0.15); }
+.bp3-callout-title { font-size: 14px; color: var(--bp-text); font-weight: 500; }
+.bp3-callout-body { font-size: 13px; color: var(--bp-text-muted); line-height: 1.5; }
+
+/* ── Checkbox ─────────────────────────────────────────────────────────── */
+.bp3-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.bp3-checkbox.bp3-disabled { opacity: 0.5; cursor: not-allowed; }
+.bp3-checkbox-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background-color: var(--bp-surface);
+  box-shadow: inset 0 0 0 1px rgba(16,22,26,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bp3-checkbox-indicator--checked { background-color: #137cbd; }
+.bp3-checkbox-check { color: var(--text-color-1); font-size: 10px; }
+.bp3-checkbox-label { color: var(--bp-text); font-size: 13px; }
+
+/* ── FormGroup ────────────────────────────────────────────────────────── */
+.bp3-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.bp3-form-group-label { color: var(--bp-text-muted); font-size: 12px; font-weight: 500; }
+.bp3-form-group-content { display: flex; align-items: center; }
+.bp3-form-group-helper { color: var(--bp-text-muted); font-size: 11px; }
+
+/* ── Icon ─────────────────────────────────────────────────────────────── */
+.bp3-icon {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── NonIdealState ────────────────────────────────────────────────────── */
+.bp3-non-ideal-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: var(--bp-text-muted);
+  text-align: center;
+}
+.bp3-non-ideal-state-visual { color: rgba(138,155,168,0.5); }
+.bp3-non-ideal-state-title {
+  color: var(--bp-text);
+  font-size: 16px;
+  font-weight: 500;
+}
+.bp3-non-ideal-state-description {
+  color: var(--bp-text-muted);
+  font-size: 13px;
+  max-width: 360px;
+  line-height: 1.5;
+}
+.bp3-non-ideal-state-action { margin-top: 8px; }
+
+/* ── Spinner ──────────────────────────────────────────────────────────── */
+.bp3-spinner {
+  display: inline-block;
+  animation: bp3-spin 0.8s linear infinite;
+}
+.bp3-spinner-ring {
+  border: 2px solid rgba(138,155,168,0.2);
+  border-top-color: #137cbd;
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+}
+.bp3-spinner.bp3-intent-success .bp3-spinner-ring { border-top-color: #0f9960; }
+.bp3-spinner.bp3-intent-warning .bp3-spinner-ring { border-top-color: #d9822b; }
+.bp3-spinner.bp3-intent-danger .bp3-spinner-ring { border-top-color: #db3737; }
+@keyframes bp3-spin { to { transform: rotate(360deg); } }
+
+/* ── Menu ─────────────────────────────────────────────────────────────── */
+.bp3-menu {
+  padding: 4px;
+  background-color: var(--bp-surface);
+  border-radius: 3px;
+  box-shadow:
+    0 0 0 1px rgba(16,22,26,0.4),
+    0 2px 4px rgba(16,22,26,0.4),
+    0 8px 24px rgba(16,22,26,0.4);
+  min-width: 180px;
+}
+.bp3-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--bp-text);
+  font-size: 13px;
+}
+.bp3-menu-item:hover { background-color: rgba(138,155,168,0.15); }
+.bp3-menu-item.bp3-active { background-color: #137cbd; color: var(--text-color-1); }
+.bp3-menu-item.bp3-disabled { opacity: 0.5; cursor: not-allowed; }
+.bp3-menu-item.bp3-disabled:hover { background: none; }
+.bp3-menu-item-icon { flex-shrink: 0; }
+.bp3-menu-item-text { flex: 1; }
+.bp3-menu-item-label { color: var(--bp-text-muted); font-size: 11px; }
+.bp3-menu-item.bp3-intent-danger { color: #db3737; }
+.bp3-menu-divider {
+  height: 1px;
+  background-color: rgba(16,22,26,0.4);
+  margin: 4px 0;
+}
+.bp3-menu-header { padding: 4px 10px; }
+.bp3-menu-header-text {
+  color: var(--bp-text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────── */
+.bp3-card {
+  padding: 20px;
+  border-radius: 3px;
+  background-color: var(--bp-surface);
+  box-shadow: 0 0 0 1px rgba(16,22,26,0.4);
+}
+.bp3-card.bp3-interactive { cursor: pointer; }
+.bp3-card.bp3-interactive:hover {
+  box-shadow: 0 0 0 1px rgba(16,22,26,0.4), 0 2px 4px rgba(16,22,26,0.4), 0 8px 24px rgba(16,22,26,0.4);
+}
+.bp3-elevation-1 { box-shadow: 0 0 0 1px rgba(16,22,26,0.4), 0 1px 1px rgba(16,22,26,0.4); }
+.bp3-elevation-2 { box-shadow: 0 0 0 1px rgba(16,22,26,0.4), 0 1px 1px rgba(16,22,26,0.4), 0 2px 6px rgba(16,22,26,0.4); }
+.bp3-elevation-3 { box-shadow: 0 0 0 1px rgba(16,22,26,0.4), 0 2px 4px rgba(16,22,26,0.4), 0 8px 24px rgba(16,22,26,0.4); }
+.bp3-elevation-4 { box-shadow: 0 0 0 1px rgba(16,22,26,0.4), 0 4px 8px rgba(16,22,26,0.4), 0 18px 46px 6px rgba(16,22,26,0.4); }
+
+/* ── Divider ──────────────────────────────────────────────────────────── */
+.bp3-divider {
+  background-color: rgba(16,22,26,0.4);
+  height: 1px;
+  margin: 8px 0;
+}
+.bp3-divider.bp3-vertical { width: 1px; height: auto; margin: 0 8px; align-self: stretch; }
+
+/* ── Tag ──────────────────────────────────────────────────────────────── */
+.bp3-tag {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background-color: #5c7080;
+  color: var(--bp-text);
+  font-size: 12px;
+  line-height: 1;
+  min-height: 20px;
+}
+.bp3-tag.bp3-large { padding: 4px 10px; font-size: 14px; min-height: 30px; }
+.bp3-tag.bp3-round { border-radius: 20px; }
+.bp3-tag.bp3-minimal { background-color: rgba(138,155,168,0.15); }
+.bp3-tag.bp3-intent-primary { background-color: #137cbd; }
+.bp3-tag.bp3-intent-success { background-color: #0f9960; }
+.bp3-tag.bp3-intent-warning { background-color: #d9822b; }
+.bp3-tag.bp3-intent-danger { background-color: #db3737; }
+.bp3-tag-text { color: inherit; font-size: inherit; }
+.bp3-tag-remove {
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.7;
+}
+.bp3-tag-remove:hover { opacity: 1; }
+.bp3-tag-remove-text { color: inherit; font-size: 10px; }
+
+/* ── Radio / RadioGroup ───────────────────────────────────────────────── */
+.bp3-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.bp3-radio.bp3-disabled { opacity: 0.5; cursor: not-allowed; }
+.bp3-radio-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: var(--bp-surface);
+  box-shadow: inset 0 0 0 1px rgba(16,22,26,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bp3-radio-indicator--checked { background-color: #137cbd; box-shadow: none; }
+.bp3-radio-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--text-color-1);
+}
+.bp3-radio-label { color: var(--bp-text); font-size: 13px; }
+.bp3-radio-group { display: flex; flex-direction: column; gap: 4px; }
+.bp3-radio-group-label { color: var(--bp-text-muted); font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+.bp3-radio-group-items { display: flex; flex-direction: column; gap: 2px; }
+.bp3-radio-group-items.bp3-inline { flex-direction: row; gap: 16px; }
+
+/* ── Alert ────────────────────────────────────────────────────────────── */
+.bp3-alert {
+  width: 400px;
+  background-color: var(--bp-surface);
+  border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 20px;
+  gap: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.bp3-alert-icon { color: var(--bp-text-muted); flex-shrink: 0; }
+.bp3-alert-contents { flex: 1; min-width: 200px; }
+.bp3-alert-message { color: var(--bp-text); font-size: 14px; line-height: 1.5; }
+.bp3-alert-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ── Toaster ──────────────────────────────────────────────────────────── */
+/* Bottom-right, not top-right: native Scintilla editors float above ALL Lynx
+   UI, so a toast over the editor mosaic is painted over no matter its
+   z-index. The bottom strip is the console — regular Lynx UI — which is the
+   one place a Lynx toast is reliably visible. (Caveat: with the console
+   collapsed the editors reach the bottom edge and can cover it again.) */
+.bp3-toast-container {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 200;
+  pointer-events: none;
+}
+.bp3-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 3px;
+  background-color: var(--bp-button-bg);
+  color: var(--bp-text);
+  min-width: 280px;
+  max-width: 400px;
+  box-shadow:
+    0 0 0 1px rgba(16,22,26,0.2),
+    0 2px 4px rgba(16,22,26,0.4),
+    0 8px 24px rgba(16,22,26,0.4);
+  pointer-events: auto;
+}
+.bp3-toast.bp3-intent-primary { background-color: #137cbd; }
+.bp3-toast.bp3-intent-success { background-color: #0f9960; }
+.bp3-toast.bp3-intent-warning { background-color: #d9822b; }
+.bp3-toast.bp3-intent-danger { background-color: #db3737; }
+.bp3-toast-icon { color: inherit; }
+.bp3-toast-message { flex: 1; color: inherit; font-size: 13px; line-height: 1.4; }
+.bp3-toast-close {
+  cursor: pointer;
+  padding: 2px 6px;
+  opacity: 0.7;
+}
+.bp3-toast-close:hover { opacity: 1; }
+.bp3-toast-close-text { color: inherit; font-size: 11px; }
+
+/* ── Light theme chrome (stock Blueprint 3 light shadows) ─────────────────
+   The dark rules above hard-code bp3-dark's rgba(16,22,26,.4) rings; stock
+   light Blueprint is far softer. Button/input overrides live next to their
+   dark rules (source order vs intent rules matters there). */
+.theme-light .bp3-checkbox-indicator {
+  background-color: #f5f8fa;
+  box-shadow: inset 0 0 0 1px rgba(16,22,26,0.2);
+}
+.theme-light .bp3-radio-indicator {
+  background-color: #f5f8fa;
+  box-shadow: inset 0 0 0 1px rgba(16,22,26,0.2);
+}
+.theme-light .bp3-checkbox-indicator--checked,
+.theme-light .bp3-radio-indicator--checked { background-color: #137cbd; }
+.theme-light .bp3-checkbox-check { color: #ffffff; }
+.theme-light .bp3-radio-dot { background-color: #ffffff; }
+.theme-light .bp3-menu {
+  box-shadow:
+    0 0 0 1px rgba(16,22,26,0.1),
+    0 2px 4px rgba(16,22,26,0.2),
+    0 8px 24px rgba(16,22,26,0.2);
+}
+.theme-light .bp3-menu-item:hover { background-color: rgba(167,182,194,0.3); }
+.theme-light .bp3-menu-divider { background-color: rgba(16,22,26,0.15); }
+.theme-light .bp3-divider { background-color: rgba(16,22,26,0.15); }
+.theme-light .bp3-card { box-shadow: 0 0 0 1px rgba(16,22,26,0.15); }
+.theme-light .bp3-card.bp3-interactive:hover {
+  box-shadow:
+    0 0 0 1px rgba(16,22,26,0.1),
+    0 2px 4px rgba(16,22,26,0.2),
+    0 8px 24px rgba(16,22,26,0.2);
+}
+.theme-light .bp3-dialog {
+  box-shadow:
+    0 0 0 1px rgba(16,22,26,0.1),
+    0 4px 8px rgba(16,22,26,0.2),
+    0 18px 46px 6px rgba(16,22,26,0.2);
+}
+.theme-light .bp3-alert {
+  box-shadow:
+    0 0 0 1px rgba(16,22,26,0.1),
+    0 4px 8px rgba(16,22,26,0.2),
+    0 18px 46px 6px rgba(16,22,26,0.2);
+}
+.theme-light .bp3-toast {
+  box-shadow:
+    0 0 0 1px rgba(16,22,26,0.1),
+    0 2px 4px rgba(16,22,26,0.2),
+    0 8px 24px rgba(16,22,26,0.2);
+}

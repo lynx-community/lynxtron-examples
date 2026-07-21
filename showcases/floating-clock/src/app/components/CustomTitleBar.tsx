@@ -22,8 +22,9 @@ export function CustomTitleBar({
 
   return (
     <view className="title-bar-drag-area">
-        <view className="title-bar-button" bindtap={handleClose}>
-          <text className="title-bar-button-text">×</text>
+      <text className="title-bar-text">FLOATING CLOCK</text>
+      <view className="title-bar-button" bindtap={handleClose}>
+        <text className="title-bar-button-text">×</text>
       </view>
     </view>
   );

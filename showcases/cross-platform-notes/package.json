@@ -18,7 +18,7 @@
   },
   "showcase": {
     "description": "Cross-Platform Notes showcase scaffold with a shared Lynx UI for desktop and web",
-    "thumbnail": "thumbnail.svg",
+    "thumbnail": "thumbnail.png",
     "targets": [
       "desktop",
       "web"

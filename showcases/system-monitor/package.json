@@ -14,7 +14,7 @@
   },
   "showcase": {
     "description": "System monitor example demonstrating Node.js and Lynx communication",
-    "thumbnail": "thumbnail.svg",
+    "thumbnail": "thumbnail.png",
     "tags": ["intermediate", "nodejs", "communication"],
     "minToolchainVersion": "0.0.1"
   },

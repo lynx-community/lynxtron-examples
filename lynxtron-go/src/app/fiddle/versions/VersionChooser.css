@@ -1,0 +1,15 @@
+.Version-List { display: flex; flex-direction: column; gap: 4px; }
+.Version-Item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.Version-Item:hover { background-color: rgba(138,155,168,0.15); }
+.Version-Item--active { background-color: var(--bp-selected-bg); }
+.Version-ItemText { color: var(--bp-text); font-size: 13px; }
+.Version-Check { color: #48aff0; font-size: 14px; }
+.Version-Empty { color: var(--bp-text-muted); font-size: 13px; }
+.Version-CatalogList { max-height: 260px; min-height: 100px; }

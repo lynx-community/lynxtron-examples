@@ -299,16 +299,19 @@ function describeNodeVersionRange(range: string): string {
   return trimmed;
 }
 
+// npm runs with Lynxtron-as-node (not the system Node), so version errors
+// must point at the runtime — telling users to `brew install node` fixes
+// nothing here.
 export function formatNodeVersionRequirementError(
   requirement: NodeVersionRequirement,
   currentVersion: string | null,
 ): string {
   const installHint = describeNodeVersionRange(requirement.range);
   if (!currentVersion) {
-    return `Lynxtron was not found. Install Lynxtron and retry.`;
+    return `Lynxtron's Node.js runtime was not detected. Reinstall or update Lynxtron and retry.`;
   }
 
-  return `Lynxtron's Node.js version ${currentVersion} does not satisfy required version ${requirement.range}.`;
+  return `Lynxtron's Node.js version ${currentVersion} does not satisfy required version ${requirement.range}. Update Lynxtron to a build shipping Node ${installHint}.`;
 }
 
 export function getShowcaseInstallPlan(showcasePath: string): ShowcaseInstallPlan {

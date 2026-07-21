@@ -1,41 +1,41 @@
 .size-breakdown {
-  background-color: #101826;
-  border: 1px solid #1f2937;
-  border-radius: 16px;
-  padding: 18px;
-  margin: 6px;
+  background-color: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 16px;
+  margin: 4px;
+  flex-direction: column;
 }
 
 .breakdown-title {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
-  color: #64748b;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  margin-bottom: 16px;
+  color: var(--text);
+  margin-bottom: 14px;
 }
 
 .bar-row {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  flex-direction: column;
 }
 
 .bar-track {
   flex-direction: row;
-  height: 10px;
-  border-radius: 999px;
+  height: 6px;
+  border-radius: 3px;
+  border: 1px solid var(--hairline);
   overflow: hidden;
-  background-color: #0b1220;
+  background-color: var(--deep);
   margin-bottom: 6px;
 }
 
 .bar-fill {
-  height: 10px;
-  border-radius: 999px;
+  height: 6px;
 }
 
 .bar-empty {
-  height: 10px;
-  background-color: #0b1220;
+  height: 6px;
+  background-color: var(--deep);
 }
 
 .bar-label-row {
@@ -45,11 +45,12 @@
 
 .bar-label {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--muted);
 }
 
 .bar-size {
+  font-family: var(--font-mono);
   font-size: 12px;
-  color: #e2e8f0;
   font-weight: 600;
+  color: var(--text);
 }

@@ -34,7 +34,7 @@ const LIST_ROWS: ListRow[] = Array.from({ length: 360 }, (_, index) => {
 
 const MODE_CONFIG: Array<{ id: ListMode; label: string; hint: string }> = [
   { id: 'all', label: 'All', hint: '360 rows' },
-  { id: 'hot', label: 'Hot Path', hint: 'every 3rd row' },
+  { id: 'hot', label: 'Hot path', hint: 'every 3rd row' },
   { id: 'dense', label: 'Dense', hint: 'skip cooling rows' },
 ];
 
@@ -54,9 +54,9 @@ function formatBytes(bytes: number): string {
 }
 
 function bucketColor(bucket: ListRow['bucket']): string {
-  if (bucket === 'hot') return '#38bdf8';
-  if (bucket === 'warm') return '#22c55e';
-  return '#f97316';
+  if (bucket === 'hot') return '#48aff0';
+  if (bucket === 'warm') return '#3dd68c';
+  return '#608291';
 }
 
 export function LongListDemo({ onInteractionStart }: LongListDemoProps) {
@@ -84,9 +84,8 @@ export function LongListDemo({ onInteractionStart }: LongListDemoProps) {
   return (
     <view className="benchmark-panel long-list-panel">
       <view className="benchmark-panel-header">
-        <view>
-          <text className="benchmark-panel-kicker">INTERACTION HEAVY</text>
-          <text className="benchmark-panel-title">Long List Stress</text>
+        <view className="benchmark-panel-header-main">
+          <text className="benchmark-panel-title">Long list stress</text>
           <text className="benchmark-panel-copy">
             Tap rows, change filters, and keep the renderer busy with a dense 360-row list.
           </text>
@@ -116,18 +115,18 @@ export function LongListDemo({ onInteractionStart }: LongListDemoProps) {
 
       <view className="benchmark-stats">
         <view className="benchmark-stat">
-          <text className="benchmark-stat-label">Visible Rows</text>
           <text className="benchmark-stat-value">{visibleRows.length}</text>
+          <text className="benchmark-stat-label">Visible rows</text>
           <text className="benchmark-stat-note">Filter updates rerender the full list panel.</text>
         </view>
         <view className="benchmark-stat">
-          <text className="benchmark-stat-label">Selected</text>
           <text className="benchmark-stat-value">{activeRow != null ? `${activeRow.id + 1}` : '—'}</text>
+          <text className="benchmark-stat-label">Selected</text>
           <text className="benchmark-stat-note">{activeRow != null ? `${activeRow.lane} · ${activeRow.stage}` : 'Tap a row'}</text>
         </view>
         <view className="benchmark-stat">
-          <text className="benchmark-stat-label">Selected Payload</text>
           <text className="benchmark-stat-value">{activeRow != null ? formatBytes(activeRow.bytes) : '—'}</text>
+          <text className="benchmark-stat-label">Selected payload</text>
           <text className="benchmark-stat-note">Big enough to show layout churn.</text>
         </view>
       </view>
@@ -155,10 +154,6 @@ export function LongListDemo({ onInteractionStart }: LongListDemoProps) {
           );
         })}
       </scroll-view>
-
-      <text className="long-list-footer">
-        Interaction note: row taps update selection and stress the full scroll surface without leaving the page.
-      </text>
     </view>
   );
 }

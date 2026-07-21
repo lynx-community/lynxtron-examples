@@ -1,0 +1,20 @@
+/* hiddenInset titlebar: traffic lights float over the header's left edge
+   (main.ts trafficLightPosition x:20) — shift the commands row clear. */
+.commands.is-mac { padding-left: 74px; }
+
+.FiddleHeader {
+  height: 51px;
+  min-height: 51px;
+  max-height: 51px;
+  background-color: var(--background-3);   /* background-3 — upstream header bg */
+  /* Upstream separates the header with its box-shadow ring rgba(16,22,26,.2)
+     (commands.less), not border-color-2 — #1e2527 solid reads as a harsh
+     black line in light mode. A border avoids sibling-stacking shadow loss. */
+  border-bottom: 1px solid rgba(16,22,26,0.2);
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  flex-shrink: 0;
+  overflow: hidden;
+  width: 100%;
+}

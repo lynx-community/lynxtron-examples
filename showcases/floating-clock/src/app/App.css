@@ -1,58 +1,82 @@
 
 .app-container {
+  display: flex;
   flex: 1;
   flex-direction: column;
-  background-color: transparent;
+  background-color: rgba(29, 36, 39, 0.94); /* --bg at panel translucency */
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
 }
 
 .title-bar-drag-area {
   display: flex;
   flex-direction: row;
   height: 36px;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(44, 46, 59, 0.6); /* --surface at chrome translucency */
+  border-bottom: 1px solid var(--hairline);
   align-items: center;
-  justify-content: center; 
+  justify-content: space-between;
   padding-left: 12px;
-  padding-right: 12px;
+  padding-right: 8px;
   flex-shrink: 0;
   -x-app-region: drag;
 }
 
+/* Chrome label: sans, no letter-spacing — mono is reserved for data. */
 .title-bar-text {
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
 }
 
 .title-bar-button {
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
+  display: flex;
+  flex-direction: row;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 95, 87, 0.8);
+  background-color: var(--hit-fill);
+}
+
+.title-bar-button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .title-bar-button-text {
-  font-size: 14px;
-  font-weight: bold;
-  color: rgba(0, 0, 0, 0.6);
-  line-height: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 13px;
 }
 
 .clock-container {
+  display: flex;
   flex: 1;
+  min-height: 0;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background-color: transparent;
   -x-app-region: drag;
 }
 
+/* The time/date ARE data — mono stays. */
 .clock-text {
-  font-size: 72px;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.95);
-  letter-spacing: 4px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-variant-numeric: tabular-nums;
+  font-size: 64px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.clock-date {
+  margin-top: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  font-family: var(--font-mono);
 }

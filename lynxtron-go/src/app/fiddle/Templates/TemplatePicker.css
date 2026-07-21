@@ -1,0 +1,112 @@
+.TemplatePicker-Overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+/* Same chrome as the bp3 dialogs (Settings etc.) — one dialog language. */
+.TemplatePicker {
+  width: 720px;
+  max-height: 80%;
+  background-color: var(--background-1);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color-1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+.theme-light .TemplatePicker {
+  box-shadow:
+    0 0 0 1px rgba(16,22,26,0.1),
+    0 4px 8px rgba(16,22,26,0.2),
+    0 18px 46px 6px rgba(16,22,26,0.2);
+}
+.TemplatePicker-Header {
+  height: 44px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--background-3);
+  border-bottom: 1px solid var(--border-color-1);
+}
+.TemplatePicker-Title {
+  font-size: 15px;
+  color: var(--bp-text);
+  font-weight: 600;
+}
+.TemplatePicker-Body {
+  /* NOTE: no flex:1 — Lynx collapses basis-0 children of auto-height
+     parents to 0 (same trap as .bp3-dialog-body). Explicit cap instead. */
+  max-height: 560px;
+  padding: 16px;
+}
+.TemplatePicker-Section { margin-bottom: 22px; }
+.TemplatePicker-SectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--foreground-3);
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.TemplatePicker-Grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.TemplatePicker-Card {
+  width: 219px;
+  min-height: 96px;
+  padding: 12px 14px;
+  background-color: var(--background-3);
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--border-color-1);
+  display: flex;
+  flex-direction: column;
+}
+.TemplatePicker-Card--wide { width: 334px; }
+.TemplatePicker-Card:hover {
+  border-color: var(--foreground-1);
+  background-color: var(--background-4);
+}
+.TemplatePicker-CardTitleRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 7px;
+  margin-bottom: 5px;
+}
+.TemplatePicker-CardTitle {
+  font-size: 14px;
+  color: var(--text-color-1);
+  font-weight: 600;
+}
+.TemplatePicker-Card:hover .TemplatePicker-CardTitle { color: var(--foreground-1); }
+.TemplatePicker-CardDesc {
+  font-size: 12px;
+  color: var(--bp-text-muted);
+  line-height: 1.45;
+  flex: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.TemplatePicker-CardTags {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+.TemplatePicker-Tag {
+  font-size: 10px;
+  color: var(--bp-text-muted);
+  background-color: rgba(138, 155, 168, 0.15);
+  padding: 2px 7px;
+  border-radius: 3px;
+}

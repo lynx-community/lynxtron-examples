@@ -1,22 +1,21 @@
 <svg width="640" height="360" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#081120" />
-      <stop offset="100%" stop-color="#020617" />
-    </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#22d3ee" />
-      <stop offset="100%" stop-color="#f97316" />
-    </linearGradient>
-  </defs>
-  <rect width="640" height="360" rx="28" fill="url(#bg)" />
-  <rect x="34" y="34" width="572" height="292" rx="22" fill="#0f172a" fill-opacity="0.82" stroke="#94a3b8" stroke-opacity="0.16" />
-  <rect x="58" y="64" width="156" height="238" rx="18" fill="#020617" fill-opacity="0.86" stroke="#94a3b8" stroke-opacity="0.18" />
-  <rect x="238" y="64" width="344" height="58" rx="16" fill="#020617" fill-opacity="0.86" stroke="#94a3b8" stroke-opacity="0.18" />
-  <rect x="238" y="138" width="344" height="164" rx="16" fill="#020617" fill-opacity="0.86" stroke="#94a3b8" stroke-opacity="0.18" />
-  <circle cx="130" cy="145" r="44" fill="#22d3ee" fill-opacity="0.9" />
-  <text x="101" y="155" fill="#f8fafc" font-size="34" font-weight="800" font-family="Inter, Arial, sans-serif">TC</text>
-  <text x="262" y="100" fill="#e2e8f0" font-size="22" font-weight="800" font-family="Inter, Arial, sans-serif">Native Texture Canvas</text>
-  <text x="262" y="176" fill="#94a3b8" font-size="16" font-family="Inter, Arial, sans-serif">Texture canvas extension</text>
-  <text x="262" y="212" fill="#94a3b8" font-size="16" font-family="Inter, Arial, sans-serif">Native drawing surface</text>
+  <rect width="640" height="360" fill="#1d2427" />
+  <rect x="0.5" y="0.5" width="639" height="359" fill="none" stroke="rgba(255,255,255,0.1)" />
+
+  <!-- specimen canvas framed in hairline on deep -->
+  <rect x="200" y="56" width="384" height="216" fill="#21232d" stroke="rgba(255,255,255,0.1)" />
+  <path d="M 244 216 C 296 128, 344 236, 400 160 S 496 108, 540 148" fill="none" stroke="#48aff0" stroke-width="6" stroke-linecap="square" />
+
+  <!-- tool rail: brush swatches -->
+  <rect x="56" y="56" width="112" height="216" fill="#2c2e3b" stroke="rgba(255,255,255,0.1)" />
+  <rect x="76" y="80" width="24" height="24" fill="#48aff0" />
+  <rect x="112" y="80" width="24" height="24" fill="#3dd68c" />
+  <rect x="76" y="116" width="24" height="24" fill="#df3434" />
+  <rect x="112" y="116" width="24" height="24" fill="#608291" />
+  <rect x="76" y="164" width="72" height="1" fill="rgba(255,255,255,0.1)" />
+  <rect x="76" y="184" width="72" height="16" fill="rgba(19,124,189,0.16)" stroke="rgba(255,255,255,0.1)" />
+  <rect x="76" y="212" width="72" height="16" fill="#394b59" stroke="rgba(255,255,255,0.1)" />
+  <rect x="76" y="240" width="72" height="16" fill="#394b59" stroke="rgba(255,255,255,0.1)" />
+
+  <text x="56" y="322" fill="#a7b6c2" font-size="16" letter-spacing="2" font-family="Menlo, monospace">NATIVE TEXTURE CANVAS</text>
 </svg>

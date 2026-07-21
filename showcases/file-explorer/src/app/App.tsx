@@ -1,4 +1,5 @@
 import { useState, useEffect } from '@lynx-js/react';
+import '@lynxtron-showcases/config/tokens.css';
 import './App.css';
 
 interface DirEntry {
@@ -36,8 +37,6 @@ export function App() {
   };
 
   const goHome = () => {
-    console.log('goHome');
-    console.log(NativeModules.nodejs.exposed);
     const api = NativeModules.nodejs.exposed;
     loadDirectory(api.homedir());
   };
@@ -82,10 +81,10 @@ export function App() {
     return (
       <view className="container">
         <view className="header">
+          <text className="title" text-maxline="1">{api.basename(selectedFile)}</text>
           <view className="back-button" bindtap={() => setSelectedFile(null)}>
-            <text className="button-text">←</text>
+            <text className="button-text">Back</text>
           </view>
-          <text className="title">{api.basename(selectedFile)}</text>
         </view>
         <scroll-view scroll-y className="file-content">
           <text className="content-text">{fileContent}</text>
@@ -101,26 +100,26 @@ export function App() {
         <text className="title">File Explorer</text>
         <view className="nav-buttons">
           <view className="nav-button" bindtap={goHome}>
-            <text className="button-text">🏠</text>
+            <text className="button-text">Home</text>
           </view>
           <view className="nav-button" bindtap={goUp}>
-            <text className="button-text">↑</text>
+            <text className="button-text">Up</text>
           </view>
         </view>
       </view>
       <view className="path-bar">
-        <text className="path-text">{currentPath}</text>
+        <text className="path-text" text-maxline="1">{currentPath}</text>
       </view>
       <scroll-view scroll-y className="file-list">
-        {loading && <text className="loading">Loading...</text>}
+        {loading && <text className="loading">reading dir…</text>}
         {entries.map((entry) => (
           <view
             key={entry.path}
             className={`list-item ${entry.isDirectory ? 'directory' : 'file'}`}
             bindtap={() => openEntry(entry)}
           >
-            <text className="item-icon">{entry.isDirectory ? '📁' : '📄'}</text>
-            <text className="item-name">{entry.name}</text>
+            <text className="item-name" text-maxline="1">{entry.name}</text>
+            <text className="item-kind">{entry.isDirectory ? 'folder' : 'file'}</text>
           </view>
         ))}
       </scroll-view>

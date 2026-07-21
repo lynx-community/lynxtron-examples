@@ -19,23 +19,31 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  /* Panes must be free to shrink: an unshrinkable pane pushes the mosaic past
+     the available area, and while Lynx UI gets clipped, the floating native
+     editors do NOT — they'd paint over sibling UI (console/sidebar). */
+  min-height: 0;
+  min-width: 0;
 }
 
 /* ── Sash (draggable divider) ────────────────────────────────────────────── */
 .Sash {
-  background-color: transparent;
+  /* NOT transparent: fully-transparent views are skipped by Lynx hit-testing */
+  background-color: rgba(128, 128, 128, 0.02);
   z-index: 10;
   flex-shrink: 0;
 }
 
 .SashH {
-  width: 4px;
+  width: 10px;
+  margin: 0 -3px; /* widen hit area without moving layout (upstream: 6px overhang) */
   height: 100%;
   cursor: col-resize;
 }
 
 .SashV {
-  height: 4px;
+  height: 10px;
+  margin: -3px 0;
   width: 100%;
   cursor: row-resize;
 }
@@ -73,7 +81,10 @@
   width: 100%;
   height: 100%;
   z-index: 100;
-  background-color: transparent;
+  /* NOT transparent: fully-transparent views are skipped by Lynx hit-testing,
+     which made this overlay dead — fast drags escaping the 10px sash lost
+     their mousemove stream and the sash stalled. */
+  background-color: rgba(128, 128, 128, 0.02);
 }
 
 .SashOverlayH {

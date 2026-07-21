@@ -1,4 +1,5 @@
 import { app, LynxWindow } from '@lynx-js/lynxtron';
+import { nudgeFramedWindowViewport } from '@lynxtron-showcases/config/window';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 
 declare const __non_webpack_require__: NodeRequire;
@@ -27,4 +28,6 @@ app.whenReady().then(() => {
 
   win.show();
   win.loadFile(LYNX_BUNDLE_PATH);
+  nudgeFramedWindowViewport(win);
+
 });

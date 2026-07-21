@@ -3,7 +3,7 @@ import type { DeepLinkFileNavigation, HostDeepLinkPayload } from '../../shared/d
 
 export type DeepLinkDispatchAction =
   | { kind: 'home' }
-  | { kind: 'open-showcase'; entry: ShowcaseEntry; navigation?: DeepLinkFileNavigation }
+  | { kind: 'open-showcase'; entry: ShowcaseEntry; target?: 'ide'; navigation?: DeepLinkFileNavigation }
   | { kind: 'open-example'; examplePath: string; navigation?: DeepLinkFileNavigation }
   | { kind: 'open-bundle-url'; url: string; title?: string }
   | { kind: 'error'; message: string };
@@ -51,6 +51,7 @@ export function resolveDeepLinkDispatchAction(
   return {
     kind: 'open-showcase',
     entry: showcase,
+    ...(intent.target === 'ide' ? { target: 'ide' as const } : {}),
     ...(intent.navigation ? { navigation: intent.navigation } : {}),
   };
 }

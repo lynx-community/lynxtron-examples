@@ -1,0 +1,37 @@
+{
+  "name": "lynxtron-http-service",
+  "author": "Lynxtron Authors",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "index.cjs",
+  "description": "Lynxtron HTTP service extension — backs the Lynx Fetch API on desktop",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "postinstall": "node scripts/prepare.js"
+  },
+  "keywords": [
+    "lynx",
+    "extension",
+    "http",
+    "fetch"
+  ],
+  "files": [
+    "module/**/*",
+    "bindings/**/*",
+    "index.cjs",
+    "CMakeLists.txt",
+    "README.md",
+    "scripts/**/*",
+    "build/Release/*.node"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "node-addon-api": "^7.0.0"
+  },
+  "devDependencies": {
+    "@lynx-js/lynx-library-headers": "catalog:",
+    "cmake-js": "^7.3.0"
+  }
+}

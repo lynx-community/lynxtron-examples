@@ -14,7 +14,7 @@
   },
   "showcase": {
     "description": "Desktop floating clock widget: frameless, transparent, and custom title bar",
-    "thumbnail": "thumbnail.svg",
+    "thumbnail": "thumbnail.png",
     "tags": ["intermediate"],
     "minToolchainVersion": "0.0.1"
   },

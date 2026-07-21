@@ -1,0 +1,161 @@
+.FiddleSidebar {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: var(--background-1);   /* background-1 */
+  border-right: 1px solid var(--border-color-2); /* border-color-2 */
+}
+.FiddleSidebar-Section {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color-2);
+}
+.FiddleSidebar-Section--modules {
+  border-bottom: none;
+  border-top: 1px solid var(--border-color-2);
+  padding-bottom: 12px;
+  margin-top: auto;
+}
+/* border-color-2 is #1e2527 in BOTH themes (upstream token) — right for dark,
+   a harsh black line in light. Light gets the mosaic-toolbar hairline. */
+.theme-light .FiddleSidebar { border-right: 1px solid var(--hairline); }
+.theme-light .FiddleSidebar-Section { border-bottom: 1px solid var(--hairline); }
+.theme-light .FiddleSidebar-Section--modules { border-bottom: none; border-top: 1px solid var(--hairline); }
+.FiddleSidebar-SectionHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: var(--background-3);   /* background-3 */
+}
+.FiddleSidebar-SectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color-1);              /* text-color-1 */
+  letter-spacing: 0.3px;
+}
+.FiddleSidebar-SectionActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 8px;
+}
+.FiddleSidebar-Count {
+  font-size: 12px;
+  color: var(--bp-text-muted);
+  min-width: 18px;
+  text-align: right;
+}
+.FiddleSidebar-List {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 0;
+}
+.FiddleSidebar-Item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.FiddleSidebar-Item:hover { background-color: var(--background-3); }  /* background-3 */
+.FiddleSidebar-Item--active { background-color: var(--background-4); border-left: 3px solid var(--foreground-1); padding-left: 9px; }
+.FiddleSidebar-ItemIcon { color: var(--foreground-3); flex-shrink: 0; }  /* foreground-3 */
+.FiddleSidebar-Item--active .FiddleSidebar-ItemIcon { color: var(--foreground-1); }  /* foreground-1 */
+.FiddleSidebar-ItemLabel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  row-gap: 2px;
+}
+.FiddleSidebar-ItemName {
+  font-size: 13px;
+  color: var(--text-color-1);              /* text-color-1 */
+  font-weight: 500;
+  lines: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.FiddleSidebar-ItemSubtitle {
+  font-size: 11px;
+  color: var(--foreground-2);              /* foreground-2 */
+  lines: 1;
+}
+.FiddleSidebar-Dot { font-size: 10px; color: var(--bp-text-muted); }
+.FiddleSidebar-SectionTitleRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 7px;
+}
+.FiddleSidebar-FolderIcon { color: var(--bp-text-muted); }
+.FiddleSidebar-EyeBtn {
+  padding: 3px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.FiddleSidebar-EyeBtn:hover { background-color: rgba(138,155,168,0.25); }
+.FiddleSidebar-RowActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 2px;
+  flex-shrink: 0;
+}
+/* Rendered only for the active row (React-conditional, not :hover/display
+   flips): hidden buttons must have NO hit region — an invisible tap target
+   here can silently delete a file — and Lynx leaves paint ghosts behind
+   when :hover toggles display. */
+.FiddleSidebar-ActiveActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 2px;
+}
+.FiddleSidebar-ModuleResults { padding: 0 6px 6px 6px; }
+.FiddleSidebar-ModuleRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.FiddleSidebar-ModuleRow:hover { background-color: var(--background-3); }
+.FiddleSidebar-ModuleLabel {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.FiddleSidebar-ModuleName { font-size: 12px; color: var(--text-color-1); flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.FiddleSidebar-ModuleVersion { font-size: 11px; color: var(--foreground-3); flex-shrink: 0; }
+.FiddleSidebar-ModuleSearch { padding: 8px 12px; }
+.FiddleSidebar-EmptyState { padding: 4px 12px 8px 12px; }
+.FiddleSidebar-EmptyStateText { color: var(--bp-text-muted); font-size: 11px; }
+
+/* ── Inline add-file row (upstream add-file-input: no modal, no overlay) ── */
+.FiddleSidebar-AddRow {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 8px 4px 8px;
+}
+.FiddleSidebar-AddRowInput {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 4px;
+}
+.FiddleSidebar-AddRowError {
+  font-size: 11px;
+  color: #f5498b;
+  padding: 2px 0 0 22px;
+}

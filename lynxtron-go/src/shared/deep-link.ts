@@ -8,7 +8,7 @@ export interface DeepLinkFileNavigation {
 
 export type DeepLinkIntent =
   | { kind: 'home' }
-  | { kind: 'showcase-open'; showcaseId: string; navigation?: DeepLinkFileNavigation }
+  | { kind: 'showcase-open'; showcaseId: string; target?: 'ide'; navigation?: DeepLinkFileNavigation }
   | { kind: 'example-open'; examplePath: string; navigation?: DeepLinkFileNavigation }
   | { kind: 'bundle-url-open'; url: string; title?: string };
 
@@ -91,8 +91,9 @@ function normalizeRelativeFilePath(value: string): string | null {
 
   const segments = slashNormalized.split('/');
   const normalizedSegments: string[] = [];
-  for (const rawSegment of segments) {
-    const segment = rawSegment.trim();
+  for (const segment of segments) {
+    // No trimming: a filename with leading/trailing spaces is unusual but
+    // legal — silently altering it would resolve to the wrong file.
     if (!segment || segment === '.') continue;
     if (segment === '..') {
       if (!normalizedSegments.length) {
@@ -217,11 +218,13 @@ export function parseDeepLinkUrl(rawUrl: string): DeepLinkParseResult {
     if (!navigationResult.ok) {
       return fail(navigationResult.error);
     }
+    const target = parsed.searchParams.get('target')?.trim();
     return {
       ok: true,
       intent: {
         kind: 'showcase-open',
         showcaseId,
+        ...(target === 'ide' ? { target: 'ide' as const } : {}),
         ...(navigationResult.navigation ? { navigation: navigationResult.navigation } : {}),
       },
     };
@@ -273,12 +276,23 @@ export function parseDeepLinkUrl(rawUrl: string): DeepLinkParseResult {
         detail: 'Use lynxtron://lynxview_page?bundle=<bundle-url>',
       });
     }
+    // http(s) ONLY. Deep links arrive from arbitrary external sources — a
+    // file:// (or other-scheme) URL here would let a drive-by link load a
+    // local bundle into a preview window.
+    let bundleUrl: URL;
     try {
-      new URL(url);
+      bundleUrl = new URL(url);
     } catch {
       return fail({
         code: 'INVALID_PARAM',
         message: 'Bundle URL is not a valid URL',
+        detail: url,
+      });
+    }
+    if (bundleUrl.protocol !== 'http:' && bundleUrl.protocol !== 'https:') {
+      return fail({
+        code: 'INVALID_PARAM',
+        message: 'Bundle URL must be http(s)',
         detail: url,
       });
     }
@@ -298,6 +312,12 @@ export function parseDeepLinkUrl(rawUrl: string): DeepLinkParseResult {
     message: 'Unsupported deep link route',
     detail: `${parsed.hostname}${parsed.pathname}`,
   });
+}
+
+/** Deep link that boots an instance straight into the legacy IDE with a
+    showcase workspace — used to open Gallery's IDE action in a new window. */
+export function buildShowcaseIdeDeepLink(showcaseId: string): string {
+  return `${PUBLIC_DEEP_LINK_SCHEME}://showcase/open?id=${encodeURIComponent(showcaseId)}&target=ide`;
 }
 
 export function extractDeepLinkUrlFromArgv(argv: string[]): string | null {

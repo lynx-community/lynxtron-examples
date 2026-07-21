@@ -12,10 +12,16 @@
     "./lynx": {
       "types": "./dist/lynx.config.d.ts",
       "default": "./dist/lynx.config.js"
-    }
+    },
+    "./window": {
+      "types": "./dist/window.d.ts",
+      "default": "./dist/window.js"
+    },
+    "./tokens.css": "./tokens.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "tokens.css"
   ],
   "scripts": {
     "build": "tsc"

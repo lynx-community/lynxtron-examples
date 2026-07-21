@@ -1,0 +1,29 @@
+/* Shared showcase design tokens (Fiddle Dark palette + go-web detailing).
+   One source of truth — this exact block used to be pasted verbatim into
+   five showcases' App.css (with a sixth carrying a drifted subset and two
+   hardcoding raw hex). Import from app code:
+
+     import '@lynxtron-showcases/config/tokens.css';
+
+   Conventions that ride along with the palette:
+   - sans-serif for labels; --font-mono strictly for DATA (numbers, paths,
+     timestamps) — not for "technical vibes".
+   - --hit-fill: Lynx skips fully-transparent views during hit-testing
+     (undocumented engine behavior, verified); give any transparent-but-
+     tappable surface this near-invisible fill. */
+:root {
+  --bg: #1d2427;
+  --surface: #2c2e3b;
+  --deep: #21232d;
+  --panel: #2f3241;
+  --text: #f5f8fa;
+  --muted: #a7b6c2;
+  --dim: #608291;
+  --accent: #48aff0;
+  --accent-bg: rgba(19, 124, 189, 0.16);
+  --hairline: rgba(255, 255, 255, 0.1);
+  --error: #df3434;
+  --ok: #3dd68c;
+  --font-mono: 'SF Mono', Menlo, monospace;
+  --hit-fill: rgba(128, 128, 128, 0.02);
+}

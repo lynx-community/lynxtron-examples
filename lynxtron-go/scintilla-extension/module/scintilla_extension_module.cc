@@ -154,7 +154,10 @@ Napi::Value GetText(const Napi::CallbackInfo& info) {
     std::string content = view->GetContent();
     return Napi::String::New(env, content);
   }
-  return Napi::String::New(env, "");
+  // null, NOT "": callers flush getText() into document state, and an
+  // unregistered editor id must read as "no editor" — an empty string here
+  // silently wipes the file's content during mosaic rebuild windows.
+  return env.Null();
 }
 
 Napi::Value SetStyles(const Napi::CallbackInfo& info) {
@@ -373,6 +376,21 @@ Napi::Value ScrollCaret(const Napi::CallbackInfo& info) {
   return Napi::Boolean::New(env, success);
 }
 
+// focus(editorId: string) -> bool — keyboard focus to that editor
+Napi::Value Focus(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Expected (string editorId)")
+        .ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  std::string editorId = info[0].As<Napi::String>().Utf8Value();
+  bool success = ScintillaRegistry::Get().Focus(editorId);
+  return Napi::Boolean::New(env, success);
+}
+
 Napi::Value DetachFromWindow(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
@@ -384,6 +402,41 @@ Napi::Value DetachFromWindow(const Napi::CallbackInfo& info) {
 
   std::string editorId = info[0].As<Napi::String>().Utf8Value();
   bool success = ScintillaRegistry::Get().DetachFromWindow(editorId);
+  return Napi::Boolean::New(env, success);
+}
+
+// attachToWindow(editorId: string) -> bool — re-attach a previously
+// detached editor view (inverse of detachFromWindow).
+Napi::Value AttachToWindow(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Expected (string editorId)")
+        .ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  std::string editorId = info[0].As<Napi::String>().Utf8Value();
+  bool success = ScintillaRegistry::Get().AttachToWindow(editorId);
+  return Napi::Boolean::New(env, success);
+}
+
+// setEditorTheme(editorId: string, dark: bool, sizePt: number) -> bool
+Napi::Value SetEditorTheme(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 3) {
+    Napi::TypeError::New(env,
+                         "Expected (string editorId, bool dark, number sizePt)")
+        .ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  std::string editorId = info[0].As<Napi::String>().Utf8Value();
+  bool dark = info[1].As<Napi::Boolean>().Value();
+  int32_t sizePt = info[2].As<Napi::Number>().Int32Value();
+
+  bool success = ScintillaRegistry::Get().ApplyTheme(editorId, dark, sizePt);
   return Napi::Boolean::New(env, success);
 }
 
@@ -434,8 +487,13 @@ Napi::Value ScintillaExtensionModuleMethodsBinder(
                   Napi::Function::New(env, SetSelection, "setSelection"));
   exports_obj.Set("scrollCaret",
                   Napi::Function::New(env, ScrollCaret, "scrollCaret"));
+  exports_obj.Set("focus", Napi::Function::New(env, Focus, "focus"));
   exports_obj.Set("detachFromWindow",
                   Napi::Function::New(env, DetachFromWindow, "detachFromWindow"));
+  exports_obj.Set("attachToWindow",
+                  Napi::Function::New(env, AttachToWindow, "attachToWindow"));
+  exports_obj.Set("setEditorTheme",
+                  Napi::Function::New(env, SetEditorTheme, "setEditorTheme"));
   exports_obj.Set("captureWindow",
                   Napi::Function::New(env, CaptureWindow, "captureWindow"));
   exports_obj.Set("captureWindowToBase64",

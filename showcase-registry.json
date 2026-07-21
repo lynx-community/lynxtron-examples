@@ -5,7 +5,7 @@
       "name": "benchmark",
       "description": "Lynxtron runtime benchmarks — app size, startup time, and memory usage",
       "path": "showcases/benchmark",
-      "thumbnail": "showcases/benchmark/thumbnail.svg",
+      "thumbnail": "showcases/benchmark/thumbnail.png",
       "tags": [
         "benchmark",
         "performance"
@@ -18,7 +18,7 @@
       "name": "counter",
       "description": "Minimal counter example demonstrating state management",
       "path": "showcases/counter",
-      "thumbnail": "showcases/counter/thumbnail.svg",
+      "thumbnail": "showcases/counter/thumbnail.png",
       "tags": [
         "beginner"
       ],
@@ -30,7 +30,7 @@
       "name": "cross-platform-notes",
       "description": "Cross-Platform Notes showcase scaffold with a shared Lynx UI for desktop and web",
       "path": "showcases/cross-platform-notes",
-      "thumbnail": "showcases/cross-platform-notes/thumbnail.svg",
+      "thumbnail": "showcases/cross-platform-notes/thumbnail.png",
       "tags": [
         "cross-platform",
         "notes",
@@ -45,7 +45,7 @@
       "name": "file-explorer",
       "description": "File explorer demonstrating NativeModules.nodejs.getExposed() usage with Node.js fs API",
       "path": "showcases/file-explorer",
-      "thumbnail": "showcases/file-explorer/thumbnail.svg",
+      "thumbnail": "showcases/file-explorer/thumbnail.png",
       "tags": [
         "nodejs",
         "filesystem",
@@ -56,7 +56,7 @@
       "name": "floating-clock",
       "description": "Desktop floating clock widget: frameless, transparent, and custom title bar",
       "path": "showcases/floating-clock",
-      "thumbnail": "showcases/floating-clock/thumbnail.svg",
+      "thumbnail": "showcases/floating-clock/thumbnail.png",
       "tags": [
         "intermediate"
       ]
@@ -65,7 +65,7 @@
       "name": "lynxtron-go",
       "description": "Lynxtron GO — IDE playground for Lynxtron showcases",
       "path": "lynxtron-go",
-      "thumbnail": "lynxtron-go/thumbnail.svg",
+      "thumbnail": "lynxtron-go/thumbnail.png",
       "tags": [
         "ide",
         "self-host"
@@ -78,7 +78,7 @@
       "name": "native-texture-canvas",
       "description": "Native Texture Canvas extension showcase with Lynx controls and a native drawing surface",
       "path": "showcases/native-texture-canvas",
-      "thumbnail": "showcases/native-texture-canvas/thumbnail.svg",
+      "thumbnail": "showcases/native-texture-canvas/thumbnail.png",
       "tags": [
         "native",
         "texture",
@@ -93,7 +93,7 @@
       "name": "pc-mouse-cursor",
       "description": "Single-screen desktop demo for mouse move, hover, and cursor states",
       "path": "showcases/pc-mouse-cursor",
-      "thumbnail": null,
+      "thumbnail": "showcases/pc-mouse-cursor/thumbnail.png",
       "tags": [
         "desktop",
         "cursor",
@@ -108,7 +108,7 @@
       "name": "system-monitor",
       "description": "System monitor example demonstrating Node.js and Lynx communication",
       "path": "showcases/system-monitor",
-      "thumbnail": "showcases/system-monitor/thumbnail.svg",
+      "thumbnail": "showcases/system-monitor/thumbnail.png",
       "tags": [
         "intermediate",
         "nodejs",

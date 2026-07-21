@@ -1,6 +1,12 @@
 // Copyright 2026 The Lynxtron Authors. All rights reserved.
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
+//
+// !! NO BUILD COVERAGE !! This backend is not compiled by any CI or local
+// verification loop (development happens on macOS). It shipped with a
+// duplicate DetachFromWindow definition for months — proof that nothing
+// builds it. Treat every change here as unverified until a Windows build
+// exists; do not "mirror" macOS changes into this file without one.
 
 #include "module/scintilla_view.h"
 
@@ -16,6 +22,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <map>
 #include <mutex>
 #include <string>
@@ -257,7 +264,7 @@ void ConfigureScintilla(HWND hwnd) {
   const char* font = "Consolas";
   SciSend(hwnd, SCI_STYLESETFONT, STYLE_DEFAULT, AsLParam(font));
   SciSend(hwnd, SCI_STYLESETSIZE, STYLE_DEFAULT, 14);
-  SciSend(hwnd, SCI_STYLESETBACK, STYLE_DEFAULT, 0x1E1E1E);
+  SciSend(hwnd, SCI_STYLESETBACK, STYLE_DEFAULT, 0x1E1E1E); // VS Dark+ default (legacy IDE); Fiddle themes via ApplyTheme
   SciSend(hwnd, SCI_STYLESETFORE, STYLE_DEFAULT, 0xD4D4D4);
   SciSend(hwnd, SCI_STYLECLEARALL, 0, 0);
 
@@ -578,6 +585,36 @@ void ScintillaView::OnPropertiesChanged(const lynx::pub::LynxValue& attrs,
     }
   }
 
+  // Host suppression state (mirror of the macOS handler): the attribute is
+  // the complete detach/attach channel for dialogs/overlays.
+  if (attrs.HasProperty("suppressed")) {
+    std::string v = attrs.GetProperty("suppressed").StdString();
+    bool sup = !(v == "false" || v == "0");
+    if (sup) {
+      DetachFromWindow();
+    } else if (detached_by_host_.load(std::memory_order_relaxed)) {
+      AttachToWindow();
+    }
+  }
+
+  // Theme attributes land before first paint (mirror of the macOS handler).
+  {
+    bool dark = theme_dark_;
+    int size = font_size_pt_;
+    bool themed = false;
+    if (attrs.HasProperty("theme-dark")) {
+      std::string v = attrs.GetProperty("theme-dark").StdString();
+      dark = !(v == "false" || v == "0");
+      themed = true;
+    }
+    if (attrs.HasProperty("font-size")) {
+      std::string v = attrs.GetProperty("font-size").StdString();
+      int n = std::atoi(v.c_str());
+      if (n >= 6 && n <= 64) { size = n; themed = true; }
+    }
+    if (themed) ApplyTheme(dark, size);
+  }
+
   if (attrs.HasProperty("content")) {
     std::string content = attrs.GetProperty("content").StdString();
     DebugLog("OnPropertiesChanged content length=" + std::to_string(content.size()));
@@ -674,22 +711,8 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
       std::lock_guard<std::mutex> lock(g_window_mutex);
       g_views_by_hwnd[hwnd] = this;
     }
-    std::string text;
-    bool has_content = false;
-    {
-      std::lock_guard<std::mutex> lock(content_mutex_);
-      has_content = has_pending_content_;
-      if (has_content) {
-        text = pending_content_;
-        pending_content_.clear();
-        has_pending_content_ = false;
-      }
-    }
-    if (has_content) {
-      SciSend(hwnd, SCI_SETTEXT, 0, AsLParam(text.c_str()));
-      RedrawEditorWindow(hwnd);
-      DebugLog("OnLayoutChanged applied pending content length=" + std::to_string(text.size()));
-    }
+    // Pending content is applied once, by the unconditional flush after
+    // positioning below — a second drain here only ever saw an empty buffer.
   }
 
   PositionOwnedPopup(parent, host, x, y, w, h);
@@ -715,13 +738,19 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
   DebugLog("OnLayoutChanged done");
 }
 
+// The single definition — this file used to contain a SECOND
+// ScintillaView::DetachFromWindow further down (a redefinition error that
+// proved the Windows build had never run). Merged behavior: cancel the
+// calltip, hide both windows, untrack + unparent the popup.
 void ScintillaView::DetachFromWindow() {
+  detached_by_host_.store(true, std::memory_order_relaxed);
   HWND parent = AsHwnd(win_parent_);
   HWND host = AsHwnd(win_host_);
   HWND hwnd = AsHwnd(win_view_);
 
   if (hwnd && ::IsWindow(hwnd)) {
     SciSend(hwnd, SCI_CALLTIPCANCEL, 0, 0);
+    ::ShowWindow(hwnd, SW_HIDE);
   }
 
   if (parent) {
@@ -796,6 +825,23 @@ void ScintillaView::SetContent(const char* data, size_t length) {
   if (!hwnd) {
     return;
   }
+  // IDEMPOTENT (mirror macOS): SCI_SETTEXT wipes every style byte and resets
+  // scroll/caret — identical content must be a strict no-op so host re-pushes
+  // can never clear the highlight.
+  {
+    LRESULT doc_len = SciSend(hwnd, SCI_GETTEXTLENGTH, 0, 0);
+    if ((size_t)doc_len == text.size()) {
+      std::string current((size_t)doc_len + 1, '\0');
+      SciSend(hwnd, SCI_GETTEXT, doc_len + 1, AsLParam(current.data()));
+      current.resize((size_t)doc_len);
+      if (current == text) {
+        std::lock_guard<std::mutex> lock(content_mutex_);
+        pending_content_.clear();
+        has_pending_content_ = false;
+        return;
+      }
+    }
+  }
   SciSend(hwnd, SCI_SETTEXT, 0, AsLParam(text.c_str()));
   RedrawEditorWindow(hwnd);
   {
@@ -825,8 +871,16 @@ void ScintillaView::ApplyStyles(int startPos, const char* styles, size_t length)
     return;
   }
   std::string style_data(styles, length);
+  // Clamp: styles computed from a JS snapshot can lag the live document —
+  // never style past the end (the debounced re-highlight converges).
+  LRESULT doc_len = SciSend(hwnd, SCI_GETTEXTLENGTH, 0, 0);
+  if (startPos >= doc_len) {
+    return;
+  }
+  size_t apply_len = style_data.size();
+  if ((LRESULT)(startPos + apply_len) > doc_len) apply_len = (size_t)(doc_len - startPos);
   SciSend(hwnd, SCI_STARTSTYLING, startPos, 0);
-  SciSend(hwnd, SCI_SETSTYLINGEX, length, AsLParam(style_data.data()));
+  SciSend(hwnd, SCI_SETSTYLINGEX, apply_len, AsLParam(style_data.data()));
   RedrawEditorWindow(hwnd);
 }
 
@@ -834,6 +888,14 @@ void ScintillaView::UpdateLayoutPosition(float left, float top) {
   std::lock_guard<std::mutex> lock(dwell_mutex_);
   layout_left_ = left;
   layout_top_ = top;
+}
+
+void ScintillaView::RecordLayoutRect(float left, float top, float width, float height) {
+  std::lock_guard<std::mutex> lock(dwell_mutex_);
+  layout_left_ = left;
+  layout_top_ = top;
+  last_layout_w_ = width;
+  last_layout_h_ = height;
 }
 
 void ScintillaView::OnDwellStart(int bytePos, int x, int y) {
@@ -874,21 +936,69 @@ void ScintillaView::ScrollCaret() {
   SciSend(AsHwnd(win_view_), SCI_SCROLLCARET, 0, 0);
 }
 
-void ScintillaView::DetachFromWindow() {
-  // Mirror macOS behavior: detach/hide the native editor view while preserving the
-  // instance for a later layout pass to reattach.
+void ScintillaView::FocusEditor() {
   HWND hwnd = AsHwnd(win_view_);
   if (hwnd && ::IsWindow(hwnd)) {
-    SciSend(hwnd, SCI_CALLTIPCANCEL, 0, 0);
-    ::ShowWindow(hwnd, SW_HIDE);
+    ::SetFocus(hwnd);
+    SciSend(hwnd, SCI_SETFOCUS, 1, 0);
   }
+}
 
+void ScintillaView::ApplyTheme(bool dark, int size_pt) {
+  HWND hwnd = AsHwnd(win_view_);
+  if (!hwnd || !::IsWindow(hwnd)) return;
+  const LPARAM bg      = dark ? 0x41322F : 0xFEFFFF;
+  const LPARAM fg      = dark ? 0xD4D4D4 : 0x000000;
+  const LPARAM kw      = dark ? 0xD69C56 : 0xFF0000;
+  const LPARAM strc    = dark ? 0x7891CE : 0x1515A3;
+  const LPARAM cmt     = dark ? 0x55996A : 0x008000;
+  const LPARAM num     = dark ? 0xA8CEB5 : 0x588609;
+  const LPARAM typ     = dark ? 0xB0C94E : 0x997F26;
+  const LPARAM lnFore  = dark ? 0x858585 : 0x937823;
+  const LPARAM lnBack  = dark ? 0x41322F : 0xF5F5F5;
+  const int size = size_pt > 0 ? size_pt : 14;
+  SciSend(hwnd, SCI_STYLESETBACK, STYLE_DEFAULT, bg);
+  SciSend(hwnd, SCI_STYLESETFORE, STYLE_DEFAULT, fg);
+  SciSend(hwnd, SCI_STYLESETSIZE, STYLE_DEFAULT, size);
+  SciSend(hwnd, SCI_STYLECLEARALL, 0, 0);
+  SciSend(hwnd, SCI_STYLESETFORE, 0, fg);
+  SciSend(hwnd, SCI_STYLESETFORE, 1, kw);
+  SciSend(hwnd, SCI_STYLESETBOLD, 1, 1);
+  SciSend(hwnd, SCI_STYLESETFORE, 2, strc);
+  SciSend(hwnd, SCI_STYLESETFORE, 3, cmt);
+  SciSend(hwnd, SCI_STYLESETFORE, 4, num);
+  SciSend(hwnd, SCI_STYLESETFORE, 5, typ);
+  SciSend(hwnd, SCI_STYLESETFORE, STYLE_LINENUMBER, lnFore);
+  SciSend(hwnd, SCI_STYLESETBACK, STYLE_LINENUMBER, lnBack);
+  theme_dark_ = dark;
+  font_size_pt_ = size;
+  RedrawEditorWindow(hwnd);
+}
+
+void ScintillaView::AttachToWindow() {
+  detached_by_host_.store(false, std::memory_order_relaxed);
+  // True inverse of DetachFromWindow: it zeroed GWLP_HWNDPARENT and
+  // untracked the parent, so just re-showing left the popup orphaned from
+  // the main window's z-order until the next full layout pass. Re-own,
+  // re-track, reposition, then show.
   HWND host = AsHwnd(win_host_);
   if (host && ::IsWindow(host)) {
-    ::ShowWindow(host, SW_HIDE);
-    if (::GetWindow(host, GW_OWNER)) {
-      ::SetWindowLongPtrW(host, GWLP_HWNDPARENT, 0);
+    HWND parent = FindMainWindow();
+    if (parent) {
+      ::SetWindowLongPtrW(host, GWLP_HWNDPARENT, reinterpret_cast<LONG_PTR>(parent));
+      TrackViewParent(this, AsHwnd(win_parent_), parent);
+      win_parent_ = parent;
+      PositionOwnedPopup(parent, host,
+                         win_layout_x_, win_layout_y_,
+                         std::max(1, win_layout_width_),
+                         std::max(1, win_layout_height_));
     }
+    ::ShowWindow(host, SW_SHOWNOACTIVATE);
+  }
+  HWND hwnd = AsHwnd(win_view_);
+  if (hwnd && ::IsWindow(hwnd)) {
+    ::ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+    RedrawEditorWindow(hwnd);
   }
 }
 
