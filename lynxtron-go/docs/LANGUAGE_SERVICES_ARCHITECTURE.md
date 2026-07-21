@@ -610,8 +610,3 @@ External tools (user-installed, not bundled):
 | Max file size for diagnostics | Skip files >500KB; highlight-only mode |
 
 ---
-
-## 9. Related Documents
-
-- [docs/lynxtron-go-ide-plan.md](/Users/bytedance/ws2/lynxtron-show-cases/docs/lynxtron-go-ide-plan.md) -- Overall feature roadmap
-- [DEBUG_STRATEGY.md](DEBUG_STRATEGY.md) -- Debugging guide

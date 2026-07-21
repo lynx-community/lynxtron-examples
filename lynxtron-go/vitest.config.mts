@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config';
 
 // Standalone vitest config for Lynxtron Go unit tests.
-// We do not use createVitestConfig() from @byted-lynx/react/testing-library
+// We do not use createVitestConfig() from @lynx-js/react/testing-library
 // here because it installs a ReactLynx global setup that conflicts with
 // Node-environment tests (extension-host) and is unnecessary for syntax tests.
 //

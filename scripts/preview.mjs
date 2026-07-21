@@ -174,8 +174,6 @@ async function startRegistry() {
 uplinks:
   npmjs:
     url: https://registry.npmjs.org/
-  bnpm:
-    url: https://bnpm.byted.org/
 packages:
   '@lynxtron-showcases/*':
     access: $all

@@ -15,7 +15,7 @@ Read the docs below in advance to help you understand the library or frameworks 
 ## Overview
 
 - Lynxtron is an Electron-like runtime where `BrowserWindow` is replaced by `LynxWindow`.
-- UI is built with Lynx via ReactLynx (`@byted-lynx/react`) using lowercase built-in elements such as `<view>`, `<text>`, `<image>`.
+- UI is built with Lynx via ReactLynx (`@lynx-js/react`) using lowercase built-in elements such as `<view>`, `<text>`, `<image>`.
 - **Symmetric Host Model**: Both Desktop and Web provide a consistent set of Native Modules to the UI.
   - `NativeModules.bridge`: Handles host-specific capabilities (dialogs, window control) via RPC.
   - `NativeModules.nodejs`: Provides a Node.js-like environment for background logic, injected directly into the Lynx Background Thread for maximum performance and object-level access.
@@ -72,7 +72,7 @@ Use NodeJS ≥ 22 and TypeScript.
 
 UI code in `src/app` runs in the Lynx engine, which is **not a browser**.
 
-- **React-like but different**: Use `@byted-lynx/react`.
+- **React-like but different**: Use `@lynx-js/react`.
 - **Built-in Elements**: Use **lowercase** Lynx elements. DO NOT use HTML elements like `div`, `span`, `button`.
   - `<view>`: Container (like `div`).
   - `<text>`: Text (like `span`).
@@ -98,7 +98,7 @@ UI code in `src/app` runs in the Lynx engine, which is **not a browser**.
 ### UI Example
 
 ```tsx
-import { useState, useCallback } from '@byted-lynx/react';
+import { useState, useCallback } from '@lynx-js/react';
 
 export function MyComponent() {
   const [count, setCount] = useState(0);

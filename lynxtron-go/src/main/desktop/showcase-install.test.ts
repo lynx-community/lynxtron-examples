@@ -87,7 +87,7 @@ describe('showcase install helpers', () => {
   it('strips inherited npm registry env when a preview userconfig is present', () => {
     const env = buildShowcaseInstallEnv('/tmp/preview/.npmrc', {
       PATH: '/usr/bin',
-      npm_config_registry: 'https://bnpm.byted.org/',
+      npm_config_registry: 'https://registry.npmjs.org/',
       NPM_CONFIG_USERCONFIG: '/tmp/global/.npmrc',
       npm_config_store_dir: '/tmp/pnpm-store',
     });

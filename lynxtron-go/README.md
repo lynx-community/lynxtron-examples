@@ -5,7 +5,7 @@ A code editor built on Lynxtron (Lynx + Node.js), using Scintilla as the native 
 ## Tech Stack
 
 - **Runtime**: Lynxtron (Lynx renderer + Node.js)
-- **UI**: ReactLynx (`@byted-lynx/react`) + CSS Flexbox
+- **UI**: ReactLynx (`@lynx-js/react`) + CSS Flexbox
 - **Editor Engine**: Scintilla 5.x (C++, embedded as native NSView)
 - **Build**: Rspack + RSpeedy (frontend), CMake (native extension)
 - **Language**: TypeScript (UI/main), C++/Objective-C (native)
@@ -120,8 +120,7 @@ Add the following to your MCP settings file (usually `~/.code/User/globalStorage
       "command": "npx",
       "args": [
         "-y",
-        "--registry=https://bnpm.byted.org",
-        "@byted-lynx/devtool-mcp-server@latest"
+        "@lynx-js/devtool-mcp-server@latest"
       ]
     }
   }

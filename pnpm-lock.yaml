@@ -177,7 +177,7 @@ importers:
     devDependencies:
       '@lynx-js/lynx-library-headers':
         specifier: 'catalog:'
-        version: 0.0.3
+        version: 0.0.5
       cmake-js:
         specifier: ^7.3.0
         version: 7.4.0
