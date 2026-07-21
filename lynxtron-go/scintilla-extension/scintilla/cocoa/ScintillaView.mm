@@ -87,6 +87,7 @@ static NSCursor *cursorFromEnum(Window::Cursor cursor) {
 @interface SCIMarginView()
 @property(assign) int marginWidth;
 @property(nonatomic, weak) ScintillaView *owner;
+- (NSRect) visibleContentRect;
 @end
 
 @implementation SCIMarginView {
@@ -124,16 +125,25 @@ static NSCursor *cursorFromEnum(Window::Cursor cursor) {
 	return marginWidth;
 }
 
+- (NSRect) visibleContentRect {
+	NSClipView *contentView = self.scrollView.contentView;
+	NSRect contentRect = [self convertRect: contentView.bounds fromView: contentView];
+	contentRect.origin.x = NSMinX(self.bounds);
+	contentRect.size.width = NSWidth(self.bounds);
+	return NSIntersectionRect(self.bounds, contentRect);
+}
+
 - (void) drawHashMarksAndLabelsInRect: (NSRect) aRect {
 	if (owner) {
-		NSRect contentRect = self.scrollView.contentView.bounds;
-		NSRect marginRect = self.bounds;
-		// Ensure paint to bottom of view to avoid glitches
-		if (marginRect.size.height > contentRect.size.height) {
-			// Legacy scroll bar mode leaves a poorly painted corner
-			aRect = marginRect;
-		}
-		owner.backend->PaintMargin(aRect);
+		const NSRect visibleRect = [self visibleContentRect];
+		const NSRect paintRect = NSIntersectionRect(aRect, visibleRect);
+		if (NSIsEmptyRect(paintRect))
+			return;
+
+		[NSGraphicsContext saveGraphicsState];
+		NSRectClip(visibleRect);
+		owner.backend->PaintMargin(paintRect);
+		[NSGraphicsContext restoreGraphicsState];
 	}
 }
 
@@ -203,9 +213,17 @@ static NSCursor *cursorFromEnum(Window::Cursor cursor) {
 
 - (void) drawRect: (NSRect) rect {
 	if (!NSContainsRect(self.bounds, rect)) {
-	    rect = self.bounds;
+		rect = self.bounds;
 	}
+	const NSRect visibleRect = [self visibleContentRect];
+	rect = NSIntersectionRect(rect, visibleRect);
+	if (NSIsEmptyRect(rect))
+		return;
+
+	[NSGraphicsContext saveGraphicsState];
+	NSRectClip(visibleRect);
 	[super drawRect:rect];
+	[NSGraphicsContext restoreGraphicsState];
 }
 
 @end
@@ -2243,4 +2261,3 @@ static NSCursor *cursorFromEnum(Window::Cursor cursor) {
 //--------------------------------------------------------------------------------------------------
 
 @end
-

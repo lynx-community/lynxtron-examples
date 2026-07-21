@@ -68,6 +68,19 @@ export interface IndicatorRange {
   style: number;   // 0=error, 1=warning, 2=info/hint
 }
 
+/**
+ * Scintilla reports dwell positions at character boundaries. Accept the end
+ * boundary as well as the covered bytes so a one-character/EOF squiggle is
+ * hoverable across its full painted width.
+ */
+export function indicatorContainsBytePosition(
+  indicator: IndicatorRange,
+  bytePosition: number,
+): boolean {
+  return bytePosition >= indicator.start
+    && bytePosition <= indicator.start + indicator.length;
+}
+
 function severityToStyle(sev: DiagnosticMarker['severity']): number {
   if (sev === 'error')   return 0;
   if (sev === 'warning') return 1;
@@ -75,11 +88,23 @@ function severityToStyle(sev: DiagnosticMarker['severity']): number {
 }
 
 export function markerToIndicator(text: string, marker: DiagnosticMarker): IndicatorRange {
-  const start = lineCharToByteOffset(text, marker.startLine, marker.startChar);
-  const end   = lineCharToByteOffset(text, marker.endLine,   marker.endChar);
+  const documentLength = utf8ByteLength(text);
+  let start = Math.min(documentLength, lineCharToByteOffset(text, marker.startLine, marker.startChar));
+  const end = Math.min(documentLength, lineCharToByteOffset(text, marker.endLine, marker.endChar));
+  let length = Math.max(0, end - start);
+
+  // Parser diagnostics are often zero-width at EOF (for example "'('
+  // expected"). Scintilla cannot paint or dwell over a byte that is outside
+  // the document, so anchor the indicator to the final UTF-8 code point.
+  if (length === 0 && start === documentLength && documentLength > 0) {
+    const lastCodePoint = Array.from(text).pop()!;
+    length = utf8ByteLength(lastCodePoint);
+    start -= length;
+  }
+
   return {
     start,
-    length: Math.max(1, end - start),
+    length: Math.max(1, length),
     style:  severityToStyle(marker.severity),
   };
 }

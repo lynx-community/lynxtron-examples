@@ -689,7 +689,7 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
     hwnd = ::CreateWindowExW(0,
                              L"Scintilla",
                              L"",
-                             WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+                             WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
                              0,
                              0,
                              std::max(1, w),
@@ -707,6 +707,10 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
     ConfigureScintilla(hwnd);
     DebugLog("OnLayoutChanged configure done");
     win_view_ = hwnd;
+    // Properties can arrive before the HWND exists. Apply the values cached
+    // by ApplyTheme while both the child and its host are still hidden, so
+    // the hard-coded ConfigureScintilla defaults can never reach the screen.
+    ApplyTheme(theme_dark_, font_size_pt_);
     {
       std::lock_guard<std::mutex> lock(g_window_mutex);
       g_views_by_hwnd[hwnd] = this;
@@ -715,8 +719,11 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
     // positioning below — a second drain here only ever saw an empty buffer.
   }
 
-  PositionOwnedPopup(parent, host, x, y, w, h);
+  // Mark the themed child visible while its host is still hidden, then reveal
+  // the host. Reversing this order exposes the host/default control for a
+  // paint between the two SetWindowPos calls.
   ::SetWindowPos(hwnd, HWND_TOP, 0, 0, w, h, SWP_SHOWWINDOW | SWP_NOACTIVATE);
+  PositionOwnedPopup(parent, host, x, y, w, h);
   RedrawHostAndEditor(host);
   std::string text;
   bool has_content = false;
@@ -914,10 +921,11 @@ ScintillaView::DwellInfo ScintillaView::GetDwellInfo() const {
   return dwell_info_;
 }
 
-void ScintillaView::ShowCalltip(int bytePos, const std::string& text) {
+bool ScintillaView::ShowCalltip(int bytePos, const std::string& text) {
   HWND hwnd = AsHwnd(win_view_);
-  if (!hwnd) return;
+  if (!hwnd) return false;
   SciSend(hwnd, SCI_CALLTIPSHOW, bytePos, AsLParam(text.c_str()));
+  return SciSend(hwnd, SCI_CALLTIPACTIVE, 0, 0) != 0;
 }
 
 void ScintillaView::HideCalltip() {
@@ -945,6 +953,12 @@ void ScintillaView::FocusEditor() {
 }
 
 void ScintillaView::ApplyTheme(bool dark, int size_pt) {
+  const int size = size_pt > 0 ? size_pt : 14;
+  // OnPropertiesChanged normally runs before OnLayoutChanged creates the
+  // native control. Preserve the requested first-frame state even when there
+  // is no HWND to style yet.
+  theme_dark_ = dark;
+  font_size_pt_ = size;
   HWND hwnd = AsHwnd(win_view_);
   if (!hwnd || !::IsWindow(hwnd)) return;
   const LPARAM bg      = dark ? 0x41322F : 0xFEFFFF;
@@ -956,7 +970,6 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   const LPARAM typ     = dark ? 0xB0C94E : 0x997F26;
   const LPARAM lnFore  = dark ? 0x858585 : 0x937823;
   const LPARAM lnBack  = dark ? 0x41322F : 0xF5F5F5;
-  const int size = size_pt > 0 ? size_pt : 14;
   SciSend(hwnd, SCI_STYLESETBACK, STYLE_DEFAULT, bg);
   SciSend(hwnd, SCI_STYLESETFORE, STYLE_DEFAULT, fg);
   SciSend(hwnd, SCI_STYLESETSIZE, STYLE_DEFAULT, size);
@@ -970,8 +983,6 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   SciSend(hwnd, SCI_STYLESETFORE, 5, typ);
   SciSend(hwnd, SCI_STYLESETFORE, STYLE_LINENUMBER, lnFore);
   SciSend(hwnd, SCI_STYLESETBACK, STYLE_LINENUMBER, lnBack);
-  theme_dark_ = dark;
-  font_size_pt_ = size;
   RedrawEditorWindow(hwnd);
 }
 

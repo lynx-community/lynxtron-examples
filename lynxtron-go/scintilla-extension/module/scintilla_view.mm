@@ -23,6 +23,57 @@
 #define SCLEX_CONTAINER 0
 #endif
 
+// Scintilla's default Cocoa content view snaps vertical scrolling to whole
+// lines in -adjustScroll:. That makes small trackpad and mouse-wheel deltas
+// feel sticky. Keep its horizontal whole-point alignment (which avoids Retina
+// drawing debris), but allow a partially visible line vertically.
+@interface LynxtronSCIContentView : SCIContentView
+@end
+
+@implementation LynxtronSCIContentView
+
+- (NSRect)adjustScroll:(NSRect)proposedVisibleRect {
+    NSRect adjustedRect = proposedVisibleRect;
+    NSRect contentRect = self.bounds;
+    if ((adjustedRect.origin.x > 0) &&
+        (NSMaxX(adjustedRect) < contentRect.size.width)) {
+        // Preserve Scintilla's horizontal whole-point snapping for positions
+        // inside the document, while leaving overscroll untouched.
+        adjustedRect.origin.x = std::round(adjustedRect.origin.x);
+    }
+    return adjustedRect;
+}
+
+@end
+
+@interface LynxtronScintillaView : ScintillaView
+- (void)syncBounceBackgroundWithStyleDefault;
+@end
+
+@implementation LynxtronScintillaView
+
++ (Class)contentViewClass {
+    return [LynxtronSCIContentView class];
+}
+
+- (void)syncBounceBackgroundWithStyleDefault {
+    // Scintilla paints the document itself, but elastic overscroll exposes
+    // AppKit's scroll/clip view background. Derive that native background
+    // from STYLE_DEFAULT so it stays aligned with every editor palette.
+    const unsigned long bgr =
+        (unsigned long)[self message:SCI_STYLEGETBACK wParam:STYLE_DEFAULT lParam:0];
+    NSColor* backgroundColor = [NSColor colorWithSRGBRed:(bgr & 0xFF) / 255.0
+                                                   green:((bgr >> 8) & 0xFF) / 255.0
+                                                    blue:((bgr >> 16) & 0xFF) / 255.0
+                                                   alpha:1.0];
+    self.scrollView.drawsBackground = YES;
+    self.scrollView.backgroundColor = backgroundColor;
+    self.scrollView.contentView.drawsBackground = YES;
+    self.scrollView.contentView.backgroundColor = backgroundColor;
+}
+
+@end
+
 // Helper to bridge C++ and ObjC.
 // Conforms to ScintillaNotificationProtocol so it receives SCN_MODIFIED and
 // other Scintilla notifications directly without a separate WndProc.
@@ -45,7 +96,7 @@
     self = [super initWithFrame:frameRect];
     if (self) {
         _owner = owner;
-        _scintillaView = [[ScintillaView alloc] initWithFrame:self.bounds];
+        _scintillaView = [[LynxtronScintillaView alloc] initWithFrame:self.bounds];
         [_scintillaView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         _scintillaView.delegate = self;  // receive SCN_MODIFIED etc.
         [self addSubview:_scintillaView];
@@ -116,11 +167,12 @@ ScintillaView::ScintillaView() {
     // Initialize Scintilla
     if (cocoa_view_) {
         ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
-        // Dispatch config to main thread if needed, but since we are in constructor and just created it,
-        // we might be on any thread. Safest to dispatch.
-        // Actually the container creation above ensures we have the view.
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
+        // Install the compiled defaults before the constructor returns. This
+        // must not be queued asynchronously: OnPropertiesChanged may apply
+        // the element's target theme on the main thread immediately after
+        // construction, and a delayed default pass would overwrite it with
+        // the 14pt fallback long enough to paint a visible flash.
+        auto initializeScintilla = ^{
             // Set Lexer to Container (styling driven from JS)
             [container.scintillaView message:SCI_SETLEXER wParam:SCLEX_CONTAINER lParam:0];
 
@@ -133,6 +185,7 @@ ScintillaView::ScintillaView() {
             [container.scintillaView message:SCI_STYLESETFORE wParam:STYLE_DEFAULT lParam:0xD4D4D4]; // fg #D4D4D4
             [container.scintillaView message:SCI_STYLESETSIZE wParam:STYLE_DEFAULT lParam:14];
             [container.scintillaView message:SCI_STYLECLEARALL wParam:0 lParam:0]; // propagate to all
+            [(LynxtronScintillaView*)container.scintillaView syncBounceBackgroundWithStyleDefault];
 
             // 2. Syntax styles (Scintilla uses BGR color format)
             // Style 0: Default
@@ -181,7 +234,12 @@ ScintillaView::ScintillaView() {
             [container.scintillaView message:SCI_INDICSETFORE wParam:0 lParam:0x3232FA];
             [container.scintillaView message:SCI_INDICSETFORE wParam:1 lParam:0x00BBFF];
             [container.scintillaView message:SCI_INDICSETFORE wParam:2 lParam:0xFF8800];
-        });
+        };
+        if ([NSThread isMainThread]) {
+            initializeScintilla();
+        } else {
+            dispatch_sync(dispatch_get_main_queue(), initializeScintilla);
+        }
     }
 #endif
 }
@@ -448,16 +506,21 @@ ScintillaView::DwellInfo ScintillaView::GetDwellInfo() const {
     return dwell_info_;
 }
 
-void ScintillaView::ShowCalltip(int bytePos, const std::string& text) {
+bool ScintillaView::ShowCalltip(int bytePos, const std::string& text) {
 #ifdef __APPLE__
-    if (!cocoa_view_) return;
+    if (!cocoa_view_) return false;
     ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
     std::string textCopy = text;
+    __block bool active = false;
     auto doShow = ^{
         [container.scintillaView message:SCI_CALLTIPSHOW wParam:bytePos lParam:(sptr_t)textCopy.c_str()];
+        active = [container.scintillaView message:SCI_CALLTIPACTIVE wParam:0 lParam:0] != 0;
     };
     if ([NSThread isMainThread]) doShow();
-    else dispatch_async(dispatch_get_main_queue(), doShow);
+    else dispatch_sync(dispatch_get_main_queue(), doShow);
+    return active;
+#else
+    return false;
 #endif
 }
 
@@ -469,7 +532,7 @@ void ScintillaView::HideCalltip() {
         [container.scintillaView message:SCI_CALLTIPCANCEL wParam:0 lParam:0];
     };
     if ([NSThread isMainThread]) doHide();
-    else dispatch_async(dispatch_get_main_queue(), doHide);
+    else dispatch_sync(dispatch_get_main_queue(), doHide);
 #endif
 }
 
@@ -611,6 +674,7 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
         [container.scintillaView message:SCI_STYLESETFORE wParam:STYLE_DEFAULT lParam:fg];
         [container.scintillaView message:SCI_STYLESETSIZE wParam:STYLE_DEFAULT lParam:size];
         [container.scintillaView message:SCI_STYLECLEARALL wParam:0 lParam:0];
+        [(LynxtronScintillaView*)container.scintillaView syncBounceBackgroundWithStyleDefault];
         [container.scintillaView message:SCI_STYLESETFORE wParam:0 lParam:fg];
         [container.scintillaView message:SCI_STYLESETFORE wParam:1 lParam:kw];
         [container.scintillaView message:SCI_STYLESETBOLD wParam:1 lParam:1];
@@ -625,8 +689,11 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
         [container.scintillaView message:SCI_CALLTIPSETBACK wParam:ctBack lParam:0];
         [container.scintillaView message:SCI_CALLTIPSETFORE wParam:ctFore lParam:0];
     };
+    // Theme properties are part of native element construction. Finish the
+    // main-thread update before returning so layout cannot attach and paint
+    // an intermediate background/font size.
     if ([NSThread isMainThread]) doApply();
-    else dispatch_async(dispatch_get_main_queue(), doApply);
+    else dispatch_sync(dispatch_get_main_queue(), doApply);
 #endif
 }
 

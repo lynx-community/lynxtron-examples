@@ -100,6 +100,21 @@ const greet = (name: string): string => {
     expect(markers.filter(m => m.severity === 'error')).toHaveLength(0);
   });
 
+  it('reports unresolved names in standalone JavaScript', () => {
+    svc.updateFile(FAKE_JS, 'asdf', 1);
+    const markers = svc.getDiagnostics(FAKE_JS);
+
+    expect(markers).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        startChar: 0,
+        endChar: 4,
+        severity: 'error',
+        code: 2304,
+        message: "Cannot find name 'asdf'.",
+      }),
+    ]));
+  });
+
   it('handles JS syntax error', () => {
     const code = 'function (x { return x; }'; // missing function name
     svc.updateFile(FAKE_JS, code, 1);

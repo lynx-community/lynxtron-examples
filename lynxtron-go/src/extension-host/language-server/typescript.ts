@@ -373,7 +373,10 @@ function defaultCompilerOptions(): ts.CompilerOptions {
     moduleResolution: ts.ModuleResolutionKind.NodeJs,
     jsx: ts.JsxEmit.ReactJSX,
     allowJs: true,
-    checkJs: false,
+    // Standalone/Fiddle JavaScript has no tsconfig. Enable semantic checking
+    // there so unresolved names such as `asdf` surface as diagnostics; an
+    // applicable project tsconfig still remains authoritative.
+    checkJs: true,
     strict: false,
     skipLibCheck: true,
     esModuleInterop: true,

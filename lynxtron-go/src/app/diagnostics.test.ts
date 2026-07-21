@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { lineCharToByteOffset, markerToIndicator, packIndicators } from './diagnostics';
+import {
+  indicatorContainsBytePosition,
+  lineCharToByteOffset,
+  markerToIndicator,
+  packIndicators,
+} from './diagnostics';
 import type { DiagnosticMarker } from '../extension-host/types';
 
 // ---------------------------------------------------------------------------
@@ -107,6 +112,13 @@ describe('markerToIndicator', () => {
     expect(ind.length).toBeGreaterThanOrEqual(1);
   });
 
+  it('anchors a zero-length EOF marker to the final UTF-8 code point', () => {
+    expect(markerToIndicator('function ', makeMarker(0, 9, 0, 9)))
+      .toMatchObject({ start: 8, length: 1 });
+    expect(markerToIndicator('const 中', makeMarker(0, 7, 0, 7)))
+      .toMatchObject({ start: 6, length: 3 });
+  });
+
   it('multi-line marker: length spans across bytes', () => {
     // 'abc\ndef' — marker from (0,3) to (1,3)
     const text = 'abc\ndef';
@@ -123,6 +135,20 @@ describe('markerToIndicator', () => {
     const ind = markerToIndicator(text, makeMarker(0, 5, 0, 10));
     expect(ind.start).toBe(6);  // 'c'(1)+'a'(1)+'f'(1)+'é'(2)+' '(1) = 6
     expect(ind.length).toBe(5); // 'error' = 5 ASCII bytes
+  });
+});
+
+describe('indicatorContainsBytePosition', () => {
+  const indicator = { start: 8, length: 1, style: 0 };
+
+  it('includes both painted character boundaries', () => {
+    expect(indicatorContainsBytePosition(indicator, 8)).toBe(true);
+    expect(indicatorContainsBytePosition(indicator, 9)).toBe(true);
+  });
+
+  it('rejects positions outside the indicator', () => {
+    expect(indicatorContainsBytePosition(indicator, 7)).toBe(false);
+    expect(indicatorContainsBytePosition(indicator, 10)).toBe(false);
   });
 });
 

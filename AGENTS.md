@@ -131,34 +131,6 @@ Each showcase is a full Lynxtron app:
 
 See [docs/showcase-development.md](docs/showcase-development.md).
 
-## Development Roles
-
-**This rule is mandatory for all AI agents working in this repository.**
-
-- **Product decisions** are made by the main conversation (PM role). Product plan is at `docs/product-plan.md`. Read it before starting any new feature.
-- **Implementation tasks** are dispatched to subagents. The PM does not write implementation code directly.
-- **Workflow**: PM defines what to build → creates workflow MD → dispatches subagent to implement → reviews result
-- **Showcase prioritization** follows the product plan's three slogans:
-  1. Light-weight and fast (58MB vs 161MB)
-  2. Native extensible (native views as first-class citizens)
-  3. Cross platforms (Desktop + Web + Mobile native from one Lynx UI codebase)
-
-## Commit Discipline
-
-- Keep commits traceable: one commit should map to one independently understandable product capability, workflow step, or scoped infra change that can be reviewed and reverted on its own.
-- Split shared infra changes from product UI or showcase changes when that improves traceability.
-- Do not mix unrelated product areas in the same commit unless the files are tightly coupled and the combined diff is still easy to review.
-- Never commit `node_modules`, build outputs, vendored code, or generated artifacts unless the PM explicitly requests that exception.
-- If a task is blocked by a pre-existing verification issue, do not mark it complete or commit it as a finished feature without PM approval.
-
-## Pre-Commit Verification
-
-- New feature or showcase work must pass the relevant build, test, or smoke verification for that scope before it is committed.
-- Docs-only changes may be committed without runtime verification, but the commit or workflow note must say that no runtime verification was needed.
-- Product UI changes should include at least the narrowest meaningful smoke check for the touched surface; larger showcase work should prefer a build plus an end-to-end smoke verification.
-- Infrastructure or registry changes should be verified with the smallest repeatable check that proves the change path, such as generation, build, or resolution of the affected artifact.
-- Workflow docs or status updates must record what was verified before commit, and must call out any remaining blocked verification explicitly.
-
 ## TODO
 
 - Dev mode (watch + hot reload)
