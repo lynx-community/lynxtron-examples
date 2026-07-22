@@ -1,6 +1,9 @@
 {
   "name": "@lynxtron-examples/system-monitor",
   "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "main.js",
   "repository": {
     "type": "git",

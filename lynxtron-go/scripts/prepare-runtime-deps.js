@@ -80,23 +80,31 @@ function findInstalledPackageDir(fromDir, packageName) {
 }
 
 function resolvePackageDir(request, fromDir = projectRoot) {
+  const expectedName = packageNameFromRequest(request);
   try {
     let dir = path.dirname(require.resolve(request, { paths: [fromDir] }));
-    while (!fs.existsSync(path.join(dir, 'package.json'))) {
+    while (true) {
+      const manifestPath = path.join(dir, 'package.json');
+      if (fs.existsSync(manifestPath)) {
+        try {
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+          if (manifest.name === expectedName) {
+            return dir;
+          }
+        } catch (_) {}
+      }
       const parent = path.dirname(dir);
       if (parent === dir) {
-        throw new Error(`Failed to locate package root for ${request}`);
+        break;
       }
       dir = parent;
     }
-    return dir;
-  } catch (_) {
-    const installedDir = findInstalledPackageDir(fromDir, packageNameFromRequest(request));
-    if (installedDir) {
-      return installedDir;
-    }
-    throw new Error(`Failed to locate package root for ${request}`);
+  } catch (_) {}
+  const installedDir = findInstalledPackageDir(fromDir, expectedName);
+  if (installedDir) {
+    return installedDir;
   }
+  throw new Error(`Failed to locate package root for ${request}`);
 }
 
 function copyPackage(request, destination) {
@@ -180,6 +188,13 @@ function main() {
   sanitizeManifest(lynxtronTarget);
 
   copyPackage('@lynxtron-examples/cli');
+
+  copyPackage('tar');
+  const tarRoot = resolvePackageDir('tar');
+  for (const dep of ['@isaacs/fs-minipass', 'chownr', 'minipass', 'minizlib', 'yallist']) {
+    copyPackageFrom(dep, tarRoot);
+  }
+
   copyPackage('@types/node/package.json', '@types/node');
   copyPackage('typescript');
   copyPackage('vscode-css-languageservice');

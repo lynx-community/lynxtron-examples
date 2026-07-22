@@ -32,6 +32,8 @@ electronBranding:
   projectName: lynxtron
   productName: Lynxtron
 mac:
+  target:
+    - dmg
   artifactName: lynxtron-go-v${version}-darwin-${arch}.${ext}
   extendInfo:
     CFBundleURLTypes:
