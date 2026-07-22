@@ -47,4 +47,10 @@ jobs:
         run: pnpm --filter lynxtron-go run typecheck
 
       - name: Changeset status
+        # Skip on the auto-generated Version Packages PR. That PR consumes
+        # changesets (deletes .changeset/*.md and bumps package.json), and
+        # `changeset version` also reformats every workspace package.json,
+        # so `changeset status` will always report "changed but no changeset"
+        # on this branch.
+        if: github.event.pull_request.head.ref != 'changeset-release/main'
         run: pnpm changeset status --verbose --since ${{ github.event.pull_request.base.sha }}
