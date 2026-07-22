@@ -15,7 +15,7 @@ concurrency:
 jobs:
   test:
     name: Lint & Test
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
         run: pnpm ignored-builds
 
       - name: Build tooling packages
-        run: pnpm --filter @lynxtron-showcases/config --filter @lynxtron-showcases/cli run build
+        run: pnpm --filter @lynxtron-examples/config --filter @lynxtron-examples/cli run build
 
       - name: Test
         run: pnpm test
