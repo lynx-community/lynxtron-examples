@@ -139,27 +139,80 @@ async function waitForRegistry() {
   throw new Error(`Registry failed to become ready at ${registryUrl}`);
 }
 
-async function stopRegistry() {
-  if (!fs.existsSync(registryPidFile)) {
+function killPid(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) {
     return;
   }
+  try {
+    process.kill(pid, 'SIGTERM');
+  } catch {
+    // Already stopped.
+  }
+}
 
-  const pidText = (await readFile(registryPidFile, 'utf8')).trim();
-  const pid = Number(pidText);
-  if (Number.isInteger(pid) && pid > 0) {
-    log(`Stopping registry (pid ${pid})...`);
-    if (process.platform === 'win32') {
-      await run('taskkill.exe', ['/PID', String(pid), '/T', '/F']).catch(() => {});
-    } else {
-      try {
-        process.kill(pid, 'SIGTERM');
-      } catch {
-        // Already stopped.
+async function findPidsOnPort(port) {
+  if (process.platform === 'win32') {
+    // netstat parsing on Windows is best-effort; skip and rely on pidfile.
+    return [];
+  }
+  return new Promise((resolve) => {
+    const child = spawn('lsof', ['-tiTCP:' + port, '-sTCP:LISTEN'], {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    let stdout = '';
+    child.stdout.on('data', (chunk) => { stdout += chunk.toString(); });
+    child.on('close', () => {
+      const pids = stdout
+        .split(/\s+/)
+        .map((token) => Number(token))
+        .filter((n) => Number.isInteger(n) && n > 0);
+      resolve(pids);
+    });
+    child.on('error', () => resolve([]));
+  });
+}
+
+async function stopRegistry() {
+  // Kill anything recorded in the pidfile first.
+  if (fs.existsSync(registryPidFile)) {
+    const pidText = (await readFile(registryPidFile, 'utf8')).trim();
+    const pid = Number(pidText);
+    if (Number.isInteger(pid) && pid > 0) {
+      log(`Stopping registry (pid ${pid})...`);
+      if (process.platform === 'win32') {
+        await run('taskkill.exe', ['/PID', String(pid), '/T', '/F']).catch(() => {});
+      } else {
+        killPid(pid);
       }
     }
+    await rm(registryPidFile, { force: true });
   }
 
-  await rm(registryPidFile, { force: true });
+  // Also kill any stray process still holding the registry port. The pidfile
+  // can go missing if the previous preview was interrupted, so port-based
+  // cleanup is the only reliable way to prevent a stale verdaccio from
+  // silently serving requests to the next run.
+  const strays = await findPidsOnPort(registryPort);
+  for (const pid of strays) {
+    log(`Killing stray process on port ${registryPort} (pid ${pid})...`);
+    killPid(pid);
+  }
+
+  // Wait until the port is actually free before returning, so the caller can
+  // safely bind to it. SIGTERM can take a moment to be processed.
+  for (let i = 0; i < 20; i += 1) {
+    const remaining = await findPidsOnPort(registryPort);
+    if (remaining.length === 0) {
+      return;
+    }
+    if (i === 10) {
+      for (const pid of remaining) {
+        log(`Escalating to SIGKILL for pid ${pid}...`);
+        try { process.kill(pid, 'SIGKILL'); } catch {}
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
 }
 
 async function startRegistry() {
@@ -210,18 +263,51 @@ log: { type: stdout, format: pretty, level: warn }
 async function publishWorkspacePackages() {
   await mkdir(npmCacheDir, { recursive: true });
 
+  // npm's `publish` for a scoped package resolves the target registry via
+  // `@scope:registry` before falling back to `--registry`. Passing
+  // `--@lynxtron-examples:registry=...` forces our local verdaccio to win over
+  // any user-configured scoped registry (e.g. the public npm registry pinned
+  // by `publishConfig`).
+  const scopedRegistryArg = `--@lynxtron-examples:registry=${registryUrl}`;
+  const publishArgs = [
+    '--cache', npmCacheDir,
+    'publish',
+    '--registry', registryUrl,
+    scopedRegistryArg,
+    registryAuthTokenArg,
+  ];
+
   log('Publishing @lynxtron-examples/config to local registry...');
-  await run('npm', ['--cache', npmCacheDir, 'publish', '--registry', registryUrl, registryAuthTokenArg], {
-    cwd: path.join(rootDir, 'packages', 'config'),
-  });
+  await runNpmPublish(path.join(rootDir, 'packages', 'config'), publishArgs);
 
   log('Publishing @lynxtron-examples/cli to local registry...');
   await run('pnpm', ['run', 'build'], {
     cwd: path.join(rootDir, 'packages', 'cli'),
   });
-  await run('npm', ['--cache', npmCacheDir, 'publish', '--registry', registryUrl, registryAuthTokenArg], {
-    cwd: path.join(rootDir, 'packages', 'cli'),
-  });
+  await runNpmPublish(path.join(rootDir, 'packages', 'cli'), publishArgs);
+}
+
+// Publishes a workspace package to the local registry even when it is marked
+// `"private": true`. The private flag is a safeguard against accidental
+// publish to the public npm registry; preview intentionally short-circuits it
+// by writing a stripped copy of package.json for the duration of the publish
+// call and always restoring the original, even on failure.
+async function runNpmPublish(pkgDir, publishArgs) {
+  const pkgJsonPath = path.join(pkgDir, 'package.json');
+  const original = await readFile(pkgJsonPath, 'utf8');
+  const parsed = JSON.parse(original);
+  const needsStrip = parsed.private === true;
+  if (needsStrip) {
+    const { private: _private, ...rest } = parsed;
+    await writeFile(pkgJsonPath, JSON.stringify(rest, null, 2) + '\n');
+  }
+  try {
+    await run('npm', publishArgs, { cwd: pkgDir });
+  } finally {
+    if (needsStrip) {
+      await writeFile(pkgJsonPath, original);
+    }
+  }
 }
 
 async function main() {
