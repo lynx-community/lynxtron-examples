@@ -17,7 +17,11 @@
   },
   "showcase": {
     "description": "Single-screen desktop demo for mouse move, hover, and cursor states",
-    "tags": ["desktop", "cursor", "interaction"],
+    "tags": [
+      "desktop",
+      "cursor",
+      "interaction"
+    ],
     "minToolchainVersion": "0.0.1"
   },
   "dependencies": {

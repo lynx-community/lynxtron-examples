@@ -16,5 +16,7 @@
     "@lynxtron-examples/pc-mouse-cursor": "0.0.1",
     "@lynxtron-examples/system-monitor": "0.0.1"
   },
-  "changesets": []
+  "changesets": [
+    "init-release-pipeline"
+  ]
 }
