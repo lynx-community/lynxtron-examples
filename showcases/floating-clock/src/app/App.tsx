@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "@lynx-js/react";
 import { CustomTitleBar } from "./components/CustomTitleBar";
-import "@lynxtron-showcases/config/tokens.css";
+import "@lynxtron-examples/config/tokens.css";
 import "./App.css";
 
 function formatTime(date: Date): string {

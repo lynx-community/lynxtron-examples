@@ -73,7 +73,7 @@ describe('showcase install helpers', () => {
       name: 'counter',
       private: true,
       devDependencies: {
-        '@lynxtron-showcases/config': '0.0.1',
+        '@lynxtron-examples/config': '0.0.1',
       },
     });
 
@@ -111,7 +111,7 @@ describe('showcase install helpers', () => {
       name: 'counter',
       private: true,
       devDependencies: {
-        '@lynxtron-showcases/config': 'workspace:*',
+        '@lynxtron-examples/config': 'workspace:*',
       },
     });
 
@@ -241,7 +241,7 @@ describe('showcase install helpers', () => {
       name: 'counter',
       private: true,
       devDependencies: {
-        '@lynxtron-showcases/config': 'workspace:*',
+        '@lynxtron-examples/config': 'workspace:*',
       },
     });
 

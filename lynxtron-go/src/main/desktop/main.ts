@@ -1,6 +1,6 @@
 import fs from 'fs';
 import os from 'os';
-import { spawn } from 'child_process';
+import { spawn, execFileSync } from 'child_process';
 import type { LynxWindow as LynxWindowInstance } from '@lynx-js/lynxtron';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 import path from 'path';
@@ -20,6 +20,48 @@ const { app, LynxWindow, dialog, Menu } =
 if (process.versions.lynxtron && !process.env.LYNXTRON_RUNTIME_VERSION) {
   process.env.LYNXTRON_RUNTIME_VERSION = process.versions.lynxtron;
 }
+// GUI-launched apps on macOS/Linux inherit a stripped PATH (launchd/Finder only
+// hand out /usr/bin:/bin:/usr/sbin:/sbin), so pnpm/node installed via nvm,
+// homebrew, corepack, etc. are invisible to child processes. Ask the user's
+// login shell what its PATH looks like and merge it in.
+function inheritShellPath(): void {
+  if (process.platform === 'win32') return;
+  if (process.env.LYNXTRON_SHELL_PATH_FIXED === '1') return;
+  const shell = process.env.SHELL || '/bin/bash';
+  const query = 'echo __PATH_START__:$PATH:__PATH_END__';
+  const shellEnv = {
+    ...process.env,
+    DISABLE_AUTO_UPDATE: 'true',
+    ZSH_TMUX_AUTOSTARTED: 'true',
+    ZSH_TMUX_AUTOSTART: 'false',
+  };
+  const tryShell = (args: string[]): string | null => {
+    try {
+      const out = execFileSync(shell, args, {
+        encoding: 'utf8',
+        timeout: 5000,
+        stdio: ['ignore', 'pipe', 'ignore'],
+        env: shellEnv,
+      });
+      const match = out.match(/__PATH_START__:(.*?):__PATH_END__/);
+      return match?.[1] || null;
+    } catch {
+      return null;
+    }
+  };
+  // Prefer -ilc (interactive login) so nvm/rc-based tools are visible; fall
+  // back to -lc if the interactive init hangs or bails.
+  const shellPath = tryShell(['-ilc', query]) ?? tryShell(['-lc', query]);
+  if (!shellPath) {
+    console.warn('[PC_Host] Could not read login shell PATH; PATH stays as launched');
+    return;
+  }
+  const existing = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
+  const additions = shellPath.split(path.delimiter).filter(Boolean);
+  process.env.PATH = Array.from(new Set([...existing, ...additions])).join(path.delimiter);
+  process.env.LYNXTRON_SHELL_PATH_FIXED = '1';
+}
+inheritShellPath();
 const isDev = process.env.NODE_ENV === 'development';
 // Bundle preview windows (from deep links / bridge calls) — one list, they
 // share a lifecycle and the tracking only exists to keep them alive.
@@ -242,7 +284,10 @@ function installFileResourceFetcher(win: LynxWindowInstance, allowedFileRoots: s
             return;
           }
           if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-            const res = await fetch(parsed.href);
+            const res = (await fetch(parsed.href)) as unknown as {
+              status: number;
+              arrayBuffer(): Promise<ArrayBuffer>;
+            };
             const buf = Buffer.from(await res.arrayBuffer());
             event.sendReply({
               url: parsed.href,
@@ -515,7 +560,7 @@ function buildAppMenu(w: LynxWindowInstance) {
     {
       label: 'Open Fiddle Repository...',
       // Our repo — the old link pointed at upstream electron/fiddle.
-      click: () => { openExternalUrl('https://github.com/icecreamx10/lynxtron-showcases'); },
+      click: () => { openExternalUrl('https://github.com/lynx-community/lynxtron-examples'); },
     },
   ];
   if (process.platform !== 'darwin') {

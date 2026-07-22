@@ -4,13 +4,19 @@
   "main": "main.js",
   "private": true,
   "dependencies": {
+    "@isaacs/fs-minipass": "^4.0.0",
     "@lynx-js/lynxtron": "0.0.5",
-    "@lynxtron-showcases/cli": "0.0.1",
+    "@lynxtron-examples/cli": "0.0.1",
+    "chownr": "^3.0.0",
     "lynxtron-scintilla-editor": "0.0.1",
+    "minipass": "^7.1.2",
+    "minizlib": "^3.1.0",
+    "tar": "^7.0.0",
     "typescript": "^5.9.3",
     "vscode-css-languageservice": "^6.3.10",
     "vscode-languageserver-textdocument": "^1.0.12",
-    "vscode-languageserver-types": "^3.17.5"
+    "vscode-languageserver-types": "^3.17.5",
+    "yallist": "^5.0.0"
   },
   "__commented_out_dependencies": {
   }

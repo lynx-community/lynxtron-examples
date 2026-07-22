@@ -16,3 +16,5 @@ build/
 *.tgz
 *.node
 .DS_Store
+
+.trae/

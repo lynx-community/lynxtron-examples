@@ -19,7 +19,7 @@ async function main() {
     case 'fetch': {
       const url = args[0];
       if (!url) {
-        log('Usage: lynxtron-showcases fetch <url>');
+        log('Usage: lynxtron-examples fetch <url>');
         process.exit(1);
       }
       await fetch(url, workspaceRoot);
@@ -31,7 +31,7 @@ async function main() {
       const positional = args.filter((a) => !a.startsWith('--'));
       const name = positional[0];
       if (!name) {
-        log('Usage: lynxtron-showcases build [--watch] <name>');
+        log('Usage: lynxtron-examples build [--watch] <name>');
         process.exit(1);
       }
       await build(name, { watch, workspaceRoot });
@@ -41,7 +41,7 @@ async function main() {
     case 'run': {
       const name = args[0];
       if (!name) {
-        log('Usage: lynxtron-showcases run <name>');
+        log('Usage: lynxtron-examples run <name>');
         process.exit(1);
       }
       await run(name, workspaceRoot);

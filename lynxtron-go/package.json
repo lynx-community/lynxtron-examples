@@ -40,14 +40,20 @@
     "minToolchainVersion": "0.0.1"
   },
   "dependencies": {
-    "@lynxtron-showcases/cli": "workspace:*",
+    "@isaacs/fs-minipass": "^4.0.0",
+    "@lynxtron-examples/cli": "workspace:*",
+    "chownr": "^3.0.0",
     "lynxtron-http-service": "workspace:*",
     "lynxtron-scintilla-editor": "workspace:*",
+    "minipass": "^7.1.2",
+    "minizlib": "^3.1.0",
     "prismjs": "^1.30.0",
+    "tar": "^7.0.0",
     "typescript": "catalog:",
     "vscode-css-languageservice": "^6.3.10",
     "vscode-languageserver-textdocument": "^1.0.12",
-    "vscode-languageserver-types": "^3.17.5"
+    "vscode-languageserver-types": "^3.17.5",
+    "yallist": "^5.0.0"
   },
   "__commented_out_dependencies": {
   },

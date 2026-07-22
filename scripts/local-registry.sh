@@ -11,13 +11,16 @@
 #   GH_TOKEN=$(gh auth token) \
 #   node packages/cli/dist/index.js fetch 'https://github.com/...'
 #
-# TODO: This script uses a local registry because @lynxtron-showcases/* packages
-# are not yet published to npm. Remove this workaround once packages are published.
+# NOTE: This script uses a local registry so you can test the CLI fetch → build →
+# serve flow without hitting the real npm registry. Production publishing of the
+# @lynxtron-examples/* packages is handled by .github/workflows/release.yml
+# (Changesets + npm OIDC trusted publishing); this local registry remains useful
+# for offline / pre-publish end-to-end testing.
 
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-NPM_CACHE_DIR="${NPM_CACHE_DIR:-/tmp/npm-cache-lynxtron-showcases}"
+NPM_CACHE_DIR="${NPM_CACHE_DIR:-/tmp/npm-cache-lynxtron-examples}"
 REGISTRY_PORT=4873
 REGISTRY_URL="http://localhost:${REGISTRY_PORT}"
 REGISTRY_PID_FILE="/tmp/verdaccio-lynxtron.pid"
@@ -51,7 +54,7 @@ uplinks:
   npmjs:
     url: https://registry.npmjs.org/
 packages:
-  '@lynxtron-showcases/*':
+  '@lynxtron-examples/*':
     access: \$all
     publish: \$all
     unpublish: \$all
@@ -88,12 +91,12 @@ EOF
 }
 
 publish_packages() {
-  log "Publishing @lynxtron-showcases/config to local registry..."
+  log "Publishing @lynxtron-examples/config to local registry..."
   cd "$ROOT_DIR/packages/config"
   npm --cache "$NPM_CACHE_DIR" publish --registry "$REGISTRY_URL" --force 2>&1 | grep -v "npm warn" || true
 
   # CLI is not needed in the remote workspace, but publish for completeness
-  log "Publishing @lynxtron-showcases/cli to local registry..."
+  log "Publishing @lynxtron-examples/cli to local registry..."
   cd "$ROOT_DIR/packages/cli"
   # Build first
   pnpm run build 2>&1 | tail -1
@@ -119,7 +122,7 @@ stop_registry() {
 }
 
 run_e2e() {
-  # Clear pnpm store cache for @lynxtron-showcases packages to avoid stale artifacts
+  # Clear pnpm store cache for @lynxtron-examples packages to avoid stale artifacts
   log "Clearing pnpm store cache..."
   pnpm store prune 2>/dev/null || true
 

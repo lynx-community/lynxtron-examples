@@ -120,6 +120,14 @@ async function fetchRepoShowcase(
   emit({ type: 'install-start', name: resolved.name });
   execSync('pnpm install', { cwd: manager.getRootPath(), stdio: 'pipe' });
   emit({ type: 'install-success', name: resolved.name });
+
+  // GitHub source tarballs never carry `dist/` (it is gitignored), so build
+  // the showcase once so `lynxtron ./dist/desktop` can find main.js.
+  const distMain = path.join(destDir, 'dist', 'desktop', 'main.js');
+  if (!fs.existsSync(distMain)) {
+    log(`Building ${resolved.name}...`);
+    execSync('pnpm run build', { cwd: destDir, stdio: 'pipe' });
+  }
 }
 
 // ── External git repo ─────────────────────────────────────────────────────
@@ -143,7 +151,7 @@ async function fetchExternal(
 
 // TODO: Remove GITHUB_TOKEN/GH_TOKEN auth once repo is public.
 function getAuthHeaders(): Record<string, string> {
-  const headers: Record<string, string> = { 'User-Agent': 'lynxtron-showcases-cli' };
+  const headers: Record<string, string> = { 'User-Agent': 'lynxtron-examples-cli' };
   const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

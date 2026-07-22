@@ -7,8 +7,8 @@ A monorepo of Lynxtron showcase apps. **Lynxtron GO** is a playground app (like 
 ```
 lynxtron-show-cases/
   packages/
-    config/         @lynxtron-showcases/config  — shared Lynx build config preset
-    cli/            @lynxtron-showcases/cli     — CLI for fetching, building, running showcases
+    config/         @lynxtron-examples/config  — shared Lynx build config preset
+    cli/            @lynxtron-examples/cli     — CLI for fetching, building, running showcases
   showcases/
     counter/        minimal counter example (full Lynxtron app)
   lynxtron-go/      Lynxtron GO playground app (IDE shell)
@@ -72,7 +72,7 @@ pnpm preview
 
 This will:
 1. Build & `npm pack` each showcase in `showcases/`
-2. Start a local Verdaccio registry and publish `@lynxtron-showcases/*` packages
+2. Start a local Verdaccio registry and publish `@lynxtron-examples/*` packages
 3. Build Lynxtron GO with `LYNXTRON_PREVIEW=1` (bakes `file://` tarball URLs)
 4. Launch Lynxtron GO desktop app
 
@@ -92,7 +92,7 @@ Each showcase is a **full Lynxtron application** (host process + Lynx UI):
 ```
 showcases/my-app/
   package.json          # metadata + deps
-  lynx.config.ts        # re-export from @lynxtron-showcases/config
+  lynx.config.ts        # re-export from @lynxtron-examples/config
   rspack.config.ts      # host process build (per-showcase)
   src/
     app/                # Lynx UI (platform-agnostic)
@@ -103,16 +103,16 @@ showcases/my-app/
 
 ```bash
 # Fetch a showcase from GitHub
-lynxtron-showcases fetch 'https://github.com/user/repo/tree/main/showcases/counter'
+lynxtron-examples fetch 'https://github.com/user/repo/tree/main/showcases/counter'
 
 # Build a fetched showcase
-lynxtron-showcases build counter
+lynxtron-examples build counter
 
 # Run a built showcase (opens independent desktop window)
-lynxtron-showcases run counter
+lynxtron-examples run counter
 
 # List locally available showcases
-lynxtron-showcases list
+lynxtron-examples list
 ```
 
 ## Lynxtron GO Commands

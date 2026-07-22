@@ -1,10 +1,21 @@
 {
-  "name": "@lynxtron-showcases/cli",
+  "name": "@lynxtron-examples/cli",
   "version": "0.0.1",
+  "description": "CLI to fetch, build and run Lynxtron showcases. Internal to Lynxtron GO — not published to npm.",
+  "license": "Apache-2.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lynx-community/lynxtron-examples.git",
+    "directory": "packages/cli"
+  },
   "type": "module",
   "bin": {
-    "lynxtron-showcases": "./dist/index.js"
+    "lynxtron-examples": "./dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  CI: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint & Test
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history so `changeset status` can diff against the base.
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: |
+          npm i -g corepack@latest --force
+          corepack enable
+          pnpm install
+
+      - name: Verify no required build scripts were skipped
+        run: pnpm ignored-builds
+
+      - name: Build tooling packages
+        run: pnpm --filter @lynxtron-examples/config --filter @lynxtron-examples/cli run build
+
+      - name: Test
+        run: pnpm test
+
+      - name: Typecheck Lynxtron GO
+        run: pnpm --filter lynxtron-go run typecheck
+
+      - name: Changeset status
+        run: pnpm changeset status --verbose --since ${{ github.event.pull_request.base.sha }}

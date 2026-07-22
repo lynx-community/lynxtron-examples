@@ -1,8 +1,10 @@
 {
   "name": "@lynxtron-examples/benchmark",
   "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "main.js",
-  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/lynx-community/lynxtron-examples"
@@ -22,7 +24,7 @@
     "@lynx-js/lynxtron": "catalog:"
   },
   "devDependencies": {
-    "@lynxtron-showcases/config": "workspace:*",
+    "@lynxtron-examples/config": "workspace:*",
     "@lynx-js/react": "catalog:",
     "@lynx-js/rspeedy": "catalog:",
     "@lynx-js/types": "catalog:",

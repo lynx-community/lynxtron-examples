@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from '@lynx-js/react';
-import '@lynxtron-showcases/config/tokens.css';
+import '@lynxtron-examples/config/tokens.css';
 import './App.css';
 import { getNotesApi, type NoteRecord, type NoteSummary, type PlatformInfo } from './api';
 

@@ -71,18 +71,33 @@ importers:
 
   lynxtron-go:
     dependencies:
-      '@lynxtron-showcases/cli':
+      '@isaacs/fs-minipass':
+        specifier: ^4.0.0
+        version: 4.0.1
+      '@lynxtron-examples/cli':
         specifier: workspace:*
         version: link:../packages/cli
+      chownr:
+        specifier: ^3.0.0
+        version: 3.0.0
       lynxtron-http-service:
         specifier: workspace:*
         version: link:http-service-extension
       lynxtron-scintilla-editor:
         specifier: workspace:*
         version: link:scintilla-extension
+      minipass:
+        specifier: ^7.1.2
+        version: 7.1.3
+      minizlib:
+        specifier: ^3.1.0
+        version: 3.1.0
       prismjs:
         specifier: ^1.30.0
         version: 1.30.0
+      tar:
+        specifier: ^7.0.0
+        version: 7.5.16
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -95,6 +110,9 @@ importers:
       vscode-languageserver-types:
         specifier: ^3.17.5
         version: 3.18.0
+      yallist:
+        specifier: ^5.0.0
+        version: 5.0.0
     devDependencies:
       '@lynx-js/config-rsbuild-plugin':
         specifier: 'catalog:'
@@ -248,7 +266,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -285,7 +303,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -322,7 +340,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -359,7 +377,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -396,7 +414,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -436,7 +454,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -479,7 +497,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -516,7 +534,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':

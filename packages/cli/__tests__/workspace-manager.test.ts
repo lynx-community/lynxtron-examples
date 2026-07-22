@@ -27,7 +27,7 @@ describe('WorkspaceManager', () => {
 
     const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
     expect(pkg.dependencies['@lynx-js/react']).toBeDefined();
-    expect(pkg.dependencies['@lynxtron-showcases/config']).toBeDefined();
+    expect(pkg.dependencies['@lynxtron-examples/config']).toBeDefined();
   });
 
   it('rewrites workspace:* in showcase package.json', async () => {
@@ -39,7 +39,7 @@ describe('WorkspaceManager', () => {
       path.join(showcaseDir, 'package.json'),
       JSON.stringify({
         name: 'test-app',
-        devDependencies: { '@lynxtron-showcases/config': 'workspace:*' },
+        devDependencies: { '@lynxtron-examples/config': 'workspace:*' },
       })
     );
 
@@ -48,6 +48,44 @@ describe('WorkspaceManager', () => {
     const pkg = JSON.parse(
       fs.readFileSync(path.join(showcaseDir, 'package.json'), 'utf-8')
     );
-    expect(pkg.devDependencies['@lynxtron-showcases/config']).not.toBe('workspace:*');
+    expect(pkg.devDependencies['@lynxtron-examples/config']).not.toBe('workspace:*');
+  });
+
+  it('rewrites catalog: refs against the workspace catalog', async () => {
+    await manager.init();
+
+    const showcaseDir = path.join(tmpDir, 'showcases', 'catalog-app');
+    fs.mkdirSync(showcaseDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(showcaseDir, 'package.json'),
+      JSON.stringify({
+        name: 'catalog-app',
+        dependencies: { '@lynx-js/lynxtron': 'catalog:' },
+        devDependencies: { '@rspack/core': 'catalog:' },
+      })
+    );
+
+    await manager.rewriteWorkspaceRefs('catalog-app');
+
+    const pkg = JSON.parse(
+      fs.readFileSync(path.join(showcaseDir, 'package.json'), 'utf-8')
+    );
+    expect(pkg.dependencies['@lynx-js/lynxtron']).not.toBe('catalog:');
+    expect(pkg.dependencies['@lynx-js/lynxtron']).toMatch(/^[\^~]?\d/);
+    expect(pkg.devDependencies['@rspack/core']).not.toBe('catalog:');
+  });
+
+  it('removes stale localhost .npmrc left by preview mode', async () => {
+    fs.mkdirSync(tmpDir, { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, '.npmrc'), 'registry=http://localhost:4873\n');
+    await manager.init();
+    expect(fs.existsSync(path.join(tmpDir, '.npmrc'))).toBe(false);
+  });
+
+  it('writes a catalog: block into pnpm-workspace.yaml', async () => {
+    await manager.init();
+    const ws = fs.readFileSync(path.join(tmpDir, 'pnpm-workspace.yaml'), 'utf-8');
+    expect(ws).toContain('catalog:');
+    expect(ws).toContain('@lynx-js/lynxtron');
   });
 });

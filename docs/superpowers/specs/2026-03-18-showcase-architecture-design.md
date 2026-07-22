@@ -73,7 +73,7 @@ lynxtron-show-cases/
   showcase-registry.json                # auto-generated showcase manifest
 
   packages/
-    config/                             # @lynxtron-showcases/config
+    config/                             # @lynxtron-examples/config
       package.json
       dist/                             # compiled JS (published to npm)
       src/
@@ -81,7 +81,7 @@ lynxtron-show-cases/
         rspack.config.ts                #   default Rspack config for host process (desktop + web)
         index.ts                        #   re-export configs
 
-    cli/                                # @lynxtron-showcases/cli
+    cli/                                # @lynxtron-examples/cli
       package.json
       src/
         commands/
@@ -128,7 +128,7 @@ lynxtron-show-cases/
 4. Place into `~/.lynxtron-go/showcases/counter/`
 5. CLI rewrites `workspace:*` references in `package.json` to real version numbers
 6. `pnpm install` in workspace context (shared toolchain, only installs business deps)
-7. `rspeedy build && rspack build` (dual pipeline, uses `@lynxtron-showcases/config` preset)
+7. `rspeedy build && rspack build` (dual pipeline, uses `@lynxtron-examples/config` preset)
 8. Output `dist/desktop/` → Lynxtron GO spawns `lynxtron ./dist/desktop` as independent process
 
 **External standalone package:**
@@ -145,7 +145,7 @@ lynxtron-show-cases/
 ```
 ~/.lynxtron-go/
   package.json                # toolchain deps: @lynx-js/react, rspeedy, rspack,
-                              #   @lynxtron-showcases/config, lynxtron, etc.
+                              #   @lynxtron-examples/config, lynxtron, etc.
   pnpm-workspace.yaml         # showcases/*
   showcases/                  # repo showcases, shared toolchain
     counter/
@@ -164,23 +164,23 @@ lynxtron-show-cases/
 When a repo showcase is fetched into the local workspace:
 
 1. **CLI rewrites `workspace:*`** in the showcase's `package.json` to the actual version installed in `~/.lynxtron-go/package.json`.
-2. **Shared packages** (`@lynxtron-showcases/config`) are declared in the workspace root `package.json`, so they resolve via hoisting.
+2. **Shared packages** (`@lynxtron-examples/config`) are declared in the workspace root `package.json`, so they resolve via hoisting.
 3. **Core Lynx SDK and Rspack** (`@lynx-js/react`, `@lynx-js/rspeedy`, `@rspack/core`, `@rspack/cli`) are also in the workspace root, shared across all showcases.
 4. **Lynxtron runtime** (`@lynx-js/lynxtron`) is in the workspace root — needed to run `lynxtron ./dist/desktop`.
 5. **Business dependencies** declared in the showcase's own `package.json` are installed per-showcase by pnpm, with dedup via pnpm's global store.
 
 ## 4. Shared Config Package
 
-`@lynxtron-showcases/config` provides a zero-config preset for the **Lynx UI build** (RSpeedy) only.
+`@lynxtron-examples/config` provides a zero-config preset for the **Lynx UI build** (RSpeedy) only.
 
 ### Lynx config (RSpeedy) — shared
 
 ```typescript
 // showcases/counter/lynx.config.ts
-export { default } from '@lynxtron-showcases/config/lynx';
+export { default } from '@lynxtron-examples/config/lynx';
 
 // Or with customization:
-import { createShowcaseConfig } from '@lynxtron-showcases/config';
+import { createShowcaseConfig } from '@lynxtron-examples/config';
 export default createShowcaseConfig({ entry: './src/app/custom.tsx' });
 ```
 
@@ -201,8 +201,8 @@ Showcases can reference `lynxtron-shell-demo` as a template. Future scaffold too
 
 | Package | npm Name | Purpose |
 |---------|----------|---------|
-| `packages/config` | `@lynxtron-showcases/config` | Shared build config preset (lynx + rspack) |
-| `packages/cli` | `@lynxtron-showcases/cli` | CLI tool (also a Lynxtron GO dependency) |
+| `packages/config` | `@lynxtron-examples/config` | Shared build config preset (lynx + rspack) |
+| `packages/cli` | `@lynxtron-examples/cli` | CLI tool (also a Lynxtron GO dependency) |
 
 ### Version strategy
 
@@ -240,7 +240,7 @@ Each showcase declares a `showcase` field in its `package.json`:
 }
 ```
 
-- `minToolchainVersion`: minimum version of the `@lynxtron-showcases/*` toolchain required
+- `minToolchainVersion`: minimum version of the `@lynxtron-examples/*` toolchain required
 - CI uses this field to auto-generate `showcase-registry.json`
 
 ### Compatibility checks
@@ -275,7 +275,7 @@ Each showcase runs in its own process with its own window. Lynxtron GO does NOT 
 
 ```bash
 # Run a built showcase
-lynxtron-showcases run counter
+lynxtron-examples run counter
 
 # Equivalent to:
 lynxtron ~/.lynxtron-go/showcases/counter/dist/desktop

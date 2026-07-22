@@ -104,7 +104,7 @@ const desktopConfig = defineConfig({
     'lynxtron': 'commonjs lynxtron',
     '@lynx-js/lynxtron': 'commonjs @lynx-js/lynxtron',
     '@lynx-js/lynxtron/context-bridge': 'commonjs @lynx-js/lynxtron/context-bridge',
-    '@lynxtron-showcases/cli/dist/index.js': 'commonjs @lynxtron-showcases/cli/dist/index.js',
+    '@lynxtron-examples/cli/dist/index.js': 'commonjs @lynxtron-examples/cli/dist/index.js',
     'typescript': 'commonjs typescript',
     'vscode-css-languageservice': 'commonjs vscode-css-languageservice',
     'vscode-languageserver-types': 'commonjs vscode-languageserver-types',

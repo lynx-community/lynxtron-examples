@@ -8,7 +8,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-NPM_CACHE_DIR="${NPM_CACHE_DIR:-/tmp/npm-cache-lynxtron-showcases}"
+NPM_CACHE_DIR="${NPM_CACHE_DIR:-/tmp/npm-cache-lynxtron-examples}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

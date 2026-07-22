@@ -31,7 +31,7 @@ const PROCESS_OUTPUT_BUFFER_LIMIT = 1000;
 const ANSI_RE = /\x1B\[[\x30-\x3F]*[\x20-\x2F]*[\x40-\x7E]|\x1B[PX^_][\s\S]*?\x1B\\|\x1B[^[\]()#;?PX^_]/g;
 
 function resolveCliPath(): string {
-  return getRuntimeRequire().resolve('@lynxtron-showcases/cli/dist/index.js');
+  return getRuntimeRequire().resolve('@lynxtron-examples/cli/dist/index.js');
 }
 
 function openExternalUrl(url: string, dbg: DebugLogger) {
