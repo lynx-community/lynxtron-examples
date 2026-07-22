@@ -242,7 +242,10 @@ function installFileResourceFetcher(win: LynxWindowInstance, allowedFileRoots: s
             return;
           }
           if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-            const res = await fetch(parsed.href);
+            const res = (await fetch(parsed.href)) as unknown as {
+              status: number;
+              arrayBuffer(): Promise<ArrayBuffer>;
+            };
             const buf = Buffer.from(await res.arrayBuffer());
             event.sendReply({
               url: parsed.href,
