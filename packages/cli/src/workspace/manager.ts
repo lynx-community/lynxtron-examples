@@ -6,7 +6,7 @@ const DEFAULT_TOOLCHAIN = {
   '@lynx-js/rspeedy': '^0.13.0',
   '@lynx-js/types': '3.6.0',
   '@lynx-js/react-rsbuild-plugin': '^0.12.5',
-  '@lynxtron-showcases/config': '0.0.1',
+  '@lynxtron-examples/config': '0.0.1',
   '@rspack/cli': '^1.7.5',
   '@rspack/core': '^1.7.5',
   '@lynx-js/lynxtron': '0.0.5',

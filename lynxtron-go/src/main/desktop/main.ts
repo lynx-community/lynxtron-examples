@@ -515,7 +515,7 @@ function buildAppMenu(w: LynxWindowInstance) {
     {
       label: 'Open Fiddle Repository...',
       // Our repo — the old link pointed at upstream electron/fiddle.
-      click: () => { openExternalUrl('https://github.com/icecreamx10/lynxtron-showcases'); },
+      click: () => { openExternalUrl('https://github.com/lynx-community/lynxtron-examples'); },
     },
   ];
   if (process.platform !== 'darwin') {

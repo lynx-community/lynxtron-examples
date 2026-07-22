@@ -1,5 +1,5 @@
 import { app, LynxWindow } from '@lynx-js/lynxtron';
-import { nudgeFramedWindowViewport } from '@lynxtron-showcases/config/window';
+import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
 import path from 'path';
 import { DESKTOP_BUNDLE_PATH } from './vendorPaths';
 

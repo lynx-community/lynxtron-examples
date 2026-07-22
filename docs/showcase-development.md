@@ -76,7 +76,7 @@ mkdir -p showcases/my-app/src/main/desktop
     "minToolchainVersion": "0.0.1"
   },
   "devDependencies": {
-    "@lynxtron-showcases/config": "workspace:*",
+    "@lynxtron-examples/config": "workspace:*",
     "@lynx-js/react": "0.115.4",
     "@lynx-js/rspeedy": "^0.13.0",
     "@lynx-js/types": "3.6.0",
@@ -94,18 +94,18 @@ mkdir -p showcases/my-app/src/main/desktop
 **Fields:**
 - `showcase.description` — shown in Lynxtron GO's showcase list
 - `showcase.tags` — used for filtering (`beginner`, `advanced`, `animation`, etc.)
-- `showcase.minToolchainVersion` — minimum `@lynxtron-showcases/*` version required
+- `showcase.minToolchainVersion` — minimum `@lynxtron-examples/*` version required
 
 ### 3. Create `lynx.config.ts`
 
 ```typescript
-export { default } from '@lynxtron-showcases/config/lynx';
+export { default } from '@lynxtron-examples/config/lynx';
 ```
 
 This gives you zero-config builds. If you need custom configuration:
 
 ```typescript
-import { createShowcaseConfig } from '@lynxtron-showcases/config';
+import { createShowcaseConfig } from '@lynxtron-examples/config';
 
 export default createShowcaseConfig({
   entry: './src/custom-entry.tsx',
@@ -311,6 +311,62 @@ GH_TOKEN=$(gh auth token) \
 ./scripts/local-registry.sh stop
 ```
 
+## Release
+
+Releases are driven by [Changesets](https://github.com/changesets/changesets) and
+GitHub Actions. There is no manual `npm publish` or hand-cut tag.
+
+### 1. Add a changeset with your change
+
+When your PR changes anything that should trigger a version bump, add a changeset:
+
+```bash
+pnpm changeset
+```
+
+Pick the affected packages and a bump level (`patch` / `minor` / `major`), then
+commit the generated `.changeset/*.md` file. CI checks (`changeset status`) fail a
+PR that changes source without a changeset.
+
+Note: showcases and `lynxtron-go` are `private`, but `.changeset/config.json` sets
+`privatePackages.version: true`, so they still get versioned and changelogged —
+they just are not published to npm.
+
+### 2. Merge to `main` → "Version Packages" PR
+
+On push to `main`, the Release workflow (`.github/workflows/release.yml`) opens or
+updates a **"Version Packages"** PR that bumps versions and writes `CHANGELOG.md`
+files from the pending changesets.
+
+### 3. Merge the "Version Packages" PR → publish
+
+Merging that PR triggers publishing:
+
+- **npm** — `@lynxtron-examples/config` is published to the public npm registry
+  via `changeset publish` using npm **OIDC trusted publishing** (no long-lived
+  `NPM_TOKEN`). `@lynxtron-examples/cli` is `private: true` — it is bundled
+  inside Lynxtron GO at build time and is not published to npm.
+- **GitHub Release** — a `lynxtron-go-v<version>` release is created with:
+  - Lynxtron GO installers: `*.dmg` (macOS) and `*-Setup.exe` (Windows), built via
+    `lynxtron-builder`.
+  - Every showcase packed as a `.tgz` (built on the macOS runner because native
+    `.node` addons are host-platform specific).
+
+Native artifacts (installers + showcase tarballs) are built on their matching OS
+runner. The npm publish requires `@lynxtron-examples/config` on npmjs to have an
+OIDC trusted publisher configured, pointing at this repository's release workflow.
+
+### Building release artifacts locally
+
+```bash
+# Pack every showcase into dist/showcase-artifacts/*.tgz
+node scripts/pack-showcases.mjs
+
+# Build the Lynxtron GO installer for the current platform
+pnpm --dir lynxtron-go run pack        # macOS dmg
+pnpm --dir lynxtron-go run pack:win    # Windows nsis
+```
+
 ## Adding Business Dependencies
 
 Add your own dependencies to `package.json` as usual:
@@ -323,7 +379,7 @@ Add your own dependencies to `package.json` as usual:
 }
 ```
 
-Core Lynx dependencies (`@lynx-js/*`) and build tools (`@lynxtron-showcases/config`) are managed at the monorepo level — don't change their versions without coordinating.
+Core Lynx dependencies (`@lynx-js/*`) and build tools (`@lynxtron-examples/config`) are managed at the monorepo level — don't change their versions without coordinating.
 
 ## Showcase Metadata
 
@@ -339,7 +395,7 @@ Before submitting a showcase:
 - [ ] `pnpm run build` produces a runnable `dist/desktop/`
 - [ ] `lynxtron ./dist/desktop` launches successfully
 - [ ] `showcase` field in `package.json` has description and tags
-- [ ] `lynx.config.ts` uses `@lynxtron-showcases/config`
+- [ ] `lynx.config.ts` uses `@lynxtron-examples/config`
 - [ ] No HTML elements — only Lynx built-in elements (`<view>`, `<text>`, etc.)
 - [ ] No DOM/BOM APIs — use `NativeModules.bridge` for host interactions
 - [ ] Run `pnpm run generate-registry` to update `showcase-registry.json`

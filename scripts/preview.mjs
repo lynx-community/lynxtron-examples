@@ -21,7 +21,7 @@ const registryPort = 4873;
 const registryUrl = `http://localhost:${registryPort}`;
 const registryAuthTokenArg = `--//localhost:${registryPort}/:_authToken=preview`;
 const tempRoot = process.env.NPM_CACHE_DIR || os.tmpdir();
-const npmCacheDir = path.join(tempRoot, 'npm-cache-lynxtron-showcases');
+const npmCacheDir = path.join(tempRoot, 'npm-cache-lynxtron-examples');
 const registryDir = path.join(os.tmpdir(), 'verdaccio-lynxtron');
 const registryPidFile = path.join(os.tmpdir(), 'verdaccio-lynxtron.pid');
 
@@ -175,7 +175,7 @@ uplinks:
   npmjs:
     url: https://registry.npmjs.org/
 packages:
-  '@lynxtron-showcases/*':
+  '@lynxtron-examples/*':
     access: $all
     publish: $anonymous
     unpublish: $anonymous
@@ -210,12 +210,12 @@ log: { type: stdout, format: pretty, level: warn }
 async function publishWorkspacePackages() {
   await mkdir(npmCacheDir, { recursive: true });
 
-  log('Publishing @lynxtron-showcases/config to local registry...');
+  log('Publishing @lynxtron-examples/config to local registry...');
   await run('npm', ['--cache', npmCacheDir, 'publish', '--registry', registryUrl, registryAuthTokenArg], {
     cwd: path.join(rootDir, 'packages', 'config'),
   });
 
-  log('Publishing @lynxtron-showcases/cli to local registry...');
+  log('Publishing @lynxtron-examples/cli to local registry...');
   await run('pnpm', ['run', 'build'], {
     cwd: path.join(rootDir, 'packages', 'cli'),
   });
@@ -230,9 +230,9 @@ async function main() {
   log('=== Step 0: Build workspace tooling ===');
   await run('pnpm', [
     '--filter',
-    '@lynxtron-showcases/config',
+    '@lynxtron-examples/config',
     '--filter',
-    '@lynxtron-showcases/cli',
+    '@lynxtron-examples/cli',
     'run',
     'build',
   ]);

@@ -143,7 +143,7 @@ async function fetchExternal(
 
 // TODO: Remove GITHUB_TOKEN/GH_TOKEN auth once repo is public.
 function getAuthHeaders(): Record<string, string> {
-  const headers: Record<string, string> = { 'User-Agent': 'lynxtron-showcases-cli' };
+  const headers: Record<string, string> = { 'User-Agent': 'lynxtron-examples-cli' };
   const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

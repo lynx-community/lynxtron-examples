@@ -1,0 +1,20 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "lynxtron-go": "0.0.1",
+    "lynxtron-http-service": "0.0.1",
+    "lynxtron-scintilla-editor": "0.0.1",
+    "@lynxtron-examples/cli": "0.0.1",
+    "@lynxtron-examples/config": "0.0.1",
+    "@lynxtron-examples/benchmark": "0.0.1",
+    "@lynxtron-examples/counter": "0.0.1",
+    "@lynxtron-examples/cross-platform-notes": "0.0.1",
+    "@lynxtron-examples/file-explorer": "0.0.1",
+    "@lynxtron-examples/floating-clock": "0.0.1",
+    "@lynxtron-examples/native-texture-canvas": "0.0.1",
+    "@lynxtron-examples/pc-mouse-cursor": "0.0.1",
+    "@lynxtron-examples/system-monitor": "0.0.1"
+  },
+  "changesets": []
+}

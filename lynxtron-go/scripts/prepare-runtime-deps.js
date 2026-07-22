@@ -179,7 +179,7 @@ function main() {
   const lynxtronTarget = copyPackageEntries('@lynx-js/lynxtron', lynxtronEntries);
   sanitizeManifest(lynxtronTarget);
 
-  copyPackage('@lynxtron-showcases/cli');
+  copyPackage('@lynxtron-examples/cli');
   copyPackage('@types/node/package.json', '@types/node');
   copyPackage('typescript');
   copyPackage('vscode-css-languageservice');

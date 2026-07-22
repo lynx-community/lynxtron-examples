@@ -27,7 +27,7 @@ describe('WorkspaceManager', () => {
 
     const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
     expect(pkg.dependencies['@lynx-js/react']).toBeDefined();
-    expect(pkg.dependencies['@lynxtron-showcases/config']).toBeDefined();
+    expect(pkg.dependencies['@lynxtron-examples/config']).toBeDefined();
   });
 
   it('rewrites workspace:* in showcase package.json', async () => {
@@ -39,7 +39,7 @@ describe('WorkspaceManager', () => {
       path.join(showcaseDir, 'package.json'),
       JSON.stringify({
         name: 'test-app',
-        devDependencies: { '@lynxtron-showcases/config': 'workspace:*' },
+        devDependencies: { '@lynxtron-examples/config': 'workspace:*' },
       })
     );
 
@@ -48,6 +48,6 @@ describe('WorkspaceManager', () => {
     const pkg = JSON.parse(
       fs.readFileSync(path.join(showcaseDir, 'package.json'), 'utf-8')
     );
-    expect(pkg.devDependencies['@lynxtron-showcases/config']).not.toBe('workspace:*');
+    expect(pkg.devDependencies['@lynxtron-examples/config']).not.toBe('workspace:*');
   });
 });

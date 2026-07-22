@@ -1,7 +1,7 @@
 import lynxLogo from './assets/lynx-logo.png';
 import desktopFrame from './assets/desktop-frame.png';
 import { useDesktopDrag } from './useDesktopDrag';
-import '@lynxtron-showcases/config/tokens.css';
+import '@lynxtron-examples/config/tokens.css';
 import './App.css';
 
 export function App() {

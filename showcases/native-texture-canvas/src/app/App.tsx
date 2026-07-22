@@ -1,5 +1,5 @@
 import { useEffect, useState } from '@lynx-js/react';
-import '@lynxtron-showcases/config/tokens.css';
+import '@lynxtron-examples/config/tokens.css';
 import './App.css';
 
 declare const NativeModules: any;

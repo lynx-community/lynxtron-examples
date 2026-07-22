@@ -40,7 +40,7 @@
     "minToolchainVersion": "0.0.1"
   },
   "dependencies": {
-    "@lynxtron-showcases/cli": "workspace:*",
+    "@lynxtron-examples/cli": "workspace:*",
     "lynxtron-http-service": "workspace:*",
     "lynxtron-scintilla-editor": "workspace:*",
     "prismjs": "^1.30.0",

@@ -2,7 +2,6 @@
   "name": "@lynxtron-examples/floating-clock",
   "version": "0.0.1",
   "main": "main.js",
-  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/lynx-community/lynxtron-examples"
@@ -22,7 +21,7 @@
     "@lynx-js/lynxtron": "catalog:"
   },
   "devDependencies": {
-    "@lynxtron-showcases/config": "workspace:*",
+    "@lynxtron-examples/config": "workspace:*",
     "@lynx-js/lynxtron-dev-plugins": "catalog:",
     "@lynx-js/react": "catalog:",
     "@lynx-js/rspeedy": "catalog:",

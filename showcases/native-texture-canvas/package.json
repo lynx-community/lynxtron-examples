@@ -27,7 +27,7 @@
     "@lynx-js/lynxtron": "catalog:"
   },
   "devDependencies": {
-    "@lynxtron-showcases/config": "workspace:*",
+    "@lynxtron-examples/config": "workspace:*",
     "@lynx-js/lynx-library-headers": "catalog:",
     "@lynx-js/react": "catalog:",
     "@lynx-js/rspeedy": "catalog:",

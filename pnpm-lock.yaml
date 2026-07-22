@@ -71,7 +71,7 @@ importers:
 
   lynxtron-go:
     dependencies:
-      '@lynxtron-showcases/cli':
+      '@lynxtron-examples/cli':
         specifier: workspace:*
         version: link:../packages/cli
       lynxtron-http-service:
@@ -248,7 +248,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -285,7 +285,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -322,7 +322,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -359,7 +359,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -396,7 +396,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -436,7 +436,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -479,7 +479,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':
@@ -516,7 +516,7 @@ importers:
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 3.8.0
-      '@lynxtron-showcases/config':
+      '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@rspack/cli':

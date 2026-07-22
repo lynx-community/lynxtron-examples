@@ -1,0 +1,120 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  # ── Stage 1: version management + npm publish (OIDC trusted publishing) ────
+  # Opens/updates the "Version Packages" PR when changesets are pending; once
+  # that PR is merged, publishes @lynxtron-examples/config to npm.
+  # (@lynxtron-examples/cli is workspace-internal to Lynxtron GO and is not
+  # published to npm.)
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          # Full history so Changesets can generate changelogs.
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Install Dependencies
+        run: |
+          npm i -g corepack@latest --force
+          corepack enable
+          pnpm install
+
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: pnpm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
+
+  # ── Stage 2: build native installers + showcase tarballs as Release assets ─
+  # Only runs when stage 1 actually published (i.e. the Version Packages PR was
+  # merged), so assets are attached to the freshly bumped Lynxtron GO version.
+  release-assets:
+    name: Release Assets (${{ matrix.os }})
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      # Serialize so the two OS jobs don't race to create the same release.
+      max-parallel: 1
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: |
+          npm i -g corepack@latest --force
+          corepack enable
+          pnpm install
+
+      - name: Read Lynxtron GO version
+        id: version
+        shell: bash
+        run: echo "version=$(node -p "require('./lynxtron-go/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      # macOS: dmg installer + every showcase tarball (native .node addons are
+      # host-platform specific, so tarballs are built on the macOS runner).
+      - name: Build macOS installer
+        if: runner.os == 'macOS'
+        run: pnpm --dir lynxtron-go run pack
+
+      - name: Pack showcases
+        if: runner.os == 'macOS'
+        run: node scripts/pack-showcases.mjs
+
+      # Windows: nsis installer.
+      - name: Build Windows installer
+        if: runner.os == 'Windows'
+        run: pnpm --dir lynxtron-go run pack:win
+
+      - name: Upload Release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: lynxtron-go-v${{ steps.version.outputs.version }}
+          name: Lynxtron GO v${{ steps.version.outputs.version }}
+          fail_on_unmatched_files: false
+          files: |
+            lynxtron-go/dist/*.dmg
+            lynxtron-go/dist/*.exe
+            dist/showcase-artifacts/*.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

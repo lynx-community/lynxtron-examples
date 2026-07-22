@@ -48,6 +48,19 @@ When implementing or reviewing a feature, explicitly identify:
 - `pnpm preview` — **one-command preview**: pack showcases + local registry + build + launch
 - `pnpm preview:build` — preview build without launching
 - `pnpm run generate-registry` — regenerate showcase-registry.json
+- `pnpm changeset` — add a changeset (required for any PR that bumps a package)
+- `node scripts/pack-showcases.mjs` — pack every showcase into `dist/showcase-artifacts/*.tgz`
+
+### Release pipeline
+
+- Versioning/publishing is driven by **Changesets** + GitHub Actions (`.github/workflows/`):
+  - `ci.yml` — PR validation (install, build tooling, test, typecheck, `changeset status`)
+  - `release.yml` — on push to `main`, opens a "Version Packages" PR; merging it publishes
+    `@lynxtron-examples/config` to npm (OIDC trusted publishing) and creates a
+    `lynxtron-go-v<version>` GitHub Release with installers (dmg/exe) + showcase `.tgz` assets
+- Showcases and `lynxtron-go` are `private` but still versioned/changelogged
+  (`.changeset/config.json` → `privatePackages.version: true`); they are not published to npm.
+- See [docs/showcase-development.md](docs/showcase-development.md) "Release" for the full flow.
 
 ### pnpm install verification
 
@@ -72,8 +85,8 @@ When implementing or reviewing a feature, explicitly identify:
 
 ```
 packages/
-  config/     Shared Lynx build config (@lynxtron-showcases/config)
-  cli/        CLI tool (@lynxtron-showcases/cli)
+  config/     Shared Lynx build config (@lynxtron-examples/config)
+  cli/        CLI tool (@lynxtron-examples/cli)
               - src/commands/     fetch, build, run, list
               - src/registry/     URL resolver (GitHub/file:// → repo/local/external)
               - src/workspace/    ~/.lynxtron-go workspace manager
@@ -165,6 +178,5 @@ See [docs/showcase-development.md](docs/showcase-development.md).
 - Global search (Search panel)
 - Debug panel (run status, process management)
 - URL scheme (`lynxtron://`) handler
-- npm publish (remove local registry dependency)
 - Pure Lynx UI showcases (no main.ts)
 - `GITHUB_TOKEN` auth — remove when repo is public

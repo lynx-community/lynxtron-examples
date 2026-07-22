@@ -1,5 +1,5 @@
 import { useState, useCallback } from '@lynx-js/react';
-import '@lynxtron-showcases/config/tokens.css';
+import '@lynxtron-examples/config/tokens.css';
 import './App.css';
 
 export function App() {
