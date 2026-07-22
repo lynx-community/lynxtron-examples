@@ -1,6 +1,6 @@
 {
   "name": "@lynxtron-examples/floating-clock",
-  "version": "0.0.1",
+  "version": "0.0.2-alpha.0",
   "publishConfig": {
     "access": "public"
   },
@@ -17,7 +17,9 @@
   "showcase": {
     "description": "Desktop floating clock widget: frameless, transparent, and custom title bar",
     "thumbnail": "thumbnail.png",
-    "tags": ["intermediate"],
+    "tags": [
+      "intermediate"
+    ],
     "minToolchainVersion": "0.0.1"
   },
   "dependencies": {
