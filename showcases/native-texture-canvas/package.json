@@ -20,7 +20,12 @@
   },
   "showcase": {
     "description": "Native Texture Canvas extension showcase with Lynx controls and a native drawing surface",
-    "tags": ["native", "texture", "canvas", "painting"],
+    "tags": [
+      "native",
+      "texture",
+      "canvas",
+      "painting"
+    ],
     "minToolchainVersion": "0.0.1"
   },
   "dependencies": {

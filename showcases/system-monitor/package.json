@@ -1,6 +1,6 @@
 {
   "name": "@lynxtron-examples/system-monitor",
-  "version": "0.0.1",
+  "version": "0.0.2-alpha.0",
   "publishConfig": {
     "access": "public"
   },
@@ -17,7 +17,11 @@
   "showcase": {
     "description": "System monitor example demonstrating Node.js and Lynx communication",
     "thumbnail": "thumbnail.png",
-    "tags": ["intermediate", "nodejs", "communication"],
+    "tags": [
+      "intermediate",
+      "nodejs",
+      "communication"
+    ],
     "minToolchainVersion": "0.0.1"
   },
   "dependencies": {

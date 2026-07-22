@@ -1,6 +1,6 @@
 {
   "name": "@lynxtron-examples/benchmark",
-  "version": "0.0.1",
+  "version": "0.0.2-alpha.0",
   "publishConfig": {
     "access": "public"
   },
@@ -17,7 +17,10 @@
   "showcase": {
     "description": "Lynxtron runtime benchmarks — app size, startup time, and memory usage",
     "thumbnail": "thumbnail.png",
-    "tags": ["benchmark", "performance"],
+    "tags": [
+      "benchmark",
+      "performance"
+    ],
     "minToolchainVersion": "0.0.1"
   },
   "dependencies": {

@@ -15,7 +15,9 @@
   "showcase": {
     "description": "Minimal counter example demonstrating state management",
     "thumbnail": "thumbnail.png",
-    "tags": ["beginner"],
+    "tags": [
+      "beginner"
+    ],
     "minToolchainVersion": "0.0.1"
   },
   "dependencies": {
