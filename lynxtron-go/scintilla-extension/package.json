@@ -2,6 +2,7 @@
   "name": "lynxtron-scintilla-editor",
   "author": "Lynxtron Authors",
   "version": "0.0.1",
+  "private": true,
   "type": "module",
   "main": "index.cjs",
   "description": "Lynxtron Scintilla Editor Extension",

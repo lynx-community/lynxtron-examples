@@ -2,6 +2,7 @@
   "name": "lynxtron-http-service",
   "author": "Lynxtron Authors",
   "version": "0.0.1",
+  "private": true,
   "type": "module",
   "main": "index.cjs",
   "description": "Lynxtron HTTP service extension — backs the Lynx Fetch API on desktop",
