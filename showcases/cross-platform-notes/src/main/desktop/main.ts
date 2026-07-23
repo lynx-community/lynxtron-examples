@@ -19,7 +19,7 @@ function bootstrapDesktopHost(): void {
     const window = createDesktopWindow();
     window.show();
     window.loadFile(DESKTOP_BUNDLE_PATH);
-  nudgeFramedWindowViewport(window);
+    nudgeFramedWindowViewport(window, { width: 1120, height: 780 });
 
   });
 }

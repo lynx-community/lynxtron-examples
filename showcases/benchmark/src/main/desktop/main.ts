@@ -23,7 +23,7 @@ function createBenchmarkWindow(title: string, width: number, height: number) {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
-  nudgeFramedWindowViewport(w);
+  nudgeFramedWindowViewport(w, { width, height });
   return w;
 }
 

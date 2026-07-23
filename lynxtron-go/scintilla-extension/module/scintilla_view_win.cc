@@ -719,6 +719,14 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
     // positioning below — a second drain here only ever saw an empty buffer.
   }
 
+  // Dialogs/overlays detach the native editor because the HWND floats above
+  // Lynx UI. A later layout pass must not undo that by showing the popup.
+  if (detached_by_host_.load(std::memory_order_relaxed)) {
+    DebugLog("OnLayoutChanged suppressed; keeping host detached");
+    DetachFromWindow();
+    return;
+  }
+
   // Mark the themed child visible while its host is still hidden, then reveal
   // the host. Reversing this order exposes the host/default control for a
   // paint between the two SetWindowPos calls.

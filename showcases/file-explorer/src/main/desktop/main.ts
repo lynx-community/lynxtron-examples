@@ -15,6 +15,6 @@ app.whenReady().then(() => {
 
   w.show();
   w.loadFile(LYNX_BUNDLE_PATH);
-  nudgeFramedWindowViewport(w);
+  nudgeFramedWindowViewport(w, { width: 800, height: 600 });
 
 });
