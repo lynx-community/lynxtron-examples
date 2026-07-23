@@ -28,6 +28,6 @@ app.whenReady().then(() => {
 
   win.show();
   win.loadFile(LYNX_BUNDLE_PATH);
-  nudgeFramedWindowViewport(win);
+  nudgeFramedWindowViewport(win, { width: 1120, height: 780 });
 
 });

@@ -3,6 +3,14 @@
 export interface ResizableWindow {
   getSize(): [number, number];
   setSize(width: number, height: number): void;
+  getPosition?(): [number, number];
+  setPosition?(x: number, y: number): void;
+}
+
+export interface NudgeFramedWindowViewportOptions {
+  width?: number;
+  height?: number;
+  delayMs?: number;
 }
 
 /**
@@ -11,14 +19,28 @@ export interface ResizableWindow {
  * (Frameless windows are unaffected and must NOT call this.)
  *
  * This helper replaces seven per-showcase copies of the same setTimeout
- * block, which had already drifted (one used 800ms and pre-baked sizes).
+ * block, which had already drifted.
  */
-export function nudgeFramedWindowViewport(win: ResizableWindow, delayMs = 600): void {
+export function nudgeFramedWindowViewport(
+  win: ResizableWindow,
+  options: NudgeFramedWindowViewportOptions | number = {},
+): void {
+  const platform = (globalThis as any).process?.platform;
+  if (platform === 'win32') return;
+
+  const normalized = typeof options === 'number' ? { delayMs: options } : options;
+  const { width, height, delayMs = 600 } = normalized;
   setTimeout(() => {
     try {
-      const [w, h] = win.getSize();
+      const [currentW, currentH] = win.getSize();
+      const w = width ?? currentW;
+      const h = height ?? currentH;
+      const position = win.getPosition?.() ?? null;
       win.setSize(w + 1, h);
       win.setSize(w, h);
+      if (position && win.setPosition) {
+        win.setPosition(position[0], position[1]);
+      }
     } catch (_) {
       /* window already closed */
     }
