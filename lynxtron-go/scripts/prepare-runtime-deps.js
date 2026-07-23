@@ -188,6 +188,12 @@ function main() {
   sanitizeManifest(lynxtronTarget);
 
   copyPackage('@lynxtron-examples/cli');
+  const cliTarget = path.join(distNodeModules, '@lynxtron-examples/cli');
+  if (!fs.existsSync(path.join(cliTarget, 'dist', 'index.js'))) {
+    throw new Error(
+      "@lynxtron-examples/cli was copied without a built dist/. Run 'pnpm --dir packages/cli run build' first.",
+    );
+  }
 
   copyPackage('tar');
   const tarRoot = resolvePackageDir('tar');
