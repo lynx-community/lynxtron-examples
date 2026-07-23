@@ -10,6 +10,31 @@ interface FileEntry {
   content: string;
 }
 
+const LYNX_GLOBALS_WORKAROUND_FILE = '.lynxtron-go-lynx-globals.d.ts';
+const LYNX_GLOBALS_WORKAROUND_SOURCE = `
+export {};
+
+declare global {
+  interface Console {
+    debug(...args: any[]): void;
+    error(...args: any[]): void;
+    group(label?: string): void;
+    groupEnd(): void;
+    info(...args: any[]): void;
+    log(...args: any[]): void;
+    alog(...args: any[]): void;
+    warn(...args: any[]): void;
+  }
+
+  var console: Console;
+
+  function setTimeout(callback: (...args: unknown[]) => unknown, delay: number): number;
+  function setInterval(callback: (...args: unknown[]) => unknown, delay: number): number;
+  function clearTimeout(timeoutId: number): void;
+  function clearInterval(timeoutId: number): void;
+}
+`;
+
 interface ProjectConfig {
   key: string;
   projectRoot: string;
@@ -236,6 +261,16 @@ function shouldUseBundledModuleFallback(
   return /\.(?:[cm]?js|jsx)$/.test(resolved.resolvedFileName);
 }
 
+function needsLynxGlobalsWorkaround(options: ts.CompilerOptions): boolean {
+  if (!options.types?.includes('@lynx-js/types')) return false;
+
+  // An omitted lib list uses TypeScript's defaults, which already include DOM.
+  // Lynx app configs explicitly choose an ES-only lib to avoid browser globals.
+  if (!options.lib) return false;
+
+  return !options.lib.some((libPath) => path.basename(libPath).toLowerCase() === 'lib.dom.d.ts');
+}
+
 class LanguageServiceHost implements ts.LanguageServiceHost {
   private files = new Map<string, FileEntry>();
   private rootFiles: string[];
@@ -253,6 +288,16 @@ class LanguageServiceHost implements ts.LanguageServiceHost {
     this.options = options;
     this.rootFiles = [...new Set(rootFiles)];
     this.bundledFallback = bundledFallback;
+
+    // @lynx-js/types@3.8 declares the timer functions outside declare global
+    // and exports Console without declaring the global console variable. Keep
+    // Lynx projects free of DOM types while making the runtime globals visible.
+    if (needsLynxGlobalsWorkaround(options)) {
+      this.files.set(path.join(projectRoot, LYNX_GLOBALS_WORKAROUND_FILE), {
+        version: 0,
+        content: LYNX_GLOBALS_WORKAROUND_SOURCE,
+      });
+    }
   }
 
   updateFile(filePath: string, content: string, version: number) {
@@ -294,10 +339,13 @@ class LanguageServiceHost implements ts.LanguageServiceHost {
   }
 
   fileExists(path: string): boolean {
+    if (this.files.has(path)) return true;
     return ts.sys.fileExists(path);
   }
 
   readFile(path: string): string | undefined {
+    const entry = this.files.get(path);
+    if (entry) return entry.content;
     return ts.sys.readFile(path);
   }
 
