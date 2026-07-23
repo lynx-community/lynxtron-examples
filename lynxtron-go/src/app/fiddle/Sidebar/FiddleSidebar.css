@@ -52,6 +52,36 @@
   min-height: 0;
   padding: 4px 0;
 }
+.FiddleSidebar-Directory {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 6px;
+  padding-top: 6px;
+  padding-right: 12px;
+  padding-bottom: 6px;
+  cursor: pointer;
+}
+.FiddleSidebar-Directory:hover { background-color: var(--background-3); }
+.FiddleSidebar-DirectoryChevron {
+  color: var(--foreground-3);
+  flex-shrink: 0;
+}
+.FiddleSidebar-DirectoryIcon {
+  color: var(--bp-text-muted);
+  flex-shrink: 0;
+}
+.FiddleSidebar-DirectoryName {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-color-1);
+  font-weight: 600;
+  lines: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .FiddleSidebar-Item {
   display: flex;
   flex-direction: row;
