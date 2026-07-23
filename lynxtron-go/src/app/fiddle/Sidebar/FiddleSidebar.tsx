@@ -1,7 +1,8 @@
-import { useState, useRef, useCallback } from '@lynx-js/react';
+import { useState, useRef, useCallback, useEffect } from '@lynx-js/react';
 import { Button, Icon, InputGroup, AppToaster } from '../bp';
 import { isSafeRelativePath } from '../state/FiddleState';
 import { searchNpm, parseDependencies, addDependency, removeDependency, type NpmSearchResult } from './npm-search';
+import { flattenFileTree } from './file-tree';
 import { DEFAULT_EDITORS } from '../types';
 import type { FiddleFile } from '../state/FiddleState';
 import './FiddleSidebar.css';
@@ -39,6 +40,7 @@ export interface FiddleSidebarProps {
  */
 export function FiddleSidebar(props: FiddleSidebarProps) {
   const editors = Array.from(props.files.values()).sort((a, b) => a.id.localeCompare(b.id));
+  const [collapsedDirectories, setCollapsedDirectories] = useState<Set<string>>(() => new Set());
   const [moduleQuery, setModuleQuery] = useState('');
   const [searchResults, setSearchResults] = useState<NpmSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -106,6 +108,24 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
     if (next) props.onSetFileContent(DEFAULT_EDITORS.PACKAGE, next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packageJson, props.onSetFileContent]);
+  const toggleDirectory = useCallback((path: string) => {
+    setCollapsedDirectories(previous => {
+      const next = new Set(previous);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }, []);
+
+  // A Gallery case owns its own tree state. Do not carry collapsed paths or an
+  // inline add/rename operation into the next showcase.
+  useEffect(() => {
+    setCollapsedDirectories(new Set());
+    setAddingName(null);
+    setRenaming(null);
+  }, [props.rootPath]);
+
+  const treeRows = flattenFileTree(editors.map(editor => editor.id), collapsedDirectories);
 
   return (
     <view className="FiddleSidebar">
@@ -122,7 +142,32 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
         </view>
       </view>
       <scroll-view className="FiddleSidebar-List" scroll-orientation="vertical">
-        {editors.map(f => {
+        {treeRows.map(row => {
+          if (row.kind === 'directory') {
+            return (
+              <view
+                key={`directory:${row.path}`}
+                className="FiddleSidebar-Directory"
+                style={{ paddingLeft: `${12 + row.depth * 14}px` }}
+                bindtap={() => toggleDirectory(row.path)}
+              >
+                <Icon
+                  icon={row.expanded ? 'chevron-down' : 'chevron-right'}
+                  size={11}
+                  className="FiddleSidebar-DirectoryChevron"
+                />
+                <Icon
+                  icon={row.expanded ? 'folder-open' : 'folder-close'}
+                  size={14}
+                  className="FiddleSidebar-DirectoryIcon"
+                />
+                <text className="FiddleSidebar-DirectoryName" text-maxline="1">{row.name}</text>
+              </view>
+            );
+          }
+
+          const f = props.files.get(row.path);
+          if (!f) return null;
           const isActive = f.id === props.activeEditorId;
           const canDelete = f.id !== DEFAULT_EDITORS.MAIN && f.id !== DEFAULT_EDITORS.PACKAGE;
           const cls = 'FiddleSidebar-Item'
@@ -130,7 +175,11 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
             + (f.isDirty ? ' FiddleSidebar-Item--dirty' : '');
           if (renaming?.id === f.id) {
             return (
-              <view key={f.id} className="FiddleSidebar-AddRow">
+              <view
+                key={f.id}
+                className="FiddleSidebar-AddRow"
+                style={{ paddingLeft: `${8 + row.depth * 14}px` }}
+              >
                 <view className="FiddleSidebar-AddRowInput">
                   <Icon icon="document" size={14} className="FiddleSidebar-ItemIcon" />
                   <InputGroup
@@ -157,11 +206,12 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
             <view
               key={f.id}
               className={cls}
+              style={{ paddingLeft: `${(isActive ? 9 : 12) + row.depth * 14}px` }}
               bindtap={() => props.onSelectEditor(f.id)}
             >
               <Icon icon="document" size={14} className="FiddleSidebar-ItemIcon" />
               <view className="FiddleSidebar-ItemLabel">
-                <text className="FiddleSidebar-ItemName" text-maxline="1">{f.id}</text>
+                <text className="FiddleSidebar-ItemName" text-maxline="1">{row.name}</text>
               </view>
               {f.isDirty ? <text className="FiddleSidebar-Dot">●</text> : null}
               {/* rename/delete only on the active row — upstream uses a
