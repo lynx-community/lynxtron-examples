@@ -56,8 +56,11 @@ When implementing or reviewing a feature, explicitly identify:
 - Versioning/publishing is driven by **Changesets** + GitHub Actions (`.github/workflows/`):
   - `ci.yml` — PR validation (install, build tooling, test, typecheck, `changeset status`)
   - `release.yml` — on push to `main`, opens a "Version Packages" PR; merging it publishes
-    `@lynxtron-examples/config` to npm (OIDC trusted publishing) and creates a
-    `lynxtron-go-v<version>` GitHub Release with installers (dmg/exe) + showcase `.tgz` assets
+    updated `@lynxtron-examples/*` packages to npm (token-based, `NPM_CONFIG_PROVENANCE: true`)
+  - `release-installers.yml` — **manual only** (`workflow_dispatch`); builds mac dmg + win exe
+    + showcase `.tgz` and attaches them to an existing `lynxtron-go-v<version>` Release.
+    Runs independently of `release.yml` so installer/asset failures don't block npm publish
+    and vice-versa.
 - Showcases and `lynxtron-go` are `private` but still versioned/changelogged
   (`.changeset/config.json` → `privatePackages.version: true`); they are not published to npm.
 - See [docs/showcase-development.md](docs/showcase-development.md) "Release" for the full flow.

@@ -26,7 +26,7 @@
     "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p src/app/tsconfig.json && tsc --noEmit -p src/main/desktop/tsconfig.json",
-    "pack:win": "npm run build && npm run prepare:runtime-deps && npm run prepare:builder-patches && lynxtron-builder --win --x64 --publish never --config.electronDist=node_modules/@lynx-js/lynxtron/dist/win32/x64",
+    "pack:win": "npm run build && npm run prepare:runtime-deps && npm run prepare:builder-patches && lynxtron-builder --win --x64 --publish never",
     "pack": "npm run build && npm run prepare:runtime-deps && npm run prepare:builder-patches && lynxtron-builder --publish never"
   },
   "private": true,

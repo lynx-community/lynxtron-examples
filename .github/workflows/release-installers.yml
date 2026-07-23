@@ -1,0 +1,89 @@
+name: Release Installers
+
+# Build native installers (mac dmg / win exe) and showcase tarballs, then
+# attach them as assets to an existing GitHub Release.
+#
+# This workflow is deliberately **manual-only** and independent of the npm
+# publish pipeline in `release.yml`, so a broken installer build can be
+# retried without re-running Changesets, and vice-versa.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: >
+          Existing GitHub Release tag to attach assets to.
+          Defaults to `lynxtron-go-v<current lynxtron-go/package.json version>`.
+        required: false
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  installers:
+    name: Installers (${{ matrix.os }})
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      # Serialize so the two OS jobs don't race to create the same release.
+      max-parallel: 1
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: |
+          npm i -g corepack@latest --force
+          corepack enable
+          pnpm install
+
+      - name: Resolve release tag
+        id: tag
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            version=$(node -p "require('./lynxtron-go/package.json').version")
+            echo "tag=lynxtron-go-v${version}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # macOS: dmg installer + every showcase tarball (native .node addons are
+      # host-platform specific, so tarballs are built on the macOS runner).
+      - name: Build macOS installer
+        if: runner.os == 'macOS'
+        run: pnpm --dir lynxtron-go run pack
+
+      - name: Pack showcases
+        if: runner.os == 'macOS'
+        run: node scripts/pack-showcases.mjs
+
+      # Windows: nsis installer.
+      - name: Build Windows installer
+        if: runner.os == 'Windows'
+        run: pnpm --dir lynxtron-go run pack:win
+
+      - name: Upload Release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          fail_on_unmatched_files: false
+          files: |
+            lynxtron-go/dist/*.dmg
+            lynxtron-go/dist/*.exe
+            dist/showcase-artifacts/*.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
