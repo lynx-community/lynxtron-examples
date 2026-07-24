@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { findCurrentFileMatches, getWrappedMatchIndex } from './current-file-search';
+import {
+  findCurrentFileMatches,
+  getWrappedMatchIndex,
+  stringRangeToUtf8ByteRange,
+} from './current-file-search';
 
 describe('findCurrentFileMatches', () => {
   it('finds plain case-insensitive substring matches', () => {
@@ -32,5 +36,22 @@ describe('getWrappedMatchIndex', () => {
     expect(getWrappedMatchIndex(-1, 3, 'next')).toBe(0);
     expect(getWrappedMatchIndex(-1, 3, 'previous')).toBe(2);
     expect(getWrappedMatchIndex(0, 0, 'next')).toBe(-1);
+  });
+});
+
+describe('stringRangeToUtf8ByteRange', () => {
+  it('converts UTF-16 search offsets to Scintilla UTF-8 byte offsets', () => {
+    const text = 'A中文😀B';
+    expect(stringRangeToUtf8ByteRange(text, 1, 5)).toEqual({
+      anchor: 1,
+      caret: 11,
+    });
+  });
+
+  it('clamps ranges to the document', () => {
+    expect(stringRangeToUtf8ByteRange('abc', -10, 99)).toEqual({
+      anchor: 0,
+      caret: 3,
+    });
   });
 });

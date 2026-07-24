@@ -9,6 +9,7 @@ import { Settings } from './settings/Settings';
 import { VersionChooser } from './versions/VersionChooser';
 import { WelcomeTour } from './tour/WelcomeTour';
 import { HistoryDialog } from './history/HistoryDialog';
+import { CurrentFileFindBar } from '../components/FindBar/CurrentFileFindBar';
 import './history/HistoryDialog.css';
 import { ToasterHost, AppToaster } from './bp';
 import { useFiddle } from './state/useFiddle';
@@ -22,6 +23,11 @@ import { resolveShowcaseWorkspace, loadShowcaseFiddle, writeFiddleToWorkspace } 
 import { showcaseApi, appendFiddleOutput as appendOutput, type ShowcaseEntry, foundationApi } from '../store';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './dev-preset';
 import { applyEditorThemeAll, setThemeSetting } from './theme';
+import {
+  findCurrentFileMatches,
+  getWrappedMatchIndex,
+  type CurrentFileMatch,
+} from '../shared/current-file-search';
 import './Fiddle.css';
 import './settings/Settings.css';
 import './versions/VersionChooser.css';
@@ -49,6 +55,14 @@ export interface FiddleProps {
   onThemeChange?: () => void;
 }
 
+interface FiddleFindState {
+  visible: boolean;
+  query: string;
+  matches: CurrentFileMatch[];
+  activeMatchIndex: number;
+  editorId: string | null;
+}
+
 export function Fiddle(props: FiddleProps) {
   const fiddle = useFiddle();
   const runner = useRunner();
@@ -60,6 +74,14 @@ export function Fiddle(props: FiddleProps) {
   const [tourOpen, setTourOpen] = useState(devBoot?.openSurface === 'tour');
   const [historyOpen, setHistoryOpen] = useState(devBoot?.openSurface === 'history');
   const [currentShowcase, setCurrentShowcase] = useState<ShowcaseEntry | null>(null);
+  const [findState, setFindState] = useState<FiddleFindState>({
+    visible: false,
+    query: '',
+    matches: [],
+    activeMatchIndex: -1,
+    editorId: null,
+  });
+  const [findFocusKey, setFindFocusKey] = useState(0);
   // Real runtime version from the foundation bridge (engine report or the
   // bundled package manifest); prop override kept for tests/self-host.
   const currentVersion = props.lynxtronVersion
@@ -181,6 +203,105 @@ export function Fiddle(props: FiddleProps) {
       appendOutput('error', '[Fiddle] Could not open the help page.');
     }
   }, []);
+
+  const refocusFind = useCallback(() => {
+    setFindFocusKey(key => key + 1);
+  }, []);
+
+  const selectFindMatch = useCallback((editorId: string, match: CurrentFileMatch) => {
+    fiddle.selectEditorRange(editorId, match.start, match.end);
+  }, [fiddle.selectEditorRange]);
+
+  const refreshFind = useCallback((
+    query: string,
+    preferredIndex = 0,
+    shouldSelect = false,
+  ) => {
+    const editorId = findState.editorId;
+    const text = editorId ? fiddle.readEditorText(editorId) ?? '' : '';
+    const matches = editorId ? findCurrentFileMatches(text, query) : [];
+    const activeMatchIndex = matches.length > 0
+      ? Math.min(Math.max(preferredIndex, 0), matches.length - 1)
+      : -1;
+
+    setFindState(prev => ({
+      ...prev,
+      query,
+      matches,
+      activeMatchIndex,
+      editorId,
+    }));
+
+    if (editorId && shouldSelect && query && activeMatchIndex >= 0) {
+      selectFindMatch(editorId, matches[activeMatchIndex]);
+    }
+  }, [fiddle.readEditorText, findState.editorId, selectFindMatch]);
+
+  const openFind = useCallback(() => {
+    const editorId = fiddle.getFocusedEditorId();
+    if (!editorId) return;
+    if (findState.visible && findState.editorId === editorId) {
+      refocusFind();
+      return;
+    }
+    setFindState({
+      visible: true,
+      query: '',
+      matches: [],
+      activeMatchIndex: -1,
+      editorId,
+    });
+    refocusFind();
+  }, [
+    fiddle.getFocusedEditorId,
+    findState.editorId,
+    findState.visible,
+    refocusFind,
+  ]);
+
+  const closeFind = useCallback(() => {
+    const editorId = findState.editorId;
+    setFindState({
+      visible: false,
+      query: '',
+      matches: [],
+      activeMatchIndex: -1,
+      editorId: null,
+    });
+    if (editorId) setTimeout(() => fiddle.selectEditor(editorId), 0);
+  }, [fiddle.selectEditor, findState.editorId]);
+
+  const updateFindQuery = useCallback((query: string) => {
+    refreshFind(query, 0, !!query);
+  }, [refreshFind]);
+
+  const navigateFind = useCallback((direction: 'next' | 'previous') => {
+    const query = findState.query;
+    if (!query) return;
+    const editorId = findState.editorId;
+    const text = editorId ? fiddle.readEditorText(editorId) ?? '' : '';
+    const matches = editorId ? findCurrentFileMatches(text, query) : [];
+    const activeMatchIndex = getWrappedMatchIndex(
+      findState.activeMatchIndex,
+      matches.length,
+      direction,
+    );
+    setFindState(prev => ({
+      ...prev,
+      matches,
+      activeMatchIndex,
+      editorId,
+    }));
+    if (editorId && activeMatchIndex >= 0) {
+      selectFindMatch(editorId, matches[activeMatchIndex]);
+    }
+  }, [
+    fiddle.readEditorText,
+    findState.activeMatchIndex,
+    findState.editorId,
+    findState.query,
+    selectFindMatch,
+  ]);
 
   const handleRun = useCallback(() => {
     if (runner.isRunning) {
@@ -385,8 +506,8 @@ export function Fiddle(props: FiddleProps) {
       .catch(e => appendOutput('error', `[Fiddle] Gist load failed: ${e?.message ?? String(e)}`));
   }, [fiddle]);
 
-  // App-menu events (main.ts buildAppMenu sends `fiddle:*` global events —
-  // mirrors upstream's ipcMainManager.send flow). NOTE: declared after the
+  // App-menu events (main.ts buildAppMenu sends `fiddle:*` global events,
+  // plus the shared `ide:findInFile` command). NOTE: declared after the
   // handlers above — referencing them earlier is a TDZ crash at loadCard.
   //
   // Latest-ref dispatch: the handler table is rebuilt every render (cheap),
@@ -411,6 +532,7 @@ export function Fiddle(props: FiddleProps) {
     'fiddle:showTour': () => setTourOpen(true),
     'fiddle:openSettings': () => setSettingsOpen(true),
     'fiddle:openHelp': () => handleOpenHelp(),
+    'ide:findInFile': () => openFind(),
     'fiddle:persistNow': () => {
       fiddle.flushAll();
       fiddle.persistNow();
@@ -525,6 +647,21 @@ export function Fiddle(props: FiddleProps) {
                 onHideEditor={fiddle.hideEditor}
                 onResetLayout={fiddle.resetLayout}
                 pushContent={fiddle.pushContent}
+                findBar={findState.visible ? (
+                  <CurrentFileFindBar
+                    key={findState.editorId}
+                    inputId={`current-file-find-input-${findFocusKey}`}
+                    query={findState.query}
+                    currentIndex={findState.activeMatchIndex}
+                    total={findState.matches.length}
+                    focusKey={findFocusKey}
+                    onQueryChange={updateFindQuery}
+                    onNext={() => navigateFind('next')}
+                    onPrevious={() => navigateFind('previous')}
+                    onClose={closeFind}
+                  />
+                ) : null}
+                findBarEditorId={findState.visible ? findState.editorId : null}
                 suppressed={anyDialogOpen}
               />
             </SplitContainer>

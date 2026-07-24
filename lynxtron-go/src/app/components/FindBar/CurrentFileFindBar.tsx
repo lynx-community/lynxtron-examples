@@ -1,14 +1,14 @@
 import { useEffect } from '@lynx-js/react';
+import { Icon } from '../../fiddle/bp';
 import './CurrentFileFindBar.css';
 
-const CURRENT_FILE_FIND_INPUT_ID = 'current-file-find-input';
 const FIND_INPUT_REFOCUS_DELAYS_MS = [120, 240];
 
 export interface CurrentFileFindBarProps {
+  inputId: string;
   query: string;
   currentIndex: number;
   total: number;
-  hasActiveFile: boolean;
   focusKey: number;
   onQueryChange: (query: string) => void;
   onNext: () => void;
@@ -17,23 +17,21 @@ export interface CurrentFileFindBarProps {
 }
 
 export function CurrentFileFindBar({
+  inputId,
   query,
   currentIndex,
   total,
-  hasActiveFile,
   focusKey,
   onQueryChange,
   onNext,
   onPrevious,
   onClose,
 }: CurrentFileFindBarProps) {
-  const status = !hasActiveFile
-    ? 'No file'
-    : !query
-      ? '0 / 0'
-      : total > 0
-        ? `${currentIndex + 1} / ${total}`
-        : 'No results';
+  const status = !query
+    ? '0 / 0'
+    : total > 0
+      ? `${currentIndex + 1} / ${total}`
+      : 'No results';
 
   const handleConfirm = (event?: any) => {
     const detail = event?.detail ?? {};
@@ -46,7 +44,7 @@ export function CurrentFileFindBar({
     const focusInput = () => {
       try {
         lynx.createSelectorQuery()
-          .select(`#${CURRENT_FILE_FIND_INPUT_ID}`)
+          .select(`#${inputId}`)
           .invoke({
             method: 'focus',
             params: {},
@@ -62,14 +60,13 @@ export function CurrentFileFindBar({
     return () => {
       timers.forEach(timer => clearTimeout(timer));
     };
-  }, [focusKey]);
+  }, [focusKey, inputId]);
 
   return (
     <view className="CurrentFileFindBar">
       <input
-        id={CURRENT_FILE_FIND_INPUT_ID}
+        id={inputId}
         className="CurrentFileFindInput"
-        value={query}
         bindinput={(e: any) => onQueryChange(e.detail.value)}
         bindconfirm={handleConfirm}
         placeholder="Find in file"
@@ -78,13 +75,13 @@ export function CurrentFileFindBar({
         {status}
       </text>
       <view className="CurrentFileFindButton" bindtap={onPrevious}>
-        <text className="CurrentFileFindButtonText">^</text>
+        <Icon icon="chevron-up" size={14} className="CurrentFileFindButtonIcon" />
       </view>
       <view className="CurrentFileFindButton" bindtap={onNext}>
-        <text className="CurrentFileFindButtonText">v</text>
+        <Icon icon="chevron-down" size={14} className="CurrentFileFindButtonIcon" />
       </view>
       <view className="CurrentFileFindButton CurrentFileFindButton--close" bindtap={onClose}>
-        <text className="CurrentFileFindButtonText">x</text>
+        <Icon icon="cross" size={14} className="CurrentFileFindButtonIcon" />
       </view>
     </view>
   );

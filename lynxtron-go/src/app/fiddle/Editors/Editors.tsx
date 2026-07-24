@@ -12,6 +12,9 @@ export interface EditorsProps {
   onHideEditor: (id: EditorId) => void;
   onResetLayout: () => void;
   pushContent: (id: EditorId) => void;
+  /** Search UI owned by one native editor pane. */
+  findBar?: any;
+  findBarEditorId?: EditorId | null;
   /** A dialog/overlay is open — newly created panes must not attach above it. */
   suppressed?: boolean;
 }
@@ -242,6 +245,7 @@ export function Editors(props: EditorsProps) {
                 onMaximize={handleMaximize}
                 onFocus={props.onSelectEditor}
                 pushContent={props.pushContent}
+                findBar={props.findBarEditorId === p.id ? props.findBar : null}
               />
             </view>
           );

@@ -1,3 +1,5 @@
+import { utf8ByteLength } from '../diagnostics';
+
 export interface CurrentFileMatch {
   start: number;
   end: number;
@@ -27,6 +29,20 @@ export function findCurrentFileMatches(text: string, query: string): CurrentFile
   }
 
   return matches;
+}
+
+export function stringRangeToUtf8ByteRange(
+  text: string,
+  start: number,
+  end: number,
+): { anchor: number; caret: number } {
+  const clampedStart = Math.min(Math.max(start, 0), text.length);
+  const clampedEnd = Math.min(Math.max(end, clampedStart), text.length);
+  const anchor = utf8ByteLength(text.slice(0, clampedStart));
+  return {
+    anchor,
+    caret: anchor + utf8ByteLength(text.slice(clampedStart, clampedEnd)),
+  };
 }
 
 export function getWrappedMatchIndex(

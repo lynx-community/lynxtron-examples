@@ -8,6 +8,7 @@ import {
   type IndicatorRange,
 } from '../../diagnostics';
 import { arrayBufferToBase64, bytesToBase64 } from '../../shared/native-bridge-encoding';
+import { stringRangeToUtf8ByteRange } from '../../shared/current-file-search';
 import type { DiagnosticsMsg } from '../../../extension-host/types';
 import {
   emptyFiddle,
@@ -67,6 +68,8 @@ export function scintillaIdFor(fileId: EditorId): string {
 export interface UseFiddleResult {
   snap: FiddleSnapshot;
   isEdited: boolean;
+  /** Native-focused pane, falling back to the last active visible pane. */
+  getFocusedEditorId: () => EditorId | null;
   selectEditor: (id: EditorId) => void;
   showEditor: (id: EditorId) => void;
   hideEditor: (id: EditorId) => void;
@@ -77,6 +80,10 @@ export interface UseFiddleResult {
   loadTemplate: (kind: 'blank' | 'hello-lynxtron') => void;
   loadSnapshot: (snap: FiddleSnapshot) => void;
   flushAll: () => void;
+  /** Read the latest native text for one visible editor. */
+  readEditorText: (id: EditorId) => string | null;
+  /** Select a JavaScript string range without stealing focus from Fiddle UI. */
+  selectEditorRange: (id: EditorId, start: number, end: number) => void;
   /** Push a file's state text, highlight, and diagnostics into its native editor. */
   pushContent: (id: EditorId) => void;
   addFile: (id: EditorId) => void;
@@ -128,6 +135,26 @@ export function useFiddle(): UseFiddleResult {
   // currentText syncs on explicit flushes (save/run/hide/dialog) and the
   // persist tick folds live text in without touching state.
   const liveText = useRef<Map<EditorId, string>>(new Map());
+  const lastFocusedEditorId = useRef<EditorId | null>(snap.activeEditorId);
+
+  const getFocusedEditorId = useCallback((): EditorId | null => {
+    const visibleIds = visibleEditorIds(snapRef.current);
+    const api = scintillaApi();
+    for (const id of visibleIds) {
+      try {
+        if (api?.hasFocus?.(scintillaIdFor(id))) {
+          lastFocusedEditorId.current = id;
+          return id;
+        }
+      } catch (_) {}
+    }
+
+    const remembered = lastFocusedEditorId.current;
+    if (remembered && snapRef.current.files.get(remembered)?.visible) return remembered;
+    const active = snapRef.current.activeEditorId;
+    if (active && snapRef.current.files.get(active)?.visible) return active;
+    return visibleIds[0] ?? null;
+  }, []);
 
   /** Current snapshot with live native text folded in — pure, no setState. */
   const snapWithLive = useCallback((): FiddleSnapshot => {
@@ -224,6 +251,25 @@ export function useFiddle(): UseFiddleResult {
   const flushAll = useCallback(() => {
     for (const id of visibleEditorIds(snapRef.current)) flushEditor(id);
   }, [flushEditor]);
+
+  const readEditorText = useCallback((id: EditorId): string | null => {
+    const file = snapRef.current.files.get(id);
+    if (!file?.visible) return null;
+    return flushEditor(id) ?? liveText.current.get(id) ?? file.currentText;
+  }, [flushEditor]);
+
+  const selectEditorRange = useCallback((id: EditorId, start: number, end: number) => {
+    const text = readEditorText(id);
+    if (text == null) return;
+
+    const { anchor, caret } = stringRangeToUtf8ByteRange(text, start, end);
+
+    try {
+      const api = scintillaApi();
+      api?.setSelection?.(scintillaIdFor(id), anchor, caret);
+      api?.scrollCaret?.(scintillaIdFor(id));
+    } catch (_) {}
+  }, [readEditorText]);
 
   const clearPaneDiagnostics = useCallback((id: EditorId) => {
     const timer = diagnosticTimers.current.get(id);
@@ -366,7 +412,22 @@ export function useFiddle(): UseFiddleResult {
     const timer = setInterval(() => {
       const api = scintillaApi();
       if (!api) return;
-      for (const id of visibleEditorIds(snapRef.current)) {
+      const visibleIds = visibleEditorIds(snapRef.current);
+      const focusedId = visibleIds.find(id => {
+        try { return !!api.hasFocus?.(scintillaIdFor(id)); } catch (_) { return false; }
+      }) ?? null;
+      if (focusedId) {
+        lastFocusedEditorId.current = focusedId;
+        if (snapRef.current.activeEditorId !== focusedId) {
+          setSnap(prev => (
+            prev.activeEditorId === focusedId
+              ? prev
+              : { ...prev, activeEditorId: focusedId }
+          ));
+        }
+      }
+
+      for (const id of visibleIds) {
         const f = snapRef.current.files.get(id);
         if (!f) continue;
         const editorId = scintillaIdFor(id);
@@ -528,6 +589,7 @@ export function useFiddle(): UseFiddleResult {
     // Sidebar click: focus the file; if hidden, show it first (upstream setFocusedFile).
     const f = snapRef.current.files.get(id);
     const wasHidden = !!f && !f.visible;
+    lastFocusedEditorId.current = id;
     if (wasHidden) showEditor(id);
     setSnap(prev => (prev.activeEditorId === id ? prev : { ...prev, activeEditorId: id }));
     // Keyboard focus follows the selection (upstream editor.focus()). A pane
@@ -646,6 +708,7 @@ export function useFiddle(): UseFiddleResult {
   return {
     snap,
     isEdited: isFiddleEdited(snap),
+    getFocusedEditorId,
     selectEditor,
     showEditor,
     hideEditor,
@@ -656,6 +719,8 @@ export function useFiddle(): UseFiddleResult {
     loadTemplate,
     loadSnapshot,
     flushAll,
+    readEditorText,
+    selectEditorRange,
     pushContent,
     addFile,
     removeFile,

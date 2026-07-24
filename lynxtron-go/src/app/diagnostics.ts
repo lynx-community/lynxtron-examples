@@ -16,7 +16,7 @@ import type { DiagnosticMarker } from '../extension-host/types';
 // UTF-8 byte length of a JS string (UTF-16 string → UTF-8 byte count)
 // ---------------------------------------------------------------------------
 
-function utf8ByteLength(s: string): number {
+export function utf8ByteLength(s: string): number {
   let len = 0;
   for (let i = 0; i < s.length; i++) {
     const cp = s.codePointAt(i)!;
