@@ -960,6 +960,17 @@ void ScintillaView::FocusEditor() {
   }
 }
 
+bool ScintillaView::HasFocus() {
+  HWND hwnd = AsHwnd(win_view_);
+  if (!hwnd || !::IsWindow(hwnd)) {
+    return false;
+  }
+  // Query the OS focus owner rather than Scintilla's cached focus bit. This
+  // stays correct when Cmd+F moves between sibling native editor windows.
+  HWND focused = ::GetFocus();
+  return focused == hwnd || (focused && ::IsChild(hwnd, focused));
+}
+
 void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   const int size = size_pt > 0 ? size_pt : 14;
   // OnPropertiesChanged normally runs before OnLayoutChanged creates the

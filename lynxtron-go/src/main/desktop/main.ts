@@ -502,6 +502,22 @@ function buildAppMenu(w: LynxWindowInstance) {
       { role: 'copy' },
       { role: 'paste' },
       { role: 'selectAll' },
+      { type: 'separator' },
+      {
+        id: 'findInFile',
+        label: 'Find',
+        accelerator: 'CmdOrCtrl+F',
+        registerAccelerator: true,
+        // Both the legacy workspace editor and the Fiddle listen for this
+        // app-level command and apply it to their own active editor.
+        click: () => {
+          try {
+            w.sendGlobalEvent('ide:findInFile', {});
+          } catch (e) {
+            console.error(`[PC_Host] sendGlobalEvent error:`, e);
+          }
+        },
+      },
     ],
   });
 

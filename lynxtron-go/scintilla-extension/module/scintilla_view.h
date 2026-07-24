@@ -69,6 +69,8 @@ class ScintillaView : public lynx::pub::LynxNativeView {
   void ScrollCaret();
   // Give the editor keyboard focus (sidebar file select → focus that pane).
   void FocusEditor();
+  // True when this native editor currently owns keyboard focus.
+  bool HasFocus();
   void RepositionForParentMove();
   void HideForParentTransition();
   bool ShouldStayHiddenForParentTransition() const;
@@ -270,6 +272,11 @@ public:
         if (!view) return false;
         view->FocusEditor();
         return true;
+    }
+
+    bool HasFocus(const std::string& id) {
+        ScintillaView* view = Find(id);
+        return view ? view->HasFocus() : false;
     }
 
     bool DetachFromWindow(const std::string& id) {
