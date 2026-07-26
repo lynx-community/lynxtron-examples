@@ -72,17 +72,6 @@ When implementing or reviewing a feature, explicitly identify:
   - `@lynx-js/lynxtron`
   - `@lynx-js/lynxtron-builder`
 
-### Native rebuild (lynxtron-rebuild) troubleshooting
-
-- `lynxtron-rebuild@0.0.1-alpha.8` uses `node-gyp@8.4.1`, whose bundled gyp still imports the
-  removed `distutils` module. On Python **3.13+** it fails with `ModuleNotFoundError: No module named 'distutils'`.
-- Workaround: prefix rebuild commands with `PYTHON=<python ≤ 3.12>`, e.g.:
-  ```
-  PYTHON=/opt/homebrew/opt/python@3.11/bin/python3.11 pnpm exec lynxtron-rebuild
-  ```
-  Xcode ships `/Applications/Xcode.app/Contents/Developer/usr/bin/python3` (3.9) as another fallback.
-- This is an upstream issue in `@lynx-js/lynxtron-rebuild`; remove once it ships with `node-gyp@^10`.
-
 ## Keyboard Shortcuts (Lynxtron GO)
 
 | Shortcut | Action |

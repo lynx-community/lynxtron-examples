@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@lynx-js/lynxtron": "catalog:",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^6.0.1"
   },
   "devDependencies": {
     "@lynxtron-examples/config": "workspace:*",

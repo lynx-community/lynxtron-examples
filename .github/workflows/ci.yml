@@ -28,14 +28,6 @@ jobs:
         with:
           node-version: 22
 
-      # lynxtron-rebuild bundles node-gyp@8.4.1, whose gyp still imports
-      # `distutils` (removed in Python 3.13+). Pin the runner to 3.11 until
-      # upstream ships node-gyp@^10.
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
       - name: Install Dependencies
         run: |
           npm i -g corepack@latest --force
