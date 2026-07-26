@@ -1,7 +1,6 @@
 {
   "name": "lynxtron-show-cases",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.0.1",
   "scripts": {
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",
@@ -27,7 +26,8 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@lynx-js/lynxtron",
-      "@lynx-js/lynxtron-builder"
+      "@lynx-js/lynxtron-builder",
+      "better-sqlite3"
     ]
   },
   "packageManager": "pnpm@10.15.1"

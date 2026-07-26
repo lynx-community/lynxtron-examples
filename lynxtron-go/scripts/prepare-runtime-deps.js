@@ -195,6 +195,16 @@ function main() {
     );
   }
 
+  // pnpm is bundled so packaged apps can install showcase dependencies
+  // without depending on the user having node/pnpm on PATH.
+  copyPackage('pnpm');
+  const pnpmTarget = path.join(distNodeModules, 'pnpm');
+  if (!fs.existsSync(path.join(pnpmTarget, 'dist', 'pnpm.cjs'))) {
+    throw new Error(
+      "pnpm was copied without dist/pnpm.cjs. Verify the pnpm dependency in lynxtron-go/package.json.",
+    );
+  }
+
   copyPackage('tar');
   const tarRoot = resolvePackageDir('tar');
   for (const dep of ['@isaacs/fs-minipass', 'chownr', 'minipass', 'minizlib', 'yallist']) {

@@ -5,7 +5,26 @@ import * as https from 'https';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as tar from 'tar';
-import { execSync } from 'child_process';
+import { execSync, type ExecSyncOptions } from 'child_process';
+
+// execSync with stdio:'pipe' hides stderr, so callers only see
+// "Command failed: <cmd>" with no diagnosis. Wrap it to re-throw an Error
+// whose message includes captured stderr/stdout.
+function execCapture(command: string, options: ExecSyncOptions = {}): void {
+  try {
+    execSync(command, { stdio: 'pipe', ...options });
+  } catch (err: any) {
+    const stderr = err?.stderr?.toString?.() ?? '';
+    const stdout = err?.stdout?.toString?.() ?? '';
+    const detail = [stderr.trim(), stdout.trim()].filter(Boolean).join('\n');
+    const suffix = detail ? `\n${detail}` : '';
+    const wrapped = new Error(`${err?.message ?? 'Command failed'}${suffix}`);
+    (wrapped as any).stderr = stderr;
+    (wrapped as any).stdout = stdout;
+    throw wrapped;
+  }
+}
+
 
 export function clearFetchDestination(destDir: string): void {
   if (fs.existsSync(destDir)) {
@@ -81,7 +100,7 @@ async function fetchLocalTarball(
       await manager.rewriteWorkspaceRefs(name);
     } catch (_) {}
     emit({ type: 'install-start', name });
-    execSync('pnpm install', { cwd: manager.getRootPath(), stdio: 'pipe', timeout: 300000 });
+    execCapture('pnpm install', { cwd: manager.getRootPath(), timeout: 300000 });
     emit({ type: 'install-success', name });
   }
 }
@@ -118,7 +137,7 @@ async function fetchRepoShowcase(
   await manager.rewriteWorkspaceRefs(resolved.name);
 
   emit({ type: 'install-start', name: resolved.name });
-  execSync('pnpm install', { cwd: manager.getRootPath(), stdio: 'pipe' });
+  execCapture('pnpm install', { cwd: manager.getRootPath() });
   emit({ type: 'install-success', name: resolved.name });
 
   // GitHub source tarballs never carry `dist/` (it is gitignored), so build
@@ -126,7 +145,7 @@ async function fetchRepoShowcase(
   const distMain = path.join(destDir, 'dist', 'desktop', 'main.js');
   if (!fs.existsSync(distMain)) {
     log(`Building ${resolved.name}...`);
-    execSync('pnpm run build', { cwd: destDir, stdio: 'pipe' });
+    execCapture('pnpm run build', { cwd: destDir });
   }
 }
 
@@ -140,10 +159,10 @@ async function fetchExternal(
   clearFetchDestination(destDir);
 
   log(`Cloning ${resolved.url}...`);
-  execSync(`git clone --depth 1 ${resolved.url} ${destDir}`, { stdio: 'pipe' });
+  execCapture(`git clone --depth 1 ${resolved.url} ${destDir}`);
 
   emit({ type: 'install-start', name: resolved.name });
-  execSync('pnpm install', { cwd: destDir, stdio: 'pipe' });
+  execCapture('pnpm install', { cwd: destDir });
   emit({ type: 'install-success', name: resolved.name });
 }
 

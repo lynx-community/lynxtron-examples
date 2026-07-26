@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   mkdir,
@@ -272,6 +272,12 @@ async function publishWorkspacePackages() {
   const publishArgs = [
     '--cache', npmCacheDir,
     'publish',
+    // npm refuses to publish a pre-release version (e.g. 0.0.2-alpha.0
+    // produced by Changesets pre mode) to the default `latest` dist-tag.
+    // Pin it to a preview-only tag so local verdaccio accepts it and
+    // downstream `npm install @scope/pkg` still resolves via the workspace
+    // range without needing the tag.
+    '--tag', 'preview',
     '--registry', registryUrl,
     scopedRegistryArg,
     registryAuthTokenArg,
@@ -364,8 +370,46 @@ async function main() {
   }
 
   log('=== Step 4: Launching Lynxtron GO ===');
+  killLingeringLynxtronInstances();
   log('Press Ctrl+C to stop.');
   await run('npx', ['lynxtron', './dist/desktop'], { cwd: lynxtronGoDir });
+}
+
+// Lynxtron uses Chromium's singleInstanceLock. If a previous `pnpm preview`
+// left a Lynxtron GO window open, launching another one just forwards argv to
+// the old instance and exits immediately — preview.mjs then sees the child
+// die and gives up. Kill anything under this monorepo's lynxtron-go dist and
+// the ~/.lynxtron-go workspace before spawning a fresh instance.
+function killLingeringLynxtronInstances() {
+  if (process.platform === 'win32') return;
+  let raw;
+  try {
+    raw = execSync('ps -Ao pid=,command=', { encoding: 'utf8' });
+  } catch {
+    return;
+  }
+  const monorepoRoot = rootDir;
+  const workspaceRoot = path.join(os.homedir(), '.lynxtron-go');
+  const victims = [];
+  for (const line of raw.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const spaceIdx = trimmed.indexOf(' ');
+    if (spaceIdx === -1) continue;
+    const pid = Number.parseInt(trimmed.slice(0, spaceIdx), 10);
+    const cmd = trimmed.slice(spaceIdx + 1);
+    if (!Number.isFinite(pid) || pid === process.pid) continue;
+    const looksLikeLynxtron = /lynxtron(?:-go)?/i.test(cmd) || /lynxtron\.app/i.test(cmd);
+    if (!looksLikeLynxtron) continue;
+    if (cmd.includes(monorepoRoot) || cmd.includes(workspaceRoot)) {
+      victims.push({ pid, cmd });
+    }
+  }
+  if (!victims.length) return;
+  log(`Killing ${victims.length} lingering Lynxtron process(es) before launch...`);
+  for (const { pid } of victims) {
+    try { process.kill(pid, 'SIGTERM'); } catch {}
+  }
 }
 
 main().catch((error) => {
