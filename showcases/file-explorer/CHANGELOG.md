@@ -1,5 +1,11 @@
 # @lynxtron-examples/file-explorer
 
+## 0.0.2
+
+### Patch Changes
+
+- c770aa7: Release showcases with new todolist example
+
 ## 0.0.2-alpha.0
 
 ### Patch Changes
