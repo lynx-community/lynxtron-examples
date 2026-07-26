@@ -1,0 +1,41 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="675" fill="#1d2427"/>
+  <rect x="1.5" y="1.5" width="1197" height="672" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+
+  <!-- panel -->
+  <rect x="380" y="110" width="440" height="380" rx="6" fill="#2c2e3b" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  <!-- header strip -->
+  <rect x="380" y="110" width="440" height="56" fill="#21232d"/>
+  <line x1="380" y1="166" x2="820" y2="166" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  <text x="404" y="146" fill="#f5f8fa" font-size="24" font-weight="700" font-family="Menlo, monospace">Todos</text>
+  <text x="740" y="146" fill="#608291" font-size="16" font-family="Menlo, monospace">2 left</text>
+
+  <!-- todo rows -->
+  <!-- row 1: done -->
+  <rect x="396" y="184" width="408" height="46" rx="3" fill="rgba(9,71,113,0.4)"/>
+  <rect x="416" y="196" width="22" height="22" rx="3" fill="#48aff0"/>
+  <polyline points="420,207 426,213 434,199" stroke="#1d2427" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="456" y="215" fill="#608291" font-size="18" font-family="Menlo, monospace" text-decoration="line-through">Read Lynxtron docs</text>
+
+  <!-- row 2 -->
+  <rect x="396" y="240" width="408" height="46" rx="3" fill="rgba(9,71,113,0.4)"/>
+  <rect x="416" y="252" width="22" height="22" rx="3" fill="none" stroke="#a7b6c2" stroke-width="2"/>
+  <text x="456" y="271" fill="#f5f8fa" font-size="18" font-family="Menlo, monospace">Wire preload.ts</text>
+
+  <!-- row 3 -->
+  <rect x="396" y="296" width="408" height="46" rx="3" fill="rgba(9,71,113,0.4)"/>
+  <rect x="416" y="308" width="22" height="22" rx="3" fill="none" stroke="#a7b6c2" stroke-width="2"/>
+  <text x="456" y="327" fill="#f5f8fa" font-size="18" font-family="Menlo, monospace">Persist to ~/.lynxtron-todolist</text>
+
+  <!-- input row -->
+  <rect x="396" y="404" width="300" height="42" rx="4" fill="#21232d" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  <text x="410" y="431" fill="#608291" font-size="18" font-family="Menlo, monospace">What needs to be done?</text>
+  <rect x="708" y="404" width="96" height="42" rx="4" fill="#48aff0"/>
+  <text x="734" y="431" fill="#1d2427" font-size="18" font-weight="700" font-family="Menlo, monospace">Add</text>
+
+  <!-- api note -->
+  <text x="380" y="536" fill="#608291" font-size="20" font-family="Menlo, monospace">NativeModules.nodejs.exposed → better-sqlite3</text>
+
+  <!-- app name -->
+  <text x="48" y="615" fill="#a7b6c2" font-size="28" font-weight="600" letter-spacing="3" font-family="Menlo, monospace">TODO LIST</text>
+</svg>

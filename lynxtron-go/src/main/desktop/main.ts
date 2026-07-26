@@ -62,6 +62,50 @@ function inheritShellPath(): void {
   process.env.LYNXTRON_SHELL_PATH_FIXED = '1';
 }
 inheritShellPath();
+
+// pnpm's shebang is `#!/usr/bin/env node`, so subprocess `pnpm install` calls
+// (spawned by the CLI when fetching a showcase) need to find a `node` on PATH.
+// Packaged apps launched from Finder rarely have one. Ship a shim that
+// re-executes the current lynxtron binary in Node mode (LYNXTRON_RUN_AS_NODE=1)
+// and prepend it to PATH so any child looking for `node` finds ours. Also
+// prepend the bundled pnpm's bin dir so plain `pnpm` resolves.
+function installBundledNodeShim(): void {
+  try {
+    const shimDir = path.join(os.homedir(), '.lynxtron-go', 'bin');
+    fs.mkdirSync(shimDir, { recursive: true });
+
+    const isWindows = process.platform === 'win32';
+    const execPath = process.execPath;
+    if (isWindows) {
+      const nodeCmd = path.join(shimDir, 'node.cmd');
+      // Set LYNXTRON_RUN_AS_NODE only for the child so we don't recurse in on ourselves.
+      const cmdBody = `@echo off\r\nset "LYNXTRON_RUN_AS_NODE=1"\r\n"${execPath}" %*\r\n`;
+      fs.writeFileSync(nodeCmd, cmdBody);
+    } else {
+      const nodeShim = path.join(shimDir, 'node');
+      const shBody = `#!/bin/sh\nexec env LYNXTRON_RUN_AS_NODE=1 "${execPath}" "$@"\n`;
+      fs.writeFileSync(nodeShim, shBody);
+      fs.chmodSync(nodeShim, 0o755);
+    }
+
+    // Locate bundled pnpm shipped next to app.asar.unpacked/node_modules/pnpm.
+    const resourcesDir = isWindows
+      ? path.join(path.dirname(execPath), 'resources')
+      : path.join(path.dirname(path.dirname(execPath)), 'Resources');
+    const pnpmBinDirs = [
+      path.join(resourcesDir, 'app.asar.unpacked', 'node_modules', 'pnpm', 'bin'),
+      path.join(resourcesDir, 'app', 'node_modules', 'pnpm', 'bin'),
+    ].filter((dir) => fs.existsSync(dir));
+
+    const existing = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
+    process.env.PATH = Array.from(
+      new Set([shimDir, ...pnpmBinDirs, ...existing]),
+    ).join(path.delimiter);
+  } catch (err) {
+    console.warn('[PC_Host] installBundledNodeShim failed:', err);
+  }
+}
+installBundledNodeShim();
 const isDev = process.env.NODE_ENV === 'development';
 // Bundle preview windows (from deep links / bridge calls) — one list, they
 // share a lifecycle and the tracking only exists to keep them alive.

@@ -48,6 +48,7 @@
     "lynxtron-scintilla-editor": "workspace:*",
     "minipass": "^7.1.2",
     "minizlib": "^3.1.0",
+    "pnpm": "10.15.1",
     "prismjs": "^1.30.0",
     "tar": "^7.0.0",
     "typescript": "catalog:",

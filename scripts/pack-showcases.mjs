@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { mkdir, readFile, readdir } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename } from 'node:fs/promises';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -101,6 +101,24 @@ async function buildAndPackShowcase(dir) {
 
   log(`Packing ${name} -> ${outDir}`);
   await run('pnpm', ['pack', '--pack-destination', outDir], { cwd: dir });
+  await stripVersionSuffix(dir);
+}
+
+// `pnpm pack` names the tarball `<scope>-<name>-<version>.tgz` with no way to
+// override it, but release assets should not include the version (installer
+// download URLs stay stable and assets don't collide with the release tag).
+// Rename the just-packed tarball for this showcase to drop the version part.
+async function stripVersionSuffix(showcaseDir) {
+  const pkg = await readJson(path.join(showcaseDir, 'package.json'));
+  const scopeless = pkg.name.replace(/^@/, '').replace('/', '-');
+  const src = path.join(outDir, `${scopeless}-${pkg.version}.tgz`);
+  const dest = path.join(outDir, `${scopeless}.tgz`);
+  if (!fs.existsSync(src)) {
+    log(`WARN expected tarball not found: ${src}`);
+    return;
+  }
+  if (fs.existsSync(dest)) fs.rmSync(dest);
+  await rename(src, dest);
 }
 
 async function main() {

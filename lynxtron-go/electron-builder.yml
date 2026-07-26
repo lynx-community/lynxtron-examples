@@ -34,7 +34,7 @@ electronBranding:
 mac:
   target:
     - dmg
-  artifactName: lynxtron-go-v${version}-darwin-${arch}.${ext}
+  artifactName: lynxtron-go-darwin-${arch}.${ext}
   extendInfo:
     CFBundleURLTypes:
       - CFBundleURLName: Lynxtron Go
@@ -46,7 +46,7 @@ win:
   target:
     - target: nsis
       arch: x64
-  artifactName: LynxtronGo-v${version}-win-x64.${ext}
+  artifactName: LynxtronGo-win-x64.${ext}
   asar: false
   extraFiles:
     - from: node_modules/@lynx-js/lynxtron/dist/win32/x64/lynxtron.exe
@@ -55,7 +55,7 @@ win:
       to: resources/app/node_modules/@lynx-js/lynxtron
 nsis:
   include: resources/installer.nsh
-  artifactName: LynxtronGo-v${version}-win-x64-Setup.${ext}
+  artifactName: LynxtronGo-win-x64-Setup.${ext}
   oneClick: false
   allowToChangeInstallationDirectory: true
   perMachine: false
