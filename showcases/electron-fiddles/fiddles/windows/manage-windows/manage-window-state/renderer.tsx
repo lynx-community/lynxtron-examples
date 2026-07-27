@@ -1,15 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import {
-  DemoPage,
-  Section,
-  Row,
-  ActionButton,
-  Field,
-  KV,
-  Paragraph,
-  Code,
-  ResultText,
-} from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, Field, KV, Paragraph, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall, bridgeSend, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 
 interface Bounds {
@@ -106,18 +96,6 @@ export function App() {
           <Field value={h} placeholder="height" onInput={setH} />
         </Row>
         <ActionButton label="Apply Bounds" onTap={applyBounds} />
-      </Section>
-
-      <Section>
-        <Paragraph>
-          The UI reads bounds with <Code>bridge.call('window:getBounds')</Code> and
-          drives the window with <Code>bridge.send('window:nudge' / 'window:setBounds')</Code>.
-          Main applies them via <Code>win.setBounds()</Code> and pushes fresh bounds
-          on every <Code>win.on('move')</Code> / <Code>win.on('resize')</Code> — so
-          dragging or resizing the OS window updates the values above live. This
-          mirrors Electron's <Code>getBounds</Code> / <Code>setBounds</Code> plus
-          the move / resize events.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

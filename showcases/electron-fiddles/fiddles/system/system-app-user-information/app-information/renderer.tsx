@@ -1,5 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, KV, ActionButton, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, KV, ActionButton, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles system/app-information. Upstream demos
@@ -47,19 +47,6 @@ export function App() {
           ))}
         </Section>
       ) : null}
-
-      <Section>
-        <Paragraph>
-          The main-process <Code>app</Code> module reports where your app lives and
-          where the OS keeps common user directories. The UI awaits
-          <Code> bridge.call('app:getInfo')</Code>; main handles it in
-          <Code> win.on('-lynx-invoke')</Code>, reads <Code>app.getName()</Code>,
-          <Code> app.getVersion()</Code>, <Code>app.getAppPath()</Code> and
-          <Code> app.getPath(name)</Code>, then replies via
-          <Code> callback.sendReply()</Code> — Electron's
-          <Code> ipcRenderer.invoke</Code> / <Code>ipcMain.handle</Code> pattern.
-        </Paragraph>
-      </Section>
     </DemoPage>
   );
 }

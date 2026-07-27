@@ -1,5 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, KV, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, KV, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles
@@ -31,16 +31,6 @@ export function App() {
 
   return (
     <DemoPage title="Starter Code (default chrome)" supports="Supports: Win, macOS, Linux · Process: Main">
-      <Section heading="This window is unmodified">
-        <Paragraph>
-          This is the baseline of the window-customization series. The window was
-          created with no chrome options — <Code>frame</Code>,{' '}
-          <Code>titleBarStyle</Code> and <Code>transparent</Code> are all left at
-          their defaults — so what you see around this content is the operating
-          system's standard title bar and border.
-        </Paragraph>
-      </Section>
-
       <Section heading="Live window options">
         <Row>
           <ActionButton label="Read window chrome" onTap={refresh} />
@@ -50,26 +40,6 @@ export function App() {
         ) : (
           <ResultText>Loading…</ResultText>
         )}
-      </Section>
-
-      <Section heading="Compare with the rest of the series">
-        <Paragraph>
-          Open <Code>Remove Title Bar</Code>, <Code>Native Window Controls</Code>,{' '}
-          <Code>Custom Title Bar</Code> and <Code>Custom Drag Region</Code> from the
-          gallery next. Each starts from this window and removes or replaces one
-          more piece of the native chrome.
-        </Paragraph>
-      </Section>
-
-      <Section heading="Electron → Lynxtron">
-        <Paragraph>
-          Upstream is four lines: <Code>new BrowserWindow(&#123;&#125;)</Code>{' '}
-          followed by <Code>win.loadURL('https://example.com')</Code>. Lynxtron's{' '}
-          <Code>LynxWindow</Code> takes the same constructor options, so the
-          default-chrome part is identical. Loading a remote web page is not
-          portable — a LynxWindow renders Lynx bundles rather than HTML — so this
-          window loads its own Lynx bundle instead.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

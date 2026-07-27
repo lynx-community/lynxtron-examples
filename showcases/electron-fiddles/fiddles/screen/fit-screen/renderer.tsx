@@ -1,13 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import {
-  DemoPage,
-  Section,
-  ActionButton,
-  KV,
-  Paragraph,
-  Code,
-  ResultText,
-} from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, ActionButton, KV, Paragraph, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall, bridgeSend, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 
 interface Rect {
@@ -86,17 +78,6 @@ export function App() {
         <Paragraph>
           Resizes this window to fill the primary display's available work area
           (the screen minus the OS taskbar / dock).
-        </Paragraph>
-      </Section>
-
-      <Section>
-        <Paragraph>
-          Main reads <Code>screen.getPrimaryDisplay().workArea</Code> and applies
-          it with <Code>win.setBounds()</Code> — the Lynxtron equivalent of
-          Electron's <Code>new BrowserWindow(&#123; width, height &#125;)</Code>
-          sized from <Code>workAreaSize</Code>. The values above refresh live via
-          <Code> win.sendGlobalEvent('fit-changed')</Code> on every native move
-          or resize.
         </Paragraph>
       </Section>
     </DemoPage>

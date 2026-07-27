@@ -55,16 +55,6 @@ export function App() {
           />
         </Row>
       </Section>
-
-      <Section>
-        <Paragraph>
-          Main builds a menu with <Code>Menu.buildFromTemplate</Code> and installs
-          it as the dock menu via <Code>app.dock.setMenu(menu)</Code>. “New Window”
-          opens another copy of this fiddle, “Close All Windows” closes this one,
-          and “Open Lynx Docs” calls <Code>shell.openExternal</Code> — Electron's
-          dock-menu pattern, unchanged in Lynxtron's main process.
-        </Paragraph>
-      </Section>
     </DemoPage>
   );
 }

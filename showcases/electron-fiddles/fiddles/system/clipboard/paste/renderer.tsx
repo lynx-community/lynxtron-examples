@@ -1,5 +1,5 @@
 import { root, useCallback, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles system/clipboard/paste — read text from the
@@ -32,19 +32,6 @@ export function App() {
         {contents !== null ? (
           <ResultText>Clipboard contents: {contents === '' ? '(empty)' : contents}</ResultText>
         ) : null}
-      </Section>
-      <Section>
-        <Paragraph>
-          Tap <Code>Paste</Code> to copy the phrase "{DEMO_PHRASE}" onto the system
-          clipboard and immediately read it back — mirroring the upstream fiddle.
-          The UI awaits <Code>bridge.call('clipboard:readText')</Code>; main handles
-          it in <Code>win.on('-lynx-invoke')</Code>, calls
-          <Code> clipboard.readText()</Code>, and replies via
-          <Code> callback.sendReply()</Code> — Electron's
-          <Code> ipcRenderer.invoke</Code> / <Code>ipcMain.handle</Code> pattern.
-          Use <Code>Read Clipboard</Code> to read whatever you last copied from
-          another app.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

@@ -31,3 +31,9 @@ shared a single main process, the ones touching app-global state
 - `lynxtron-go`: the gallery bakes in the fiddle catalog and lists all 55 fiddles
   grouped by upstream category with status badges, separate from the
   featured-showcase grid.
+
+The fiddles are pared back to the API demonstration itself and share the repo's
+Fiddle Dark language with `showcases/counter` and `showcases/system-monitor` —
+palette from `@lynxtron-examples/config/tokens.css`, labelled panels, and
+`var(--font-mono)` reserved for data. `partial` fiddles keep one plain line
+naming the gap; the tutorial prose that repeated the port matrix is gone.

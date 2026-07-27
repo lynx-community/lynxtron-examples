@@ -1,5 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, ActionButton, KV, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, ActionButton, KV, Paragraph, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { exposed } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles system/get-version-information.
@@ -39,18 +39,6 @@ export function App() {
         ) : (
           entries.map(([k, v]) => <KV k={k} v={String(v)} key={k} />)
         )}
-      </Section>
-
-      <Section>
-        <Paragraph>
-          The <Code>process</Code> module is built into Node.js, so it is available
-          in both the main and app processes. The shared preload reads
-          <Code> process.versions</Code> and exposes it via
-          <Code> contextBridge.exposeInLynxBTS(&#123; versions &#125;)</Code>; the UI reads it
-          from <Code>NativeModules.nodejs.exposed</Code>. This mirrors Electron’s
-          preload + <Code>contextBridge.exposeInMainWorld</Code> pattern, but reports
-          the Lynxtron runtime version instead of Electron/Chromium.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

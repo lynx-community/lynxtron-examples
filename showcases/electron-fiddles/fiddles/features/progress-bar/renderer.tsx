@@ -1,5 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, Paragraph, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeSend, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 import './styles.css';
 
@@ -70,16 +70,6 @@ export function App() {
           <ActionButton label="100%" onTap={() => set(1)} variant="secondary" />
           <ActionButton label="Indeterminate" onTap={() => set(1.5)} variant="secondary" />
         </Row>
-      </Section>
-
-      <Section>
-        <Paragraph>
-          Keep an eye on the dock (macOS) or taskbar (Windows) while this runs.
-          Main calls <Code>win.setProgressBar(fraction)</Code>: values between 0
-          and 1 fill the indicator, and values above 1 show as indeterminate on
-          Windows or pin at 100% elsewhere. The bar above tracks the same value,
-          pushed back to Lynx via <Code>win.sendGlobalEvent('progress:tick')</Code>.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

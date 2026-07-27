@@ -1,5 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, ActionButton, Paragraph, Code, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, ActionButton, ResultText, KV, Note } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles menus/shortcuts.
@@ -29,30 +29,8 @@ export function App() {
         <ActionButton label="Trigger Shortcut Action" onTap={fire} />
         {pressed ? <ResultText>Fired — main showed the “Success!” dialog.</ResultText> : null}
       </Section>
-
-      <Section heading="What it does">
-        <Paragraph>
-          In Electron, keyboard shortcuts are called accelerators. They can be
-          assigned to items in the application <Code>Menu</Code>, or registered
-          globally so they fire even without keyboard focus. Main installs a
-          menu carrying <Code>{accelerator}</Code>; pressing that combo — or
-          tapping the button above — runs <Code>dialog.showMessageBox</Code> with
-          the same “Success!” message.
-        </Paragraph>
-      </Section>
-
-      <Section heading="Lynxtron note">
-        <Paragraph>
-          The original fiddle uses <Code>globalShortcut.register</Code>, which
-          Lynxtron does not export. It is ported here as an application-menu
-          accelerator via <Code>Menu.setApplicationMenu</Code> plus
-          <Code> Menu.buildFromTemplate</Code>. The trade-off: the accelerator
-          fires while the app has focus (menu scope) rather than system-wide.
-          When registering accelerators, avoid overriding existing OS-level
-          shortcuts.
-        </Paragraph>
-      </Section>
-    </DemoPage>
+    
+      <Note>Electron uses globalShortcut, which Lynxtron does not export. Ported as application-menu accelerators via Menu.setApplicationMenu.</Note></DemoPage>
   );
 }
 

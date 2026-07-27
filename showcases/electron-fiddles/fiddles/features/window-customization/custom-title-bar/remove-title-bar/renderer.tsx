@@ -1,15 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import {
-  DemoPage,
-  Section,
-  Row,
-  ActionButton,
-  Field,
-  KV,
-  Paragraph,
-  Code,
-  ResultText,
-} from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, Field, KV, Paragraph, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles features/window-customization/custom-title-bar/
@@ -46,15 +36,6 @@ export function App() {
       title="Remove Title Bar"
       supports="Supports: Win, macOS, Linux · Process: Main"
     >
-      <Section heading="This window has no native title bar">
-        <Paragraph>
-          This fiddle's main.ts created this window with <Code>titleBarStyle: 'hidden'</Code>,
-          so the OS does not draw its title bar. The fiddle content extends to the
-          very top edge of the window — there is no bar to grab or read the title
-          from.
-        </Paragraph>
-      </Section>
-
       <Section heading="The window still works">
         <Row>
           <ActionButton label="Read window bounds" onTap={refreshBounds} />
@@ -70,19 +51,6 @@ export function App() {
           <ActionButton label="Set window title" onTap={applyTitle} />
         </Row>
         {status ? <ResultText>{status}</ResultText> : null}
-      </Section>
-
-      <Section>
-        <Paragraph>
-          Electron sets <Code>titleBarStyle: 'hidden'</Code> on the
-          <Code> BrowserWindow</Code>; Lynxtron keeps the same window option and
-          only swaps Chromium for the Lynx renderer, so the OS title bar is
-          hidden identically. The UI reads bounds and re-titles the window over
-          the Lynxtron bridge via <Code>bridge.call('window:getBounds')</Code> and
-          <Code> bridge.call('window:setTitle')</Code>, handled in main with
-          <Code> win.getBounds()</Code> / <Code>win.setTitle()</Code> — Electron's
-          <Code> ipcRenderer.invoke</Code> / <Code>ipcMain.handle</Code> pattern.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

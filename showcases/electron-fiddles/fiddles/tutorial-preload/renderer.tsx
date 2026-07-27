@@ -1,5 +1,5 @@
 import { root, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, KV, Paragraph, Code } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, KV, Paragraph } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { exposed } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles tutorial-preload — read values a preload script
@@ -23,13 +23,6 @@ export function App() {
         ) : (
           Object.entries(versions).map(([k, v]) => <KV k={k} v={String(v)} key={k} />)
         )}
-      </Section>
-      <Section>
-        <Paragraph>
-          The preload script calls <Code>contextBridge.exposeInLynxBTS(&#123; versions &#125;)</Code>.
-          The UI reads them from <Code>NativeModules.nodejs.exposed</Code>. This
-          mirrors Electron’s <Code>contextBridge.exposeInMainWorld</Code>.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

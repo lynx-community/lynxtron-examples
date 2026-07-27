@@ -1,5 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, Paragraph, Code, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, Paragraph, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall, bridgeSend, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 
 interface TrayState {
@@ -53,18 +53,6 @@ export function App() {
             variant="secondary"
           />
         </Row>
-      </Section>
-
-      <Section>
-        <Paragraph>
-          Main keeps a Tray reference alive and builds its menu with
-          <Code> Menu.buildFromTemplate</Code>. “Open App” focuses the window,
-          the “Set Green Icon” checkbox swaps the tray image via
-          <Code> tray.setImage</Code>, and “Set Title” toggles
-          <Code> tray.setTitle</Code>. Each toggle is echoed to this UI over a
-          <Code> tray-state</Code> global event — Electron’s
-          <Code> Tray</Code> / <Code>Menu</Code> template pattern.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

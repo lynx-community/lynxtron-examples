@@ -1,5 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, ResultText, Note } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 import './styles.css';
 
@@ -69,26 +69,8 @@ export function App() {
           />
         </Row>
       </Section>
-
-      <Section>
-        <Paragraph>
-          The main process polls connectivity every few seconds by resolving a
-          well-known hostname and pushes each result via{' '}
-          <Code>win.sendGlobalEvent('online-status')</Code>. The UI receives it
-          through <Code>GlobalEventEmitter</Code> and updates the indicator live —
-          try toggling your network to watch it flip.
-        </Paragraph>
-        <Paragraph>
-          In Electron this fiddle reads <Code>navigator.onLine</Code> in the
-          renderer and listens for the window's <Code>online</Code> /{' '}
-          <Code>offline</Code> events. Lynxtron replaces the Chromium renderer
-          with Lynx, which has no <Code>navigator</Code>, so connectivity is
-          probed in the main process (Node <Code>dns.lookup</Code>) and forwarded
-          to the UI instead — the same "report network connectivity" behavior,
-          sourced where a Web API is unavailable.
-        </Paragraph>
-      </Section>
-    </DemoPage>
+    
+      <Note>Electron uses the renderer navigator.onLine. Lynx has no navigator; connectivity is probed from main and pushed to the UI.</Note></DemoPage>
   );
 }
 

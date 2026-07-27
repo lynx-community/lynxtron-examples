@@ -1,5 +1,5 @@
 import { root, useCallback, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, Field, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, Field, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall } from '@lynxtron-examples/fiddle-kit/bridge';
 import './styles.css';
 
@@ -62,20 +62,6 @@ export function App() {
           <ResultText>{status}</ResultText>
         </Section>
       ) : null}
-
-      <Section>
-        <Paragraph>
-          Main builds a Menu with <Code>Menu.buildFromTemplate</Code> using the
-          <Code> copy</Code>, <Code>cut</Code>, <Code>paste</Code> and
-          <Code> selectAll</Code> roles. A long-press calls
-          <Code> bridge.call('contextmenu:popup')</Code> with an
-          <Code> isEditable</Code> flag; main pops the menu with
-          <Code> Menu.popup(&#123; window &#125;)</Code> only when editable —
-          exactly like Electron’s <Code>webContents.on('context-menu')</Code>
-          handler checking <Code>params.isEditable</Code>. Lynxtron has no
-          <Code> webContents</Code>, so the Lynx UI raises the gesture instead.
-        </Paragraph>
-      </Section>
     </DemoPage>
   );
 }

@@ -1,5 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, Field, ActionButton, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, Field, ActionButton, ResultText, Note } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles features/represented-file (macOS).
@@ -47,22 +47,8 @@ export function App() {
           <ResultText>Window title is now: “{state.title}” {state.edited ? '(edited)' : ''}</ResultText>
         ) : null}
       </Section>
-      <Section>
-        <Paragraph>
-          On macOS, Electron calls <Code>win.setRepresentedFilename(path)</Code> and
-          <Code> win.setDocumentEdited(true)</Code> to put a proxy icon and an
-          “edited” dot in the native title bar (Cmd-click the title to reveal the
-          file path).
-        </Paragraph>
-        <Paragraph>
-          Note (partial): Lynxtron does not export those two APIs, so this port
-          uses the window <Code>title</Code> instead — main calls
-          <Code> win.setTitle(basename + (edited ? ' — Edited' : ''))</Code>, the
-          same cross-platform fallback many editors use. The associated file and
-          edited state are real; only the native proxy-icon affordance is absent.
-        </Paragraph>
-      </Section>
-    </DemoPage>
+    
+      <Note>Lynxtron does not export setRepresentedFilename / setDocumentEdited (the native proxy-icon affordance). Ported via the window title (setTitle) — the cross-platform "filename — Edited" fallback.</Note></DemoPage>
   );
 }
 

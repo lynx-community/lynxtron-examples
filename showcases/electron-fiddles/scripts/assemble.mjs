@@ -39,9 +39,9 @@ export function readCatalog() {
     const win = /window: \{([^}]*)\}/.exec(block);
     out.push({
       id,
-      dir: field('dir'),
       title: field('title') ?? id,
       status,
+      notes: field('notes') ?? '',
       upstream: field('upstream') ?? '',
       window: win ? win[1].trim() : '',
     });

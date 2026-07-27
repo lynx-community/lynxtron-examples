@@ -1,5 +1,5 @@
 import { root, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, KV, Paragraph, Code } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, KV, Paragraph } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { exposed } from '@lynxtron-examples/fiddle-kit/bridge';
 import './styles.css';
 
@@ -34,17 +34,6 @@ export function App() {
         ) : (
           Object.entries(versions).map(([k, v]) => <KV k={k} v={String(v)} key={k} />)
         )}
-      </Section>
-
-      <Section>
-        <Paragraph>
-          In Electron the main process calls <Code>new BrowserWindow()</Code> and
-          <Code> win.loadFile('index.html')</Code> to show a Chromium page. In
-          Lynxtron the main process still owns the window, but the renderer is
-          Lynx: this greeting is a ReactLynx component, not HTML. That is the only
-          real difference in a first app — same Node main process, a Lynx view in
-          place of a web page.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

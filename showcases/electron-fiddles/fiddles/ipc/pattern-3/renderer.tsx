@@ -1,5 +1,5 @@
 import { root, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeSend, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles ipc/pattern-3 (main → renderer).
@@ -27,16 +27,6 @@ export function App() {
           <ActionButton label="Increment (menu)" onTap={() => bridgeSend('nudge', { delta: 1 })} />
           <ActionButton label="Decrement (menu)" onTap={() => bridgeSend('nudge', { delta: -1 })} variant="secondary" />
         </Row>
-      </Section>
-      <Section>
-        <Paragraph>
-          Main pushes <Code>update-counter</Code> events via
-          <Code> win.sendGlobalEvent()</Code>; the UI receives them through
-          <Code> GlobalEventEmitter</Code> and echoes the new value back with
-          <Code> bridge.send('counter-value')</Code>. Electron’s
-          <Code> webContents.send</Code> / <Code>ipcRenderer.on</Code> pattern.
-          The app menu (Increment / Decrement) drives the same events.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

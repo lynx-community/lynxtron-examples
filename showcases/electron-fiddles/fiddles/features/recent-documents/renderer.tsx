@@ -1,5 +1,5 @@
 import { root, useCallback, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, Field, Paragraph, Code, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, Field, Paragraph, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles features/recent-documents.
@@ -41,18 +41,6 @@ export function App() {
         ) : (
           added.map((p, i) => <KV k={`#${i + 1}`} v={p} key={p} />)
         )}
-      </Section>
-
-      <Section>
-        <Paragraph>
-          The UI awaits <Code>bridge.call('recent:add')</Code>. Main writes a
-          small file into your Documents folder and registers it with
-          <Code> app.addRecentDocument(path)</Code>. Right-click the Lynxtron app
-          icon in the Dock / taskbar to see it under Recent Documents.
-          <Code> Clear List</Code> calls <Code>app.clearRecentDocuments()</Code>.
-          This is Electron’s same main-process API — only the UI moved from
-          Chromium to Lynx.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

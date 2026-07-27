@@ -1,7 +1,11 @@
-// Shared visual kit for fiddle demos. Every ported fiddle composes these so the
-// gallery has one consistent look. Colors are baked into styles (Lynx does not
-// resolve `currentColor` for svg, and CSS inheritance is limited).
+// Shared visual kit for fiddle demos. Every ported fiddle composes these, so
+// the whole set reads as one product — in the repo's Fiddle Dark language,
+// alongside showcases/counter and showcases/system-monitor.
+//
+// The palette lives in one place for the whole repo; import it rather than
+// restating hex values here.
 import { useCallback } from '@lynx-js/react';
+import '@lynxtron-examples/config/tokens.css';
 import './Demo.css';
 
 interface DemoPageProps {
@@ -46,7 +50,10 @@ interface ActionButtonProps {
   disabled?: boolean;
 }
 
-/** Primary interactive control. */
+/**
+ * An action. `primary` carries the accent and should appear at most once per
+ * screen — everything else stays quiet, the way showcases/counter does it.
+ */
 export function ActionButton({ label, onTap, variant = 'primary', disabled }: ActionButtonProps) {
   const handle = useCallback(() => {
     if (!disabled) onTap();
@@ -56,7 +63,9 @@ export function ActionButton({ label, onTap, variant = 'primary', disabled }: Ac
       className={`demo-btn demo-btn-${variant}${disabled ? ' demo-btn-disabled' : ''}`}
       bindtap={handle}
     >
-      <text className="demo-btn-text">{label}</text>
+      <text className={`demo-btn-text${variant === 'primary' ? ' demo-btn-text-primary' : ''}`}>
+        {label}
+      </text>
     </view>
   );
 }
@@ -69,6 +78,15 @@ export function Paragraph({ children }: { children: unknown }) {
 /** Inline monospace-ish label for API names / code. */
 export function Code({ children }: { children: unknown }) {
   return <text className="demo-code">{children as any}</text>;
+}
+
+/**
+ * One line naming what Lynxtron cannot do here and what stands in for it.
+ * Only `partial` fiddles should carry one — plain text, because the point is
+ * to be believed rather than noticed.
+ */
+export function Note({ children }: { children: unknown }) {
+  return <text className="demo-note">{children as any}</text>;
 }
 
 /** Live result / status line. */

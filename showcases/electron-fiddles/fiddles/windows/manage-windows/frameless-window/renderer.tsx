@@ -1,12 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import {
-  DemoPage,
-  Section,
-  ActionButton,
-  Paragraph,
-  Code,
-  ResultText,
-} from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, ActionButton, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeSend, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles windows/manage-windows/frameless-window.
@@ -42,31 +35,6 @@ export function App() {
         {opened ? (
           <ResultText>Opened a new frameless window (frame: false).</ResultText>
         ) : null}
-      </Section>
-
-      <Section>
-        <Paragraph>
-          A frameless window has no OS chrome — no title bar, tool bars, or
-          borders. You make one by setting <Code>frame: false</Code> when
-          creating the window. This very window is frameless for that reason.
-          Tapping <Code>View Demo</Code> sends a
-          <Code> bridge.send('create-frameless-window')</Code> message; main
-          handles it in <Code>win.on('-lynx-message')</Code> and calls
-          <Code> ctx.openFiddle('window-frameless')</Code>, which constructs a
-          fresh <Code>new LynxWindow(&#123; frame: false &#125;)</Code> — just as
-          Electron’s main process runs
-          <Code> new BrowserWindow(&#123; frame: false &#125;)</Code>.
-        </Paragraph>
-      </Section>
-
-      <Section heading="Transparent windows">
-        <Paragraph>
-          A frameless window can also be transparent. Setting
-          <Code> transparent: true</Code> alongside
-          <Code> frame: false</Code> lets the desktop show through — see the
-          Transparent Window fiddle. For more, read the upstream Window
-          Customization documentation.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

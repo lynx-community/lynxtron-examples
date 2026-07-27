@@ -1,5 +1,5 @@
 import { root, useCallback, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, Paragraph, Code, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, ResultText, KV, Note } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall, bridgeSend } from '@lynxtron-examples/fiddle-kit/bridge';
 
 interface DroppedFile {
@@ -55,26 +55,8 @@ export function App() {
         ) : null}
         {status ? <ResultText>{status}</ResultText> : null}
       </Section>
-      <Section>
-        <Paragraph>
-          Electron's original fiddle drags a file OUT of the window to Finder or
-          Explorer using the HTML5 drag API and
-          <Code> event.sender.startDrag</Code>. Lynx replaces Chromium's renderer
-          and has no HTML5 drag-and-drop, so there is no drag surface to attach to.
-        </Paragraph>
-      </Section>
-      <Section>
-        <Paragraph>
-          This port demonstrates the nearest equivalent: the UI awaits
-          <Code> bridge.call('dnd:pickFile')</Code>, main opens a native
-          <Code> dialog.showOpenDialog</Code>, reads the file's name and size with
-          Node's <Code>fs</Code>, and replies via <Code>callback.sendReply()</Code>.
-          Tapping Reveal sends <Code>bridge.send('dnd:reveal')</Code> so main can
-          call <Code>shell.showItemInFolder</Code> — the inverse of dragging a file
-          out to the OS.
-        </Paragraph>
-      </Section>
-    </DemoPage>
+    
+      <Note>Electron uses the HTML5 drag-and-drop API. Lynx has no HTML5 DnD; ported as a file picker + shell.showItemInFolder as the nearest demo.</Note></DemoPage>
   );
 }
 

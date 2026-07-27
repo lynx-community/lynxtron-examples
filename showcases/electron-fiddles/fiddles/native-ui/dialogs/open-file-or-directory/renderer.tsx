@@ -1,5 +1,5 @@
 import { root, useCallback, useState } from '@lynx-js/react';
-import { DemoPage, Section, ActionButton, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, ActionButton, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles native-ui/dialogs/open-file-or-directory.
@@ -18,23 +18,6 @@ export function App() {
       <Section heading="Use system dialogs">
         <ActionButton label="View Demo" onTap={onSelect} />
         {selection ? <ResultText>You selected: {selection}</ResultText> : null}
-      </Section>
-      <Section>
-        <Paragraph>
-          Tapping the button awaits <Code>bridge.call('dialog:openFileOrDirectory')</Code>.
-          Main handles it in <Code>win.on('-lynx-invoke')</Code>, opens a native
-          <Code> dialog.showOpenDialog</Code> with <Code>properties: ['openFile', 'openDirectory']</Code>,
-          and replies with the chosen path(s) via <Code>callback.sendReply()</Code> — Electron’s
-          <Code> ipcRenderer.invoke</Code> / <Code>ipcMain.handle</Code> pattern.
-        </Paragraph>
-      </Section>
-      <Section>
-        <Paragraph>
-          The dialog runs in the main process because native utilities are more
-          efficient there, and it lets the call happen without interrupting the
-          Lynx UI. The <Code>properties</Code> array is what lets a single dialog
-          accept either a file or a folder.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

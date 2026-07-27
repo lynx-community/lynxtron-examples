@@ -1,5 +1,5 @@
 import { root, useCallback, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, ResultText, Note } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import './styles.css';
 
 // Port of electron docs/fiddles features/dark-mode. Upstream toggles the OS
@@ -47,23 +47,8 @@ export function App() {
           </text>
         </view>
       </Section>
-
-      <Section>
-        <Paragraph>
-          Electron drives this with the <Code>nativeTheme</Code> module: the
-          buttons set <Code>nativeTheme.themeSource</Code> to
-          <Code> 'dark'</Code>, <Code>'light'</Code>, or <Code>'system'</Code>,
-          and the page's <Code>prefers-color-scheme</Code> CSS follows along.
-        </Paragraph>
-        <Paragraph>
-          Lynxtron does not export <Code>nativeTheme</Code>, so this port applies
-          the theme in-app: the preview swaps its own colors instead of asking
-          the OS. Because there is no <Code>nativeTheme</Code> bridge, the
-          <Code> System</Code> option cannot follow your real OS theme — it just
-          resets the in-app preview to its light default.
-        </Paragraph>
-      </Section>
-    </DemoPage>
+    
+      <Note>Electron uses the nativeTheme module (not exported by Lynxtron). Ported as an in-app CSS theme toggle; system-theme following is not wired.</Note></DemoPage>
   );
 }
 

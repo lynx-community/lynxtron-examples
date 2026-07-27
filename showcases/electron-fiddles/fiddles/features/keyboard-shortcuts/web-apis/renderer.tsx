@@ -1,5 +1,5 @@
 import { root, useCallback, useState } from '@lynx-js/react';
-import { DemoPage, Section, ActionButton, Paragraph, Code, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, ActionButton, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 
 // Port of electron docs/fiddles features/keyboard-shortcuts/web-apis.
 //
@@ -46,36 +46,7 @@ export function App() {
           {lastKey ? <ResultText>You pressed: {lastKey}</ResultText> : null}
           <ActionButton label="Reset" onTap={reset} variant="secondary" />
         </Section>
-
-        <Section heading="How it works">
-          <Paragraph>
-            The root <Code>&lt;view&gt;</Code> declares{' '}
-            <Code>global-bindkeyup</Code> and <Code>global-bindkeydown</Code>. The
-            <Code> global-</Code> prefix makes the binding fire for key events
-            anywhere in the Lynx view, not only when this node has focus — the
-            closest equivalent to attaching a listener to <Code>window</Code>. The
-            handler reads <Code>event.key</Code>, exactly like the upstream fiddle.
-          </Paragraph>
-        </Section>
-
-        <Section heading="Electron → Lynxtron">
-          <Paragraph>
-            Upstream calls{' '}
-            <Code>window.addEventListener('keyup', handleKeyPress)</Code> and
-            renders <Code>event.key</Code> into the page. On Lynxtron the renderer
-            is Lynx rather than Chromium, so the DOM listener is replaced by
-            Lynx's own keyboard bindings — but the event shape and the
-            demonstrated behaviour are the same.
-          </Paragraph>
-          <Paragraph>
-            This is renderer-side, in-app capture: it only works while this window
-            has OS focus. For shortcuts that fire while the app is in the
-            background, Electron uses <Code>globalShortcut</Code>, which Lynxtron
-            does not export — see the "Menu Shortcuts" fiddle for the
-            application-menu accelerator alternative.
-          </Paragraph>
-        </Section>
-      </DemoPage>
+    </DemoPage>
     </view>
   );
 }

@@ -1,12 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import {
-  DemoPage,
-  Section,
-  Paragraph,
-  Code,
-  ResultText,
-  KV,
-} from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Paragraph, Code, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeSend, bridgeCall, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 import './styles.css';
 
@@ -74,22 +67,6 @@ export function App() {
       </view>
 
       <DemoPage title="Frameless Window" supports="frame: false · in-content controls">
-        <Section heading="In-content window controls">
-          <Paragraph>
-            This window was created with <Code>frame: false</Code>, so it has no
-            operating-system title bar and none of the usual minimize / maximize /
-            close buttons. The strip at the very top is not OS chrome — it is
-            ordinary Lynx content standing in for it.
-          </Paragraph>
-          <Paragraph>
-            Tap the buttons up there: <Code>—</Code> minimizes,{' '}
-            <Code>{maximized ? '❐' : '☐'}</Code> toggles maximize / restore, and{' '}
-            <Code>✕</Code> closes the window. Each one sends a{' '}
-            <Code>bridge.send('window:…')</Code> message that main turns into a
-            real window operation.
-          </Paragraph>
-        </Section>
-
         <Section heading="This window right now">
           <KV k="Platform" v={platform} />
           <KV k="Maximized" v={maximized ? 'yes' : 'no'} />
@@ -112,22 +89,7 @@ export function App() {
             window from content.
           </Paragraph>
         </Section>
-
-        <Section>
-          <Paragraph>
-            In Electron this is <Code>new BrowserWindow(&#123; frame: false &#125;)</Code>;
-            the page then draws its own title bar and wires buttons to{' '}
-            <Code>ipcRenderer</Code> so main can call{' '}
-            <Code>win.minimize()</Code>, <Code>win.maximize()</Code>, and{' '}
-            <Code>win.close()</Code>. Lynxtron keeps that exact main-process window
-            API — only the Chromium renderer is replaced by Lynx. This fiddle's main.ts
-            applies <Code>frame: false</Code>, the buttons above send{' '}
-            <Code>bridge.send</Code> messages, and main handles them in{' '}
-            <Code>win.on('-lynx-message')</Code> by calling the same window
-            methods.
-          </Paragraph>
-        </Section>
-      </DemoPage>
+    </DemoPage>
     </view>
   );
 }

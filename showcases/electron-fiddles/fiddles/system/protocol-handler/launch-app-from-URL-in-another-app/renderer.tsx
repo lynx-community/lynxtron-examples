@@ -1,5 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, Paragraph, Code, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, Paragraph, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall, bridgeSend, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 
 const SCHEME = 'electron-fiddle';
@@ -70,21 +70,6 @@ export function App() {
         ) : (
           links.map((link) => <ResultText key={link.id}>You arrived from: {link.url}</ResultText>)
         )}
-      </Section>
-
-      <Section>
-        <Paragraph>
-          Main calls <Code>app.setAsDefaultProtocolClient('{SCHEME}')</Code> so the OS
-          routes <Code>{SCHEME}://</Code> links to this app. When one arrives, Electron
-          fires <Code>app.on('open-url')</Code>; here main forwards it to the UI with
-          <Code> win.sendGlobalEvent('deep-link')</Code> and the list above receives it via
-          <Code> GlobalEventEmitter</Code>.
-        </Paragraph>
-        <Paragraph>
-          Real deep links only fire when the app is packaged and registered with the OS.
-          The “Simulate Deep Link” button injects one through main so the flow is testable
-          in development.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

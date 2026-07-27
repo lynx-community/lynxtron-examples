@@ -58,6 +58,23 @@ node scripts/assemble.mjs quick-start --build --run   # one fiddle, end to end
 node scripts/assemble.mjs --all --build --jobs 6      # what `npm run build` does
 ```
 
+### What a fiddle shows
+
+One API, doing one thing, with its result visible. Nothing else.
+
+Each screen is the working demo and — where the port has a real gap — a single
+line naming it. The tutorial prose the fiddles used to carry ("How it works in
+Electron", "Electron → Lynxtron") was removed: the mapping already lives in the
+IPC table and port matrix below, and repeating it on every screen buried the
+part that is actually evidence.
+
+They share the repo's Fiddle Dark language with `showcases/counter` and
+`showcases/system-monitor` — palette from `@lynxtron-examples/config/tokens.css`,
+labelled panels, sans-serif labels, and `var(--font-mono)` reserved for data
+(values, paths, versions, API identifiers). Colour carries meaning: the accent
+marks the one primary action, `--ok` a live result. See `.impeccable.md` at the
+repo root for the design context.
+
 ### Why each fiddle gets its own process
 
 Launching a fiddle from the gallery spawns a **separate Lynxtron process** on

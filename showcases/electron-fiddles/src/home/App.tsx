@@ -1,6 +1,7 @@
 import { useCallback } from '@lynx-js/react';
 import { FIDDLES, CATEGORY_ORDER, type FiddleMeta, type FiddleStatus } from '../../catalog';
 import { bridgeSend } from '@lynxtron-examples/fiddle-kit/bridge';
+import '@lynxtron-examples/config/tokens.css';
 import './App.css';
 
 const STATUS_LABEL: Record<FiddleStatus, string> = {
@@ -23,7 +24,7 @@ function FiddleCard({ meta }: { meta: FiddleMeta }) {
       <view className="card-head">
         <text className="card-title">{meta.title}</text>
         <view className={`badge badge-${meta.status}`}>
-          <text className="badge-text">{STATUS_LABEL[meta.status]}</text>
+          <text className={`badge-text badge-text-${meta.status}`}>{STATUS_LABEL[meta.status]}</text>
         </view>
       </view>
       <text className="card-desc">{meta.description}</text>

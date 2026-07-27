@@ -1,5 +1,5 @@
 import { root, useCallback, useState } from '@lynx-js/react';
-import { DemoPage, Section, Field, ActionButton, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Field, ActionButton, Paragraph, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall, bridgeSend } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles menus/context-menu/dom.
@@ -43,18 +43,6 @@ export function App() {
           <ActionButton label="Show context menu" onTap={openMenuViaButton} variant="secondary" />
         </view>
         {count > 0 ? <ResultText>Context menu requested {count}×</ResultText> : null}
-      </Section>
-
-      <Section>
-        <Paragraph>
-          The target element listens for <Code>bindlongpress</Code> and fires
-          <Code> bridge.send('context-menu')</Code>. Main builds a role-based
-          menu with <Code>Menu.buildFromTemplate</Code> and shows it via
-          <Code> menu.popup(&#123; window &#125;)</Code>. This mirrors Electron’s
-          renderer <Code>contextmenu</Code> → <Code>ipcRenderer.send</Code> →
-          <Code> menu.popup</Code> flow, with long-press standing in for
-          right-click.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

@@ -1,44 +1,61 @@
+/* The fiddle UI kit, in the repo's Fiddle Dark language.
+   Palette comes from @lynxtron-examples/config/tokens.css (imported from
+   Demo.tsx) — no hex literals here. Vocabulary matches showcases/counter and
+   showcases/system-monitor: labelled panels, sans-serif labels, and
+   var(--font-mono) reserved strictly for DATA (values, paths, versions, API
+   identifiers). */
+
 .demo-page {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
-  background-color: #1e1e24;
+  background-color: var(--bg);
 }
 
 .demo-inner {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 24px;
+  gap: 16px;
 }
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
 
 .demo-title {
-  color: #ffffff;
-  font-size: 22px;
-  font-weight: bold;
-  margin-bottom: 4px;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  color: var(--text);
 }
 
+/* The API/platform line under the title. Metadata, so it stays quiet. */
 .demo-supports {
-  color: #8a8a99;
   font-size: 12px;
-  margin-bottom: 16px;
+  line-height: 16px;
+  color: var(--dim);
+  margin-top: 2px;
 }
+
+/* ── Panel ──────────────────────────────────────────────────────────────── */
 
 .demo-section {
   display: flex;
   flex-direction: column;
-  background-color: #2a2a33;
-  border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 14px;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background-color: var(--surface);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
 }
 
 .demo-section-heading {
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 10px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .demo-row {
@@ -46,90 +63,137 @@
   flex-direction: row;
   align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 8px;
 }
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+/* Same shape as showcases/counter: quiet by default, accent only on the one
+   primary action. Hover is colour-only — a `:hover` layout flip leaves paint
+   ghosts in Lynx. */
 
 .demo-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 38px;
-  padding-left: 18px;
-  padding-right: 18px;
-  border-radius: 8px;
-  margin-right: 10px;
-  margin-bottom: 8px;
+  /* A panel is a column, whose default cross-axis stretch would make every
+     button span the full width. Buttons size to their label instead. */
+  align-self: flex-start;
+  padding: 8px 14px;
+  margin-right: 8px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  background-color: var(--panel);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
+}
+
+.demo-btn:hover {
+  background-color: var(--deep);
 }
 
 .demo-btn-primary {
-  background-color: #4f8cff;
+  background-color: var(--accent-bg);
 }
 
-.demo-btn-secondary {
-  background-color: #3a3a46;
+.demo-btn-primary:hover {
+  background-color: rgba(19, 124, 189, 0.3);
 }
 
 .demo-btn-disabled {
-  background-color: #33333a;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 .demo-btn-text {
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: bold;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--text);
 }
+
+.demo-btn-text-primary {
+  color: var(--accent);
+}
+
+/* ── Text ───────────────────────────────────────────────────────────────── */
 
 .demo-paragraph {
-  color: #c2c2cc;
   font-size: 13px;
-  line-height: 20px;
-  margin-top: 6px;
-  margin-bottom: 6px;
+  line-height: 19px;
+  color: var(--muted);
 }
 
+/* Inline API identifiers and literals — data, so monospace earns its place. */
 .demo-code {
-  color: #ffca7a;
-  font-size: 13px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
 }
 
+/* The live outcome of the demo. */
 .demo-result {
-  color: #7ce7a3;
-  font-size: 14px;
-  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--ok);
 }
+
+/* A single line naming what Lynxtron cannot do here. These pages exist to be
+   believed, so the caveat is plain text, not a decorated callout. */
+.demo-note {
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--dim);
+}
+
+/* ── Input ──────────────────────────────────────────────────────────────── */
 
 .demo-field {
-  height: 38px;
-  background-color: #1a1a20;
-  border-radius: 8px;
-  padding-left: 12px;
-  padding-right: 12px;
-  color: #ffffff;
-  font-size: 14px;
-  margin-right: 10px;
-  margin-bottom: 8px;
+  height: 32px;
+  padding: 0 10px;
+  margin-right: 8px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  background-color: var(--deep);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
+  color: var(--text);
+  font-size: 13px;
   flex-grow: 1;
   min-width: 160px;
 }
 
+/* ── Key/value rows ─────────────────────────────────────────────────────── */
+/* Mirrors system-monitor's info rows: sans-serif label, monospace value. */
+
 .demo-kv {
   display: flex;
   flex-direction: row;
+  align-items: center;
   justify-content: space-between;
-  padding-top: 6px;
-  padding-bottom: 6px;
+  padding-top: 5px;
+  padding-bottom: 5px;
   border-bottom-width: 1px;
   border-bottom-style: solid;
-  border-bottom-color: #33333d;
+  border-bottom-color: var(--hairline);
 }
 
+/* Fixed label column, like system-monitor's .info-key — otherwise a long value
+   squeezes the key until it wraps mid-word ("appPat / h"). */
 .demo-kv-key {
-  color: #8a8a99;
+  width: 108px;
+  flex-shrink: 0;
   font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
 }
 
 .demo-kv-val {
-  color: #ffffff;
+  flex-grow: 1;
+  min-width: 0;
+  text-align: right;
+  font-family: var(--font-mono);
   font-size: 13px;
+  line-height: 18px;
+  color: var(--text);
 }

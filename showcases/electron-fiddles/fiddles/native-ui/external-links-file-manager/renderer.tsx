@@ -1,14 +1,5 @@
 import { root, useCallback, useState } from '@lynx-js/react';
-import {
-  DemoPage,
-  Section,
-  Row,
-  ActionButton,
-  Field,
-  Paragraph,
-  Code,
-  ResultText,
-} from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, Field, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeSend } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles native-ui/external-links-file-manager.
@@ -69,17 +60,6 @@ export function App() {
           <ResultText>{status}</ResultText>
         </Section>
       ) : null}
-
-      <Section>
-        <Paragraph>
-          The <Code>shell</Code> module lets the main process touch native
-          desktop features like the file manager and default browser. The UI
-          fires <Code>bridge.send('shell:openExternal')</Code>; main receives it
-          in <Code>win.on('-lynx-message')</Code> and calls the matching
-          {' '}<Code>shell</Code> API — Lynxtron's take on Electron's
-          {' '}<Code>ipcRenderer.send</Code> / <Code>ipcMain.on</Code>.
-        </Paragraph>
-      </Section>
     </DemoPage>
   );
 }

@@ -1,5 +1,5 @@
 import { root, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, Paragraph, Code, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Paragraph, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles features/window-customization/custom-title-bar/
@@ -70,25 +70,6 @@ export function App() {
         <ResultText>
           Bounds update live as you move or resize: {bounds || '(reading…)'}
         </ResultText>
-      </Section>
-
-      <Section>
-        <Paragraph>
-          In Electron this is <Code>new BrowserWindow(&#123; titleBarStyle: 'hidden' &#125;)</Code>,
-          adding <Code>titleBarOverlay: true</Code> on Windows &amp; Linux so the
-          native minimize / maximize / close controls stay painted into the
-          window. That single option removes the default title bar while keeping
-          the OS control buttons — on macOS the traffic-light buttons, on Windows
-          &amp; Linux an overlay.
-        </Paragraph>
-        <Paragraph>
-          Lynxtron keeps Electron's main-process window API, so this fiddle's main.ts
-          constructs this fiddle's window with the same{' '}
-          <Code>titleBarStyle: 'hidden'</Code> option. The Chromium renderer is
-          replaced by Lynx, but the window chrome is identical — a hidden title
-          bar with native controls intact — which is exactly what you see framing
-          this Lynx content.
-        </Paragraph>
       </Section>
     </DemoPage>
   );

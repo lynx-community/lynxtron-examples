@@ -1,5 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, ActionButton, Paragraph, Code, ResultText } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, ActionButton, ResultText, Note } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles features/notifications/renderer.
@@ -36,28 +36,8 @@ export function App() {
         ) : null}
         <ResultText>{output}</ResultText>
       </Section>
-      <Section>
-        <Paragraph>
-          In Electron this fiddle constructs <Code>new window.Notification(title, &#123; body &#125;)</Code>
-          directly in the renderer and updates the page from its <Code>onclick</Code>.
-          Lynx replaces the Chromium renderer, so there is no DOM
-          <Code> Notification</Code> here. Instead the UI awaits
-          <Code> bridge.call('notification:showFromRenderer')</Code>, and main
-          constructs the OS notification with
-          <Code> new Notification(&#123; title, body &#125;).show()</Code> — the
-          same main-process API Electron exposes.
-        </Paragraph>
-      </Section>
-      <Section>
-        <Paragraph>
-          Note (partial): the renderer Web Notification API is not available in
-          Lynx, so this bridges to the main-process <Code>Notification</Code>.
-          When the OS surfaces a click, main pushes it back via
-          <Code> win.sendGlobalEvent('notification-clicked')</Code> and the line
-          above updates to <Code>{CLICK_MESSAGE}</Code>, matching upstream.
-        </Paragraph>
-      </Section>
-    </DemoPage>
+    
+      <Note>Electron uses the renderer Web Notification API; Lynx has no DOM Notification, so this bridges to the main-process Notification instead.</Note></DemoPage>
   );
 }
 

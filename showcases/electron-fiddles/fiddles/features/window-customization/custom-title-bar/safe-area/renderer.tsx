@@ -1,13 +1,5 @@
 import { root, useCallback, useState } from '@lynx-js/react';
-import {
-  DemoPage,
-  Section,
-  Row,
-  ActionButton,
-  Paragraph,
-  Code,
-  ResultText,
-} from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, ResultText, Note } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import './styles.css';
 
 // Port of electron docs/fiddles features/window-customization/custom-title-bar/
@@ -71,31 +63,8 @@ export function App() {
           Safe-area inset: {safe ? `${SAFE_INSET}px each side` : 'off (0px)'}
         </ResultText>
       </Section>
-
-      <Section>
-        <Paragraph>
-          When the OS title bar is hidden with <Code>titleBarStyle: 'hidden'</Code>,
-          the window controls are painted directly over your content — the macOS
-          traffic lights on the left, or the Windows/Linux overlay buttons on the
-          right. A custom title bar must be laid out around that region so its own
-          label and drag area do not collide with the OS buttons.
-        </Paragraph>
-      </Section>
-
-      <Section>
-        <Paragraph>
-          In a browser renderer this is done with the
-          <Code> env(titlebar-area-x)</Code>,
-          <Code> env(titlebar-area-width)</Code> and
-          <Code> env(titlebar-area-height)</Code> CSS insets, which report the
-          exact overlay geometry so the bar reflows automatically. Lynx does not
-          expose those <Code>env()</Code> variables, so this port approximates the
-          safe area with a fixed <Code>{SAFE_INSET}px</Code> inset on each end.
-          Toggle it above: with the inset off, the label slides under the control
-          cluster; with it on, the label stays clear.
-        </Paragraph>
-      </Section>
-    </DemoPage>
+    
+      <Note>Depends on titlebar-overlay env() safe-area insets; approximated with a fixed inset and noted in-app.</Note></DemoPage>
   );
 }
 

@@ -1,5 +1,5 @@
 import { root, useCallback, useEffect, useState } from '@lynx-js/react';
-import { DemoPage, Section, Row, ActionButton, Paragraph, Code, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
+import { DemoPage, Section, Row, ActionButton, Paragraph, ResultText, KV } from '@lynxtron-examples/fiddle-kit/ui/Demo';
 import { bridgeCall, onGlobalEvent } from '@lynxtron-examples/fiddle-kit/bridge';
 
 // Port of electron docs/fiddles windows/manage-windows/window-events.
@@ -90,21 +90,6 @@ export function App() {
             </ResultText>
           ))
         )}
-      </Section>
-
-      <Section>
-        <Paragraph>
-          In Electron this fiddle opens a second <Code>BrowserWindow</Code> and
-          subscribes to its <Code>focus</Code> / <Code>blur</Code> /{' '}
-          <Code>close</Code> events, forwarding them to the renderer with{' '}
-          <Code>webContents.send</Code>. Lynxtron replaces the Chromium renderer
-          with Lynx, so main subscribes to this window's lifecycle events —{' '}
-          <Code>win.on('focus' | 'blur' | 'maximize' | 'minimize' | 'move' | 'resize', …)</Code>{' '}
-          — and pushes each via <Code>win.sendGlobalEvent('window-event')</Code>.
-          The UI receives them through <Code>GlobalEventEmitter</Code> and appends
-          to the live log — the same "observe window events in main, react in the
-          UI" pattern the original demonstrates.
-        </Paragraph>
       </Section>
     </DemoPage>
   );
