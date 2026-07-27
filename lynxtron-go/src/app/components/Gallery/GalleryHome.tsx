@@ -2,9 +2,12 @@ import './GalleryHome.css';
 import { Button } from '../../fiddle/bp';
 import { isDevMode } from '../../fiddle/dev-preset';
 import {
+  FIDDLE_CATALOG,
+  FIDDLE_SHOWCASE_NAME,
   SHOWCASE_LOCAL_WORKSPACE,
   SHOWCASE_PREVIEW,
   SHOWCASE_REGISTRY,
+  type FiddleEntry,
   type ShowcaseEntry,
 } from '../../store';
 
@@ -37,6 +40,93 @@ function tagTint(tag: string): (typeof TAG_TINTS)[number] {
   return TAG_TINTS[h % TAG_TINTS.length];
 }
 
+const FIDDLE_STATUS_LABEL: Record<string, string> = {
+  working: 'working',
+  partial: 'partial',
+  na: 'N/A',
+};
+
+/**
+ * Every ported Electron `docs/fiddles` example, grouped the way the upstream
+ * docs group them. This is one collection inside a single showcase, not one
+ * showcase per fiddle — so it gets its own section rather than N cards in the
+ * featured grid above.
+ */
+function ElectronFiddlesSection({
+  onOpen,
+  onRun,
+}: {
+  onOpen: () => void;
+  onRun: () => void;
+}) {
+  const { categories, fiddles } = FIDDLE_CATALOG;
+  if (!fiddles.length) return null;
+
+  const counts = fiddles.reduce(
+    (acc, f) => {
+      acc[f.status] = (acc[f.status] ?? 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+
+  // Follow the manifest's declared category order, then anything unlisted.
+  const seen = new Set(categories);
+  const order = [...categories, ...fiddles.map(f => f.category).filter(c => !seen.has(c))];
+  const grouped: Array<[string, FiddleEntry[]]> = [];
+  for (const category of order) {
+    if (grouped.some(([c]) => c === category)) continue;
+    const items = fiddles.filter(f => f.category === category);
+    if (items.length) grouped.push([category, items]);
+  }
+
+  return (
+    <>
+      <view className="GallerySectionRule">
+        <text className="GallerySectionLabel">
+          ELECTRON FIDDLES · {String(fiddles.length)}
+        </text>
+        <view className="GallerySectionLine" />
+      </view>
+
+      <view className="FiddleIntro">
+        <text className="FiddleIntroText">
+          The complete Electron <text className="FiddleIntroCode">docs/fiddles</text> set, ported to
+          Lynxtron — {String(counts.working ?? 0)} working, {String(counts.partial ?? 0)} partial,{' '}
+          {String(counts.na ?? 0)} not portable. They ship as one showcase whose home screen
+          launches each fiddle in its own window.
+        </text>
+        <view className="FiddleIntroActions">
+          <Button text="Open collection" small onClick={onOpen} />
+          <Button text="Run" small onClick={onRun} />
+        </view>
+      </view>
+
+      {grouped.map(([category, items]) => (
+        <view key={category} className="FiddleGroup">
+          <text className="FiddleGroupTitle">{category}</text>
+          <view className="FiddleList">
+            {items.map(f => (
+              <view
+                key={f.id}
+                className={`FiddleChip FiddleChip--${f.status}`}
+                bindtap={onOpen}
+              >
+                <text className="FiddleChipTitle" text-maxline="1">{f.title}</text>
+                <view className={`FiddleChipBadge FiddleChipBadge--${f.status}`}>
+                  <text className={`FiddleChipBadgeText FiddleChipBadgeText--${f.status}`}>
+                    {FIDDLE_STATUS_LABEL[f.status] ?? f.status}
+                  </text>
+                </view>
+              </view>
+            ))}
+          </view>
+        </view>
+      ))}
+    </>
+  );
+}
+
 export function GalleryHome({
   onBack,
   onOpenFolder,
@@ -47,7 +137,12 @@ export function GalleryHome({
   onDebugExampleRoute,
   standalone = false,
 }: GalleryHomeProps) {
-  const featured = SHOWCASE_REGISTRY;
+  // The Electron-fiddles showcase gets its own section below, so it does not
+  // also take a slot in the featured grid.
+  const fiddleShowcase = SHOWCASE_REGISTRY.find(e => e.name === FIDDLE_SHOWCASE_NAME);
+  const featured = fiddleShowcase
+    ? SHOWCASE_REGISTRY.filter(e => e.name !== FIDDLE_SHOWCASE_NAME)
+    : SHOWCASE_REGISTRY;
 
   return (
     <view className="GalleryHome">
@@ -132,6 +227,13 @@ export function GalleryHome({
             </view>
           ))}
         </view>
+
+        {fiddleShowcase ? (
+          <ElectronFiddlesSection
+            onOpen={() => onOpenShowcase(fiddleShowcase)}
+            onRun={() => onRunShowcase(fiddleShowcase)}
+          />
+        ) : null}
       </scroll-view>
     </view>
   );

@@ -1,0 +1,121 @@
+.home {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: #16161c;
+}
+
+.home-inner {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+}
+
+.home-title {
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.home-sub {
+  color: #8a8a99;
+  font-size: 13px;
+  margin-top: 6px;
+  margin-bottom: 20px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 22px;
+}
+
+.group-title {
+  color: #6fb3ff;
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  background-color: #23232c;
+  border-radius: 12px;
+  padding: 14px;
+  margin-right: 14px;
+  margin-bottom: 14px;
+}
+
+.card-disabled {
+  opacity: 0.55;
+}
+
+.card-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.card-title {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: bold;
+  flex-grow: 1;
+  flex-shrink: 1;
+  margin-right: 8px;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  padding-left: 8px;
+  padding-right: 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.badge-working {
+  background-color: #1f7a44;
+}
+
+.badge-partial {
+  background-color: #8a6d1f;
+}
+
+.badge-na {
+  background-color: #5a2a2a;
+}
+
+.badge-text {
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.card-desc {
+  color: #c2c2cc;
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.card-notes {
+  color: #9a9aa8;
+  font-size: 11px;
+  line-height: 16px;
+  margin-top: 8px;
+  font-style: italic;
+}

@@ -42,6 +42,20 @@
       ]
     },
     {
+      "name": "@lynxtron-examples/electron-fiddles",
+      "description": "Electron docs/fiddles ported to Lynxtron — gallery of API demos",
+      "path": "showcases/electron-fiddles",
+      "thumbnail": "showcases/electron-fiddles/thumbnail.svg",
+      "tags": [
+        "fiddle",
+        "electron",
+        "gallery"
+      ],
+      "targets": [
+        "desktop"
+      ]
+    },
+    {
       "name": "@lynxtron-examples/file-explorer",
       "description": "File explorer demonstrating NativeModules.nodejs.exposed usage with Node.js fs API",
       "path": "showcases/file-explorer",
@@ -113,12 +127,12 @@
     },
     {
       "name": "@lynxtron-examples/todolist",
-      "description": "Todo list persisted with better-sqlite3, rebuilt against the Lynxtron runtime via node-gyp",
+      "description": "Todo list persisted with sqlite3, rebuilt against the Lynxtron runtime via node-gyp",
       "path": "showcases/todolist",
       "thumbnail": "showcases/todolist/thumbnail.png",
       "tags": [
         "nodejs",
-        "preload",
+        "bridge",
         "native-module",
         "sqlite",
         "intermediate"

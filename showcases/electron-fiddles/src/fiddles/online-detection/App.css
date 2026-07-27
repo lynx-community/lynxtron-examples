@@ -1,0 +1,45 @@
+.ond-indicator {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.ond-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  margin-right: 12px;
+  background-color: #8a8a99;
+}
+
+.ond-dot-online {
+  background-color: #7ce7a3;
+}
+
+.ond-dot-offline {
+  background-color: #ff6b6b;
+}
+
+.ond-dot-unknown {
+  background-color: #8a8a99;
+}
+
+.ond-status {
+  font-size: 28px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.ond-status-online {
+  color: #7ce7a3;
+}
+
+.ond-status-offline {
+  color: #ff6b6b;
+}
+
+.ond-status-unknown {
+  color: #8a8a99;
+}

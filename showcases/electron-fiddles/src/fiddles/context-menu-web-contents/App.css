@@ -1,0 +1,29 @@
+.ctx-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 96px;
+  background-color: #1a1a20;
+  border-radius: 8px;
+  border-width: 1px;
+  border-style: dashed;
+  border-color: #4f8cff;
+  padding: 14px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.ctx-area-plain {
+  border-color: #44444f;
+}
+
+.ctx-area-label {
+  color: #c2c2cc;
+  font-size: 13px;
+}
+
+.ctx-area-hint {
+  color: #8a8a99;
+  font-size: 11px;
+  margin-top: 6px;
+}

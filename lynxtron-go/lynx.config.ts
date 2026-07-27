@@ -108,6 +108,58 @@ function buildShowcaseRegistry() {
 
 const bakedShowcases = buildShowcaseRegistry();
 console.log(`Baking ${bakedShowcases.length} showcase(s), sourceMode=${showcaseSourceMode}`);
+
+// ── Bake-in the Electron-fiddles catalog ──────────────────────────────────
+// The electron-fiddles showcase is a gallery of its own: one Lynx bundle per
+// ported Electron fiddle. The gallery lists them in a dedicated section, so it
+// needs the per-fiddle metadata, not just the one showcase entry. Read straight
+// from the showcase's manifest so there is a single source of truth; if the
+// showcase is absent (a trimmed checkout), the section just does not render.
+function buildFiddleCatalog(): { categories: string[]; fiddles: unknown[] } {
+  const empty = { categories: [], fiddles: [] };
+  try {
+    const manifestPath = path.resolve(monorepoRoot, 'showcases/electron-fiddles/src/shared/manifest.ts');
+    if (!fs.existsSync(manifestPath)) return empty;
+    const src = fs.readFileSync(manifestPath, 'utf-8');
+
+    const orderMatch = /export const CATEGORY_ORDER = \[([\s\S]*?)\] as const;/.exec(src);
+    const categories = orderMatch
+      ? [...orderMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1])
+      : [];
+
+    // The manifest is a flat array of object literals with string/boolean
+    // fields — parse the fields we render rather than executing TypeScript.
+    const fiddles: unknown[] = [];
+    const body = src.slice(src.indexOf('export const FIDDLES'));
+    for (const block of body.split(/\n  \{\n/).slice(1)) {
+      const field = (name: string) => {
+        const m = new RegExp(`\\n?\\s*${name}: '((?:[^'\\\\]|\\\\.)*)'`).exec(block);
+        return m ? m[1].replace(/\\'/g, "'") : undefined;
+      };
+      const id = field('id');
+      const title = field('title');
+      const category = field('category');
+      const status = field('status');
+      if (!id || !title || !category || !status) continue;
+      fiddles.push({
+        id,
+        title,
+        category,
+        status,
+        description: field('description') ?? '',
+        notes: field('notes') ?? '',
+        upstream: field('upstream') ?? '',
+      });
+    }
+    return { categories, fiddles };
+  } catch (e) {
+    console.warn('Failed to build electron-fiddles catalog:', e);
+    return empty;
+  }
+}
+
+const bakedFiddles = buildFiddleCatalog();
+console.log(`Baking ${bakedFiddles.fiddles.length} Electron fiddle(s)`);
 export default defineConfig({
   server: {
     port: 5817,
@@ -138,6 +190,7 @@ export default defineConfig({
   source: {
     define: {
       __SHOWCASE_REGISTRY__: JSON.stringify(bakedShowcases),
+      __FIDDLE_CATALOG__: JSON.stringify(bakedFiddles),
       __SHOWCASE_PREVIEW__: JSON.stringify(isLocalSourceMode),
       __SHOWCASE_LOCAL_WORKSPACE__: JSON.stringify(isLocalWorkspace),
     },

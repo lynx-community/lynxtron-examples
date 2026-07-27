@@ -1,0 +1,135 @@
+.demo-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: #1e1e24;
+}
+
+.demo-inner {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.demo-title {
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.demo-supports {
+  color: #8a8a99;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.demo-section {
+  display: flex;
+  flex-direction: column;
+  background-color: #2a2a33;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.demo-section-heading {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.demo-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.demo-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding-left: 18px;
+  padding-right: 18px;
+  border-radius: 8px;
+  margin-right: 10px;
+  margin-bottom: 8px;
+}
+
+.demo-btn-primary {
+  background-color: #4f8cff;
+}
+
+.demo-btn-secondary {
+  background-color: #3a3a46;
+}
+
+.demo-btn-disabled {
+  background-color: #33333a;
+  opacity: 0.5;
+}
+
+.demo-btn-text {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.demo-paragraph {
+  color: #c2c2cc;
+  font-size: 13px;
+  line-height: 20px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+.demo-code {
+  color: #ffca7a;
+  font-size: 13px;
+}
+
+.demo-result {
+  color: #7ce7a3;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.demo-field {
+  height: 38px;
+  background-color: #1a1a20;
+  border-radius: 8px;
+  padding-left: 12px;
+  padding-right: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  margin-right: 10px;
+  margin-bottom: 8px;
+  flex-grow: 1;
+  min-width: 160px;
+}
+
+.demo-kv {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #33333d;
+}
+
+.demo-kv-key {
+  color: #8a8a99;
+  font-size: 13px;
+}
+
+.demo-kv-val {
+  color: #ffffff;
+  font-size: 13px;
+}
