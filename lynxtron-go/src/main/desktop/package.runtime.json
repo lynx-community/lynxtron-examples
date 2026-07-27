@@ -5,7 +5,7 @@
   "private": true,
   "dependencies": {
     "@isaacs/fs-minipass": "^4.0.0",
-    "@lynx-js/lynxtron": "0.0.5",
+    "@lynx-js/lynxtron": "0.0.7",
     "@lynxtron-examples/cli": "0.0.1",
     "chownr": "^3.0.0",
     "lynxtron-scintilla-editor": "0.0.1",

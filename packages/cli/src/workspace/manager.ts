@@ -6,10 +6,10 @@ import * as path from 'path';
 // `catalog:` resolve to the versions they were built against. `latest` is used
 // where the showcase does not care about pinning (config is unversioned surface).
 const CATALOG_VERSIONS: Record<string, string> = {
-  '@lynx-js/lynxtron': '0.0.5',
-  '@lynx-js/lynxtron-builder': '0.0.5',
-  '@lynx-js/lynxtron-dev-plugins': '0.0.5',
-  '@lynx-js/lynx-library-headers': '0.0.5',
+  '@lynx-js/lynxtron': '0.0.7',
+  '@lynx-js/lynxtron-builder': '0.0.7',
+  '@lynx-js/lynxtron-dev-plugins': '0.0.7',
+  '@lynx-js/lynx-library-headers': '0.0.7',
   '@lynx-js/config-rsbuild-plugin': '0.0.2',
   '@lynx-js/react': '0.120.0',
   '@lynx-js/react-rsbuild-plugin': '^0.16.1',
