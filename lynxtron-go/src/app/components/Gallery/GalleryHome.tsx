@@ -62,23 +62,18 @@ function ElectronFiddlesSection({
   const { categories, fiddles } = FIDDLE_CATALOG;
   if (!fiddles.length) return null;
 
-  const counts = fiddles.reduce(
-    (acc, f) => {
-      acc[f.status] = (acc[f.status] ?? 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
-
-  // Follow the manifest's declared category order, then anything unlisted.
-  const seen = new Set(categories);
-  const order = [...categories, ...fiddles.map(f => f.category).filter(c => !seen.has(c))];
-  const grouped: Array<[string, FiddleEntry[]]> = [];
-  for (const category of order) {
-    if (grouped.some(([c]) => c === category)) continue;
-    const items = fiddles.filter(f => f.category === category);
-    if (items.length) grouped.push([category, items]);
+  // One pass over the catalog: tally the status counts and bucket by category.
+  // Categories are seeded in the manifest's declared order so they render that
+  // way; anything the manifest did not declare is appended as it is met.
+  const counts: Record<string, number> = {};
+  const buckets = new Map<string, FiddleEntry[]>(categories.map(c => [c, []]));
+  for (const f of fiddles) {
+    counts[f.status] = (counts[f.status] ?? 0) + 1;
+    const bucket = buckets.get(f.category);
+    if (bucket) bucket.push(f);
+    else buckets.set(f.category, [f]);
   }
+  const grouped = [...buckets].filter(([, items]) => items.length > 0);
 
   return (
     <>
