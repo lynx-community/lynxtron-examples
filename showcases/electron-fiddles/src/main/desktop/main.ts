@@ -1,51 +1,53 @@
 import { app, LynxWindow } from '@lynx-js/lynxtron';
-import path from 'path';
-import { FIDDLES, type FiddleMeta } from '../../shared/manifest';
-import { fiddleMains, type FiddleContext } from './registry';
+import path from 'node:path';
+import fs from 'node:fs';
+import { spawn, type ChildProcess } from 'node:child_process';
+import { FIDDLES, type FiddleMeta } from '../../../catalog';
 
-// Identifiable instance name so this build is distinguishable in
-// `lynx-devtool list-clients` (esp. alongside other parallel sessions).
+// The gallery. It owns no fiddle logic at all: every fiddle is a standalone
+// Lynxtron project assembled under `.assembled/<id>/`, and launching one means
+// spawning a *separate* Lynxtron process on it — the same relationship Electron
+// Fiddle has with the fiddles it runs.
+//
+// That separation is the point. While all fiddles shared this process, the ones
+// touching app-global state (Menu.setApplicationMenu, app.dock.setMenu,
+// app.setAsDefaultProtocolClient) overwrote each other; now each gets its own
+// application menu, dock menu and protocol registration, exactly like upstream.
 app.setName('Electron Fiddles on Lynxtron');
 
-const bundlePath = (id: string) => path.join(__dirname, `${id}.lynx.bundle`);
+/** Where `scripts/assemble.mjs` puts assembled projects (override for tests). */
+function assembledRoot(): string {
+  const override = process.env.LYNXTRON_FIDDLE_ASSEMBLED;
+  if (override) return path.resolve(override);
+  // dist/desktop/main.js -> showcase root
+  return path.resolve(__dirname, '..', '..', '.assembled');
+}
 
-/** Open a fiddle in its own window and wire its main-process handlers. */
-function openFiddle(id: string): void {
+const children = new Set<ChildProcess>();
+
+function launchFiddle(id: string): void {
   const meta: FiddleMeta | undefined = FIDDLES.find((f) => f.id === id);
-  if (!meta || meta.status === 'na' || !meta.dir) {
-    console.error(`[fiddles] no launchable fiddle for id "${id}"`);
+  if (!meta || meta.status === 'na') {
+    console.error(`[fiddles] "${id}" is not a launchable fiddle`);
     return;
   }
-  // Only pass through the chrome options a fiddle actually declares. Spelling
-  // an unset option as an explicit `undefined` is NOT the same as omitting it —
-  // LynxWindow reads the key as present and falls back to `false`, which turned
-  // the default-chrome baseline into a non-resizable window.
-  const chrome: Record<string, unknown> = {};
-  for (const key of ['frame', 'transparent', 'titleBarStyle', 'resizable', 'alwaysOnTop', 'backgroundColor'] as const) {
-    const value = meta.window?.[key];
-    if (value !== undefined) chrome[key] = value;
+
+  const projectDist = path.join(assembledRoot(), id, 'dist', 'desktop');
+  if (!fs.existsSync(path.join(projectDist, 'main.js'))) {
+    // Fail loudly and actionably rather than spawning into a missing directory.
+    console.error(
+      `[fiddles] "${id}" has not been assembled yet (${projectDist} is missing).\n` +
+        `[fiddles] Run: node scripts/assemble.mjs ${id} --build`,
+    );
+    return;
   }
 
-  const win = new LynxWindow({
-    width: meta.window?.width ?? 720,
-    height: meta.window?.height ?? 560,
-    title: meta.title,
-    ...chrome,
-    lynxPreference: {
-      preload: path.join(__dirname, 'preload.js'),
-    },
-  } as any);
-
-  const ctx: FiddleContext = { win, openFiddle };
-  try {
-    fiddleMains[id]?.(win, ctx);
-  } catch (err) {
-    // Non-blocking: a failing fiddle must not freeze the launcher. Log and
-    // still show the window so the UI renders (its buttons may just be inert).
-    console.error(`[fiddles] main error in "${id}":`, err);
-  }
-  win.show();
-  win.loadFile(bundlePath(id));
+  // `process.execPath` is the running Lynxtron binary, so this is exactly what
+  // `lynxtron <project>` does from a shell — a brand new instance.
+  const child = spawn(process.execPath, [projectDist], { stdio: 'inherit' });
+  children.add(child);
+  child.on('exit', () => children.delete(child));
+  console.log(`[fiddles] launched ${id} (pid=${child.pid})`);
 }
 
 app.whenReady().then(() => {
@@ -53,27 +55,32 @@ app.whenReady().then(() => {
     width: 960,
     height: 720,
     title: 'Electron Fiddles on Lynxtron',
-    lynxPreference: {
-      preload: path.join(__dirname, 'preload.js'),
-    },
   });
 
   home.on('-lynx-message', (name, data) => {
     if (name === 'launchFiddle') {
       const id = String((data as Record<string, unknown>)?.id ?? '');
-      if (id) openFiddle(id);
+      if (id) launchFiddle(id);
     }
   });
 
   home.show();
-  home.loadFile(bundlePath('main'));
+  home.loadFile(path.join(__dirname, 'main.lynx.bundle'));
 
-  // Dev affordance: LYNXTRON_FIDDLE=<id[,id...]> opens those fiddles directly on
-  // startup, useful for manual testing and screenshot verification.
-  const directIds = process.env.LYNXTRON_FIDDLE;
-  if (directIds) {
-    for (const id of directIds.split(',').map((s) => s.trim()).filter(Boolean)) {
-      openFiddle(id);
+  // Dev affordance: LYNXTRON_FIDDLE=<id[,id...]> launches those directly.
+  const direct = process.env.LYNXTRON_FIDDLE;
+  if (direct) {
+    for (const id of direct.split(',').map((s) => s.trim()).filter(Boolean)) launchFiddle(id);
+  }
+});
+
+// A gallery that exits should not leave orphaned fiddle windows behind.
+app.on('will-quit', () => {
+  for (const child of children) {
+    try {
+      child.kill();
+    } catch {
+      /* already gone */
     }
   }
 });

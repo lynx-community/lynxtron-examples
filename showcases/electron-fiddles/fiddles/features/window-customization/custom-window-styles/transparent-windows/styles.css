@@ -1,0 +1,57 @@
+/* The window itself is transparent (main.ts sets transparent: true /
+   backgroundColor: #00000000), so the root must NOT paint an opaque background —
+   otherwise you'd hide the very effect this fiddle demonstrates. */
+.transparent-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  background-color: transparent;
+}
+
+/* The floating white circle, faithful to the upstream "Hello World!" demo.
+   Solid white on an otherwise transparent surface, so it appears to float. */
+.floating-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 60px;
+  background-color: #ffffff;
+  margin-bottom: 20px;
+}
+
+.circle-text {
+  color: #1e1e24;
+  font-size: 14px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* Translucent card keeps the explanation legible over whatever shows through the
+   transparent window, without fully defeating the transparency. */
+.explainer-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 460px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: rgba(30, 30, 36, 0.82);
+}
+
+.explainer-title {
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.explainer-supports {
+  color: #8a8a99;
+  font-size: 12px;
+  margin-bottom: 12px;
+}

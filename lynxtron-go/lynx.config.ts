@@ -118,7 +118,7 @@ console.log(`Baking ${bakedShowcases.length} showcase(s), sourceMode=${showcaseS
 function buildFiddleCatalog(): { categories: string[]; fiddles: unknown[] } {
   const empty = { categories: [], fiddles: [] };
   try {
-    const manifestPath = path.resolve(monorepoRoot, 'showcases/electron-fiddles/src/shared/manifest.ts');
+    const manifestPath = path.resolve(monorepoRoot, 'showcases/electron-fiddles/catalog.ts');
     if (!fs.existsSync(manifestPath)) return empty;
     const src = fs.readFileSync(manifestPath, 'utf-8');
 

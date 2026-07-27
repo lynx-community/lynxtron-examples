@@ -1,11 +1,9 @@
 import { createShowcaseConfig } from '@lynxtron-examples/config/lynx';
-import { FIDDLE_ENTRIES } from './entries.ts';
 
-// Multi-entry: one Lynx bundle per fiddle plus the `main` gallery bundle.
-// Uses the shared showcase config so the fiddles get the repo-wide defaults
-// (notably `alignMouseEventWithW3C`, which the pointer-driven demos rely on).
+// Only the gallery is built here. Every fiddle is a standalone project with its
+// own single-entry build, assembled on demand — see scripts/assemble.mjs.
 export default createShowcaseConfig({
-  entries: FIDDLE_ENTRIES,
+  entry: './src/home/index.tsx',
   lynxDistPath: './output/bundle/lynx',
   server: { port: 5891 },
 });

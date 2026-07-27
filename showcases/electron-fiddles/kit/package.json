@@ -1,0 +1,12 @@
+{
+  "name": "@lynxtron-examples/fiddle-kit",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "The small shared kit every ported Electron fiddle uses: the Lynxtron bridge helpers, a Lynx UI kit, and runtime access to native classes the ESM shim omits.",
+  "exports": {
+    "./bridge": "./bridge.ts",
+    "./ui/Demo": "./ui/Demo.tsx",
+    "./lynx-native": "./lynx-native.ts"
+  }
+}

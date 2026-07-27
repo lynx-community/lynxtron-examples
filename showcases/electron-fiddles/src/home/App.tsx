@@ -1,6 +1,6 @@
 import { useCallback } from '@lynx-js/react';
-import { FIDDLES, CATEGORY_ORDER, type FiddleMeta, type FiddleStatus } from '../shared/manifest';
-import { bridgeSend } from '../shared/bridge';
+import { FIDDLES, CATEGORY_ORDER, type FiddleMeta, type FiddleStatus } from '../../catalog';
+import { bridgeSend } from '@lynxtron-examples/fiddle-kit/bridge';
 import './App.css';
 
 const STATUS_LABEL: Record<FiddleStatus, string> = {

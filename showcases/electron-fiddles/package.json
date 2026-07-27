@@ -8,7 +8,9 @@
     "url": "https://github.com/lynx-community/lynxtron-examples"
   },
   "scripts": {
-    "build": "rspeedy build && rspack build",
+    "build": "npm run build:fiddles && rspeedy build && rspack build",
+    "build:fiddles": "node scripts/assemble.mjs --all --build",
+    "assemble": "node scripts/assemble.mjs",
     "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
     "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop"
   },
@@ -30,6 +32,7 @@
   },
   "devDependencies": {
     "@lynxtron-examples/config": "workspace:*",
+    "@lynxtron-examples/fiddle-kit": "workspace:*",
     "@lynx-js/react": "catalog:",
     "@lynx-js/react-rsbuild-plugin": "catalog:",
     "@lynx-js/rspeedy": "catalog:",

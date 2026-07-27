@@ -1,0 +1,61 @@
+/* Custom in-content title bar laid out around the window-control "safe area".
+
+   The native OS title bar is hidden by this fiddle's main.ts (window option
+   titleBarStyle: 'hidden'), so the window controls (macOS traffic lights on the
+   left; Windows/Linux overlay buttons on the right) are drawn *on top of* the
+   content. In the browser these regions are exposed as CSS env() insets
+   (env(titlebar-area-x / -width / -height)) so a page can lay itself out around
+   them. Lynx has no titlebar-area env() variables, so we approximate the safe
+   area with a fixed inset on each side (see SAFE_INSET in App.tsx). */
+
+.titlebar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: 38px;
+  background-color: #2f6bff;
+  /* left/right padding is applied inline from the fixed safe-area inset */
+}
+
+.titlebar-label {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.titlebar-text {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* Visual stand-in for the OS window-control cluster that overlays the corner. */
+.titlebar-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.titlebar-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+.dot-close {
+  background-color: #ff5f57;
+}
+.dot-min {
+  background-color: #febc2e;
+}
+.dot-max {
+  background-color: #28c840;
+}

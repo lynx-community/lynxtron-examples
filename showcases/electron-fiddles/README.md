@@ -21,33 +21,60 @@ Verified against the Lynxtron toolchain pinned in `pnpm-workspace.yaml`
 that version's API surface (`@lynx-js/lynxtron/apis`), not merely unimplemented
 in the port.
 
-## Architecture
+## Architecture — loose source, assembled on demand
 
-One rspeedy project with **multiple entries** (one Lynx bundle per fiddle, plus
-a `main` bundle for the gallery) and one rspack `electron-main` build for the
-shared main process.
+This follows upstream's model rather than inventing one. Upstream's
+`docs/fiddles` holds **171 files and zero `package.json`s**: each fiddle is a
+plain source folder, and Electron Fiddle synthesizes a throwaway project around
+it at run time and spawns Electron on that. We do the same, plus the one step
+Electron does not need — Lynx cannot load source at run time, so the renderer is
+compiled to a `.lynx.bundle` before a window can load it.
 
 ```
-src/
-  home/                 gallery UI (the `main` entry)
-  fiddles/<id>/         one folder per fiddle: index.tsx + App.tsx (+ App.css, main.ts)
-  main/desktop/
-    main.ts             opens the gallery; on launch, opens a LynxWindow per fiddle
-    registry.ts         fiddle id -> registerMain(win, ctx) (generated from fiddles/*/main.ts)
-    preload.ts          shared contextBridge exposures
-    lynx-native.ts      runtime access to native classes the ESM shim omits (Notification)
-  shared/
-    manifest.ts         single source of truth: id, category, status, notes, window opts
-    bridge.ts           the app-side IPC helpers every fiddle uses
-    ui/Demo.tsx         shared Lynx UI kit (DemoPage, Section, ActionButton, Field, KV…)
+fiddles/<upstream/path>/     loose source, mirroring electron/docs/fiddles 1:1
+  main.ts                    a REAL main process: app.whenReady() + its own window
+  renderer.tsx               the Lynx UI entry (upstream's renderer.js + index.html)
+  preload.ts                 only where the fiddle needs one (upstream has 27)
+  styles.css                 optional
+
+kit/                         @lynxtron-examples/fiddle-kit — the small shared kit
+  bridge.ts                  the app-side IPC helpers
+  ui/Demo.tsx                the Lynx UI kit (DemoPage, Section, ActionButton…)
+  lynx-native.ts             native classes the ESM shim omits (Notification)
+
+scripts/assemble.mjs         folder -> complete project -> build -> run
+catalog.ts                   id, category, status, notes, window options
+src/home/                    the gallery UI
+src/main/desktop/main.ts     the gallery's main process — spawns fiddles, nothing else
 ```
 
-The gallery (`main` entry) is positioned to become the repo's future landing
-screen, with other showcases loadable as templates.
+Assembling a fiddle produces a complete, standalone Lynxtron project under
+`.assembled/<id>/`: the fiddle's own files, a copy of the kit, and generated
+`package.json` / `lynx.config.ts` / `rspack.config.ts`. Everything there is
+generated and gitignored, so it can be deleted at any time.
+
+```bash
+node scripts/assemble.mjs quick-start --build --run   # one fiddle, end to end
+node scripts/assemble.mjs --all --build --jobs 6      # what `npm run build` does
+```
+
+### Why each fiddle gets its own process
+
+Launching a fiddle from the gallery spawns a **separate Lynxtron process** on
+its assembled project (`spawn(process.execPath, [projectDist])`), which is the
+same relationship Electron Fiddle has with the fiddles it runs.
+
+That isolation is load-bearing, not cosmetic. While every fiddle shared one main
+process, the ones that touch app-global state overwrote each other —
+`ipc-pattern-3` and `menu-shortcuts` both call `Menu.setApplicationMenu`, so
+whichever opened last won, and `app.dock.setMenu` (dock-menu) and
+`app.setAsDefaultProtocolClient` (protocol-handler) had the same problem. Each
+fiddle now gets its own application menu, dock menu and protocol registration,
+exactly like upstream.
 
 ## IPC mapping (Electron → Lynxtron)
 
-Lynxtron's UI↔main bridge is **callback-style**, wrapped by `src/shared/bridge.ts`
+Lynxtron's UI↔main bridge is **callback-style**, wrapped by the kit's `bridge.ts`
 so fiddles use ergonomic helpers:
 
 | Electron | Lynxtron (native) | Shared helper |
@@ -72,10 +99,25 @@ so fiddles use ergonomic helpers:
 ## Develop
 
 ```bash
-pnpm --filter electron-fiddles build           # rspeedy (UI bundles) + rspack (main)
-pnpm --filter electron-fiddles start           # build + launch the gallery
+pnpm --filter electron-fiddles build   # assemble + build all 44 fiddles, then the gallery
+pnpm --filter electron-fiddles start   # build + launch the gallery
+```
 
-# Open specific fiddles directly (skips the gallery), comma-separated:
+Working on a single fiddle is a single command — no need to build the rest:
+
+```bash
+node scripts/assemble.mjs window-state --build --run
+```
+
+A built fiddle is an ordinary Lynxtron app, so it also runs on its own:
+
+```bash
+./node_modules/.bin/lynxtron .assembled/window-state/dist/desktop
+```
+
+Launching straight from the gallery process (skips clicking, comma-separated):
+
+```bash
 LYNXTRON_FIDDLE=app-information,window-state ./node_modules/.bin/lynxtron ./dist/desktop
 ```
 

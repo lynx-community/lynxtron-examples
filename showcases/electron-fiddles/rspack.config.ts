@@ -10,9 +10,10 @@ const isDev = process.env.NODE_ENV === 'development';
 
 export default defineConfig({
   target: 'electron-main',
+  // The gallery has no preload of its own — the fiddles that need one carry it
+  // in their own source folder.
   entry: {
     main: './src/main/desktop/main.ts',
-    preload: './src/main/desktop/preload.ts',
   },
   output: {
     path: path.resolve(__dirname, 'dist/desktop/'),
