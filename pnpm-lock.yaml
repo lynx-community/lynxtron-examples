@@ -569,8 +569,8 @@ importers:
         specifier: 'catalog:'
         version: 0.0.7(@rsbuild/core@1.7.5)
       '@lynx-js/lynxtron-rebuild':
-        specifier: 0.0.1-alpha.11
-        version: 0.0.1-alpha.11
+        specifier: 0.0.1-alpha.12
+        version: 0.0.1-alpha.12
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
@@ -1144,8 +1144,8 @@ packages:
     peerDependencies:
       '@rsbuild/core': ^2.1.5
 
-  '@lynx-js/lynxtron-rebuild@0.0.1-alpha.11':
-    resolution: {integrity: sha512-qdtOpYSFLPNTkAIw6kPS1Z6Es/JXh4atIq9AFco/yOduxsSHrjR4kMP4ioL9aRPuhi62bPoYtxdYvu9tM9YOFA==}
+  '@lynx-js/lynxtron-rebuild@0.0.1-alpha.12':
+    resolution: {integrity: sha512-O6SaSSzX5XTC7JmPk1NCyaHNEFNezhZrdI/UfuWFKtEnXsqyFb/aoSpGM031HpWGG1hOXvWK+2BKTH2VIHC1Jw==}
     hasBin: true
 
   '@lynx-js/lynxtron@0.0.7':
@@ -6584,7 +6584,7 @@ snapshots:
       '@rsbuild/core': 1.7.5
       cross-spawn: 7.0.6
 
-  '@lynx-js/lynxtron-rebuild@0.0.1-alpha.11':
+  '@lynx-js/lynxtron-rebuild@0.0.1-alpha.12':
     dependencies:
       compressing: 1.10.5
       node-fetch: 3.3.2

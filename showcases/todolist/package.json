@@ -34,7 +34,7 @@
   "devDependencies": {
     "@lynxtron-examples/config": "workspace:*",
     "@lynx-js/lynxtron-dev-plugins": "catalog:",
-    "@lynx-js/lynxtron-rebuild": "0.0.1-alpha.11",
+    "@lynx-js/lynxtron-rebuild": "0.0.1-alpha.12",
     "@lynx-js/react": "catalog:",
     "@lynx-js/rspeedy": "catalog:",
     "@lynx-js/types": "catalog:",
