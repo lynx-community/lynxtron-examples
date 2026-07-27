@@ -31,7 +31,7 @@ export function App() {
 
   return (
     <DemoPage title="Create a new window" supports="Supports: Win, macOS, Linux · Process: Main">
-      <Section heading="View Demo">
+      <Section>
         {CHOICES.map((c) => (
           <Row key={c.id}>
             <ActionButton label={c.label} onTap={() => openWindow(c.id)} />

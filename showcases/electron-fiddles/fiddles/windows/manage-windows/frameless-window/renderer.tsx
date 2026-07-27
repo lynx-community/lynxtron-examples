@@ -30,8 +30,8 @@ export function App() {
       title="Create a frameless window"
       supports="Supports: Win, macOS, Linux · Process: Main"
     >
-      <Section heading="View Demo">
-        <ActionButton label="View Demo" onTap={viewDemo} />
+      <Section>
+        <ActionButton label="Create frameless window" onTap={viewDemo} />
         {opened ? (
           <ResultText>Opened a new frameless window (frame: false).</ResultText>
         ) : null}

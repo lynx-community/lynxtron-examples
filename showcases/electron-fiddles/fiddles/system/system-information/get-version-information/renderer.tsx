@@ -28,8 +28,8 @@ export function App() {
 
   return (
     <DemoPage title="Get Version Information" supports="Supports: Win, macOS, Linux | Process: Both">
-      <Section heading="View Demo">
-        <ActionButton label="View Demo" onTap={onViewDemo} />
+      <Section>
+        <ActionButton label="Read versions" onTap={onViewDemo} />
         {message ? <ResultText>{message}</ResultText> : null}
       </Section>
 

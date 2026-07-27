@@ -33,10 +33,16 @@ interface SectionProps {
   children: unknown;
 }
 
-/** A titled card grouping controls + explanation. */
+/**
+ * A labelled group of controls or readings.
+ *
+ * Without a heading there is nothing to label, so it renders as a plain group
+ * rather than a panel — a bordered card drawn around a single button is heavier
+ * than the button it contains.
+ */
 export function Section({ heading, children }: SectionProps) {
   return (
-    <view className="demo-section">
+    <view className={heading ? 'demo-section' : 'demo-group'}>
       {heading ? <text className="demo-section-heading">{heading}</text> : null}
       {children as any}
     </view>

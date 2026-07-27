@@ -22,12 +22,12 @@ export function App() {
   return (
     <DemoPage title="Notifications" supports="Native UI · Process: Main">
       <Section heading="Basic notification">
-        <ActionButton label="View Demo" onTap={showBasic} />
+        <ActionButton label="Show notification" onTap={showBasic} />
         <Paragraph>This demo shows a basic notification. Text only.</Paragraph>
       </Section>
 
       <Section heading="Notification with subtitle">
-        <ActionButton label="View Demo" onTap={showAdvanced} variant="secondary" />
+        <ActionButton label="Show with subtitle" onTap={showAdvanced} variant="secondary" />
         <Paragraph>This demo shows a notification with an extra subtitle line.</Paragraph>
       </Section>
 

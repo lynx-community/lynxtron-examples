@@ -15,7 +15,7 @@ export function App() {
   return (
     <DemoPage title="Save Dialog" supports="dialog.showSaveDialog · Process: Main">
       <Section heading="Save an image">
-        <ActionButton label="View Demo" onTap={onSave} />
+        <ActionButton label="Open save dialog" onTap={onSave} />
         {savedPath ? <ResultText>Path selected: {savedPath}</ResultText> : null}
       </Section>
     </DemoPage>

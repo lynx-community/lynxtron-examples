@@ -15,7 +15,7 @@ export function App() {
   return (
     <DemoPage title="Error Dialog" supports="dialog.showErrorBox · Process: Main">
       <Section heading="Show a native error box">
-        <ActionButton label="View Demo" onTap={onShow} />
+        <ActionButton label="Show error box" onTap={onShow} />
         {count > 0 ? (
           <ResultText>
             Sent open-error-dialog {count} {count === 1 ? 'time' : 'times'} — a native error box was shown.

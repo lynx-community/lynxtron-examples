@@ -51,6 +51,13 @@
   border-color: var(--hairline);
 }
 
+/* An unlabelled group: same rhythm, no chrome. */
+.demo-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .demo-section-heading {
   font-size: 14px;
   line-height: 20px;

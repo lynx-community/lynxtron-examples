@@ -15,8 +15,8 @@ export function App() {
 
   return (
     <DemoPage title="Information Dialog" supports="Dialogs · Process: Main">
-      <Section heading="Information Dialog">
-        <ActionButton label="View Demo" onTap={onShowDialog} />
+      <Section>
+        <ActionButton label="Show message box" onTap={onShowDialog} />
         {selection ? <ResultText>{selection}</ResultText> : null}
       </Section>
     </DemoPage>
