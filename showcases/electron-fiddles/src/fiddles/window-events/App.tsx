@@ -37,15 +37,22 @@ function time(at: number): string {
   return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
+/** A logged event plus a stable render key. Entries are PREPENDED, so array
+    indices shift on every arrival; `at` alone is not unique either, because a
+    move/resize burst produces several events within the same millisecond. */
+type LoggedEvent = WindowEvent & { id: number };
+
+let nextEventId = 0;
+
 export function App() {
-  const [events, setEvents] = useState<WindowEvent[]>([]);
+  const [events, setEvents] = useState<LoggedEvent[]>([]);
   const [bounds, setBounds] = useState('');
 
   useEffect(() => {
     const off = onGlobalEvent('window-event', (data: WindowEvent) => {
       if (!data || !data.type) return;
       // Prepend newest; cap the log so it stays readable.
-      setEvents((prev) => [data, ...prev].slice(0, 30));
+      setEvents((prev) => [{ ...data, id: nextEventId++ }, ...prev].slice(0, 30));
     });
     // Seed the current bounds so the panel isn't empty on first render.
     bridgeCall<string>('window:getBounds')
@@ -76,8 +83,8 @@ export function App() {
         {events.length === 0 ? (
           <Paragraph>No events yet — focus, move, resize, or minimize this window.</Paragraph>
         ) : (
-          events.map((e, i) => (
-            <ResultText key={`${e.at}-${i}`}>
+          events.map((e) => (
+            <ResultText key={e.id}>
               {time(e.at)} · {label(e.type)}
               {e.detail ? ` — ${e.detail}` : ''}
             </ResultText>

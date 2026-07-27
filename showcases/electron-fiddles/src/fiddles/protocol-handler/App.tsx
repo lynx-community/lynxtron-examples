@@ -9,9 +9,17 @@ const SCHEME = 'electron-fiddle';
 // Incoming deep links (Electron's app.on('open-url')) are pushed to the UI via
 // win.sendGlobalEvent and listed below. A "simulate" button injects one so the
 // demo is runnable without a packaged build / a second app to click a link from.
+interface DeepLink {
+  /** Stable render key: new links are PREPENDED, so array indices shift. */
+  id: number;
+  url: string;
+}
+
+let nextLinkId = 0;
+
 export function App() {
   const [registered, setRegistered] = useState<boolean | null>(null);
-  const [links, setLinks] = useState<string[]>([]);
+  const [links, setLinks] = useState<DeepLink[]>([]);
 
   useEffect(() => {
     // Ask main to register the protocol and report whether it succeeded.
@@ -21,7 +29,7 @@ export function App() {
 
     // Receive deep links pushed from main.
     const off = onGlobalEvent('deep-link', (url: string) => {
-      setLinks((prev) => [String(url), ...prev]);
+      setLinks((prev) => [{ id: nextLinkId++, url: String(url) }, ...prev]);
     });
     return off;
   }, []);
@@ -60,7 +68,7 @@ export function App() {
         {links.length === 0 ? (
           <Paragraph>No deep links yet. Tap “Simulate Deep Link”, or open a real {SCHEME}:// link once packaged.</Paragraph>
         ) : (
-          links.map((url, i) => <ResultText key={i}>You arrived from: {url}</ResultText>)
+          links.map((link) => <ResultText key={link.id}>You arrived from: {link.url}</ResultText>)
         )}
       </Section>
 

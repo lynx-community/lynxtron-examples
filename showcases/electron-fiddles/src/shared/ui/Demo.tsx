@@ -82,7 +82,10 @@ interface FieldProps {
   onInput?: (value: string) => void;
 }
 
-/** Text input. `<input>` accepts value at runtime despite @lynx-js/types. */
+/** Text input. `<input>` accepts value at runtime despite @lynx-js/types.
+    This is a controlled input in the Lynx sense: Lynx has no `onChange` — the
+    edit event is `bindinput` — so DOM-oriented "uncontrolled input" lints
+    misfire here. */
 export function Field({ value, placeholder, onInput }: FieldProps) {
   const handle = useCallback(
     (e: any) => onInput?.(e?.detail?.value ?? ''),
