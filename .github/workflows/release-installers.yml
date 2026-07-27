@@ -61,11 +61,48 @@ jobs:
             echo "tag=lynxtron-go-v${version}" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Import macOS signing certificate
+        if: runner.os == 'macOS'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          certificate_path="$RUNNER_TEMP/lynxtron-go-signing.p12"
+          keychain_path="$RUNNER_TEMP/lynxtron-go-signing.keychain-db"
+
+          printf '%s' "$MACOS_CERTIFICATE" | base64 --decode > "$certificate_path"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
+          security import "$certificate_path" \
+            -P "$MACOS_CERTIFICATE_PWD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$keychain_path"
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$keychain_path"
+          security list-keychains -d user -s "$keychain_path"
+          security default-keychain -d user -s "$keychain_path"
+          security find-identity -v -p codesigning "$keychain_path"
+
       # macOS: dmg installer + every showcase tarball (native .node addons are
       # host-platform specific, so tarballs are built on the macOS runner).
       - name: Build macOS installer
         if: runner.os == 'macOS'
         run: pnpm --dir lynxtron-go run pack
+
+      - name: Verify macOS signature
+        if: runner.os == 'macOS'
+        run: |
+          app_path=$(find lynxtron-go/dist -type d -name 'Lynxtron Go.app' -print -quit)
+          test -n "$app_path"
+          codesign --verify --deep --strict --verbose=2 "$app_path"
+          codesign --display --verbose=4 "$app_path"
 
       - name: Pack showcases
         if: runner.os == 'macOS'
@@ -87,3 +124,9 @@ jobs:
             dist/showcase-artifacts/*.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clean up macOS signing keychain
+        if: runner.os == 'macOS' && always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/lynxtron-go-signing.keychain-db" || true
+          rm -f "$RUNNER_TEMP/lynxtron-go-signing.p12"

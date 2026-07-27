@@ -41,7 +41,6 @@ mac:
         CFBundleURLSchemes:
           - lynxtron
           - Lynxtron
-  identity: null
 win:
   target:
     - target: nsis
