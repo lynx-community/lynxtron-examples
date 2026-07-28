@@ -1,4 +1,4 @@
-import { createShowcaseConfig } from '../../packages/config/src/lynx.config.ts';
+import { createShowcaseConfig } from '@lynxtron-examples/config/lynx';
 
 const targetEnv = process.env.TARGET_ENV ?? 'desktop';
 
