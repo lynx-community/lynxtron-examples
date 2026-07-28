@@ -1,4 +1,4 @@
-export const PUBLIC_DEEP_LINK_SCHEME = 'lynxtron';
+export const PUBLIC_DEEP_LINK_SCHEME = 'lynxtron-go';
 
 export interface DeepLinkFileNavigation {
   filePath: string;
@@ -211,7 +211,7 @@ export function parseDeepLinkUrl(rawUrl: string): DeepLinkParseResult {
       return fail({
         code: 'MISSING_PARAM',
         message: 'Missing showcase id in deep link',
-        detail: 'Use lynxtron://showcase/open?id=<showcase-id>',
+        detail: 'Use lynxtron-go://showcase/open?id=<showcase-id>',
       });
     }
     const navigationResult = parseOptionalFileNavigation(parsed);
@@ -236,7 +236,7 @@ export function parseDeepLinkUrl(rawUrl: string): DeepLinkParseResult {
       return fail({
         code: 'MISSING_PARAM',
         message: 'Missing example path in deep link',
-        detail: 'Use lynxtron://example/open?path=<example-relative-path>',
+        detail: 'Use lynxtron-go://example/open?path=<example-relative-path>',
       });
     }
     if (rawPath.includes('://')) {
@@ -267,13 +267,26 @@ export function parseDeepLinkUrl(rawUrl: string): DeepLinkParseResult {
     };
   }
 
-  if (host === 'lynxview_page' && (routePath === '' || routePath === '/')) {
-    const url = parsed.searchParams.get('bundle')?.trim() || '';
+  if (
+    (host === 'lynxview_page' && (routePath === '' || routePath === '/'))
+    || (host === 'open' && (routePath === '' || routePath === '/'))
+  ) {
+    // `bundle=` is the original param name; `url=` is the shorter alias used
+    // by the `open` host. Accept either on both hosts so the two forms stay
+    // interchangeable.
+    const paramName = host === 'open' ? 'url' : 'bundle';
+    const url =
+      parsed.searchParams.get(paramName)?.trim()
+      || parsed.searchParams.get(paramName === 'url' ? 'bundle' : 'url')?.trim()
+      || '';
     if (!url) {
       return fail({
         code: 'MISSING_PARAM',
-        message: 'Missing bundle URL in deep link',
-        detail: 'Use lynxtron://lynxview_page?bundle=<bundle-url>',
+        message: `Missing bundle URL in deep link`,
+        detail:
+          host === 'open'
+            ? 'Use lynxtron-go://open?url=<bundle-url>'
+            : 'Use lynxtron-go://lynxview_page?bundle=<bundle-url>',
       });
     }
     // http(s) ONLY. Deep links arrive from arbitrary external sources — a

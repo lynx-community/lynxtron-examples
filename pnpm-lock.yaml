@@ -74,6 +74,9 @@ importers:
       '@isaacs/fs-minipass':
         specifier: ^4.0.0
         version: 4.0.1
+      '@lynx-js/lynxtron':
+        specifier: 'catalog:'
+        version: 0.0.7
       '@lynxtron-examples/cli':
         specifier: workspace:*
         version: link:../packages/cli
@@ -123,9 +126,6 @@ importers:
       '@lynx-js/lynx-core':
         specifier: latest
         version: 0.1.4
-      '@lynx-js/lynxtron':
-        specifier: 'catalog:'
-        version: 0.0.7
       '@lynx-js/lynxtron-builder':
         specifier: 'catalog:'
         version: 0.0.7(electron-builder-squirrel-windows@26.8.1)

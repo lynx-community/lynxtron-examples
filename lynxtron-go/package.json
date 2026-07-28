@@ -42,6 +42,7 @@
   },
   "dependencies": {
     "@isaacs/fs-minipass": "^4.0.0",
+    "@lynx-js/lynxtron": "catalog:",
     "@lynxtron-examples/cli": "workspace:*",
     "chownr": "^3.0.0",
     "lynxtron-http-service": "workspace:*",
@@ -60,7 +61,6 @@
   "__commented_out_dependencies": {
   },
   "devDependencies": {
-    "@lynx-js/lynxtron": "catalog:",
     "@lynx-js/lynxtron-builder": "catalog:",
     "@lynx-js/lynxtron-dev-plugins": "catalog:",
     "@lynx-js/config-rsbuild-plugin": "catalog:",

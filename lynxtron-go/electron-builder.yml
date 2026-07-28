@@ -39,8 +39,9 @@ mac:
     CFBundleURLTypes:
       - CFBundleURLName: Lynxtron Go
         CFBundleURLSchemes:
-          - lynxtron
-          - Lynxtron
+          - lynxtron-go
+          - Lynxtron-Go
+  identity: null
 win:
   target:
     - target: nsis
