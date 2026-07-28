@@ -137,6 +137,38 @@ describe('parseDeepLinkUrl', () => {
     if (result.ok) return;
     expect(result.error.code).toBe('INVALID_PARAM');
   });
+
+  it('parses bundle URL deep link via short open?url= form', () => {
+    const result = parseDeepLinkUrl('lynxtron-go://open?url=https%3A%2F%2Fexample.com%2Fbundle.lynx');
+    expect(result).toEqual({
+      ok: true,
+      intent: { kind: 'bundle-url-open', url: 'https://example.com/bundle.lynx' },
+    });
+  });
+
+  it('parses open?url= with title', () => {
+    const result = parseDeepLinkUrl(
+      'lynxtron-go://open?url=https%3A%2F%2Fexample.com%2Fbundle.lynx&title=My%20App',
+    );
+    expect(result).toEqual({
+      ok: true,
+      intent: { kind: 'bundle-url-open', url: 'https://example.com/bundle.lynx', title: 'My App' },
+    });
+  });
+
+  it('rejects open route with missing url', () => {
+    const result = parseDeepLinkUrl('lynxtron-go://open');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('MISSING_PARAM');
+  });
+
+  it('rejects open?url= with non-http(s) scheme', () => {
+    const result = parseDeepLinkUrl('lynxtron-go://open?url=file%3A%2F%2F%2Ftmp%2Fbundle.lynx');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('INVALID_PARAM');
+  });
 });
 
 describe('extractDeepLinkUrlFromArgv', () => {
