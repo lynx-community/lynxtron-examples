@@ -83,7 +83,7 @@ function ElectronFiddlesSection({
     <>
       <view className="GallerySectionRule">
         <text className="GallerySectionLabel">
-          ELECTRON FIDDLES · {String(fiddles.length)}
+          ELECTRON FIDDLES ON LYNXTRON · {String(fiddles.length)}
         </text>
         <view className="GallerySectionLine" />
       </view>
@@ -102,35 +102,47 @@ function ElectronFiddlesSection({
           <text className="FiddleGroupTitle">{category}</text>
           <view className="FiddleList">
             {items.map(f => (
+              // The same card as the featured showcases above — same class, so
+              // the two grids stay identical by construction rather than by
+              // two stylesheets agreeing. The body is fixed-height for the same
+              // reason it is up there: it pins every footer to the bottom, so a
+              // one-line description cannot pull its actions up out of line.
               <view
                 key={f.id}
-                // Same card as the collection's own home screen. Both launch a
-                // single fiddle now, so a second, thinner rendering of the same
-                // catalog would only be a worse copy of this one.
-                className={`FiddleCard${f.status === 'na' ? ' FiddleCard--disabled' : ''}`}
+                className={`GalleryCard${f.status === 'na' ? ' GalleryCard--inert' : ''}`}
               >
-                <view className="FiddleCardHead">
-                  <text className="FiddleCardTitle">{f.title}</text>
-                  <view className={`FiddleBadge FiddleBadge--${f.status}`}>
-                    <text className={`FiddleBadgeText FiddleBadgeText--${f.status}`}>
-                      {FIDDLE_STATUS_LABEL[f.status] ?? f.status}
-                    </text>
+                <view className="GalleryCardBody FiddleCardBody">
+                  <view className="GalleryCardTitleRow">
+                    <text className="GalleryCardTitle" text-maxline="1">{f.title}</text>
+                    <view className={`FiddleBadge FiddleBadge--${f.status}`}>
+                      <text className={`FiddleBadgeText FiddleBadgeText--${f.status}`}>
+                        {FIDDLE_STATUS_LABEL[f.status] ?? f.status}
+                      </text>
+                    </view>
                   </view>
+                  <text className="GalleryCardDescription" text-maxline="2">{f.description}</text>
+                  {f.notes ? <text className="FiddleCardNotes" text-maxline="2">{f.notes}</text> : null}
                 </view>
-                <text className="FiddleCardDesc">{f.description}</text>
-                {f.notes ? <text className="FiddleCardNotes">{f.notes}</text> : null}
-                {/* Same two actions every other showcase card offers. `na` rows
-                    have no source to open or assemble, so they get none. */}
-                {f.status === 'na' ? null : (
-                  <view className="FiddleCardFooter">
-                    <view className="FiddleCardAction" bindtap={() => onOpenFiddle(f)}>
-                      <text className="FiddleCardActionText FiddleCardActionText--primary">Open</text>
-                    </view>
-                    <view className="FiddleCardAction" bindtap={() => onRunFiddle(f)}>
-                      <text className="FiddleCardActionText">Run</text>
-                    </view>
-                  </view>
-                )}
+                {/* The footer is always present, so every card is the same
+                    height. An N/A fiddle has nothing to open or assemble, so it
+                    says why instead of offering actions that would not work. */}
+                <view className="GalleryCardFooter">
+                  {f.status === 'na' ? (
+                    <text className="GalleryCardActionText">not portable</text>
+                  ) : (
+                    <>
+                      <view
+                        className="GalleryCardAction GalleryCardAction--primary"
+                        bindtap={() => onOpenFiddle(f)}
+                      >
+                        <text className="GalleryCardActionText GalleryCardActionText--primary">Open</text>
+                      </view>
+                      <view className="GalleryCardAction" bindtap={() => onRunFiddle(f)}>
+                        <text className="GalleryCardActionText">Run</text>
+                      </view>
+                    </>
+                  )}
+                </view>
               </view>
             ))}
           </view>

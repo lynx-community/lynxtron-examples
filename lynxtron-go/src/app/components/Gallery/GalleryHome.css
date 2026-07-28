@@ -319,19 +319,18 @@
   color: var(--bp-text);
 }
 
-.FiddleIntroActions {
-  display: flex;
-  flex-direction: row;
-  margin-top: 8px;
-}
-
+/* Horizontal padding matches .GalleryGrid (16px), so a fiddle card's left edge
+   lands on the featured cards' left edge — both add the same 6px card margin
+   on top. At 22px here the two grids would sit 6px apart. */
 .FiddleGroup {
   display: flex;
   flex-direction: column;
-  padding: 2px 22px 8px 22px;
+  padding: 2px 16px 8px 16px;
 }
 
+/* +6px to clear the cards' margin, landing on the section label's 22px. */
 .FiddleGroupTitle {
+  margin-left: 6px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.4px;
@@ -345,54 +344,30 @@
   flex-wrap: wrap;
 }
 
-/* Cards, identical in treatment to the collection's own home screen — both
-   launch a single fiddle, so a second thinner rendering of the same catalog
-   would only be a worse copy. */
-.FiddleCard {
-  display: flex;
-  flex-direction: column;
-  width: 280px;
-  padding: 12px 14px;
-  margin: 0 10px 10px 0;
-  border-radius: 6px;
-  background-color: var(--background-3);
-  border-width: 1px;
-  border-style: solid;
-  border-color: var(--hairline);
+/* Fiddle cards reuse .GalleryCard / .GalleryCardBody / .GalleryCardFooter and
+   friends wholesale — what follows is only what a fiddle has and a showcase does
+   not (a status badge, a gap note), plus the taller body they need. */
+
+/* Taller than the showcase body because a fiddle can also carry a gap note.
+   Fixed height, for the same reason it is fixed up there: it is what pins every
+   footer to the bottom, so a one-line description cannot pull its actions out
+   of line with the card beside it. */
+.FiddleCardBody {
+  height: 104px;
 }
 
-/* N/A fiddles have nothing to assemble — inert, not merely styled-disabled. */
-.FiddleCard--disabled {
+/* N/A fiddles have nothing to open or assemble — inert, not merely dimmed. */
+.GalleryCard--inert {
   opacity: 0.5;
-}
-
-.FiddleCardHead {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.FiddleCardTitle {
-  flex: 1;
-  font-size: 13px;
-  line-height: 18px;
-  font-weight: 600;
-  color: var(--bp-text);
-  margin-right: 8px;
-}
-
-.FiddleCardDesc {
-  font-size: 12px;
-  line-height: 17px;
-  color: var(--bp-text-muted);
 }
 
 /* Why a fiddle is partial or N/A — the whole reason the card is not just green. */
 .FiddleCardNotes {
+  display: block;
   font-size: 11px;
   line-height: 16px;
+  max-height: 32px;
+  overflow: hidden;
   color: var(--bp-text-muted);
   opacity: 0.75;
   margin-top: 6px;
@@ -406,8 +381,8 @@
 
 .FiddleBadgeText {
   font-family: 'SF Mono', Menlo, monospace;
-  font-size: 10px;
-  line-height: 15px;
+  font-size: 9px;
+  line-height: 14px;
   font-weight: 600;
   letter-spacing: 0.3px;
 }
@@ -422,42 +397,3 @@
 .theme-light .FiddleBadgeText--working { color: #0f8a5f; }
 .theme-light .FiddleBadgeText--partial { color: #c05f00; }
 .theme-light .FiddleBadgeText--na { color: #5c6773; }
-
-/* Card actions — same quiet action row the featured showcase cards use. */
-.FiddleCardFooter {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top-width: 1px;
-  border-top-style: solid;
-  border-top-color: var(--hairline);
-}
-
-.FiddleCardAction {
-  padding: 3px 8px;
-  margin-right: 4px;
-  border-radius: 4px;
-  /* Lynx skips fully transparent views during hit-testing. */
-  background-color: rgba(128, 128, 128, 0.02);
-}
-
-.FiddleCardAction:hover {
-  background-color: var(--background-4);
-}
-
-.FiddleCardActionText {
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--bp-text-muted);
-}
-
-/* Same explicit pair the featured cards use — a bare var() that turns out not
-   to exist renders as an inherited colour, not an error. */
-.FiddleCardActionText--primary {
-  color: #48aff0;
-  font-weight: 600;
-}
-
-.theme-light .FiddleCardActionText--primary { color: #106ba3; }
