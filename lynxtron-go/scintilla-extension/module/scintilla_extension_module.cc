@@ -391,6 +391,19 @@ Napi::Value Focus(const Napi::CallbackInfo& info) {
   return Napi::Boolean::New(env, success);
 }
 
+Napi::Value HasFocus(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Expected (string editorId)")
+        .ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  std::string editorId = info[0].As<Napi::String>().Utf8Value();
+  return Napi::Boolean::New(env, ScintillaRegistry::Get().HasFocus(editorId));
+}
+
 Napi::Value DetachFromWindow(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
@@ -488,6 +501,8 @@ Napi::Value ScintillaExtensionModuleMethodsBinder(
   exports_obj.Set("scrollCaret",
                   Napi::Function::New(env, ScrollCaret, "scrollCaret"));
   exports_obj.Set("focus", Napi::Function::New(env, Focus, "focus"));
+  exports_obj.Set("hasFocus",
+                  Napi::Function::New(env, HasFocus, "hasFocus"));
   exports_obj.Set("detachFromWindow",
                   Napi::Function::New(env, DetachFromWindow, "detachFromWindow"));
   exports_obj.Set("attachToWindow",

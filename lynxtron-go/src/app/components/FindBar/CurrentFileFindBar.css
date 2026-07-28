@@ -7,9 +7,9 @@
   justify-content: flex-end;
   padding-left: 8px;
   padding-right: 8px;
-  background-color: #252526;
+  background-color: var(--background-1, #252526);
   border-bottom-width: 1px;
-  border-bottom-color: #1b1b1c;
+  border-bottom-color: var(--hairline, #1b1b1c);
 }
 
 .CurrentFileFindInput {
@@ -17,18 +17,18 @@
   height: 24px;
   padding-left: 8px;
   padding-right: 8px;
-  background-color: #1e1e1e;
+  background-color: var(--background-2, #1e1e1e);
   border-width: 1px;
-  border-color: #3c3c3c;
-  color: #d4d4d4;
-  caret-color: #aeafad;
+  border-color: var(--hairline, #3c3c3c);
+  color: var(--text-color-1, #d4d4d4);
+  caret-color: var(--foreground-1, #aeafad);
   font-size: 12px;
 }
 
 .CurrentFileFindStatus {
   width: 76px;
   margin-left: 8px;
-  color: #9d9d9d;
+  color: var(--text-color-3, #9d9d9d);
   font-size: 12px;
   text-align: right;
 }
@@ -44,17 +44,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #2d2d30;
-  border-width: 1px;
-  border-color: #3c3c3c;
+  background-color: transparent;
+  border-width: 0;
+  border-radius: 3px;
+}
+
+.CurrentFileFindButton:hover {
+  background-color: rgba(138, 155, 168, 0.15);
 }
 
 .CurrentFileFindButton--close {
   margin-left: 8px;
 }
 
-.CurrentFileFindButtonText {
-  color: #cccccc;
-  font-size: 14px;
-  line-height: 18px;
+.CurrentFileFindButtonIcon {
+  color: var(--text-color-3, #cccccc);
 }

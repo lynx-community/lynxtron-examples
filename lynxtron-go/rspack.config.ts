@@ -2,6 +2,7 @@
 
 import { defineConfig } from '@rspack/cli';
 import { rspack } from '@rspack/core';
+import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
@@ -11,6 +12,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isDev = process.env.NODE_ENV === 'development';
 const scintillaNativeModulePath = path.resolve(__dirname, './scintilla-extension/build/Release/lynx_scintilla_module.node');
+const copiedScintillaNativeModulePath = path.resolve(
+  __dirname,
+  './dist/desktop/node_modules/lynxtron-scintilla-editor/build/Release/lynx_scintilla_module.node',
+);
 const httpServiceNativeModulePath = path.resolve(__dirname, './http-service-extension/build/Release/lynx_http_service_module.node');
 const httpServiceRuntimePatterns: Array<{ from: string; to: string }> = [
   { from: './http-service-extension/package.json', to: 'node_modules/lynxtron-http-service/package.json' },
@@ -32,6 +37,29 @@ const scintillaRuntimePatterns: Array<{ from: string; to: string }> = [
       }]
     : []),
 ];
+
+const signCopiedScintillaPlugin = {
+  apply(compiler: any) {
+    compiler.hooks.afterEmit.tap('SignCopiedScintillaPlugin', () => {
+      if (
+        process.platform !== 'darwin' ||
+        !fs.existsSync(copiedScintillaNativeModulePath)
+      ) {
+        return;
+      }
+      const result = spawnSync(
+        '/usr/bin/codesign',
+        ['--force', '--sign', '-', copiedScintillaNativeModulePath],
+        { stdio: 'inherit' },
+      );
+      if (result.status !== 0) {
+        throw new Error(
+          `Failed to sign copied Scintilla module (status ${result.status ?? 'unknown'})`,
+        );
+      }
+    });
+  },
+};
 
 
 const desktopConfig = defineConfig({
@@ -85,6 +113,7 @@ const desktopConfig = defineConfig({
         { from: './node_modules/vscode-languageserver-textdocument/', to: 'node_modules/vscode-languageserver-textdocument/' },
       ],
     }),
+    signCopiedScintillaPlugin,
     ...(isDev ? [pluginLynxtron({
       isDev,
       entry: path.resolve(__dirname, './dist/desktop'),

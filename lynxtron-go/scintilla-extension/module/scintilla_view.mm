@@ -138,6 +138,40 @@
 @end
 #endif
 
+#ifdef __APPLE__
+// Scintilla consumes Command+F in its text input path before AppKit's menu
+// accelerator dispatch in some focus transitions. A single process-local
+// monitor routes that exact shortcut through the application menu first.
+// Returning nil prevents the same event from also reaching the editor.
+static id gCommandFindMonitor = nil;
+
+static void InstallCommandFindMonitor() {
+    auto install = ^{
+        if (gCommandFindMonitor) return;
+        gCommandFindMonitor =
+            [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown
+                                                   handler:^NSEvent*(NSEvent* event) {
+            const NSEventModifierFlags flags =
+                event.modifierFlags & NSEventModifierFlagDeviceIndependentFlagsMask;
+            const NSEventModifierFlags disallowed =
+                NSEventModifierFlagShift |
+                NSEventModifierFlagControl |
+                NSEventModifierFlagOption;
+            NSString* key = event.charactersIgnoringModifiers.lowercaseString;
+            if ((flags & NSEventModifierFlagCommand) != 0 &&
+                (flags & disallowed) == 0 &&
+                [key isEqualToString:@"f"] &&
+                [[NSApp mainMenu] performKeyEquivalent:event]) {
+                return nil;
+            }
+            return event;
+        }];
+    };
+    if ([NSThread isMainThread]) install();
+    else dispatch_sync(dispatch_get_main_queue(), install);
+}
+#endif
+
 namespace extension {
 
 // Diagnostic logging is opt-in: OnLayoutChanged fires on every sash-drag
@@ -153,6 +187,7 @@ static bool ScxVerbose() {
 ScintillaView::ScintillaView() {
     SCX_LOG("ScintillaView::ScintillaView constructor called\n");
 #ifdef __APPLE__
+    InstallCommandFindMonitor();
     // Ensure UI operations happen on main thread
     if ([NSThread isMainThread]) {
         ScintillaViewContainer* container = [[ScintillaViewContainer alloc] initWithFrame:NSZeroRect owner:this];
@@ -572,6 +607,31 @@ void ScintillaView::FocusEditor() {
     };
     if ([NSThread isMainThread]) doFocus();
     else dispatch_async(dispatch_get_main_queue(), doFocus);
+#endif
+}
+
+bool ScintillaView::HasFocus() {
+#ifdef __APPLE__
+    if (!cocoa_view_) return false;
+    ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
+    __block bool focused = false;
+    auto checkFocus = ^{
+        // SCI_GETFOCUS can remain stale while focus moves between sibling
+        // native editors and a Lynx <input>. The AppKit first responder is
+        // authoritative for deciding which pane owns the next Cmd+F.
+        NSResponder* responder = container.window.firstResponder;
+        if ([responder isKindOfClass:[NSView class]]) {
+            NSView* responderView = (NSView*)responder;
+            focused =
+                responderView == container ||
+                [responderView isDescendantOf:container];
+        }
+    };
+    if ([NSThread isMainThread]) checkFocus();
+    else dispatch_sync(dispatch_get_main_queue(), checkFocus);
+    return focused;
+#else
+    return false;
 #endif
 }
 

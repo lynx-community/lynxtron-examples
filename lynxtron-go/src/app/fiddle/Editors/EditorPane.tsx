@@ -15,6 +15,8 @@ export interface EditorPaneProps {
   onMaximize: (id: string) => void;
   onFocus: (id: string) => void;
   pushContent: (id: string) => void;
+  /** Search UI for this pane; reserves space above the native editor body. */
+  findBar?: any;
   /** Host has a dialog/overlay up — the native view must stay detached. */
   suppressed?: boolean;
 }
@@ -66,6 +68,7 @@ export function EditorPane(props: EditorPaneProps) {
           <Button icon="cross" small minimal title="Hide" onClick={() => props.onHide(file.id)} />
         </view>
       </view>
+      {props.findBar}
       <view className="MosaicBody" bindlayoutchange={onBodyLayout}>
         <scintilla-view
           className="MosaicEditor"
@@ -78,4 +81,3 @@ export function EditorPane(props: EditorPaneProps) {
     </view>
   );
 }
-
