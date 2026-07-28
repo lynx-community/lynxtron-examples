@@ -100,7 +100,12 @@ async function fetchLocalTarball(
       await manager.rewriteWorkspaceRefs(name);
     } catch (_) {}
     emit({ type: 'install-start', name });
-    execCapture('pnpm install', { cwd: manager.getRootPath(), timeout: 300000 });
+    // Scope install to just this showcase so other workspace members
+    // (previously-fetched showcases) don't run their postinstall scripts.
+    execCapture(`pnpm install --filter=./showcases/${name}...`, {
+      cwd: manager.getRootPath(),
+      timeout: 300000,
+    });
     emit({ type: 'install-success', name });
   }
 }
@@ -137,7 +142,9 @@ async function fetchRepoShowcase(
   await manager.rewriteWorkspaceRefs(resolved.name);
 
   emit({ type: 'install-start', name: resolved.name });
-  execCapture('pnpm install', { cwd: manager.getRootPath() });
+  execCapture(`pnpm install --filter=./showcases/${resolved.name}...`, {
+    cwd: manager.getRootPath(),
+  });
   emit({ type: 'install-success', name: resolved.name });
 
   // GitHub source tarballs never carry `dist/` (it is gitignored), so build

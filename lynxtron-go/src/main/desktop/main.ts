@@ -76,26 +76,46 @@ function installBundledNodeShim(): void {
 
     const isWindows = process.platform === 'win32';
     const execPath = process.execPath;
-    if (isWindows) {
-      const nodeCmd = path.join(shimDir, 'node.cmd');
-      // Set LYNXTRON_RUN_AS_NODE only for the child so we don't recurse in on ourselves.
-      const cmdBody = `@echo off\r\nset "LYNXTRON_RUN_AS_NODE=1"\r\n"${execPath}" %*\r\n`;
-      fs.writeFileSync(nodeCmd, cmdBody);
-    } else {
-      const nodeShim = path.join(shimDir, 'node');
-      const shBody = `#!/bin/sh\nexec env LYNXTRON_RUN_AS_NODE=1 "${execPath}" "$@"\n`;
-      fs.writeFileSync(nodeShim, shBody);
-      fs.chmodSync(nodeShim, 0o755);
-    }
 
     // Locate bundled pnpm shipped next to app.asar.unpacked/node_modules/pnpm.
     const resourcesDir = isWindows
       ? path.join(path.dirname(execPath), 'resources')
       : path.join(path.dirname(path.dirname(execPath)), 'Resources');
-    const pnpmBinDirs = [
-      path.join(resourcesDir, 'app.asar.unpacked', 'node_modules', 'pnpm', 'bin'),
-      path.join(resourcesDir, 'app', 'node_modules', 'pnpm', 'bin'),
-    ].filter((dir) => fs.existsSync(dir));
+    const pnpmCandidates = [
+      path.join(resourcesDir, 'app.asar.unpacked', 'node_modules', 'pnpm', 'bin', 'pnpm.cjs'),
+      path.join(resourcesDir, 'app', 'node_modules', 'pnpm', 'bin', 'pnpm.cjs'),
+    ];
+    const pnpmCjs = pnpmCandidates.find((p) => fs.existsSync(p));
+    const pnpmBinDirs = pnpmCandidates
+      .map((p) => path.dirname(p))
+      .filter((dir) => fs.existsSync(dir));
+
+    if (isWindows) {
+      const nodeCmd = path.join(shimDir, 'node.cmd');
+      // Set LYNXTRON_RUN_AS_NODE only for the child so we don't recurse in on ourselves.
+      const cmdBody = `@echo off\r\nset "LYNXTRON_RUN_AS_NODE=1"\r\n"${execPath}" %*\r\n`;
+      fs.writeFileSync(nodeCmd, cmdBody);
+      // Third-party postinstall scripts (e.g. older lynxtron-rebuild) invoke
+      // `npx node-gyp rebuild`, but packaged apps ship neither npm nor npx.
+      // Fall back to bundled pnpm's `exec`, which resolves binaries the same
+      // way (node_modules/.bin lookup) using our node shim as the runtime.
+      if (pnpmCjs) {
+        const npxCmd = path.join(shimDir, 'npx.cmd');
+        const npxBody = `@echo off\r\nset "LYNXTRON_RUN_AS_NODE=1"\r\n"${execPath}" "${pnpmCjs}" exec %*\r\n`;
+        fs.writeFileSync(npxCmd, npxBody);
+      }
+    } else {
+      const nodeShim = path.join(shimDir, 'node');
+      const shBody = `#!/bin/sh\nexec env LYNXTRON_RUN_AS_NODE=1 "${execPath}" "$@"\n`;
+      fs.writeFileSync(nodeShim, shBody);
+      fs.chmodSync(nodeShim, 0o755);
+      if (pnpmCjs) {
+        const npxShim = path.join(shimDir, 'npx');
+        const npxBody = `#!/bin/sh\nexec env LYNXTRON_RUN_AS_NODE=1 "${execPath}" "${pnpmCjs}" exec "$@"\n`;
+        fs.writeFileSync(npxShim, npxBody);
+        fs.chmodSync(npxShim, 0o755);
+      }
+    }
 
     const existing = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
     process.env.PATH = Array.from(
