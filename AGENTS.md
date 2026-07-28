@@ -152,6 +152,6 @@ See [docs/showcase-development.md](docs/showcase-development.md).
 - Dev mode (watch + hot reload)
 - Global search (Search panel)
 - Debug panel (run status, process management)
-- URL scheme (`lynxtron://`) handler
+- URL scheme (`lynxtron-go://`) handler
 - Pure Lynx UI showcases (no main.ts)
 - `GITHUB_TOKEN` auth — remove when repo is public

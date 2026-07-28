@@ -1,4 +1,4 @@
-export const PUBLIC_DEEP_LINK_SCHEME = 'lynxtron';
+export const PUBLIC_DEEP_LINK_SCHEME = 'lynxtron-go';
 
 export interface DeepLinkFileNavigation {
   filePath: string;
@@ -211,7 +211,7 @@ export function parseDeepLinkUrl(rawUrl: string): DeepLinkParseResult {
       return fail({
         code: 'MISSING_PARAM',
         message: 'Missing showcase id in deep link',
-        detail: 'Use lynxtron://showcase/open?id=<showcase-id>',
+        detail: 'Use lynxtron-go://showcase/open?id=<showcase-id>',
       });
     }
     const navigationResult = parseOptionalFileNavigation(parsed);
@@ -236,7 +236,7 @@ export function parseDeepLinkUrl(rawUrl: string): DeepLinkParseResult {
       return fail({
         code: 'MISSING_PARAM',
         message: 'Missing example path in deep link',
-        detail: 'Use lynxtron://example/open?path=<example-relative-path>',
+        detail: 'Use lynxtron-go://example/open?path=<example-relative-path>',
       });
     }
     if (rawPath.includes('://')) {
@@ -273,7 +273,7 @@ export function parseDeepLinkUrl(rawUrl: string): DeepLinkParseResult {
       return fail({
         code: 'MISSING_PARAM',
         message: 'Missing bundle URL in deep link',
-        detail: 'Use lynxtron://lynxview_page?bundle=<bundle-url>',
+        detail: 'Use lynxtron-go://lynxview_page?bundle=<bundle-url>',
       });
     }
     // http(s) ONLY. Deep links arrive from arbitrary external sources — a

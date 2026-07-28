@@ -3,7 +3,7 @@ import { extractDeepLinkUrlFromArgv, parseDeepLinkUrl } from './deep-link';
 
 describe('parseDeepLinkUrl', () => {
   it('parses home deep link', () => {
-    const result = parseDeepLinkUrl('lynxtron://home');
+    const result = parseDeepLinkUrl('lynxtron-go://home');
     expect(result).toEqual({
       ok: true,
       intent: { kind: 'home' },
@@ -11,7 +11,7 @@ describe('parseDeepLinkUrl', () => {
   });
 
   it('parses showcase deep link', () => {
-    const result = parseDeepLinkUrl('lynxtron://showcase/open?id=benchmark');
+    const result = parseDeepLinkUrl('lynxtron-go://showcase/open?id=benchmark');
     expect(result).toEqual({
       ok: true,
       intent: { kind: 'showcase-open', showcaseId: 'benchmark' },
@@ -19,7 +19,7 @@ describe('parseDeepLinkUrl', () => {
   });
 
   it('parses example deep link and normalizes path', () => {
-    const result = parseDeepLinkUrl('lynxtron://example/open?path=/view/');
+    const result = parseDeepLinkUrl('lynxtron-go://example/open?path=/view/');
     expect(result).toEqual({
       ok: true,
       intent: { kind: 'example-open', examplePath: 'view' },
@@ -28,7 +28,7 @@ describe('parseDeepLinkUrl', () => {
 
   it('parses optional file navigation for showcase and normalizes the relative path', () => {
     const result = parseDeepLinkUrl(
-      'lynxtron://showcase/open?id=benchmark&file=src/./app/../app/App.tsx&line=42&column=7',
+      'lynxtron-go://showcase/open?id=benchmark&file=src/./app/../app/App.tsx&line=42&column=7',
     );
     expect(result).toEqual({
       ok: true,
@@ -45,7 +45,7 @@ describe('parseDeepLinkUrl', () => {
   });
 
   it('parses file-only navigation for example deep link', () => {
-    const result = parseDeepLinkUrl('lynxtron://example/open?path=view&file=src/App.tsx');
+    const result = parseDeepLinkUrl('lynxtron-go://example/open?path=view&file=src/App.tsx');
     expect(result).toEqual({
       ok: true,
       intent: {
@@ -59,57 +59,57 @@ describe('parseDeepLinkUrl', () => {
   });
 
   it('rejects unsupported routes', () => {
-    const result = parseDeepLinkUrl('lynxtron://folder/open?path=/tmp/demo');
+    const result = parseDeepLinkUrl('lynxtron-go://folder/open?path=/tmp/demo');
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error.code).toBe('UNSUPPORTED_ROUTE');
   });
 
   it('rejects missing required parameters', () => {
-    const result = parseDeepLinkUrl('lynxtron://showcase/open');
+    const result = parseDeepLinkUrl('lynxtron-go://showcase/open');
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error.code).toBe('MISSING_PARAM');
   });
 
   it('rejects absolute and escaping file paths', () => {
-    const absolute = parseDeepLinkUrl('lynxtron://showcase/open?id=benchmark&file=/tmp/App.tsx');
+    const absolute = parseDeepLinkUrl('lynxtron-go://showcase/open?id=benchmark&file=/tmp/App.tsx');
     expect(absolute.ok).toBe(false);
     if (absolute.ok) return;
     expect(absolute.error.code).toBe('INVALID_PARAM');
 
-    const escaping = parseDeepLinkUrl('lynxtron://showcase/open?id=benchmark&file=../../App.tsx');
+    const escaping = parseDeepLinkUrl('lynxtron-go://showcase/open?id=benchmark&file=../../App.tsx');
     expect(escaping.ok).toBe(false);
     if (escaping.ok) return;
     expect(escaping.error.code).toBe('INVALID_PARAM');
   });
 
   it('rejects line and column without file', () => {
-    const lineOnly = parseDeepLinkUrl('lynxtron://showcase/open?id=benchmark&line=9');
+    const lineOnly = parseDeepLinkUrl('lynxtron-go://showcase/open?id=benchmark&line=9');
     expect(lineOnly.ok).toBe(false);
     if (lineOnly.ok) return;
     expect(lineOnly.error.code).toBe('INVALID_PARAM');
 
-    const columnOnly = parseDeepLinkUrl('lynxtron://example/open?path=view&column=3');
+    const columnOnly = parseDeepLinkUrl('lynxtron-go://example/open?path=view&column=3');
     expect(columnOnly.ok).toBe(false);
     if (columnOnly.ok) return;
     expect(columnOnly.error.code).toBe('INVALID_PARAM');
   });
 
   it('rejects column without line and non-positive coordinates', () => {
-    const missingLine = parseDeepLinkUrl('lynxtron://showcase/open?id=benchmark&file=src/App.tsx&column=3');
+    const missingLine = parseDeepLinkUrl('lynxtron-go://showcase/open?id=benchmark&file=src/App.tsx&column=3');
     expect(missingLine.ok).toBe(false);
     if (missingLine.ok) return;
     expect(missingLine.error.code).toBe('INVALID_PARAM');
 
-    const invalidLine = parseDeepLinkUrl('lynxtron://showcase/open?id=benchmark&file=src/App.tsx&line=0');
+    const invalidLine = parseDeepLinkUrl('lynxtron-go://showcase/open?id=benchmark&file=src/App.tsx&line=0');
     expect(invalidLine.ok).toBe(false);
     if (invalidLine.ok) return;
     expect(invalidLine.error.code).toBe('INVALID_PARAM');
   });
 
   it('parses bundle URL deep link', () => {
-    const result = parseDeepLinkUrl('lynxtron://lynxview_page?bundle=https://example.com/bundle.lynx');
+    const result = parseDeepLinkUrl('lynxtron-go://lynxview_page?bundle=https://example.com/bundle.lynx');
     expect(result).toEqual({
       ok: true,
       intent: { kind: 'bundle-url-open', url: 'https://example.com/bundle.lynx' },
@@ -117,7 +117,7 @@ describe('parseDeepLinkUrl', () => {
   });
 
   it('parses bundle URL deep link with title', () => {
-    const result = parseDeepLinkUrl('lynxtron://lynxview_page?bundle=https://example.com/bundle.lynx&title=My%20App');
+    const result = parseDeepLinkUrl('lynxtron-go://lynxview_page?bundle=https://example.com/bundle.lynx&title=My%20App');
     expect(result).toEqual({
       ok: true,
       intent: { kind: 'bundle-url-open', url: 'https://example.com/bundle.lynx', title: 'My App' },
@@ -125,14 +125,14 @@ describe('parseDeepLinkUrl', () => {
   });
 
   it('rejects bundle URL deep link with missing URL', () => {
-    const result = parseDeepLinkUrl('lynxtron://lynxview_page');
+    const result = parseDeepLinkUrl('lynxtron-go://lynxview_page');
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error.code).toBe('MISSING_PARAM');
   });
 
   it('rejects bundle URL deep link with invalid URL', () => {
-    const result = parseDeepLinkUrl('lynxtron://lynxview_page?bundle=not-a-valid-url');
+    const result = parseDeepLinkUrl('lynxtron-go://lynxview_page?bundle=not-a-valid-url');
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error.code).toBe('INVALID_PARAM');
@@ -144,9 +144,9 @@ describe('extractDeepLinkUrlFromArgv', () => {
     const result = extractDeepLinkUrlFromArgv([
       '/Applications/Lynxtron GO.app/Contents/MacOS/lynxtron-go',
       '--inspect=9222',
-      'lynxtron://example/open?path=view',
+      'lynxtron-go://example/open?path=view',
     ]);
-    expect(result).toBe('lynxtron://example/open?path=view');
+    expect(result).toBe('lynxtron-go://example/open?path=view');
   });
 
   it('returns null when argv has no deep link', () => {

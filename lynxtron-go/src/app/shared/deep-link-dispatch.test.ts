@@ -17,7 +17,7 @@ describe('resolveDeepLinkDispatchAction', () => {
     const payload: HostDeepLinkPayload = {
       kind: 'intent',
       intent: { kind: 'home' },
-      rawUrl: 'lynxtron://home',
+      rawUrl: 'lynxtron-go://home',
       source: 'test',
     };
     expect(resolveDeepLinkDispatchAction(payload, registry)).toEqual({ kind: 'home' });
@@ -35,7 +35,7 @@ describe('resolveDeepLinkDispatchAction', () => {
           column: 4,
         },
       },
-      rawUrl: 'lynxtron://showcase/open?id=benchmark',
+      rawUrl: 'lynxtron-go://showcase/open?id=benchmark',
       source: 'test',
     };
     expect(resolveDeepLinkDispatchAction(payload, registry)).toEqual({
@@ -53,7 +53,7 @@ describe('resolveDeepLinkDispatchAction', () => {
     const payload: HostDeepLinkPayload = {
       kind: 'intent',
       intent: { kind: 'showcase-open', showcaseId: 'unknown' },
-      rawUrl: 'lynxtron://showcase/open?id=unknown',
+      rawUrl: 'lynxtron-go://showcase/open?id=unknown',
       source: 'test',
     };
     const action = resolveDeepLinkDispatchAction(payload, registry);
@@ -73,7 +73,7 @@ describe('resolveDeepLinkDispatchAction', () => {
           filePath: 'src/App.tsx',
         },
       },
-      rawUrl: 'lynxtron://example/open?path=view',
+      rawUrl: 'lynxtron-go://example/open?path=view',
       source: 'test',
     };
     expect(resolveDeepLinkDispatchAction(payload, registry)).toEqual({
@@ -91,14 +91,14 @@ describe('resolveDeepLinkDispatchAction', () => {
       error: {
         code: 'MISSING_PARAM',
         message: 'Missing showcase id in deep link',
-        detail: 'Use lynxtron://showcase/open?id=<showcase-id>',
+        detail: 'Use lynxtron-go://showcase/open?id=<showcase-id>',
       },
-      rawUrl: 'lynxtron://showcase/open',
+      rawUrl: 'lynxtron-go://showcase/open',
       source: 'test',
     };
     expect(resolveDeepLinkDispatchAction(payload, registry)).toEqual({
       kind: 'error',
-      message: 'Deep link rejected: Missing showcase id in deep link (Use lynxtron://showcase/open?id=<showcase-id>)',
+      message: 'Deep link rejected: Missing showcase id in deep link (Use lynxtron-go://showcase/open?id=<showcase-id>)',
     });
   });
 
@@ -109,7 +109,7 @@ describe('resolveDeepLinkDispatchAction', () => {
         kind: 'bundle-url-open',
         url: 'https://example.com/bundle.lynx',
       },
-      rawUrl: 'lynxtron://lynxview_page?bundle=https://example.com/bundle.lynx',
+      rawUrl: 'lynxtron-go://lynxview_page?bundle=https://example.com/bundle.lynx',
       source: 'test',
     };
     expect(resolveDeepLinkDispatchAction(payload, registry)).toEqual({
@@ -126,7 +126,7 @@ describe('resolveDeepLinkDispatchAction', () => {
         url: 'https://example.com/bundle.lynx',
         title: 'My App',
       },
-      rawUrl: 'lynxtron://lynxview_page?bundle=https://example.com/bundle.lynx&title=My%20App',
+      rawUrl: 'lynxtron-go://lynxview_page?bundle=https://example.com/bundle.lynx&title=My%20App',
       source: 'test',
     };
     expect(resolveDeepLinkDispatchAction(payload, registry)).toEqual({
