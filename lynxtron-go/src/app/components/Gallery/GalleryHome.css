@@ -345,53 +345,80 @@
   flex-wrap: wrap;
 }
 
-.FiddleChip {
+/* Cards, identical in treatment to the collection's own home screen — both
+   launch a single fiddle, so a second thinner rendering of the same catalog
+   would only be a worse copy. */
+.FiddleCard {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  width: 23.5%;
-  min-width: 200px;
-  margin: 0 6px 6px 0;
-  padding: 6px 8px;
-  border-radius: 5px;
+  flex-direction: column;
+  width: 280px;
+  padding: 12px 14px;
+  margin: 0 10px 10px 0;
+  border-radius: 6px;
   background-color: var(--background-3);
   border-width: 1px;
   border-style: solid;
   border-color: var(--hairline);
 }
 
-.FiddleChip--na {
-  opacity: 0.55;
+/* N/A fiddles have nothing to assemble — inert, not merely styled-disabled. */
+.FiddleCard--disabled {
+  opacity: 0.5;
 }
 
-.FiddleChipTitle {
+.FiddleCardHead {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.FiddleCardTitle {
   flex: 1;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
   color: var(--bp-text);
   margin-right: 8px;
 }
 
-.FiddleChipBadge {
+.FiddleCardDesc {
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--bp-text-muted);
+}
+
+/* Why a fiddle is partial or N/A — the whole reason the card is not just green. */
+.FiddleCardNotes {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--bp-text-muted);
+  opacity: 0.75;
+  margin-top: 6px;
+}
+
+.FiddleBadge {
   flex-shrink: 0;
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: 8px;
 }
 
-.FiddleChipBadgeText {
+.FiddleBadgeText {
   font-family: 'SF Mono', Menlo, monospace;
-  font-size: 9px;
+  font-size: 10px;
+  line-height: 15px;
   font-weight: 600;
   letter-spacing: 0.3px;
 }
 
-.FiddleChipBadge--working { background-color: rgba(16, 185, 129, 0.16); }
-.FiddleChipBadgeText--working { color: #3dd68c; }
-.FiddleChipBadge--partial { background-color: rgba(249, 115, 22, 0.16); }
-.FiddleChipBadgeText--partial { color: #f5a623; }
-.FiddleChipBadge--na { background-color: rgba(148, 163, 184, 0.16); }
-.FiddleChipBadgeText--na { color: #9aa5b1; }
+.FiddleBadge--working { background-color: rgba(16, 185, 129, 0.16); }
+.FiddleBadgeText--working { color: #3dd68c; }
+.FiddleBadge--partial { background-color: rgba(249, 115, 22, 0.16); }
+.FiddleBadgeText--partial { color: #f5a623; }
+.FiddleBadge--na { background-color: rgba(148, 163, 184, 0.16); }
+.FiddleBadgeText--na { color: #9aa5b1; }
 
-.theme-light .FiddleChipBadgeText--working { color: #0f8a5f; }
-.theme-light .FiddleChipBadgeText--partial { color: #c05f00; }
-.theme-light .FiddleChipBadgeText--na { color: #5c6773; }
+.theme-light .FiddleBadgeText--working { color: #0f8a5f; }
+.theme-light .FiddleBadgeText--partial { color: #c05f00; }
+.theme-light .FiddleBadgeText--na { color: #5c6773; }

@@ -108,18 +108,25 @@ function ElectronFiddlesSection({
             {items.map(f => (
               <view
                 key={f.id}
-                className={`FiddleChip FiddleChip--${f.status}`}
-                // Each fiddle is its own project and its own process, so a chip
+                // Same card as the collection's own home screen. Both launch a
+                // single fiddle now, so a second, thinner rendering of the same
+                // catalog would only be a worse copy of this one.
+                className={`FiddleCard${f.status === 'na' ? ' FiddleCard--disabled' : ''}`}
+                // Each fiddle is its own project and its own process, so this
                 // launches THAT fiddle — not the whole collection. `na` rows
                 // have no source to assemble, so they stay inert.
                 bindtap={f.status === 'na' ? undefined : () => onRunFiddle(f.id)}
               >
-                <text className="FiddleChipTitle" text-maxline="1">{f.title}</text>
-                <view className={`FiddleChipBadge FiddleChipBadge--${f.status}`}>
-                  <text className={`FiddleChipBadgeText FiddleChipBadgeText--${f.status}`}>
-                    {FIDDLE_STATUS_LABEL[f.status] ?? f.status}
-                  </text>
+                <view className="FiddleCardHead">
+                  <text className="FiddleCardTitle">{f.title}</text>
+                  <view className={`FiddleBadge FiddleBadge--${f.status}`}>
+                    <text className={`FiddleBadgeText FiddleBadgeText--${f.status}`}>
+                      {FIDDLE_STATUS_LABEL[f.status] ?? f.status}
+                    </text>
+                  </view>
                 </view>
+                <text className="FiddleCardDesc">{f.description}</text>
+                {f.notes ? <text className="FiddleCardNotes">{f.notes}</text> : null}
               </view>
             ))}
           </view>
