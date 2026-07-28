@@ -20,7 +20,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Notifications" supports="Native UI · Process: Main">
+    <DemoPage title="Notifications" supports="Native UI · Process: Main"
+      apis={['Notification']}>
       <Section heading="Basic notification">
         <ActionButton label="Show notification" onTap={showBasic} />
         <Paragraph>This demo shows a basic notification. Text only.</Paragraph>

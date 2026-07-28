@@ -35,6 +35,7 @@ export function App() {
     <DemoPage
       title="Remove Title Bar"
       supports="Supports: Win, macOS, Linux · Process: Main"
+      apis={['LynxWindow', 'win.getBounds', 'win.setTitle']}
     >
       <Section heading="The window still works">
         <Row>

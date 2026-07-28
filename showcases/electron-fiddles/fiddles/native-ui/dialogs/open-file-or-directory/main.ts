@@ -1,4 +1,5 @@
 import { LynxWindow, app, dialog } from '@lynx-js/lynxtron';
+import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
 // electron docs/fiddles native-ui/dialogs/open-file-or-directory main:
@@ -30,6 +31,7 @@ function createWindow(): LynxWindow {
     ...WINDOW_OPTIONS,
   } as any);
   setupWindow(win);
+  attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
   return win;

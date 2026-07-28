@@ -49,7 +49,8 @@ export function App() {
   const platform = info?.platform ?? 'unknown';
 
   return (
-    <DemoPage title="Native Window Controls" supports="titleBarStyle: hidden · native controls kept">
+    <DemoPage title="Native Window Controls" supports="titleBarStyle: hidden · native controls kept"
+      apis={['LynxWindow', 'app.getName', 'win.getBounds']}>
       <Section heading="This window right now">
         <Paragraph>
           This window was created with a hidden title bar, yet it still shows its

@@ -35,6 +35,7 @@ export function App() {
     <DemoPage
       title="Title Bar Safe Area"
       supports="Supports: Win, macOS, Linux · Process: Renderer (CSS)"
+      apis={['LynxWindow']}
     >
       <Section heading="Custom title bar">
         {/* The bar reserves `inset` px on both ends so its label never hides

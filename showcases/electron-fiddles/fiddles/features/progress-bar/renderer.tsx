@@ -40,7 +40,8 @@ export function App() {
   const fillWidth = `${Math.round(clamped * 100)}%`;
 
   return (
-    <DemoPage title="Progress Bar" supports="Supports: Win, macOS, Linux | Process: Main">
+    <DemoPage title="Progress Bar" supports="Supports: Win, macOS, Linux | Process: Main"
+      apis={['win.setProgressBar']}>
       <Section heading="Dock / taskbar progress">
         <view className="pb-track">
           <view className="pb-fill" style={{ width: fillWidth }} />

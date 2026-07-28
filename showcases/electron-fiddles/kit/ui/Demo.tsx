@@ -6,22 +6,54 @@
 // restating hex values here.
 import { useCallback } from '@lynx-js/react';
 import '@lynxtron-examples/config/tokens.css';
+import { docsUrlFor } from '../docs';
+import { bridgeSend } from '../bridge';
 import './Demo.css';
+
+/**
+ * The name of a Lynxtron API this fiddle calls. Monospace because it is a
+ * literal identifier, and tappable because the next thing you want after
+ * seeing an API work is its reference page.
+ *
+ * Undocumented symbols render as plain text rather than a dead link.
+ */
+export function Api({ name }: { name: string }) {
+  const url = docsUrlFor(name);
+  const open = useCallback(() => {
+    if (url) bridgeSend('open-docs', { url });
+  }, [url]);
+
+  if (!url) return <text className="demo-api demo-api-plain">{name}</text>;
+  return (
+    <text className="demo-api" bindtap={open}>
+      {name}
+    </text>
+  );
+}
 
 interface DemoPageProps {
   title: string;
   /** e.g. "Supports: Win, macOS, Linux | Process: Main". */
   supports?: string;
+  /** Lynxtron APIs this fiddle demonstrates, e.g. ['dialog.showOpenDialog']. */
+  apis?: string[];
   children: unknown;
 }
 
 /** Scrollable page shell with a title header. */
-export function DemoPage({ title, supports, children }: DemoPageProps) {
+export function DemoPage({ title, supports, apis, children }: DemoPageProps) {
   return (
     <scroll-view className="demo-page" scroll-orientation="vertical">
       <view className="demo-inner">
         <text className="demo-title">{title}</text>
         {supports ? <text className="demo-supports">{supports}</text> : null}
+        {apis && apis.length ? (
+          <view className="demo-apis">
+            {apis.map((name) => (
+              <Api key={name} name={name} />
+            ))}
+          </view>
+        ) : null}
         {children as any}
       </view>
     </scroll-view>

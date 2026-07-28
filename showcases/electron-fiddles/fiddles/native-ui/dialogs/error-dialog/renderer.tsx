@@ -13,7 +13,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Error Dialog" supports="dialog.showErrorBox · Process: Main">
+    <DemoPage title="Error Dialog" supports="dialog.showErrorBox · Process: Main"
+      apis={['dialog.showErrorBox']}>
       <Section heading="Show a native error box">
         <ActionButton label="Show error box" onTap={onShow} />
         {count > 0 ? (

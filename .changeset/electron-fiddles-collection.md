@@ -37,3 +37,7 @@ Fiddle Dark language with `showcases/counter` and `showcases/system-monitor` —
 palette from `@lynxtron-examples/config/tokens.css`, labelled panels, and
 `var(--font-mono)` reserved for data. `partial` fiddles keep one plain line
 naming the gap; the tutorial prose that repeated the port matrix is gone.
+
+Each fiddle also lists the Lynxtron APIs it calls, in monospace, and tapping one
+opens its page in the published API reference. The lists are derived from each
+fiddle's own source rather than hand-written.

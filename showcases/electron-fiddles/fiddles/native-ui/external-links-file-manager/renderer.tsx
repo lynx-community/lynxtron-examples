@@ -29,6 +29,7 @@ export function App() {
     <DemoPage
       title="External Links & File Manager"
       supports="shell module · Process: Main"
+      apis={['app.getPath', 'shell.openExternal', 'shell.showItemInFolder']}
     >
       <Section heading="Open path in file manager">
         <Row>

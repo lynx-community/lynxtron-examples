@@ -40,7 +40,8 @@ export function App() {
   }, [file]);
 
   return (
-    <DemoPage title="Drag & Drop (files in)" supports="dialog.showOpenDialog · shell.showItemInFolder · Process: Main">
+    <DemoPage title="Drag & Drop (files in)" supports="dialog.showOpenDialog · shell.showItemInFolder · Process: Main"
+      apis={['dialog.showOpenDialog', 'shell.showItemInFolder']}>
       <Section heading="Pick a file to inspect">
         <Row>
           <ActionButton label="Choose a File" onTap={onPick} />

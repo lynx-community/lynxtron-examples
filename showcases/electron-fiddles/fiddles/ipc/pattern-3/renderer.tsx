@@ -20,7 +20,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="IPC: Main → Renderer" supports="Pattern 3 · pushed events">
+    <DemoPage title="IPC: Main → Renderer" supports="Pattern 3 · pushed events"
+      apis={['Menu.buildFromTemplate', 'Menu.setApplicationMenu', 'app.getName']}>
       <Section heading="Menu-driven counter">
         <ResultText>Current value: {counter}</ResultText>
         <Row>

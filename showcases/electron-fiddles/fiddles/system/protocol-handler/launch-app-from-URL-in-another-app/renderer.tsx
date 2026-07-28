@@ -47,7 +47,8 @@ export function App() {
   const onClear = useCallback(() => setLinks([]), []);
 
   return (
-    <DemoPage title="Protocol Handler (deep link)" supports="System · app.setAsDefaultProtocolClient">
+    <DemoPage title="Protocol Handler (deep link)" supports="System · app.setAsDefaultProtocolClient"
+      apis={['app.setAsDefaultProtocolClient', 'shell.openExternal']}>
       <Section heading="Custom URL scheme">
         <KV k="Scheme" v={`${SCHEME}://`} />
         <KV

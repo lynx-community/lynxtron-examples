@@ -1,4 +1,5 @@
 import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
 
@@ -21,6 +22,7 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
+  attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
   return win;

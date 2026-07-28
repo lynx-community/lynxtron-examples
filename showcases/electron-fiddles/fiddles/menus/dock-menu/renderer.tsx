@@ -21,7 +21,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Dock Menu (macOS)" supports="app.dock.setMenu · Menu.buildFromTemplate · Process: Main">
+    <DemoPage title="Dock Menu (macOS)" supports="app.dock.setMenu · Menu.buildFromTemplate · Process: Main"
+      apis={['Menu.buildFromTemplate', 'shell.openExternal']}>
       <Section heading="Dock status">
         <KV k="Platform dock" v={state.dockAvailable ? 'Available (macOS)' : 'Unavailable'} />
       </Section>

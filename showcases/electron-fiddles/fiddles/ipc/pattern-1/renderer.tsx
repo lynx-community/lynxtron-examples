@@ -13,7 +13,8 @@ export function App() {
   }, [title]);
 
   return (
-    <DemoPage title="IPC: Renderer → Main" supports="Pattern 1 · one-way message">
+    <DemoPage title="IPC: Renderer → Main" supports="Pattern 1 · one-way message"
+      apis={['win.setTitle']}>
       <Section heading="Set the window title">
         <Row>
           <Field value={title} placeholder="Window title" onInput={setTitle} />

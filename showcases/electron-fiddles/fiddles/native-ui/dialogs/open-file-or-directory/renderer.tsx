@@ -14,7 +14,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Open File or Directory" supports="dialog.showOpenDialog · Process: Main">
+    <DemoPage title="Open File or Directory" supports="dialog.showOpenDialog · Process: Main"
+      apis={['dialog.showOpenDialog']}>
       <Section heading="Use system dialogs">
         <ActionButton label="Open file dialog" onTap={onSelect} />
         {selection ? <ResultText>You selected: {selection}</ResultText> : null}

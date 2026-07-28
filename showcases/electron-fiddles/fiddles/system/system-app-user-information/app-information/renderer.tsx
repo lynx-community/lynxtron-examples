@@ -26,7 +26,8 @@ export function App() {
   }, [load]);
 
   return (
-    <DemoPage title="App Information" supports="Supports: Win, macOS, Linux · Process: Main">
+    <DemoPage title="App Information" supports="Supports: Win, macOS, Linux · Process: Main"
+      apis={['app.getAppPath', 'app.getName', 'app.getPath', 'app.getVersion']}>
       <Section heading="Application">
         <ActionButton label="Refresh" onTap={load} />
         {info ? (

@@ -23,7 +23,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Menu Shortcuts" supports="Menu.setApplicationMenu · accelerators · Process: Main">
+    <DemoPage title="Menu Shortcuts" supports="Menu.setApplicationMenu · accelerators · Process: Main"
+      apis={['Menu.buildFromTemplate', 'Menu.setApplicationMenu', 'dialog.showMessageBox']}>
       <Section heading="Registered shortcut">
         <KV k="Accelerator" v={accelerator} />
         <ActionButton label="Trigger Shortcut Action" onTap={fire} />

@@ -25,7 +25,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Recent Documents" supports="Features · app.addRecentDocument">
+    <DemoPage title="Recent Documents" supports="Features · app.addRecentDocument"
+      apis={['app.addRecentDocument', 'app.clearRecentDocuments', 'app.getPath']}>
       <Section heading="Add a recent document">
         <Field value={fileName} placeholder="file name" onInput={setFileName} />
         <Row>

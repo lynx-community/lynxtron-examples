@@ -30,7 +30,8 @@ export function App() {
   }, [refresh]);
 
   return (
-    <DemoPage title="Starter Code (default chrome)" supports="Supports: Win, macOS, Linux · Process: Main">
+    <DemoPage title="Starter Code (default chrome)" supports="Supports: Win, macOS, Linux · Process: Main"
+      apis={['win.getBounds', 'win.getTitle', 'win.isResizable']}>
       <Section heading="Live window options">
         <Row>
           <ActionButton label="Read window chrome" onTap={refresh} />

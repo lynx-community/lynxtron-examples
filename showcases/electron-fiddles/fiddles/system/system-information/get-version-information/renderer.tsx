@@ -27,7 +27,8 @@ export function App() {
   const entries = Object.entries(versions);
 
   return (
-    <DemoPage title="Get Version Information" supports="Supports: Win, macOS, Linux | Process: Both">
+    <DemoPage title="Get Version Information" supports="Supports: Win, macOS, Linux | Process: Both"
+      apis={['contextBridge.exposeInLynxBTS']}>
       <Section>
         <ActionButton label="Read versions" onTap={onViewDemo} />
         {message ? <ResultText>{message}</ResultText> : null}

@@ -29,6 +29,7 @@ export function App() {
     <DemoPage
       title="Create a frameless window"
       supports="Supports: Win, macOS, Linux · Process: Main"
+      apis={['LynxWindow', 'win.loadURL']}
     >
       <Section>
         <ActionButton label="Create frameless window" onTap={viewDemo} />

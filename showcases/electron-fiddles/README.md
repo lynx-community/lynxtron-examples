@@ -1,7 +1,7 @@
 # Electron Fiddles on Lynxtron
 
-A single multi-entry showcase that ports the [Electron `docs/fiddles`](https://github.com/electron/electron/tree/main/docs/fiddles)
-example snippets to **Lynxtron** — proving Lynxtron's Electron-compatible
+The [Electron `docs/fiddles`](https://github.com/electron/electron/tree/main/docs/fiddles)
+example set, ported to **Lynxtron** — proving Lynxtron's Electron-compatible
 main-process API while replacing the Chromium renderer with Lynx (ReactLynx).
 
 Launch the showcase and you get a **gallery home screen**: tap any card to open
@@ -41,6 +41,7 @@ kit/                         @lynxtron-examples/fiddle-kit — the small shared 
   bridge.ts                  the app-side IPC helpers
   ui/Demo.tsx                the Lynx UI kit (DemoPage, Section, ActionButton…)
   lynx-native.ts             native classes the ESM shim omits (Notification)
+  docs.ts / docs-main.ts     resolve an API name to its docs page, and open it
 
 scripts/assemble.mjs         folder -> complete project -> build -> run
 catalog.ts                   id, category, status, notes, window options
@@ -75,6 +76,24 @@ labelled panels, sans-serif labels, and `var(--font-mono)` reserved for data
 marks the one primary action, `--ok` a live result. See `.impeccable.md` at the
 repo root for the design context.
 
+### The APIs a fiddle calls
+
+Under the title, each fiddle lists the Lynxtron APIs it actually calls, in
+monospace. Tapping one opens its page in the published API reference
+(`shell.openExternal` -> the docs site); members link straight to their anchor,
+so `dialog.showOpenDialog` lands on `Interface.Dialog.html#showopendialog`.
+
+The lists are **derived from each fiddle's own source**, not hand-written, so
+they cannot drift into advertising an API the fiddle does not use. Three fiddles
+carry no list because they genuinely call no Lynxtron API: dark-mode (the point
+is that `nativeTheme` is missing), online-detection (it probes with `node:dns`)
+and keyboard-web-apis (pure Lynx renderer bindings).
+
+Resolution lives in `kit/docs.ts`. Note the shape it has to account for: `app`,
+`dialog` and friends are exported as *variables*, but their members are
+documented on the *interface* that types them — linking a member to
+`Variable.app.html` lands on a page with no members on it.
+
 ### Why each fiddle gets its own process
 
 Launching a fiddle from the gallery spawns a **separate Lynxtron process** on
@@ -105,7 +124,7 @@ so fiddles use ergonomic helpers:
 
 - `bridge.call` is **callback-style**, not promise-based — `bridgeCall` wraps it in a Promise.
 - Main→UI events arrive via `lynx.getJSModule('GlobalEventEmitter')`; there is **no** bare `GlobalEventEmitter` global.
-- `Notification` exists on the native `require('lynxtron')` object but is **not** re-exported by the package's ESM shim — accessed via `src/main/desktop/lynx-native.ts`.
+- `Notification` exists on the native `require('lynxtron')` object but is **not** re-exported by the package's ESM shim — accessed via the kit's `lynx-native.ts`.
 - Use the lowercase `nativeImage` namespace, not a `NativeImage` class.
 - Not available in 0.0.7: `globalShortcut`, `nativeTheme`, `desktopCapturer`, `webContents`, `BaseWindow.setRepresentedFilename` / `setDocumentEdited`, `webContents.startDrag`, `titleBarOverlay` / safe-area insets.
 - **`-x-app-region: drag`** is Lynx's spelling of Chromium's `-webkit-app-region: drag`; it is what makes a custom title bar in a frameless window a window-move handle (documented on `BaseWindow`'s `system-context-menu` event).

@@ -7,6 +7,8 @@
   "exports": {
     "./bridge": "./bridge.ts",
     "./ui/Demo": "./ui/Demo.tsx",
-    "./lynx-native": "./lynx-native.ts"
+    "./lynx-native": "./lynx-native.ts",
+    "./docs": "./docs.ts",
+    "./docs-main": "./docs-main.ts"
   }
 }

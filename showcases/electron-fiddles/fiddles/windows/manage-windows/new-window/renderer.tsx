@@ -30,7 +30,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Create a new window" supports="Supports: Win, macOS, Linux · Process: Main">
+    <DemoPage title="Create a new window" supports="Supports: Win, macOS, Linux · Process: Main"
+      apis={['win.loadURL']}>
       <Section>
         {CHOICES.map((c) => (
           <Row key={c.id}>

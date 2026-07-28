@@ -23,7 +23,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Clipboard: Paste" supports="Supports: Win, macOS, Linux · Process: Main">
+    <DemoPage title="Clipboard: Paste" supports="Supports: Win, macOS, Linux · Process: Main"
+      apis={['clipboard.readText', 'clipboard.writeText']}>
       <Section heading="Paste from clipboard">
         <Row>
           <ActionButton label="Paste" onTap={onPaste} />

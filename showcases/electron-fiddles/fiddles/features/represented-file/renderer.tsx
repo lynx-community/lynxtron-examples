@@ -34,7 +34,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Represented File" supports="macOS proxy icon → window title (partial)">
+    <DemoPage title="Represented File" supports="macOS proxy icon → window title (partial)"
+      apis={['win.setTitle']}>
       <Section heading="Associate a file with this window">
         <Row>
           <Field value={file} placeholder="/path/to/file" onInput={setFile} />

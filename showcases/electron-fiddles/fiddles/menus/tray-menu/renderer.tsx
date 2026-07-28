@@ -28,7 +28,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Tray Menu" supports="Tray · Menu.buildFromTemplate · Process: Main">
+    <DemoPage title="Tray Menu" supports="Tray · Menu.buildFromTemplate · Process: Main"
+      apis={['Menu.buildFromTemplate', 'Tray', 'nativeImage.createFromDataURL', 'win.focus']}>
       <Section heading="Tray state">
         <KV k="Icon" v={state.isGreen ? 'Green' : 'Red'} />
         <KV k="Title" v={state.hasTitle ? '“Title”' : '(none)'} />

@@ -21,7 +21,8 @@ export function App() {
         <text className="titlebar-text">Cool titlebar</text>
       </view>
 
-      <DemoPage title="Custom Title Bar" supports="titleBarStyle: hidden · in-content chrome">
+      <DemoPage title="Custom Title Bar" supports="titleBarStyle: hidden · in-content chrome"
+      apis={['LynxWindow']}>
         <Section heading="What you're seeing">
           <Paragraph>
             The blue strip above is not the operating system's title bar — the

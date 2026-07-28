@@ -1,4 +1,5 @@
 import { LynxWindow, Menu, app } from '@lynx-js/lynxtron';
+import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
 // Port of electron docs/fiddles menus/context-menu/dom.
@@ -56,6 +57,7 @@ function createWindow(): LynxWindow {
     ...WINDOW_OPTIONS,
   } as any);
   setupWindow(win);
+  attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
   return win;

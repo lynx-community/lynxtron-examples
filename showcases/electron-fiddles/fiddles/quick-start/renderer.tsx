@@ -19,7 +19,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Hello World!" supports="Quick Start · runtime versions from preload">
+    <DemoPage title="Hello World!" supports="Quick Start · runtime versions from preload"
+      apis={['contextBridge.exposeInLynxBTS']}>
       <Section heading="We are using">
         <KV k="Node.js" v={versions.node ?? 'unknown'} />
         <KV k="Lynx" v="renderer (replaces Chromium)" />

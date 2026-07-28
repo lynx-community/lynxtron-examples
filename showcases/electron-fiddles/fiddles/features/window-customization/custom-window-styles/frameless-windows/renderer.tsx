@@ -66,7 +66,8 @@ export function App() {
         </view>
       </view>
 
-      <DemoPage title="Frameless Window" supports="frame: false · in-content controls">
+      <DemoPage title="Frameless Window" supports="frame: false · in-content controls"
+      apis={['LynxWindow', 'win.center', 'win.close', 'win.getBounds', 'win.isMaximized', 'win.maximize', 'win.minimize', 'win.unmaximize']}>
         <Section heading="This window right now">
           <KV k="Platform" v={platform} />
           <KV k="Maximized" v={maximized ? 'yes' : 'no'} />

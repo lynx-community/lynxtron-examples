@@ -47,7 +47,8 @@ export function App() {
   }, [x, y, w, h]);
 
   return (
-    <DemoPage title="Manage Window State" supports="BaseWindow · getBounds / setBounds">
+    <DemoPage title="Manage Window State" supports="BaseWindow · getBounds / setBounds"
+      apis={['win.getBounds', 'win.setBounds']}>
       <Section heading="Live window bounds">
         {bounds ? (
           <>

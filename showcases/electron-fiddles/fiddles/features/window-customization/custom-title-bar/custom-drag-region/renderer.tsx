@@ -34,7 +34,8 @@ export function App() {
         <text className="titlebar-text">Cool titlebar</text>
       </view>
 
-      <DemoPage title="Custom Drag Region" supports="titleBarStyle: hidden · app-region: drag">
+      <DemoPage title="Custom Drag Region" supports="titleBarStyle: hidden · app-region: drag"
+      apis={['LynxWindow']}>
         <Section heading="What you're seeing">
           <Paragraph>
             The blue strip above is not the operating system's title bar — the

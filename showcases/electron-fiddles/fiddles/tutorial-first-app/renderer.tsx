@@ -19,7 +19,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="First App" supports="Tutorial · your first window">
+    <DemoPage title="First App" supports="Tutorial · your first window"
+      apis={['contextBridge.exposeInLynxBTS']}>
       <Section heading="Hello from Lynxtron!">
         <text className="first-app-wave">👋</text>
         <Paragraph>

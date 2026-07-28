@@ -24,7 +24,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Context Menu (element-targeted)" supports="Menu.buildFromTemplate · Process: Main">
+    <DemoPage title="Context Menu (element-targeted)" supports="Menu.buildFromTemplate · Process: Main"
+      apis={['Menu.buildFromTemplate']}>
       <Section heading="Long-press the target">
         <Paragraph>
           Long-press the box below (or edit the field first, then long-press) to

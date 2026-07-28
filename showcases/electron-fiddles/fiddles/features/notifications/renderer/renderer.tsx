@@ -28,7 +28,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Notification (from Renderer)" supports="Notifications · Web API → Main (bridged)">
+    <DemoPage title="Notification (from Renderer)" supports="Notifications · Web API → Main (bridged)"
+      apis={['Notification']}>
       <Section heading="Trigger a notification">
         <ActionButton label="Show Notification" onTap={onShow} />
         {triggered ? (

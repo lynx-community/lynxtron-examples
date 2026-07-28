@@ -27,7 +27,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Context Menu" supports="Menu.popup · long-press · Process: Main">
+    <DemoPage title="Context Menu" supports="Menu.popup · long-press · Process: Main"
+      apis={['Menu.buildFromTemplate']}>
       <Section heading="Editable field">
         <Field value={text} onInput={setText} placeholder="Type here…" />
         <view

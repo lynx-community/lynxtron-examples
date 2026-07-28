@@ -12,7 +12,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="IPC: Renderer ↔ Main" supports="Pattern 2 · request / response">
+    <DemoPage title="IPC: Renderer ↔ Main" supports="Pattern 2 · request / response"
+      apis={['dialog.showOpenDialog']}>
       <Section heading="Open a file">
         <ActionButton label="Open a File" onTap={onOpen} />
         {filePath ? <ResultText>File path: {filePath}</ResultText> : null}

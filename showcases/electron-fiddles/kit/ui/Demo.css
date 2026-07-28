@@ -37,6 +37,45 @@
   margin-top: 2px;
 }
 
+/* ── API references ─────────────────────────────────────────────────────── */
+/* The APIs a fiddle calls, sitting under the title. Monospace because they are
+   literal identifiers, and accent-coloured because they are the one thing on
+   the page you can follow somewhere else. */
+
+.demo-apis {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.demo-api {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--accent);
+  background-color: var(--accent-bg);
+  padding: 2px 8px;
+  margin-right: 6px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+}
+
+.demo-api:hover {
+  background-color: rgba(19, 124, 189, 0.3);
+}
+
+/* No published docs page — still an identifier, but it goes nowhere, so it
+   must not look like the ones that do. */
+.demo-api-plain {
+  color: var(--muted);
+  background-color: var(--panel);
+}
+
+.demo-api-plain:hover {
+  background-color: var(--panel);
+}
+
 /* ── Panel ──────────────────────────────────────────────────────────────── */
 
 .demo-section {

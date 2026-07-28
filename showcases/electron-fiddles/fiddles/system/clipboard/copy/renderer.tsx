@@ -17,7 +17,8 @@ export function App() {
   }, [text]);
 
   return (
-    <DemoPage title="Clipboard: Copy" supports="Supports: Win, macOS, Linux · Process: Main">
+    <DemoPage title="Clipboard: Copy" supports="Supports: Win, macOS, Linux · Process: Main"
+      apis={['clipboard.writeText']}>
       <Section heading="Copy to clipboard">
         <Row>
           <Field value={text} placeholder="Type text to copy." onInput={setText} />

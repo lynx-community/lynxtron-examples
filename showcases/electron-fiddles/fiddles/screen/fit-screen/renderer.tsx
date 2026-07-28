@@ -40,7 +40,8 @@ export function App() {
       : false;
 
   return (
-    <DemoPage title="Fit Window to Screen" supports="screen.getPrimaryDisplay · setBounds">
+    <DemoPage title="Fit Window to Screen" supports="screen.getPrimaryDisplay · setBounds"
+      apis={['screen.getPrimaryDisplay', 'win.getBounds', 'win.setBounds']}>
       <Section heading="Primary display work area">
         {work ? (
           <>

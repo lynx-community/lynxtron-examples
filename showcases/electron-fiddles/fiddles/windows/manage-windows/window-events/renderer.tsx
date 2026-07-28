@@ -64,7 +64,8 @@ export function App() {
   const onClear = useCallback(() => setEvents([]), []);
 
   return (
-    <DemoPage title="Window Events" supports="BrowserWindow lifecycle · main → UI">
+    <DemoPage title="Window Events" supports="BrowserWindow lifecycle · main → UI"
+      apis={['win.getBounds']}>
       <Section heading="Try it">
         <Paragraph>
           Interact with this window to fire native events. Each is caught in the

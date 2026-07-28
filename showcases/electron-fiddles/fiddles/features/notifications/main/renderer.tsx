@@ -14,7 +14,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Notification (from Main)" supports="Notifications · Process: Main">
+    <DemoPage title="Notification (from Main)" supports="Notifications · Process: Main"
+      apis={['Notification']}>
       <Section heading="Basic Notification">
         <ActionButton label="Show Notification" onTap={onShow} />
         {shown ? (

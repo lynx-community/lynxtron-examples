@@ -14,7 +14,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Information Dialog" supports="Dialogs · Process: Main">
+    <DemoPage title="Information Dialog" supports="Dialogs · Process: Main"
+      apis={['dialog.showMessageBox']}>
       <Section>
         <ActionButton label="Show message box" onTap={onShowDialog} />
         {selection ? <ResultText>{selection}</ResultText> : null}

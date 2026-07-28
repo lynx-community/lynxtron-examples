@@ -16,7 +16,8 @@ export function App() {
   }, []);
 
   return (
-    <DemoPage title="Preload Script" supports="contextBridge · exposeInLynxBTS">
+    <DemoPage title="Preload Script" supports="contextBridge · exposeInLynxBTS"
+      apis={['contextBridge.exposeInLynxBTS']}>
       <Section heading="Values exposed from preload">
         {Object.keys(versions).length === 0 ? (
           <Paragraph>No exposed values found.</Paragraph>
