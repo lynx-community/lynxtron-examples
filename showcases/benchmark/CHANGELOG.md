@@ -1,5 +1,11 @@
 # @lynxtron-examples/benchmark
 
+## 0.0.2
+
+### Patch Changes
+
+- e4baab9: Add `repository.directory` to each showcase's `package.json` so tools that resolve source URLs from published packages (e.g. the `<Go>` component in the docs site) can link back to the correct subdirectory in the monorepo.
+
 ## 0.0.2-alpha.0
 
 ### Patch Changes
