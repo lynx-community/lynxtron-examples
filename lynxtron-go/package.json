@@ -1,6 +1,6 @@
 {
   "name": "lynxtron-go",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "main.js",
   "files": [
     "dist/**",
@@ -58,8 +58,7 @@
     "vscode-languageserver-types": "^3.17.5",
     "yallist": "^5.0.0"
   },
-  "__commented_out_dependencies": {
-  },
+  "__commented_out_dependencies": {},
   "devDependencies": {
     "@lynx-js/lynxtron-builder": "catalog:",
     "@lynx-js/lynxtron-dev-plugins": "catalog:",
