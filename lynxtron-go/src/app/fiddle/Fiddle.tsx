@@ -18,7 +18,7 @@ import { useRunner } from './runner/useRunner';
 import { spawnRuntimeForWorkspace } from './runner/spawnRuntime';
 import { loadGistFiddle, parseGistId, publishGistFiddle } from './gist/gist-loader';
 import { loadLocalFiddle } from './runner/open';
-import { resolveShowcaseWorkspace, loadShowcaseFiddle, writeFiddleToWorkspace } from './runner/showcase-open';
+import { resolveShowcaseWorkspace, loadShowcaseFiddle, loadSingleFiddle, writeFiddleToWorkspace } from './runner/showcase-open';
 import { showcaseApi, appendFiddleOutput as appendOutput, type ShowcaseEntry, foundationApi } from '../store';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './dev-preset';
 import { applyEditorThemeAll, setThemeSetting } from './theme';
@@ -36,6 +36,11 @@ export interface FiddleProps {
   /** Showcase handed over by the gallery's Open — consumed once on mount/change. */
   pendingShowcaseTemplate?: ShowcaseEntry | null;
   onShowcaseTemplateConsumed?: () => void;
+  /** Open ONE fiddle of a fiddle-collection showcase — its own files only. */
+  pendingFiddleOpen?: { entry: ShowcaseEntry; id: string; title: string; upstream: string } | null;
+  onFiddleOpenConsumed?: () => void;
+  /** Build + launch the single fiddle currently loaded. */
+  onRunFiddleSource?: (fiddleId: string) => void;
   /** A full-page overlay (gallery) covers the Fiddle — detach native editors. */
   overlayActive?: boolean;
   /** Gallery page rendered INSIDE the shell (covers the sidebar+editors
@@ -188,6 +193,23 @@ export function Fiddle(props: FiddleProps) {
       appendOutput('info', ok ? `[Fiddle] Stopped pid=${runner.pid}` : `[Fiddle] Stop failed`);
       return;
     }
+    // A single loaded fiddle builds and runs ITSELF, not its collection.
+    //
+    // This MUST come before the showcase branch below: a loaded fiddle also has
+    // `kind: 'showcase'` with a `ref`, so that branch swallows it and tries to
+    // treat the fiddle's source folder as a showcase workspace — which meant
+    // `npm install` inside fiddles/native-ui/dialogs/open-file-or-directory.
+    const loadedFiddleId = fiddle.snap.source.fiddleId;
+    if (loadedFiddleId && props.onRunFiddleSource) {
+      const fiddleDir = fiddle.snap.source.ref;
+      // Save edits first — the assembler copies from this folder.
+      if (fiddleDir) {
+        writeFiddleToWorkspace(fiddleDir, fiddle.values());
+        fiddle.markSaved();
+      }
+      props.onRunFiddleSource(loadedFiddleId);
+      return;
+    }
     // Showcase fiddle: write edits back into the downloaded workspace, then
     // run it. Prebuilt + clean → spawn directly. Otherwise prefer the
     // showcase's `start` script (build && launch — always surfaces a window)
@@ -257,7 +279,7 @@ export function Fiddle(props: FiddleProps) {
     const pid = runner.start(workspace);
     if (pid) appendOutput('info', `[Fiddle] Run: pid=${pid} workspace=${workspace}`);
     else appendOutput('error', '[Fiddle] Run failed to spawn.');
-  }, [currentShowcase, props.onRunShowcase, fiddle.snap, runner, resolveLocalVersionFolder, selectedLocalName]);
+  }, [currentShowcase, props.onRunShowcase, props.onRunFiddleSource, fiddle, runner, resolveLocalVersionFolder, selectedLocalName]);
 
   const handleSave = useCallback(async () => {
     // A showcase fiddle already has a workspace on disk — ⌘S writes back to
@@ -364,6 +386,45 @@ export function Fiddle(props: FiddleProps) {
 
   // Gallery "Open" hands its showcase over via props — consume it through the
   // same download→mosaic chain as the TemplatePicker. Declared after
+  // Open a single fiddle: same collector, pointed at that fiddle's folder, so
+  // the mosaic shows main/renderer/preload/styles and nothing else — the way
+  // Electron Fiddle shows a fiddle.
+  const handleOpenSingleFiddle = useCallback(
+    (req: { entry: ShowcaseEntry; id: string; title: string; upstream: string }) => {
+      setCurrentShowcase(req.entry);
+      setTemplatePickerOpen(false);
+      appendOutput('info', `[Fiddle] Opening ${req.id}…`);
+      void (async () => {
+        try {
+          const workspaceRoot = await resolveShowcaseWorkspace(req.entry);
+          if (!workspaceRoot) {
+            appendOutput('error', `[Fiddle] Could not fetch "${req.entry.name}".`);
+            return;
+          }
+          const snap = loadSingleFiddle(req.entry, workspaceRoot, req);
+          if (!snap) {
+            appendOutput('error', `[Fiddle] No source found for ${req.id}`);
+            return;
+          }
+          fiddle.loadSnapshot(snap);
+          appendOutput('info', `[Fiddle] Opened ${req.id} (${snap.files.size} files)`);
+          AppToaster.show({ message: `Opened ${req.title} — hit Run`, intent: 'success', icon: 'tick' });
+        } catch (e: any) {
+          appendOutput('error', `[Fiddle] Open ${req.id} failed: ${e?.message ?? String(e)}`);
+        }
+      })();
+    },
+    [fiddle],
+  );
+
+  useEffect(() => {
+    const req = props.pendingFiddleOpen;
+    if (!req) return;
+    props.onFiddleOpenConsumed?.();
+    handleOpenSingleFiddle(req);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.pendingFiddleOpen]);
+
   // handlePickShowcase (TDZ in hook deps is a load-time crash on Lynx).
   useEffect(() => {
     const entry = props.pendingShowcaseTemplate;

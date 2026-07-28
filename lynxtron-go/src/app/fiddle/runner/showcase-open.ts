@@ -88,6 +88,38 @@ export function loadShowcaseFiddle(entry: ShowcaseEntry, workspaceRoot: string):
   };
 }
 
+/**
+ * Load ONE fiddle out of a fiddle-collection showcase.
+ *
+ * Electron Fiddle shows you a fiddle's own files — main.js, renderer.js,
+ * preload.js, styles.css — not the tree they live in. Our fiddles are laid out
+ * the same way (one folder per fiddle at its upstream path), so opening one is
+ * just pointing the same collector at that folder: it picks up the 2-4 files
+ * there and nothing else.
+ *
+ * `source.fiddleId` is what later tells Run to build and launch this one fiddle
+ * instead of the whole collection.
+ */
+export function loadSingleFiddle(
+  entry: ShowcaseEntry,
+  workspaceRoot: string,
+  fiddle: { id: string; title: string; upstream: string },
+): FiddleSnapshot | null {
+  const fs = foundationApi()?.fs;
+  if (!fs) return null;
+  const dir: string =
+    fs.join?.(workspaceRoot, 'fiddles', fiddle.upstream) ??
+    `${workspaceRoot}/fiddles/${fiddle.upstream}`;
+
+  const snap = loadShowcaseFiddle(entry, dir);
+  if (!snap) return null;
+  return {
+    ...snap,
+    source: { kind: 'showcase', ref: dir, fiddleId: fiddle.id },
+    title: fiddle.title,
+  };
+}
+
 /** Write (possibly edited) fiddle contents back into the workspace before running.
     Unchanged files are skipped — writing them anyway would bump every mtime and
     defeat the source-newer-than-build check that decides rebuild vs direct run. */

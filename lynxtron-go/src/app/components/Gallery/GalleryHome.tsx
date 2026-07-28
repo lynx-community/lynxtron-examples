@@ -20,6 +20,8 @@ interface GalleryHomeProps {
   onRunShowcase: (entry: ShowcaseEntry) => void;
   /** Build + launch a single fiddle of the Electron-fiddles collection. */
   onRunFiddle: (entry: ShowcaseEntry, fiddleId: string) => void;
+  /** Load ONE fiddle's own source into the Fiddle editors. */
+  onOpenFiddle: (entry: ShowcaseEntry, fiddle: { id: string; title: string; upstream: string }) => void;
   onRunShowcaseOnWeb: (entry: ShowcaseEntry) => void;
   onDebugExampleRoute: () => void;
   /** Full-screen fallback (legacy IDE) — no commands bar above, so the page
@@ -55,13 +57,11 @@ const FIDDLE_STATUS_LABEL: Record<string, string> = {
  * featured grid above.
  */
 function ElectronFiddlesSection({
-  onOpen,
-  onRun,
   onRunFiddle,
+  onOpenFiddle,
 }: {
-  onOpen: () => void;
-  onRun: () => void;
-  onRunFiddle: (id: string) => void;
+  onRunFiddle: (f: FiddleEntry) => void;
+  onOpenFiddle: (f: FiddleEntry) => void;
 }) {
   const { categories, fiddles } = FIDDLE_CATALOG;
   if (!fiddles.length) return null;
@@ -92,13 +92,9 @@ function ElectronFiddlesSection({
         <text className="FiddleIntroText">
           The complete Electron <text className="FiddleIntroCode">docs/fiddles</text> set, ported to
           Lynxtron — {String(counts.working ?? 0)} working, {String(counts.partial ?? 0)} partial,{' '}
-          {String(counts.na ?? 0)} not portable. Tap one to build and run it — each fiddle is its
-          own project and runs as its own process.
+          {String(counts.na ?? 0)} not portable. Each is its own project: Open loads just that
+          fiddle's source, Run builds and launches it as its own process.
         </text>
-        <view className="FiddleIntroActions">
-          <Button text="Open collection" small onClick={onOpen} />
-          <Button text="Run" small onClick={onRun} />
-        </view>
       </view>
 
       {grouped.map(([category, items]) => (
@@ -112,10 +108,6 @@ function ElectronFiddlesSection({
                 // single fiddle now, so a second, thinner rendering of the same
                 // catalog would only be a worse copy of this one.
                 className={`FiddleCard${f.status === 'na' ? ' FiddleCard--disabled' : ''}`}
-                // Each fiddle is its own project and its own process, so this
-                // launches THAT fiddle — not the whole collection. `na` rows
-                // have no source to assemble, so they stay inert.
-                bindtap={f.status === 'na' ? undefined : () => onRunFiddle(f.id)}
               >
                 <view className="FiddleCardHead">
                   <text className="FiddleCardTitle">{f.title}</text>
@@ -127,6 +119,18 @@ function ElectronFiddlesSection({
                 </view>
                 <text className="FiddleCardDesc">{f.description}</text>
                 {f.notes ? <text className="FiddleCardNotes">{f.notes}</text> : null}
+                {/* Same two actions every other showcase card offers. `na` rows
+                    have no source to open or assemble, so they get none. */}
+                {f.status === 'na' ? null : (
+                  <view className="FiddleCardFooter">
+                    <view className="FiddleCardAction" bindtap={() => onOpenFiddle(f)}>
+                      <text className="FiddleCardActionText FiddleCardActionText--primary">Open</text>
+                    </view>
+                    <view className="FiddleCardAction" bindtap={() => onRunFiddle(f)}>
+                      <text className="FiddleCardActionText">Run</text>
+                    </view>
+                  </view>
+                )}
               </view>
             ))}
           </view>
@@ -143,6 +147,7 @@ export function GalleryHome({
   onOpenShowcaseLegacy,
   onRunShowcase,
   onRunFiddle,
+  onOpenFiddle,
   onRunShowcaseOnWeb,
   onDebugExampleRoute,
   standalone = false,
@@ -240,9 +245,8 @@ export function GalleryHome({
 
         {fiddleShowcase ? (
           <ElectronFiddlesSection
-            onOpen={() => onOpenShowcase(fiddleShowcase)}
-            onRun={() => onRunShowcase(fiddleShowcase)}
-            onRunFiddle={(id) => onRunFiddle(fiddleShowcase, id)}
+            onRunFiddle={(f) => onRunFiddle(fiddleShowcase, f.id)}
+            onOpenFiddle={(f) => onOpenFiddle(fiddleShowcase, f)}
           />
         ) : null}
       </scroll-view>

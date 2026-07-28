@@ -422,3 +422,42 @@
 .theme-light .FiddleBadgeText--working { color: #0f8a5f; }
 .theme-light .FiddleBadgeText--partial { color: #c05f00; }
 .theme-light .FiddleBadgeText--na { color: #5c6773; }
+
+/* Card actions — same quiet action row the featured showcase cards use. */
+.FiddleCardFooter {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--hairline);
+}
+
+.FiddleCardAction {
+  padding: 3px 8px;
+  margin-right: 4px;
+  border-radius: 4px;
+  /* Lynx skips fully transparent views during hit-testing. */
+  background-color: rgba(128, 128, 128, 0.02);
+}
+
+.FiddleCardAction:hover {
+  background-color: var(--background-4);
+}
+
+.FiddleCardActionText {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--bp-text-muted);
+}
+
+/* Same explicit pair the featured cards use — a bare var() that turns out not
+   to exist renders as an inherited colour, not an error. */
+.FiddleCardActionText--primary {
+  color: #48aff0;
+  font-weight: 600;
+}
+
+.theme-light .FiddleCardActionText--primary { color: #106ba3; }
