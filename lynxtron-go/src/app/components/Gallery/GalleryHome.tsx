@@ -18,6 +18,8 @@ interface GalleryHomeProps {
   /** Legacy route: open the workspace in the old IDE shell instead of the Fiddle. */
   onOpenShowcaseLegacy: (entry: ShowcaseEntry) => void;
   onRunShowcase: (entry: ShowcaseEntry) => void;
+  /** Build + launch a single fiddle of the Electron-fiddles collection. */
+  onRunFiddle: (entry: ShowcaseEntry, fiddleId: string) => void;
   onRunShowcaseOnWeb: (entry: ShowcaseEntry) => void;
   onDebugExampleRoute: () => void;
   /** Full-screen fallback (legacy IDE) — no commands bar above, so the page
@@ -55,9 +57,11 @@ const FIDDLE_STATUS_LABEL: Record<string, string> = {
 function ElectronFiddlesSection({
   onOpen,
   onRun,
+  onRunFiddle,
 }: {
   onOpen: () => void;
   onRun: () => void;
+  onRunFiddle: (id: string) => void;
 }) {
   const { categories, fiddles } = FIDDLE_CATALOG;
   if (!fiddles.length) return null;
@@ -88,8 +92,8 @@ function ElectronFiddlesSection({
         <text className="FiddleIntroText">
           The complete Electron <text className="FiddleIntroCode">docs/fiddles</text> set, ported to
           Lynxtron — {String(counts.working ?? 0)} working, {String(counts.partial ?? 0)} partial,{' '}
-          {String(counts.na ?? 0)} not portable. They ship as one showcase whose home screen
-          launches each fiddle in its own window.
+          {String(counts.na ?? 0)} not portable. Tap one to build and run it — each fiddle is its
+          own project and runs as its own process.
         </text>
         <view className="FiddleIntroActions">
           <Button text="Open collection" small onClick={onOpen} />
@@ -105,7 +109,10 @@ function ElectronFiddlesSection({
               <view
                 key={f.id}
                 className={`FiddleChip FiddleChip--${f.status}`}
-                bindtap={onOpen}
+                // Each fiddle is its own project and its own process, so a chip
+                // launches THAT fiddle — not the whole collection. `na` rows
+                // have no source to assemble, so they stay inert.
+                bindtap={f.status === 'na' ? undefined : () => onRunFiddle(f.id)}
               >
                 <text className="FiddleChipTitle" text-maxline="1">{f.title}</text>
                 <view className={`FiddleChipBadge FiddleChipBadge--${f.status}`}>
@@ -128,6 +135,7 @@ export function GalleryHome({
   onOpenShowcase,
   onOpenShowcaseLegacy,
   onRunShowcase,
+  onRunFiddle,
   onRunShowcaseOnWeb,
   onDebugExampleRoute,
   standalone = false,
@@ -227,6 +235,7 @@ export function GalleryHome({
           <ElectronFiddlesSection
             onOpen={() => onOpenShowcase(fiddleShowcase)}
             onRun={() => onRunShowcase(fiddleShowcase)}
+            onRunFiddle={(id) => onRunFiddle(fiddleShowcase, id)}
           />
         ) : null}
       </scroll-view>

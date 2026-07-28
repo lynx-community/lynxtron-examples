@@ -1942,6 +1942,39 @@ export function App(props: { onRender?: () => void } = {}) {
     }
   }, [clearShowcaseLoading, resolveShowcaseEntryWorkspacePath, showOutput, startShowcaseLoading, log]);
 
+  /**
+   * Launch ONE fiddle out of a fiddle-collection showcase.
+   *
+   * Deliberately does not go through `runShowcaseEntry`: that builds the whole
+   * collection and opens its home screen, whereas a fiddle is its own project
+   * and its own process. It also does not require the collection to be built —
+   * assembling the single fiddle is the build.
+   */
+  const runFiddleEntry = useCallback(async (entry: ShowcaseEntry, fiddleId: string) => {
+    const api = showcaseApi();
+    if (!api?.runFiddle) {
+      showOutput('error', 'Showcase runtime unavailable');
+      return;
+    }
+    startShowcaseLoading(`Building ${fiddleId}...`);
+    appendProcessLine('command', `Run fiddle: ${fiddleId}`);
+    try {
+      const showcasePath = await resolveShowcaseEntryWorkspacePath(entry);
+      if (!showcasePath) return;
+      const pid = await api.runFiddle(showcasePath, fiddleId);
+      setRunningPid(pid);
+      showOutput('info', `${fiddleId} launched (pid ${pid})`);
+      appendProcessLine('command', `Launched ${fiddleId} (pid ${pid})`);
+      setStatus(`Running ${fiddleId} (pid ${pid})`);
+    } catch (e: any) {
+      showOutput('error', `Run ${fiddleId} failed: ${e.message}`);
+      appendProcessLine('stderr', `Run ${fiddleId} failed: ${e.message}`);
+      setStatus('Run failed');
+    } finally {
+      clearShowcaseLoading();
+    }
+  }, [clearShowcaseLoading, resolveShowcaseEntryWorkspacePath, showOutput, startShowcaseLoading]);
+
   const hasShowcaseWebTarget = useCallback((showcasePath: string): boolean => {
     try {
       return !!showcaseApi()?.getTargets?.(showcasePath)?.includes('web');
@@ -2452,6 +2485,7 @@ export function App(props: { onRender?: () => void } = {}) {
     onOpenShowcase: openShowcaseInFiddle,
     onOpenShowcaseLegacy: openShowcaseInIdeWindow,
     onRunShowcase: runShowcaseEntry,
+    onRunFiddle: runFiddleEntry,
     onRunShowcaseOnWeb: runShowcaseEntryOnWeb,
     onDebugExampleRoute: () => { setGalleryOpen(false); setLegacyIdeOpen(true); openExampleArtifactDirect('view'); },
   };

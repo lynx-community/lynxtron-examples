@@ -424,6 +424,8 @@ export interface ShowcaseService {
     isRunning: (pid: number) => boolean;
     stop: (pid: number) => boolean;
     run: (showcasePath: string) => number;
+    /** Build (if needed) and launch ONE fiddle of a fiddle-collection showcase. */
+    runFiddle: (showcasePath: string, fiddleId: string) => Promise<number>;
     start: (showcasePath: string) => Promise<number>;
     dev: (showcasePath: string) => Promise<number>;
     list: () => Array<{ name: string; description: string; local: boolean }>;
@@ -525,6 +527,46 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
         try { process.kill(-pid, 'SIGTERM'); ok = true; } catch (_) {}
         try { child.kill('SIGTERM'); ok = true; } catch (_) {}
         return ok;
+      },
+
+      // A fiddle collection (showcases/electron-fiddles) is not one app: every
+      // fiddle assembles into its own standalone project and runs as its own
+      // process. Launching one therefore means assembling+building that project
+      // — not building all 44 and opening the collection's home screen.
+      runFiddle: async (showcasePath: string, fiddleId: string): Promise<number> => {
+        if (!/^[a-z0-9][a-z0-9-]*$/.test(fiddleId)) {
+          throw new Error(`Invalid fiddle id: ${fiddleId}`);
+        }
+        const projectDist = path.join(showcasePath, '.assembled', fiddleId, 'dist', 'desktop');
+        const lynxtronExecutable = resolveLynxtronExecutablePath(dbg);
+
+        if (!fs.existsSync(path.join(projectDist, 'main.js'))) {
+          // Assemble + build just this one. The assembler is a plain Node
+          // script, so run the Lynxtron binary in Node mode rather than
+          // depending on a system Node being installed.
+          const args = ['scripts/assemble.mjs', fiddleId, '--build'];
+          emitCommandStart(processOutputBuffer, 'showcase.runFiddle', showcasePath, lynxtronExecutable, args);
+          await runInstallCommand({
+            command: lynxtronExecutable,
+            args,
+            cwd: showcasePath,
+            env: { ...process.env, LYNXTRON_RUN_AS_NODE: '1' },
+            outputBuffer: processOutputBuffer,
+          });
+          if (!fs.existsSync(path.join(projectDist, 'main.js'))) {
+            throw new Error(`Assembling "${fiddleId}" did not produce ${projectDist}/main.js`);
+          }
+        }
+
+        emitCommandStart(processOutputBuffer, 'showcase.runFiddle', showcasePath, lynxtronExecutable, [projectDist]);
+        const child = spawn(lynxtronExecutable, [projectDist], {
+          cwd: showcasePath,
+          stdio: ['ignore', 'pipe', 'pipe'],
+          detached: true,
+          env: showcaseSpawnEnv(showcasePath),
+        });
+        attachProcessOutput(child, 'showcase.runFiddle', processOutputBuffer);
+        return trackRunningShowcase('showcase.runFiddle', child, `fiddle=${fiddleId}`, runningShowcases, dbg);
       },
 
       run: (showcasePath: string): number => {
