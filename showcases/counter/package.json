@@ -5,7 +5,8 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/lynx-community/lynxtron-examples"
+    "url": "https://github.com/lynx-community/lynxtron-examples",
+    "directory": "showcases/counter"
   },
   "scripts": {
     "build": "rspeedy build && rspack build",
