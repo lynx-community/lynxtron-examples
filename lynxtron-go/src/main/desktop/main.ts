@@ -140,20 +140,6 @@ let pendingDeepLinkPayload: HostDeepLinkPayload | null = null;
 let quitFlushTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Register native extensions
-// HTTP service first: it backs the standard Lynx Fetch API for every
-// LynxView in the process (the desktop host ships no HTTP service of its
-// own — without this, UI-side fetch() fails with
-// "request_func is unimplemented").
-try {
-  const registered = require('lynxtron-http-service').setUp();
-  if (registered) {
-    console.log('[PC_Host] HttpService extension registered');
-  } else {
-    console.warn('[PC_Host] HttpService extension skipped');
-  }
-} catch (e) {
-  console.error('[PC_Host] Failed to register lynxtron-http-service:', e);
-}
 try {
   const registered = require('lynxtron-scintilla-editor').setUp();
   if (registered) {

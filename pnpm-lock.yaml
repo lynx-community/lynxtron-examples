@@ -83,9 +83,6 @@ importers:
       chownr:
         specifier: ^3.0.0
         version: 3.0.0
-      lynxtron-http-service:
-        specifier: workspace:*
-        version: link:http-service-extension
       lynxtron-scintilla-editor:
         specifier: workspace:*
         version: link:scintilla-extension
@@ -189,19 +186,6 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.6(@types/debug@4.1.13)(@types/node@22.20.0)(jiti@2.7.0)(jsdom@26.1.0)(terser@5.48.0)
-
-  lynxtron-go/http-service-extension:
-    dependencies:
-      node-addon-api:
-        specifier: ^7.0.0
-        version: 7.1.1
-    devDependencies:
-      '@lynx-js/lynx-library-headers':
-        specifier: 'catalog:'
-        version: 0.0.7
-      cmake-js:
-        specifier: ^7.3.0
-        version: 7.4.0
 
   lynxtron-go/scintilla-extension:
     dependencies:
