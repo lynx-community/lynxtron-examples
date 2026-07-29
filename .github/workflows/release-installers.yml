@@ -33,7 +33,7 @@ jobs:
       # Serialize so the two OS jobs don't race to create the same release.
       max-parallel: 1
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Repo
