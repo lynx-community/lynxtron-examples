@@ -1,5 +1,11 @@
 # lynxtron-go
 
+## 0.0.6
+
+Direct version bump from 0.0.3 to align the release-installers tag naming
+scheme (`lynxtron-go-v<version>`) with the intended installer track;
+0.0.4 and 0.0.5 are intentionally skipped and will not be released.
+
 ## 0.0.3
 
 ### Patch Changes
