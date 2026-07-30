@@ -21,6 +21,32 @@ Verified against the Lynxtron toolchain pinned in `pnpm-workspace.yaml`
 that version's API surface (`@lynx-js/lynxtron/apis`), not merely unimplemented
 in the port.
 
+## What it looks like
+
+The collection's home screen — every fiddle, grouped the way the upstream docs
+group them, with an honest status badge and, for the ones that are not a clean
+port, the reason:
+
+![The Electron Fiddles collection home screen](docs/screenshots/collection-home.png)
+
+A fiddle is one API doing one thing, with the APIs it calls listed under the
+title. Tapping one opens its page in the Lynxtron API reference:
+
+![App Information, showing app.getPath and friends as tappable API chips](docs/screenshots/app-information.png)
+
+Where the port has a real gap, the fiddle says so in one line rather than
+pretending. Dark Mode is `partial` because Lynxtron does not export
+`nativeTheme`, so the theme is applied in-app and cannot follow the OS:
+
+![Dark Mode, with the nativeTheme gap stated under the demo](docs/screenshots/dark-mode.png)
+
+Some of the gaps turned out not to be gaps. The blue strip below is a real
+window-move handle: Chromium's `-webkit-app-region: drag` has a Lynx spelling,
+`-x-app-region: drag`, which is why this fiddle is `working` rather than the
+`partial` it was first catalogued as:
+
+![Custom Drag Region — a frameless window with an in-content title bar](docs/screenshots/custom-drag-region.png)
+
 ## Architecture — loose source, assembled on demand
 
 This follows upstream's model rather than inventing one. Upstream's

@@ -45,7 +45,7 @@
       "name": "@lynxtron-examples/electron-fiddles",
       "description": "Electron docs/fiddles ported to Lynxtron — gallery of API demos",
       "path": "showcases/electron-fiddles",
-      "thumbnail": "showcases/electron-fiddles/thumbnail.svg",
+      "thumbnail": "showcases/electron-fiddles/thumbnail.png",
       "tags": [
         "fiddle",
         "electron",

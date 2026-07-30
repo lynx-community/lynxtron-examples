@@ -57,7 +57,14 @@ function resolveThumbnailUrl(thumbnail: string | null, gitRemote: string, gitBra
   }
   if (!gitRemote) return null;
   const normalized = thumbnail.replace(/\\/g, '/').split('/').map(encodeURIComponent).join('/');
-  return `${gitRemote}/raw/${gitBranch}/${normalized}`;
+  // Point at raw.githubusercontent.com directly rather than github.com/…/raw/…,
+  // which answers 302. Lynx's `<image>` loader reads the URL itself — it does
+  // not go through the window's fetch handler — and does not follow the
+  // redirect, so every thumbnail came up blank in remote mode.
+  const rawHost = gitRemote.replace(/^https:\/\/github\.com\//, 'https://raw.githubusercontent.com/');
+  return rawHost === gitRemote
+    ? `${gitRemote}/raw/${gitBranch}/${normalized}` // non-GitHub remote: leave as-is
+    : `${rawHost}/${gitBranch}/${normalized}`;
 }
 
 function buildShowcaseRegistry() {
