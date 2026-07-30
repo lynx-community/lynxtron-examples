@@ -88,4 +88,16 @@ describe('WorkspaceManager', () => {
     expect(ws).toContain('catalog:');
     expect(ws).toContain('@lynx-js/lynxtron');
   });
+
+  it('allow-lists Lynxtron native packages via pnpm.onlyBuiltDependencies', async () => {
+    // pnpm 10 skips postinstall for third-party deps by default. If we don't
+    // opt in here, @lynx-js/lynxtron's postinstall never fires, its dist/
+    // never appears, and downstream native builds (sqlite3, native-texture)
+    // fail with LNK1104 / "import library not found".
+    await manager.init();
+    const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
+    expect(pkg.pnpm?.onlyBuiltDependencies).toEqual(
+      expect.arrayContaining(['@lynx-js/lynxtron', '@lynx-js/lynxtron-builder'])
+    );
+  });
 });

@@ -31,6 +31,20 @@ const ROOT_DEPENDENCIES: Record<string, string> = {
   '@lynxtron-examples/config': 'latest',
 };
 
+// pnpm 10 refuses to run postinstall scripts for third-party dependencies
+// unless they're allow-listed here. Without this, `@lynx-js/lynxtron`'s
+// postinstall never runs, its `dist/` (Lynxtron runtime binary + import lib)
+// never lands, and downstream native modules — sqlite3 via `lynxtron-rebuild`,
+// or the CMake link step in native-texture-canvas — fail with cryptic
+// LNK1104 / "import library not found" errors.
+const ONLY_BUILT_DEPENDENCIES: string[] = [
+  '@lynx-js/lynxtron',
+  '@lynx-js/lynxtron-builder',
+  '@lynx-js/lynxtron-rebuild',
+  'better-sqlite3',
+  'sqlite3',
+];
+
 function stringifyWorkspaceYaml(): string {
   const lines: string[] = [];
   lines.push('packages:');
@@ -62,6 +76,9 @@ export class WorkspaceManager {
           name: 'lynxtron-go-workspace',
           private: true,
           dependencies: { ...ROOT_DEPENDENCIES },
+          pnpm: {
+            onlyBuiltDependencies: [...ONLY_BUILT_DEPENDENCIES],
+          },
         },
         null,
         2
