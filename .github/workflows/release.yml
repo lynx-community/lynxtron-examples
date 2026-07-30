@@ -7,8 +7,13 @@ name: Release
 #
 # Native installers (dmg/exe) and showcase tarballs are handled by the
 # separate `release-installers.yml` workflow, which is triggered manually
-# so that a fresh set of installer/asset builds can be attached to an
-# existing Release without depending on npm publish state.
+# so that a fresh set of installer/asset builds can be attached to a
+# Release (created on demand) without depending on npm publish state.
+#
+# Note: this pipeline runs `changeset publish --no-git-tag` and passes
+# `createGithubReleases: false` to changesets/action, so no git tags or
+# GitHub Releases are produced here. Installer Releases are created by
+# `release-installers.yml` on demand.
 
 on:
   push:
@@ -53,7 +58,8 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: pnpm run release
+          publish: pnpm run release -- --no-git-tag
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
