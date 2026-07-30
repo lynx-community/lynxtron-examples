@@ -1,6 +1,5 @@
 ---
 '@lynxtron-examples/electron-fiddles': minor
-'@lynxtron-examples/fiddle-kit': minor
 '@lynxtron-examples/config': patch
 'lynxtron-go': minor
 ---
@@ -23,9 +22,11 @@ shared a single main process, the ones touching app-global state
 (`Menu.setApplicationMenu`, `app.dock.setMenu`,
 `app.setAsDefaultProtocolClient`) silently overwrote each other.
 
-- `fiddle-kit`: new package holding the shared bridge helpers, Lynx UI kit, and
-  runtime access to native classes the ESM shim omits. A copy travels with every
-  assembled project so the output stays runnable on its own.
+- `kit/` (`@lynxtron-examples/fiddle-kit`): the shared bridge helpers, Lynx UI
+  kit, and runtime access to native classes the ESM shim omits. It ships inside
+  the showcase as a `file:` dependency rather than as an independently released
+  workspace package — a fetched showcase has no monorepo to resolve
+  `workspace:*` against, and the kit is private so it cannot be published.
 - `config`: `createShowcaseConfig` gains `server` (and `entries`, for multi-entry
   showcases).
 - `lynxtron-go`: the gallery bakes in the fiddle catalog and lists all 55 fiddles
