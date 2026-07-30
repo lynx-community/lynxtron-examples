@@ -14,8 +14,10 @@ on:
       tag:
         description: >
           GitHub Release tag to attach assets to. If the tag/Release does
-          not exist yet, it will be created automatically.
-          Defaults to `lynxtron-go-v<current lynxtron-go/package.json version>`.
+          not exist yet, it will be created automatically. When left
+          empty, the tag defaults to `lynxtron-go-v<version>` on `main`
+          (tracking Changesets patch bumps), or
+          `lynxtron-go-v<version>-<sha6>` on any other branch.
         required: false
         type: string
 
@@ -57,11 +59,20 @@ jobs:
         shell: bash
         run: |
           if [ -n "${{ inputs.tag }}" ]; then
-            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+            tag="${{ inputs.tag }}"
           else
             version=$(node -p "require('./lynxtron-go/package.json').version")
-            echo "tag=lynxtron-go-v${version}" >> "$GITHUB_OUTPUT"
+            # main: v<version> (stable, tracks Changesets patch bumps)
+            # other branches: v<version>-<sha6> (pre-release; disambiguates
+            # per-commit builds so they don't clobber the stable Release)
+            if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+              tag="lynxtron-go-v${version}"
+            else
+              sha6=$(printf '%s' "$GITHUB_SHA" | cut -c1-6)
+              tag="lynxtron-go-v${version}-${sha6}"
+            fi
           fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Import macOS signing certificate
         if: runner.os == 'macOS'
