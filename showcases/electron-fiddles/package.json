@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@lynxtron-examples/config": "workspace:*",
-    "@lynxtron-examples/fiddle-kit": "workspace:*",
+    "@lynxtron-examples/fiddle-kit": "file:./kit",
     "@lynx-js/react": "catalog:",
     "@lynx-js/react-rsbuild-plugin": "catalog:",
     "@lynx-js/rspeedy": "catalog:",

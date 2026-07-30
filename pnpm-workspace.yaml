@@ -2,7 +2,6 @@ packages:
   - 'packages/*'
   - 'showcases/*'
   - 'lynxtron-go'
-  - 'showcases/electron-fiddles/kit'
   - 'lynxtron-go/scintilla-extension'
 
 catalog:

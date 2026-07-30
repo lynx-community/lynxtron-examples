@@ -371,8 +371,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/config
       '@lynxtron-examples/fiddle-kit':
-        specifier: workspace:*
-        version: link:kit
+        specifier: file:./kit
+        version: file:showcases/electron-fiddles/kit
       '@rspack/cli':
         specifier: 'catalog:'
         version: 1.7.12(@rspack/core@1.7.12(@swc/helpers@0.5.23))(@types/express@4.17.25)(tslib@2.8.1)(webpack@5.107.2)
@@ -388,8 +388,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-
-  showcases/electron-fiddles/kit: {}
 
   showcases/file-explorer:
     dependencies:
@@ -1289,6 +1287,9 @@ packages:
   '@lynx-js/websocket@0.0.4':
     resolution: {integrity: sha512-yXuMiTALLNvkDz8hG+0KdkBodnyJDvyfr8bdIq6zMP9X8JAoBC/czc1HIhUgYEJ3Zee5F/vGKjNxcoSx2t1E6w==}
     engines: {node: '>=18'}
+
+  '@lynxtron-examples/fiddle-kit@file:showcases/electron-fiddles/kit':
+    resolution: {directory: showcases/electron-fiddles/kit, type: directory}
 
   '@malept/cross-spawn-promise@1.1.1':
     resolution: {integrity: sha512-RTBGWL5FWQcg9orDOCcp4LvItNzUPcyEU9bwaeJX0rJ1IQxzucC48Y0/sQLp/g6t99IQgAlGIaesJS+gTn7tVQ==}
@@ -6795,6 +6796,8 @@ snapshots:
   '@lynx-js/websocket@0.0.4':
     dependencies:
       eventemitter3: 5.0.4
+
+  '@lynxtron-examples/fiddle-kit@file:showcases/electron-fiddles/kit': {}
 
   '@malept/cross-spawn-promise@1.1.1':
     dependencies:
