@@ -17,7 +17,7 @@ tree: every upstream directory has exactly one row below, and there are no rows
 that upstream does not have.
 
 Verified against the Lynxtron toolchain pinned in `pnpm-workspace.yaml`
-(**0.0.7**). Where a status says "N/A", it means the capability is absent from
+(**0.0.8**). Where a status says "N/A", it means the capability is absent from
 that version's API surface (`@lynx-js/lynxtron/apis`), not merely unimplemented
 in the port.
 
@@ -152,10 +152,10 @@ so fiddles use ergonomic helpers:
 - Main→UI events arrive via `lynx.getJSModule('GlobalEventEmitter')`; there is **no** bare `GlobalEventEmitter` global.
 - `Notification` exists on the native `require('lynxtron')` object but is **not** re-exported by the package's ESM shim — accessed via the kit's `lynx-native.ts`.
 - Use the lowercase `nativeImage` namespace, not a `NativeImage` class.
-- Not available in 0.0.7: `globalShortcut`, `nativeTheme`, `desktopCapturer`, `webContents`, `BaseWindow.setRepresentedFilename` / `setDocumentEdited`, `webContents.startDrag`, `titleBarOverlay` / safe-area insets.
+- Not available in 0.0.8: `globalShortcut`, `nativeTheme`, `desktopCapturer`, `webContents`, `BaseWindow.setRepresentedFilename` / `setDocumentEdited`, `webContents.startDrag`, `titleBarOverlay` / safe-area insets.
 - **`-x-app-region: drag`** is Lynx's spelling of Chromium's `-webkit-app-region: drag`; it is what makes a custom title bar in a frameless window a window-move handle (documented on `BaseWindow`'s `system-context-menu` event).
 - **Keyboard events exist**: `bindkeydown` / `bindkeyup`, plus `global-bindkeydown` / `global-bindkeyup` which fire regardless of focused node — the analogue of a `window` listener. The event carries `key`.
-- New in 0.0.7 and unused by upstream fiddles: `powerMonitor`, `lynxBridge`.
+- New in 0.0.7+ and unused by upstream fiddles: `powerMonitor`, `lynxBridge`.
 - Also missing from the ESM shim (reachable the same way as `Notification`): `TouchBar*`, `UtilityProcess`, `Task`, `JumpListItem`.
 
 ## Develop

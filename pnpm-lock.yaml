@@ -350,11 +350,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.7
+        version: 0.0.8
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.7(@rsbuild/core@1.7.5)
+        version: 0.0.8(@rsbuild/core@1.7.5)
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
