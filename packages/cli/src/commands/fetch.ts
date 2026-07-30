@@ -142,9 +142,12 @@ async function fetchRepoShowcase(
   await manager.rewriteWorkspaceRefs(resolved.name);
 
   emit({ type: 'install-start', name: resolved.name });
-  execCapture(`pnpm install --filter=./showcases/${resolved.name}...`, {
-    cwd: manager.getRootPath(),
-  });
+  execCapture(
+    `pnpm install --filter=./showcases/${resolved.name}... --registry=https://registry.npmjs.org/`,
+    {
+      cwd: manager.getRootPath(),
+    }
+  );
   emit({ type: 'install-success', name: resolved.name });
 
   // GitHub source tarballs never carry `dist/` (it is gitignored), so build

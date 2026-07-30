@@ -1,7 +1,8 @@
 name: Release Installers
 
 # Build native installers (mac dmg / win exe) and showcase tarballs, then
-# attach them as assets to an existing GitHub Release.
+# attach them as assets to a GitHub Release (created on demand if the tag
+# does not exist yet).
 #
 # This workflow is deliberately **manual-only** and independent of the npm
 # publish pipeline in `release.yml`, so a broken installer build can be
@@ -12,7 +13,8 @@ on:
     inputs:
       tag:
         description: >
-          Existing GitHub Release tag to attach assets to.
+          GitHub Release tag to attach assets to. If the tag/Release does
+          not exist yet, it will be created automatically.
           Defaults to `lynxtron-go-v<current lynxtron-go/package.json version>`.
         required: false
         type: string
@@ -33,7 +35,7 @@ jobs:
       # Serialize so the two OS jobs don't race to create the same release.
       max-parallel: 1
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Repo

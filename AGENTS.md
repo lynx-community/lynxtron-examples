@@ -58,7 +58,8 @@ When implementing or reviewing a feature, explicitly identify:
   - `release.yml` — on push to `main`, opens a "Version Packages" PR; merging it publishes
     updated `@lynxtron-examples/*` packages to npm (token-based, `NPM_CONFIG_PROVENANCE: true`)
   - `release-installers.yml` — **manual only** (`workflow_dispatch`); builds mac dmg + win exe
-    + showcase `.tgz` and attaches them to an existing `lynxtron-go-v<version>` Release.
+    + showcase `.tgz` and attaches them to a `lynxtron-go-v<version>` Release (created on
+    demand if the tag does not exist yet).
     Runs independently of `release.yml` so installer/asset failures don't block npm publish
     and vice-versa.
 - Showcases and `lynxtron-go` are `private` but still versioned/changelogged
