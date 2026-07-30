@@ -29,6 +29,13 @@ const CATALOG_VERSIONS: Record<string, string> = {
 const ROOT_DEPENDENCIES: Record<string, string> = {
   ...CATALOG_VERSIONS,
   '@lynxtron-examples/config': 'latest',
+  // @lynx-js/lynxtron-builder's postinstall runs patch-package against
+  // `node_modules/app-builder-lib` and `node_modules/dmg-builder`. pnpm does not
+  // hoist them, so unless the workspace root depends on them itself the patch
+  // step errors and the whole install — and therefore every fetched showcase —
+  // fails. The source monorepo carries them at its root for the same reason.
+  'app-builder-lib': '26.8.1',
+  'dmg-builder': '26.8.1',
 };
 
 // pnpm 10 refuses to run postinstall scripts for third-party dependencies
@@ -49,6 +56,16 @@ function stringifyWorkspaceYaml(): string {
   const lines: string[] = [];
   lines.push('packages:');
   lines.push('  - "showcases/*"');
+  lines.push('');
+  // pnpm 11 stopped reading `pnpm.onlyBuiltDependencies` from package.json and
+  // reads it from here instead. The workspace pins no packageManager, so it
+  // runs whatever pnpm the machine has — and under 11 the old location was
+  // silently ignored, which skipped @lynx-js/lynxtron's postinstall. That
+  // postinstall downloads the runtime binary, so every fetched showcase then
+  // installed "successfully" and could not run. Written in both places so
+  // either pnpm major works.
+  lines.push('onlyBuiltDependencies:');
+  for (const name of ONLY_BUILT_DEPENDENCIES) lines.push(`  - "${name}"`);
   lines.push('');
   lines.push('catalog:');
   for (const [name, version] of Object.entries(CATALOG_VERSIONS)) {
@@ -75,6 +92,12 @@ export class WorkspaceManager {
         {
           name: 'lynxtron-go-workspace',
           private: true,
+          // Pin the same pnpm the monorepo uses. Without this the workspace
+          // falls through to whatever pnpm is on the machine; pnpm 11 turns
+          // ignored build scripts into a hard error and no longer reads
+          // `pnpm.onlyBuiltDependencies` from package.json, so fetching a
+          // showcase failed outright on a machine with pnpm 11 installed.
+          packageManager: 'pnpm@10.15.1',
           dependencies: { ...ROOT_DEPENDENCIES },
           pnpm: {
             onlyBuiltDependencies: [...ONLY_BUILT_DEPENDENCIES],

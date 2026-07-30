@@ -50,21 +50,25 @@ const isLocalRegistry = showcaseSourceMode === 'local-registry';
 const isLocalWorkspace = showcaseSourceMode === 'local-workspace';
 const registryPath = path.resolve(monorepoRoot, 'showcase-registry.json');
 
-function resolveThumbnailUrl(thumbnail: string | null, gitRemote: string, gitBranch: string): string | null {
+// Thumbnails are staged into the app's own bundle rather than linked at their
+// origin. Lynx's `<image>` loader reads the URL itself — it does not go through
+// the window's fetch handler — and it does not load https at all, so every
+// remote-mode thumbnail came up blank even once the URL answered 200. Copying
+// them in makes the gallery work in both source modes and leaves the packaged
+// app self-contained.
+const THUMBNAIL_STAGE = path.resolve(__dirname, 'thumbnails');
+fs.rmSync(THUMBNAIL_STAGE, { recursive: true, force: true });
+
+function resolveThumbnailUrl(thumbnail: string | null): string | null {
   if (!thumbnail) return null;
-  if (isLocalSourceMode) {
-    return pathToFileURL(path.resolve(monorepoRoot, thumbnail)).href;
-  }
-  if (!gitRemote) return null;
-  const normalized = thumbnail.replace(/\\/g, '/').split('/').map(encodeURIComponent).join('/');
-  // Point at raw.githubusercontent.com directly rather than github.com/…/raw/…,
-  // which answers 302. Lynx's `<image>` loader reads the URL itself — it does
-  // not go through the window's fetch handler — and does not follow the
-  // redirect, so every thumbnail came up blank in remote mode.
-  const rawHost = gitRemote.replace(/^https:\/\/github\.com\//, 'https://raw.githubusercontent.com/');
-  return rawHost === gitRemote
-    ? `${gitRemote}/raw/${gitBranch}/${normalized}` // non-GitHub remote: leave as-is
-    : `${rawHost}/${gitBranch}/${normalized}`;
+  const source = path.resolve(monorepoRoot, thumbnail);
+  if (!fs.existsSync(source)) return null;
+  // Flatten, so showcases cannot collide on a bare `thumbnail.png`.
+  const staged = thumbnail.replace(/[\\/]/g, '__');
+  fs.mkdirSync(THUMBNAIL_STAGE, { recursive: true });
+  fs.copyFileSync(source, path.join(THUMBNAIL_STAGE, staged));
+  // rspack copies ./thumbnails -> dist/desktop/thumbnails (see rspack.config.ts).
+  return pathToFileURL(path.resolve(__dirname, 'dist', 'desktop', 'thumbnails', staged)).href;
 }
 
 function buildShowcaseRegistry() {
@@ -104,7 +108,7 @@ function buildShowcaseRegistry() {
         targets: Array.isArray(s.targets) ? s.targets : ['desktop'],
         path: s.path || undefined,
         url,
-        thumbnail: resolveThumbnailUrl(s.thumbnail ?? null, gitRemote, gitBranch),
+        thumbnail: resolveThumbnailUrl(s.thumbnail ?? null),
       };
     });
   } catch (e) {
