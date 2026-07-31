@@ -119,7 +119,7 @@ importers:
     devDependencies:
       '@lynx-js/config-rsbuild-plugin':
         specifier: 'catalog:'
-        version: 0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15)))
+        version: 0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2))
       '@lynx-js/lynx-core':
         specifier: latest
         version: 0.1.4
@@ -137,7 +137,7 @@ importers:
         version: 0.18.1(@lynx-js/lynx-core@0.1.4)(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(tslib@2.8.1)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15))
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
       '@lynx-js/type-config':
         specifier: 'catalog:'
         version: 4.1.3
@@ -357,19 +357,19 @@ importers:
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.8(@rsbuild/core@1.7.5)
+        version: 0.0.8(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
-        version: 0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31)
+        version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/react-rsbuild-plugin':
         specifier: 'catalog:'
-        version: 0.16.3(@lynx-js/react@0.120.0(@lynx-js/types@3.8.0)(@types/react@18.3.31))(tslib@2.8.1)(webpack@5.107.2)
+        version: 0.18.1(@lynx-js/lynx-core@0.1.4)(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(tslib@2.8.1)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.14.5(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@rspack/core@1.7.12(@swc/helpers@0.5.23))(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15))
       '@lynx-js/types':
         specifier: 'catalog:'
-        version: 3.8.0
+        version: 4.1.0
       '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -378,10 +378,10 @@ importers:
         version: file:showcases/electron-fiddles/kit
       '@rspack/cli':
         specifier: 'catalog:'
-        version: 1.7.12(@rspack/core@1.7.12(@swc/helpers@0.5.23))(@types/express@4.17.25)(tslib@2.8.1)(webpack@5.107.2)
+        version: 2.1.7(@rspack/core@2.1.7(@swc/helpers@0.5.23))
       '@rspack/core':
         specifier: 'catalog:'
-        version: 1.7.12(@swc/helpers@0.5.23)
+        version: 2.1.7(@swc/helpers@0.5.23)
       concurrently:
         specifier: 'catalog:'
         version: 8.2.2
@@ -1343,12 +1343,6 @@ packages:
   '@manypkg/get-packages@1.1.3':
     resolution: {integrity: sha512-fo+QhuU3qE/2TQMQmbVMqaQ6EWbMhi4ABWP+O4AM1NqPBuy0OrApV5LO6BrrgnhtAHS2NH6RrVk9OL181tTi8A==}
 
-  '@napi-rs/wasm-runtime@1.1.5':
-    resolution: {integrity: sha512-AWPoBRJ9tsnVhor4sjO7rkni+7p+2IAEFj6cx06UgP10jkQHqay/36uRV/bFkgrh18D9vb4cr8Q0Pthskgzy+Q==}
-    peerDependencies:
-      '@emnapi/core': ^1.7.1
-      '@emnapi/runtime': ^1.7.1
-
   '@napi-rs/wasm-runtime@1.1.6':
     resolution: {integrity: sha512-ZLv/JdUfkvOy9eCnnBaGfiO+XimbjebAeO+MRQqD/B+FR1tnRN0tpKSJHRbE8sFfS6aqsXZ67TQjfwfsxULVbg==}
     peerDependencies:
@@ -1416,79 +1410,66 @@ packages:
     resolution: {integrity: sha512-n1GJHPOvpIfhi3TmrCeh6S6URt9BFCt0KQE3qvexyGCTAKpR4Lg+eWvNZEqu7epxwus/8ElT3hacYEucm49SZg==}
     cpu: [arm]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-arm-musleabihf@4.62.2':
     resolution: {integrity: sha512-JqgflS8wEB+UXV/vS1RpRbifGBeN4D5lz8D8oOFbFZw4vedvdOgCFAjfBmIMdW3yL10XpQQ0Ambepw6MXrhOnA==}
     cpu: [arm]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-arm64-gnu@4.62.2':
     resolution: {integrity: sha512-wnFJkogWvN4jm/hQRF2UBaeUmk20j5+DmHvoyWii2b8HJDyvz1MF2OU/6ynXt2KR63rbZLWkFpoytpdc/yBuSA==}
     cpu: [arm64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-arm64-musl@4.62.2':
     resolution: {integrity: sha512-HVu2bp0zhvJ8xHEV9+UUs7S90VadmBSY3LcIMvozbPo4AuMGDWlz3ymHLHZPX4hR67TKTt8Qp5PJ5RBg/i+RMQ==}
     cpu: [arm64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-loong64-gnu@4.62.2':
     resolution: {integrity: sha512-mQqqAV8QaoSgr9I2fKDLY2BAVvmKjWoGiu/cSYQonsLvtqwEn1E4QYfnCOcp5zoEqNhsDYin1s6jx/VJmrxlZg==}
     cpu: [loong64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-loong64-musl@4.62.2':
     resolution: {integrity: sha512-IxKLoxCQ2IWi6bT2akyDUBGsOImDKB+sPp4EsTmwFQ/fMwpCKm8uLSSgP/Kx/QYUgKis6SEZ5/Nlhup0DIA0PQ==}
     cpu: [loong64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-ppc64-gnu@4.62.2':
     resolution: {integrity: sha512-Mk5ha2RQSgyFfmYYLkBpPnUk8D8FriBxesO1u9O75X0mHgXL1UQcH5Itl2lurWL2tj0RxV9b9tJgipac0hRY9A==}
     cpu: [ppc64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-ppc64-musl@4.62.2':
     resolution: {integrity: sha512-CjvEnqJL/0/TQ3TXX3OPIJ/kmBellrWd4heXUmHeJlTnmwjKpSJzoehLaL6Xk0ZnMHBu9dZuFADNOrtjF4v+2w==}
     cpu: [ppc64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-riscv64-gnu@4.62.2':
     resolution: {integrity: sha512-1SiZbzwdkaDURsew/tSOrooKiYy7EQGT6m8ufavAi9NEyQb/6VuIxFXAL1fqa4iZe3g4NbNk4P7J32z2tw5Mgg==}
     cpu: [riscv64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-musl@4.62.2':
     resolution: {integrity: sha512-nQts12zJ3NQRoE6uYljOH89v7szzLDvG2JD/vsX+vGXU8w/At1GowTZ5/7qeFQ8m7L55rpR8Okugnuo5bgjy2Q==}
     cpu: [riscv64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-linux-s390x-gnu@4.62.2':
     resolution: {integrity: sha512-E9/ll019jhPIJgpzfZoIkBGhcz+kKNgVWYRY0zr9srBdPPFVpvOKW8VaJKUbeK+eZXyQF9ltME+Kk6affeaPgg==}
     cpu: [s390x]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-x64-gnu@4.62.2':
     resolution: {integrity: sha512-5BqxR/pshjey51iliyzTD5Xi3EN0aLmQ2lZ3lvefVV9c82BvrLo2/6OT55iifpWBufs6kdwWbuOKS841DrmK9A==}
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   '@rollup/rollup-linux-x64-musl@4.62.2':
     resolution: {integrity: sha512-uNN83XxQrRAh/w0/pmAfibcwyb6YWt4gP+dpnQKPVJshAloQ785ii8CT8ZCIxkGg9opVsvAlGhFitSm6D1Jjpg==}
     cpu: [x64]
     os: [linux]
-    libc: [musl]
 
   '@rollup/rollup-openbsd-x64@4.62.2':
     resolution: {integrity: sha512-srjEIxSH3LRnJN6THczDHWQplqEMFiAJrTab0msUryh9kwNpkICf3Ea6q6MN/2cZwRFUNx5w+h6Hpi4QuHS6Zg==}
@@ -1605,37 +1586,31 @@ packages:
     resolution: {integrity: sha512-VFB+YXM3kZ6IIuLV64H3vgnwqvQIIaqfR/aeGwuxYvwcZsrgblSBmXMeDULdgDjqP8Yr0VaFMBBiD9OtG5KdFw==}
     cpu: [arm64]
     os: [linux]
-    libc: [glibc]
 
   '@rspack/binding-linux-arm64-musl@2.1.7':
     resolution: {integrity: sha512-Mzbxyg0aJ+ITj526Iuz0enEDYY6WxhFIwEKXqwjQh+Vpd5v/+aPzPo83sSQVX/3puBV1sbmviTURbh6N9e1fvA==}
     cpu: [arm64]
     os: [linux]
-    libc: [musl]
 
   '@rspack/binding-linux-riscv64-gnu@2.1.7':
     resolution: {integrity: sha512-mpazwgT/Pse1720mvEJsoXfPkJ+enj0xUqpbe/wL6aedwjGT+9jJNB8HTJXE4XBX0UO7umGqcJMeKA6YsD2CDA==}
     cpu: [riscv64]
     os: [linux]
-    libc: [glibc]
 
   '@rspack/binding-linux-riscv64-musl@2.1.7':
     resolution: {integrity: sha512-oU/l3soPRsDEWn7KZic+npyTMM2N1kRdHjoJ+L5IUBXs8bjdTXPLoyTbTdIOza5ZSoT4+UeEiEryj4BB0tQE5w==}
     cpu: [riscv64]
     os: [linux]
-    libc: [musl]
 
   '@rspack/binding-linux-x64-gnu@2.1.7':
     resolution: {integrity: sha512-7Gtpl3h3jtnOpk1mYQE8mRndXAO2ibI8mnAbs7klevdKey+ZHneWMoMi2yOMQhhI/ifWEFxDzyGJ8bdxo0XTsA==}
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   '@rspack/binding-linux-x64-musl@2.1.7':
     resolution: {integrity: sha512-w+whI2Uy+DYkGN+MVkzMFWweL7B/s1gMqX+nvTE1vhOy3hGV0VyA9H6lqWjSD3I+eGkpYhN9Pr244cYnLpZOUQ==}
     cpu: [x64]
     os: [linux]
-    libc: [musl]
 
   '@rspack/binding-wasm32-wasi@2.1.7':
     resolution: {integrity: sha512-cDVgvzRdTgxaeM+a5Lx0+7/VAvunvwO0wNtQ3ATQGOtFCW5b7cUzhNPcytH5ZSJTnFWuxinlGwtar5yfcnkdZQ==}
@@ -1698,25 +1673,21 @@ packages:
     resolution: {integrity: sha512-wGvkxm2G4mNTztslaOzLzx5JuySQSy5DcOWEZxHcjJJzp5L3ODbYLK18HtUc6cvmaVOmjaGrrYPrqJJ0hHTVFg==}
     cpu: [arm64]
     os: [linux]
-    libc: [glibc]
 
   '@rspack/resolver-binding-linux-arm64-musl@0.2.8':
     resolution: {integrity: sha512-EqRJ9zLQsLAvyDKJKVZ45BSqRIMS12f5HtJdy3KkAHU14ZmsGv8e5IKkwUZN5CNBRad8xVlOMMx3dOfF4whJzg==}
     cpu: [arm64]
     os: [linux]
-    libc: [musl]
 
   '@rspack/resolver-binding-linux-x64-gnu@0.2.8':
     resolution: {integrity: sha512-eXbeotNCTntL4/+mxJRVCxK63YeWzTfp0F3POeHJFSs6Nt0f2J/mZNFlasJmd6xm7zvE80h/HWOwbwjRBLcElA==}
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   '@rspack/resolver-binding-linux-x64-musl@0.2.8':
     resolution: {integrity: sha512-KWFHlOWGkT+eMngoUgPGXrDi+rU04VCh9jyk0U6Ot2RTWvhGxwKykjmLS+CWZI/EBrzr9A6g2U3jzKTMNz9oCw==}
     cpu: [x64]
     os: [linux]
-    libc: [musl]
 
   '@rspack/resolver-binding-wasm32-wasi@0.2.8':
     resolution: {integrity: sha512-I6GIhgICFViE88jejIV74oiiWHnpLpQ5ogaZM1ozM9KDnfqcHoX0IVEyrIh5KqA8iLDyhuoFSW+Hf0qN7VTBBQ==}
@@ -1761,9 +1732,6 @@ packages:
   '@testing-library/jest-dom@6.9.1':
     resolution: {integrity: sha512-zIcONa+hVtVSSep9UT3jZ5rizo2BsxgyDYU7WFD5eICBE7no3881HGeb/QkGfsJs6JTkY1aQhT7rIPC7e+0nnA==}
     engines: {node: '>=14', npm: '>=6', yarn: '>=1'}
-
-  '@tybys/wasm-util@0.10.2':
-    resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
 
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
@@ -6303,17 +6271,12 @@ snapshots:
     dependencies:
       '@lynx-js/webpack-runtime-globals': 0.0.7
 
-  '@lynx-js/config-rsbuild-plugin@0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15)))':
-    dependencies:
-      '@lynx-js/rspeedy': 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15))
-      '@lynx-js/type-config': 4.1.1
-
   '@lynx-js/config-rsbuild-plugin@0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2))':
     dependencies:
       '@lynx-js/rspeedy': 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
       '@lynx-js/type-config': 4.1.1
 
-  '@lynx-js/css-extract-webpack-plugin@0.10.0(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))':
+  '@lynx-js/css-extract-webpack-plugin@0.10.0(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))':
     dependencies:
       '@lynx-js/template-webpack-plugin': 0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)
 
@@ -6369,16 +6332,16 @@ snapshots:
 
   '@lynx-js/react-alias-rsbuild-plugin@0.18.1': {}
 
-  '@lynx-js/react-refresh-webpack-plugin@0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1)))':
+  '@lynx-js/react-refresh-webpack-plugin@0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)))':
     dependencies:
-      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))
+      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))
 
   '@lynx-js/react-rsbuild-plugin@0.18.1(@lynx-js/lynx-core@0.1.4)(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(tslib@2.8.1)':
     dependencies:
-      '@lynx-js/css-extract-webpack-plugin': 0.10.0(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))
+      '@lynx-js/css-extract-webpack-plugin': 0.10.0(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))
       '@lynx-js/react-alias-rsbuild-plugin': 0.18.1
-      '@lynx-js/react-refresh-webpack-plugin': 0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1)))
-      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))
+      '@lynx-js/react-refresh-webpack-plugin': 0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)))
+      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))
       '@lynx-js/runtime-wrapper-webpack-plugin': 0.2.3
       '@lynx-js/template-webpack-plugin': 0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)
       '@lynx-js/use-sync-external-store': 1.5.0(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))
@@ -6390,7 +6353,7 @@ snapshots:
       - '@lynx-js/lynx-core'
       - tslib
 
-  '@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))':
+  '@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))':
     dependencies:
       '@lynx-js/debug-metadata': 0.1.0
       '@lynx-js/template-webpack-plugin': 0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)
@@ -6577,13 +6540,6 @@ snapshots:
       fs-extra: 8.1.0
       globby: 11.1.0
       read-yaml-file: 1.1.0
-
-  '@napi-rs/wasm-runtime@1.1.5(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)':
-    dependencies:
-      '@emnapi/core': 1.11.2
-      '@emnapi/runtime': 1.11.2
-      '@tybys/wasm-util': 0.10.2
-    optional: true
 
   '@napi-rs/wasm-runtime@1.1.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)':
     dependencies:
@@ -7051,7 +7007,7 @@ snapshots:
 
   '@rspack/resolver-binding-wasm32-wasi@0.2.8(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)':
     dependencies:
-      '@napi-rs/wasm-runtime': 1.1.5(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)
+      '@napi-rs/wasm-runtime': 1.1.6(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
@@ -7104,11 +7060,6 @@ snapshots:
       dom-accessibility-api: 0.6.3
       picocolors: 1.1.1
       redent: 3.0.0
-
-  '@tybys/wasm-util@0.10.2':
-    dependencies:
-      tslib: 2.8.1
-    optional: true
 
   '@tybys/wasm-util@0.10.3':
     dependencies:
