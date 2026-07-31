@@ -39,22 +39,25 @@ const STORAGE_KEY = 'cross-platform-notes.v1';
 
 const DEFAULT_NOTES: NoteRecord[] = [
   {
-    id: 'note-1',
-    title: 'Project kickoff',
-    content: '# Project kickoff\n\nA small note shell that proves the same UI code runs on desktop and web.',
-    updatedAt: '2026-03-30T00:00:00.000Z',
+    id: 'release-plan',
+    title: 'Desktop release plan',
+    content:
+      '# Desktop release plan\n\nShip the Lynx UI, verify native capabilities, and share one bundle across hosts.',
+    updatedAt: '2026-06-17T09:30:00.000Z',
   },
   {
-    id: 'note-2',
-    title: 'Cross-platform scope',
-    content: '# Cross-platform scope\n\nLeft list, right editor, bottom status bar.',
-    updatedAt: '2026-03-29T00:00:00.000Z',
+    id: 'design-review',
+    title: 'Design review',
+    content:
+      '# Design review\n\nPolish navigation, canvas tools, and the platform status bar.',
+    updatedAt: '2026-06-16T14:15:00.000Z',
   },
   {
-    id: 'note-3',
-    title: 'Follow-up',
-    content: '# Follow-up\n\nStorage and host wiring come next.',
-    updatedAt: '2026-03-28T00:00:00.000Z',
+    id: 'platform-checklist',
+    title: 'Platform checklist',
+    content:
+      '# Platform checklist\n\n- Desktop: filesystem\n- Web: localStorage\n- UI: shared Lynx bundle',
+    updatedAt: '2026-06-15T11:00:00.000Z',
   },
 ];
 
@@ -67,7 +70,11 @@ function nowIso(): string {
 }
 
 function makeExcerpt(content: string): string {
-  const firstLine = content.split('\n').map(line => line.trim()).find(line => line.length > 0) ?? '';
+  const firstLine =
+    content
+      .split('\n')
+      .map((line) => line.trim())
+      .find((line) => line.length > 0) ?? '';
   const stripped = firstLine.replace(/^#+\s*/, '');
   return stripped.length > 72 ? `${stripped.slice(0, 69)}...` : stripped;
 }
@@ -121,7 +128,7 @@ function sortNotes(notes: NoteRecord[]): NoteRecord[] {
 function createNotesApi(): NotesApi {
   return {
     list() {
-      return sortNotes(readState().notes).map(note => ({
+      return sortNotes(readState().notes).map((note) => ({
         id: note.id,
         title: note.title,
         excerpt: makeExcerpt(note.content),
@@ -130,7 +137,7 @@ function createNotesApi(): NotesApi {
     },
 
     get(id: string) {
-      return readState().notes.find(note => note.id === id) ?? null;
+      return readState().notes.find((note) => note.id === id) ?? null;
     },
 
     save(note: NoteInput) {
@@ -141,8 +148,10 @@ function createNotesApi(): NotesApi {
         content: note.content,
         updatedAt: nowIso(),
       };
-      const nextNotes = state.notes.some(existing => existing.id === note.id)
-        ? state.notes.map(existing => (existing.id === note.id ? updated : existing))
+      const nextNotes = state.notes.some((existing) => existing.id === note.id)
+        ? state.notes.map((existing) =>
+            existing.id === note.id ? updated : existing,
+          )
         : [updated, ...state.notes];
       persist(nextNotes);
       return updated;
@@ -153,8 +162,8 @@ function createNotesApi(): NotesApi {
       const nextId = `note-${Date.now().toString(36)}`;
       const created: NoteRecord = {
         id: nextId,
-        title: 'Untitled note',
-        content: '# Untitled note\n\nStart typing here.',
+        title: 'New idea',
+        content: '# New idea\n\nCapture the next product thought here.',
         updatedAt: nowIso(),
       };
       persist([created, ...state.notes]);
@@ -163,7 +172,7 @@ function createNotesApi(): NotesApi {
 
     remove(id: string) {
       const state = readState();
-      persist(state.notes.filter(note => note.id !== id));
+      persist(state.notes.filter((note) => note.id !== id));
     },
 
     platform() {

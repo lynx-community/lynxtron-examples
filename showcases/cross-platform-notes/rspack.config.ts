@@ -9,10 +9,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
 const WEB_PLATFORM_STATIC_DIR = path.resolve(
-  path.dirname(require.resolve('@lynx-js/web-rsbuild-server-middleware/dist/index.js')),
-  '../www/static',
+  path.dirname(require.resolve('@lynx-js/web-core/package.json')),
+  'dist/client_prod/static',
 );
-const WEB_PLATFORM_BASE_URL = '/__lynx_web__/';
+const WEB_PLATFORM_BASE_URL = './__lynx_web__/';
 const WEB_PLATFORM_PLACEHOLDER = 'http://lynx-web-core-mocked.localhost/';
 
 const sharedTsRule = {
@@ -23,14 +23,19 @@ const sharedTsRule = {
   type: 'javascript/auto',
 };
 
-function rewriteWebPlatformAsset(content: Buffer, absolutePath: string): Buffer {
+function rewriteWebPlatformAsset(
+  content: Buffer,
+  absolutePath: string,
+): Buffer {
   const extname = path.extname(absolutePath).toLowerCase();
   if (!['.css', '.html', '.js', '.mjs'].includes(extname)) {
     return content;
   }
 
   return Buffer.from(
-    content.toString('utf-8').replaceAll(WEB_PLATFORM_PLACEHOLDER, WEB_PLATFORM_BASE_URL),
+    content
+      .toString('utf-8')
+      .replaceAll(WEB_PLATFORM_PLACEHOLDER, WEB_PLATFORM_BASE_URL),
     'utf-8',
   );
 }
@@ -85,12 +90,21 @@ const webConfig = defineConfig({
   target: 'web',
   entry: {
     'web-host': './src/main/web/web-host.ts',
+    'web-native-modules': {
+      import: './src/main/web/native-modules.ts',
+      library: {
+        type: 'module',
+      },
+    },
   },
   output: {
     path: path.resolve(__dirname, 'dist/web/'),
     filename: '[name].js',
   },
   module: { rules: [sharedTsRule] },
+  experiments: {
+    outputModule: true,
+  },
   plugins: [
     new rspack.CopyRspackPlugin({
       patterns: [
@@ -107,10 +121,10 @@ const webConfig = defineConfig({
     proxy: [
       {
         context: (pathname: string) =>
-          pathname.endsWith('.bundle')
-          || pathname.endsWith('.map')
-          || pathname.includes('__rspeedy')
-          || pathname.includes('/static/'),
+          pathname.endsWith('.bundle') ||
+          pathname.endsWith('.map') ||
+          pathname.includes('__rspeedy') ||
+          pathname.includes('/static/'),
         target: 'http://localhost:5969',
       },
     ],

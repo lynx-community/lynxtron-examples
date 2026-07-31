@@ -6,6 +6,11 @@ Cross-Platform Notes proves that one Lynx UI can run against two host adapters:
 - Web uses the same shared `src/app` Lynx UI with a browser host adapter and browser-local note storage.
 - Both targets build from the same app source while keeping platform code isolated under `src/main/desktop` and `src/main/web`.
 
+The Web adapter is exposed through `lynxView.nativeModulesMap`. Its ESM module
+runs in the Lynx BTS worker and forwards note operations through Web Core RPC to
+`web-host.ts`, where the browser main thread can access `localStorage`. This is
+the Web equivalent of the desktop preload bridge.
+
 ## Run Desktop
 
 From this showcase directory:
