@@ -10,9 +10,26 @@ import { execSync, type ExecSyncOptions } from 'child_process';
 // execSync with stdio:'pipe' hides stderr, so callers only see
 // "Command failed: <cmd>" with no diagnosis. Wrap it to re-throw an Error
 // whose message includes captured stderr/stdout.
+/**
+ * Every install here is spawned by the app, never from a terminal. pnpm asks
+ * for confirmation before purging an existing `node_modules` it did not create,
+ * and with no TTY to answer it aborts:
+ *
+ *   ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY
+ *
+ * which surfaced as "showcasePath resolved: null" and a showcase that simply
+ * would not run. Declaring the environment non-interactive is what pnpm's own
+ * error message asks for.
+ */
+const NON_INTERACTIVE_ENV = { CI: 'true', npm_config_confirm_modules_purge: 'false' };
+
 function execCapture(command: string, options: ExecSyncOptions = {}): void {
   try {
-    execSync(command, { stdio: 'pipe', ...options });
+    execSync(command, {
+      stdio: 'pipe',
+      ...options,
+      env: { ...process.env, ...NON_INTERACTIVE_ENV, ...(options.env ?? {}) },
+    });
   } catch (err: any) {
     const stderr = err?.stderr?.toString?.() ?? '';
     const stdout = err?.stdout?.toString?.() ?? '';

@@ -86,6 +86,37 @@ export interface ShowcaseEntry {
 
 export type ShowcaseTarget = 'desktop' | 'web';
 
+// ── Baked-in Electron-fiddles catalog ────────────────────────────────────
+// One entry per ported Electron `docs/fiddles` example, read at build time
+// from showcases/electron-fiddles/src/shared/manifest.ts.
+
+export type FiddleStatus = 'working' | 'partial' | 'na';
+
+export interface FiddleEntry {
+  id: string;
+  title: string;
+  category: string;
+  status: FiddleStatus;
+  description: string;
+  /** Why a fiddle is partial / N/A, or how it maps onto Lynxtron. */
+  notes: string;
+  /** Path under electron/docs/fiddles this was ported from. */
+  upstream: string;
+}
+
+export interface FiddleCatalog {
+  categories: string[];
+  fiddles: FiddleEntry[];
+}
+
+declare const __FIDDLE_CATALOG__: FiddleCatalog;
+
+export const FIDDLE_CATALOG: FiddleCatalog =
+  typeof __FIDDLE_CATALOG__ !== 'undefined' ? __FIDDLE_CATALOG__ : { categories: [], fiddles: [] };
+
+/** The showcase that hosts every ported fiddle. */
+export const FIDDLE_SHOWCASE_NAME = '@lynxtron-examples/electron-fiddles';
+
 declare const __SHOWCASE_REGISTRY__: ShowcaseEntry[];
 declare const __SHOWCASE_PREVIEW__: boolean;
 declare const __SHOWCASE_LOCAL_WORKSPACE__: boolean;

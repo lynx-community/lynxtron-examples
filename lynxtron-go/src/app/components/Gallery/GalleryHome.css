@@ -296,3 +296,104 @@
 .theme-light .GalleryCardActionText--web { color: #0d8079; }
 .theme-light .GalleryThumbOverlay { background-color: rgba(255, 255, 255, 0.7); }
 .theme-light .GalleryThumbOverlayText { color: rgba(16, 22, 26, 0.7); }
+
+/* ── Electron fiddles section ────────────────────────────────────────────
+   The ported Electron docs/fiddles set is one collection inside a single
+   showcase, so it renders as a dense chip list grouped by upstream category
+   rather than as N cards in the featured grid. */
+.FiddleIntro {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 22px 10px 22px;
+}
+
+.FiddleIntroText {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--bp-text-muted);
+}
+
+.FiddleIntroCode {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  color: var(--bp-text);
+}
+
+/* Horizontal padding matches .GalleryGrid (16px), so a fiddle card's left edge
+   lands on the featured cards' left edge — both add the same 6px card margin
+   on top. At 22px here the two grids would sit 6px apart. */
+.FiddleGroup {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 16px 8px 16px;
+}
+
+/* +6px to clear the cards' margin, landing on the section label's 22px. */
+.FiddleGroupTitle {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--bp-text-muted);
+  margin-bottom: 6px;
+}
+
+.FiddleList {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+/* Fiddle cards reuse .GalleryCard / .GalleryCardBody / .GalleryCardFooter and
+   friends wholesale — what follows is only what a fiddle has and a showcase does
+   not (a status badge, a gap note), plus the taller body they need. */
+
+/* Taller than the showcase body because a fiddle can also carry a gap note.
+   Fixed height, for the same reason it is fixed up there: it is what pins every
+   footer to the bottom, so a one-line description cannot pull its actions out
+   of line with the card beside it. */
+.FiddleCardBody {
+  height: 104px;
+}
+
+/* N/A fiddles have nothing to open or assemble — inert, not merely dimmed. */
+.GalleryCard--inert {
+  opacity: 0.5;
+}
+
+/* Why a fiddle is partial or N/A — the whole reason the card is not just green. */
+.FiddleCardNotes {
+  display: block;
+  font-size: 11px;
+  line-height: 16px;
+  max-height: 32px;
+  overflow: hidden;
+  color: var(--bp-text-muted);
+  opacity: 0.75;
+  margin-top: 6px;
+}
+
+.FiddleBadge {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 8px;
+}
+
+.FiddleBadgeText {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 9px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.FiddleBadge--working { background-color: rgba(16, 185, 129, 0.16); }
+.FiddleBadgeText--working { color: #3dd68c; }
+.FiddleBadge--partial { background-color: rgba(249, 115, 22, 0.16); }
+.FiddleBadgeText--partial { color: #f5a623; }
+.FiddleBadge--na { background-color: rgba(148, 163, 184, 0.16); }
+.FiddleBadgeText--na { color: #9aa5b1; }
+
+.theme-light .FiddleBadgeText--working { color: #0f8a5f; }
+.theme-light .FiddleBadgeText--partial { color: #c05f00; }
+.theme-light .FiddleBadgeText--na { color: #5c6773; }

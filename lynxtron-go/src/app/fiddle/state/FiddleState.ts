@@ -16,6 +16,12 @@ export interface FiddleFile {
 export interface FiddleSource {
   kind: 'blank' | 'template' | 'showcase' | 'gist' | 'local';
   ref?: string;
+  /**
+   * Set when `ref` is ONE fiddle inside a fiddle-collection showcase rather
+   * than a whole showcase. Run then builds and launches just that fiddle —
+   * the same relationship Electron Fiddle has with a fiddle it has loaded.
+   */
+  fiddleId?: string;
 }
 
 export interface FiddleSnapshot {

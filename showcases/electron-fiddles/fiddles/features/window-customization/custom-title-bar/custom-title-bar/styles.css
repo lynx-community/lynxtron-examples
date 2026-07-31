@@ -1,0 +1,32 @@
+/* Custom in-content title bar. The native OS title bar is hidden by the
+   fiddle's main.ts (window option titleBarStyle: 'hidden'), so this bar stands in for
+   it — drawn at the very top of the content, full width, centered label. */
+.custom-title-bar-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.titlebar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 30px;
+  background-color: #2f6bff;
+}
+
+/* The demo shell fills whatever space remains below the custom title bar. */
+.custom-title-bar-root .demo-page {
+  flex-grow: 1;
+  height: auto;
+}
+
+.titlebar-text {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: bold;
+  white-space: nowrap;
+}

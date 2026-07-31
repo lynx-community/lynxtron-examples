@@ -1,0 +1,47 @@
+{
+  "name": "@lynxtron-examples/electron-fiddles",
+  "version": "0.0.1",
+  "main": "main.js",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lynx-community/lynxtron-examples"
+  },
+  "scripts": {
+    "build": "npm run build:fiddles && rspeedy build && rspack build",
+    "build:fiddles": "node scripts/assemble.mjs --all --build",
+    "assemble": "node scripts/assemble.mjs",
+    "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
+    "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop"
+  },
+  "showcase": {
+    "description": "Electron docs/fiddles ported to Lynxtron \u2014 gallery of API demos",
+    "thumbnail": "thumbnail.png",
+    "tags": [
+      "fiddle",
+      "electron",
+      "gallery"
+    ],
+    "targets": [
+      "desktop"
+    ],
+    "minToolchainVersion": "0.0.1"
+  },
+  "dependencies": {
+    "@lynx-js/lynxtron": "catalog:"
+  },
+  "devDependencies": {
+    "@lynxtron-examples/config": "workspace:*",
+    "@lynxtron-examples/fiddle-kit": "file:./kit",
+    "@lynx-js/react": "catalog:",
+    "@lynx-js/react-rsbuild-plugin": "catalog:",
+    "@lynx-js/rspeedy": "catalog:",
+    "@lynx-js/types": "catalog:",
+    "@rspack/cli": "catalog:",
+    "@rspack/core": "catalog:",
+    "@lynx-js/lynxtron-dev-plugins": "catalog:",
+    "concurrently": "catalog:",
+    "cross-env": "catalog:",
+    "typescript": "catalog:"
+  }
+}

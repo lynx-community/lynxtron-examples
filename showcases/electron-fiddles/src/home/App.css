@@ -1,0 +1,155 @@
+/* The collection's home screen, in the same Fiddle Dark language as the fiddles
+   it launches. Palette from @lynxtron-examples/config/tokens.css — no hex
+   literals. Status colour is the only colour that carries meaning here. */
+
+.home {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg);
+}
+
+.home-inner {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+}
+
+.home-title {
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.home-sub {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--dim);
+  margin-top: 2px;
+  margin-bottom: 20px;
+}
+
+/* ── Category ───────────────────────────────────────────────────────────── */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+/* Section label, not a heading competing with the page title. */
+.group-title {
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: var(--dim);
+  margin-bottom: 10px;
+}
+
+.grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+/* ── Card ───────────────────────────────────────────────────────────────── */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  padding: 12px 14px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  background-color: var(--surface);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
+}
+
+.card:hover {
+  background-color: var(--panel);
+}
+
+/* N/A fiddles have nothing to launch — they read as inert rather than styled
+   like a disabled control. */
+.card-disabled {
+  opacity: 0.5;
+}
+
+.card-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.card-title {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--text);
+  flex-grow: 1;
+  flex-shrink: 1;
+  margin-right: 8px;
+}
+
+/* ── Status ─────────────────────────────────────────────────────────────── */
+/* Tinted text on a tinted ground, the way the gallery chips read — a solid
+   colour block would shout louder than the fiddle name next to it. */
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 7px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.badge-working {
+  background-color: rgba(61, 214, 140, 0.14);
+}
+
+.badge-partial {
+  background-color: rgba(245, 166, 35, 0.14);
+}
+
+.badge-na {
+  background-color: rgba(167, 182, 194, 0.12);
+}
+
+.badge-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Explicit modifier classes rather than a descendant selector — Lynx's
+   selector support is a subset and descendant matching is not something to
+   rely on for something load-bearing as status colour. */
+.badge-text-working { color: var(--ok); }
+.badge-text-partial { color: #f5a623; }
+.badge-text-na { color: var(--muted); }
+
+.card-desc {
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--muted);
+}
+
+/* Why a fiddle is partial or N/A. Quiet, but present — it is the whole reason
+   the card is not simply green. */
+.card-notes {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--dim);
+  margin-top: 6px;
+}

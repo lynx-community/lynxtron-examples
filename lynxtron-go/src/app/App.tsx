@@ -14,6 +14,8 @@ import {
   showcaseApi,
   exampleArtifactApi,
   SHOWCASE_REGISTRY,
+  FIDDLE_SHOWCASE_NAME,
+  FIDDLE_CATALOG,
   SHOWCASE_LOCAL_WORKSPACE,
   appendOutput,
   appendProcessLine,
@@ -178,6 +180,9 @@ export function App(props: { onRender?: () => void } = {}) {
   const [uiThemeDark, setUiThemeDark] = useState(() => isDarkTheme());
   // Showcase handed from the gallery's Open into the Fiddle (new chain).
   const [pendingShowcaseTemplate, setPendingShowcaseTemplate] = useState<ShowcaseEntry | null>(null);
+  const [pendingFiddleOpen, setPendingFiddleOpen] = useState<
+    { entry: ShowcaseEntry; id: string; title: string; upstream: string } | null
+  >(null);
   // Legacy chain: mount the old IDE shell for the current workspace route.
   const [legacyIdeOpen, setLegacyIdeOpen] = useState(false);
   const [currentFileFind, setCurrentFileFind] = useState<CurrentFileFindState>({
@@ -1676,6 +1681,16 @@ export function App(props: { onRender?: () => void } = {}) {
     setPendingShowcaseTemplate(entry);
   }, []);
 
+  /** Open ONE fiddle's own source in the Fiddle editors. */
+  const openFiddleSource = useCallback(
+    (entry: ShowcaseEntry, f: { id: string; title: string; upstream: string }) => {
+      setGalleryOpen(false);
+      setLegacyIdeOpen(false);
+      setPendingFiddleOpen({ entry, ...f });
+    },
+    [],
+  );
+
   // Legacy chain: the old IDE workspace route mounted IN this window —
   // still used by Open Folder / Resume / route chevrons.
   const openShowcaseInLegacyIde = useCallback((entry: ShowcaseEntry) => {
@@ -1742,6 +1757,16 @@ export function App(props: { onRender?: () => void } = {}) {
         else if (name === 'app:quickOpen') { setPickerQuery(''); setPickerMode(undefined); setPickerOpen(true); }
         else if (name === 'app:runShowcase' && entry) void runShowcaseEntry(entry);
         else if (name === 'app:runShowcaseWeb' && entry) void runShowcaseEntryOnWeb(entry);
+        // The Electron-fiddles section sits below the fold and its cards cannot
+        // be reached by synthesised input, so its two actions get an automation
+        // entry point: app:openFiddle / app:runFiddle {"id":"dialog-open-file"}.
+        else if (name === 'app:openFiddle' || name === 'app:runFiddle') {
+          const collection = SHOWCASE_REGISTRY.find(e => e.name === FIDDLE_SHOWCASE_NAME);
+          const f = FIDDLE_CATALOG.fiddles.find(x => x.id === data?.id);
+          if (!collection || !f) appendOutput('warn', `[DevCmd:app] no such fiddle: ${data?.id}`);
+          else if (name === 'app:openFiddle') openFiddleSource(collection, f);
+          else void runFiddleEntry(collection, f.id);
+        }
         else if (name === 'app:quickClose') { setPickerOpen(false); setPickerMode(undefined); }
         else appendOutput('warn', `[DevCmd:app] unknown: ${trimmed}`);
         } catch (e: any) {
@@ -1941,6 +1966,39 @@ export function App(props: { onRender?: () => void } = {}) {
       clearShowcaseLoading();
     }
   }, [clearShowcaseLoading, resolveShowcaseEntryWorkspacePath, showOutput, startShowcaseLoading, log]);
+
+  /**
+   * Launch ONE fiddle out of a fiddle-collection showcase.
+   *
+   * Deliberately does not go through `runShowcaseEntry`: that builds the whole
+   * collection and opens its home screen, whereas a fiddle is its own project
+   * and its own process. It also does not require the collection to be built —
+   * assembling the single fiddle is the build.
+   */
+  const runFiddleEntry = useCallback(async (entry: ShowcaseEntry, fiddleId: string) => {
+    const api = showcaseApi();
+    if (!api?.runFiddle) {
+      showOutput('error', 'Showcase runtime unavailable');
+      return;
+    }
+    startShowcaseLoading(`Building ${fiddleId}...`);
+    appendProcessLine('command', `Run fiddle: ${fiddleId}`);
+    try {
+      const showcasePath = await resolveShowcaseEntryWorkspacePath(entry);
+      if (!showcasePath) return;
+      const pid = await api.runFiddle(showcasePath, fiddleId);
+      setRunningPid(pid);
+      showOutput('info', `${fiddleId} launched (pid ${pid})`);
+      appendProcessLine('command', `Launched ${fiddleId} (pid ${pid})`);
+      setStatus(`Running ${fiddleId} (pid ${pid})`);
+    } catch (e: any) {
+      showOutput('error', `Run ${fiddleId} failed: ${e.message}`);
+      appendProcessLine('stderr', `Run ${fiddleId} failed: ${e.message}`);
+      setStatus('Run failed');
+    } finally {
+      clearShowcaseLoading();
+    }
+  }, [clearShowcaseLoading, resolveShowcaseEntryWorkspacePath, showOutput, startShowcaseLoading]);
 
   const hasShowcaseWebTarget = useCallback((showcasePath: string): boolean => {
     try {
@@ -2452,6 +2510,8 @@ export function App(props: { onRender?: () => void } = {}) {
     onOpenShowcase: openShowcaseInFiddle,
     onOpenShowcaseLegacy: openShowcaseInIdeWindow,
     onRunShowcase: runShowcaseEntry,
+    onRunFiddle: runFiddleEntry,
+    onOpenFiddle: openFiddleSource,
     onRunShowcaseOnWeb: runShowcaseEntryOnWeb,
     onDebugExampleRoute: () => { setGalleryOpen(false); setLegacyIdeOpen(true); openExampleArtifactDirect('view'); },
   };
@@ -2494,6 +2554,12 @@ export function App(props: { onRender?: () => void } = {}) {
       onRunShowcase={(entry) => { void runShowcaseEntry(entry); }}
       pendingShowcaseTemplate={pendingShowcaseTemplate}
       onShowcaseTemplateConsumed={() => setPendingShowcaseTemplate(null)}
+      pendingFiddleOpen={pendingFiddleOpen}
+      onFiddleOpenConsumed={() => setPendingFiddleOpen(null)}
+      onRunFiddleSource={(id) => {
+        const entry = SHOWCASE_REGISTRY.find(e => e.name === FIDDLE_SHOWCASE_NAME);
+        if (entry) void runFiddleEntry(entry, id);
+      }}
       // Quick Open (Cmd+P) is an App-level overlay just like the gallery —
       // native editors float above every Lynx layer, so the Fiddle must
       // detach them while the palette is up or it renders half-hidden.

@@ -63,6 +63,8 @@ const desktopConfig = defineConfig({
         // Static help page, opened in the system browser (Help button / menu).
         { from: './src/main/desktop/help.html', to: 'help.html' },
         { from: './output/bundle/lynx/', to: '.' },
+        // Gallery thumbnails, staged by lynx.config.ts (Lynx <image> cannot load https).
+        { from: './thumbnails/', to: 'thumbnails/', noErrorOnMissing: true },
         // Keep only the Scintilla extension runtime closure in dist/desktop.
         ...scintillaRuntimePatterns,
         // Keep appPackage dependencies physically present under dist/desktop/node_modules

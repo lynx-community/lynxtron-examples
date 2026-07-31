@@ -1,0 +1,25 @@
+/* Custom in-content title bar with a drag region. The native OS title bar is
+   hidden by this fiddle's main.ts (window option titleBarStyle: 'hidden'), so this bar
+   stands in for it — drawn at the very top of the content, full width, centered
+   label.
+
+   Upstream Electron uses Chromium's `-webkit-app-region: drag`. Lynxtron's
+   equivalent is `-x-app-region: drag`, documented on BaseWindow's
+   'system-context-menu' event: "In a frameless window, draggable regions must be
+   explicitly declared using the `-x-app-region: drag` CSS property". */
+.titlebar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  background-color: #2f6bff;
+  -x-app-region: drag;
+}
+
+.titlebar-text {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: bold;
+  white-space: nowrap;
+}

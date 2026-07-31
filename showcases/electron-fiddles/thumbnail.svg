@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200">
+  <rect width="320" height="200" rx="16" fill="#16161c"/>
+  <text x="20" y="36" font-family="-apple-system, Segoe UI, sans-serif" font-size="18" font-weight="700" fill="#ffffff">Electron Fiddles</text>
+  <text x="20" y="56" font-family="-apple-system, Segoe UI, sans-serif" font-size="12" fill="#8a8a99">on Lynxtron</text>
+
+  <!-- card grid -->
+  <g>
+    <rect x="20"  y="76" width="86" height="46" rx="8" fill="#23232c"/>
+    <rect x="30"  y="86" width="46" height="6" rx="3" fill="#c2c2cc"/>
+    <rect x="30"  y="100" width="30" height="14" rx="7" fill="#1f7a44"/>
+
+    <rect x="117" y="76" width="86" height="46" rx="8" fill="#23232c"/>
+    <rect x="127" y="86" width="46" height="6" rx="3" fill="#c2c2cc"/>
+    <rect x="127" y="100" width="30" height="14" rx="7" fill="#8a6d1f"/>
+
+    <rect x="214" y="76" width="86" height="46" rx="8" fill="#23232c"/>
+    <rect x="224" y="86" width="46" height="6" rx="3" fill="#c2c2cc"/>
+    <rect x="224" y="100" width="24" height="14" rx="7" fill="#5a2a2a"/>
+
+    <rect x="20"  y="132" width="86" height="46" rx="8" fill="#23232c"/>
+    <rect x="30"  y="142" width="46" height="6" rx="3" fill="#c2c2cc"/>
+    <rect x="30"  y="156" width="30" height="14" rx="7" fill="#1f7a44"/>
+
+    <rect x="117" y="132" width="86" height="46" rx="8" fill="#23232c"/>
+    <rect x="127" y="142" width="46" height="6" rx="3" fill="#c2c2cc"/>
+    <rect x="127" y="156" width="30" height="14" rx="7" fill="#1f7a44"/>
+
+    <rect x="214" y="132" width="86" height="46" rx="8" fill="#23232c"/>
+    <rect x="224" y="142" width="46" height="6" rx="3" fill="#c2c2cc"/>
+    <rect x="224" y="156" width="30" height="14" rx="7" fill="#4f8cff"/>
+  </g>
+</svg>

@@ -4,6 +4,15 @@ packages:
   - 'lynxtron-go'
   - 'lynxtron-go/scintilla-extension'
 
+# pnpm 11 reads this here rather than from package.json's `pnpm` field. Kept in
+# both places so either pnpm major runs these postinstalls — @lynx-js/lynxtron's
+# downloads the runtime binary, and skipping it yields an install that looks
+# fine and an app that cannot start.
+onlyBuiltDependencies:
+  - '@lynx-js/lynxtron'
+  - '@lynx-js/lynxtron-builder'
+  - 'better-sqlite3'
+
 catalog:
   '@lynx-js/lynxtron': 0.0.8
   '@lynx-js/lynxtron-builder': 0.0.8

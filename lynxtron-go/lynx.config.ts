@@ -50,14 +50,25 @@ const isLocalRegistry = showcaseSourceMode === 'local-registry';
 const isLocalWorkspace = showcaseSourceMode === 'local-workspace';
 const registryPath = path.resolve(monorepoRoot, 'showcase-registry.json');
 
-function resolveThumbnailUrl(thumbnail: string | null, gitRemote: string, gitBranch: string): string | null {
+// Thumbnails are staged into the app's own bundle rather than linked at their
+// origin. Lynx's `<image>` loader reads the URL itself — it does not go through
+// the window's fetch handler — and it does not load https at all, so every
+// remote-mode thumbnail came up blank even once the URL answered 200. Copying
+// them in makes the gallery work in both source modes and leaves the packaged
+// app self-contained.
+const THUMBNAIL_STAGE = path.resolve(__dirname, 'thumbnails');
+fs.rmSync(THUMBNAIL_STAGE, { recursive: true, force: true });
+
+function resolveThumbnailUrl(thumbnail: string | null): string | null {
   if (!thumbnail) return null;
-  if (isLocalSourceMode) {
-    return pathToFileURL(path.resolve(monorepoRoot, thumbnail)).href;
-  }
-  if (!gitRemote) return null;
-  const normalized = thumbnail.replace(/\\/g, '/').split('/').map(encodeURIComponent).join('/');
-  return `${gitRemote}/raw/${gitBranch}/${normalized}`;
+  const source = path.resolve(monorepoRoot, thumbnail);
+  if (!fs.existsSync(source)) return null;
+  // Flatten, so showcases cannot collide on a bare `thumbnail.png`.
+  const staged = thumbnail.replace(/[\\/]/g, '__');
+  fs.mkdirSync(THUMBNAIL_STAGE, { recursive: true });
+  fs.copyFileSync(source, path.join(THUMBNAIL_STAGE, staged));
+  // rspack copies ./thumbnails -> dist/desktop/thumbnails (see rspack.config.ts).
+  return pathToFileURL(path.resolve(__dirname, 'dist', 'desktop', 'thumbnails', staged)).href;
 }
 
 function buildShowcaseRegistry() {
@@ -97,7 +108,7 @@ function buildShowcaseRegistry() {
         targets: Array.isArray(s.targets) ? s.targets : ['desktop'],
         path: s.path || undefined,
         url,
-        thumbnail: resolveThumbnailUrl(s.thumbnail ?? null, gitRemote, gitBranch),
+        thumbnail: resolveThumbnailUrl(s.thumbnail ?? null),
       };
     });
   } catch (e) {
@@ -108,6 +119,58 @@ function buildShowcaseRegistry() {
 
 const bakedShowcases = buildShowcaseRegistry();
 console.log(`Baking ${bakedShowcases.length} showcase(s), sourceMode=${showcaseSourceMode}`);
+
+// ── Bake-in the Electron-fiddles catalog ──────────────────────────────────
+// The electron-fiddles showcase is a gallery of its own: one Lynx bundle per
+// ported Electron fiddle. The gallery lists them in a dedicated section, so it
+// needs the per-fiddle metadata, not just the one showcase entry. Read straight
+// from the showcase's manifest so there is a single source of truth; if the
+// showcase is absent (a trimmed checkout), the section just does not render.
+function buildFiddleCatalog(): { categories: string[]; fiddles: unknown[] } {
+  const empty = { categories: [], fiddles: [] };
+  try {
+    const manifestPath = path.resolve(monorepoRoot, 'showcases/electron-fiddles/catalog.ts');
+    if (!fs.existsSync(manifestPath)) return empty;
+    const src = fs.readFileSync(manifestPath, 'utf-8');
+
+    const orderMatch = /export const CATEGORY_ORDER = \[([\s\S]*?)\] as const;/.exec(src);
+    const categories = orderMatch
+      ? [...orderMatch[1].matchAll(/'([^']+)'/g)].map((m) => m[1])
+      : [];
+
+    // The manifest is a flat array of object literals with string/boolean
+    // fields — parse the fields we render rather than executing TypeScript.
+    const fiddles: unknown[] = [];
+    const body = src.slice(src.indexOf('export const FIDDLES'));
+    for (const block of body.split(/\n  \{\n/).slice(1)) {
+      const field = (name: string) => {
+        const m = new RegExp(`\\n?\\s*${name}: '((?:[^'\\\\]|\\\\.)*)'`).exec(block);
+        return m ? m[1].replace(/\\'/g, "'") : undefined;
+      };
+      const id = field('id');
+      const title = field('title');
+      const category = field('category');
+      const status = field('status');
+      if (!id || !title || !category || !status) continue;
+      fiddles.push({
+        id,
+        title,
+        category,
+        status,
+        description: field('description') ?? '',
+        notes: field('notes') ?? '',
+        upstream: field('upstream') ?? '',
+      });
+    }
+    return { categories, fiddles };
+  } catch (e) {
+    console.warn('Failed to build electron-fiddles catalog:', e);
+    return empty;
+  }
+}
+
+const bakedFiddles = buildFiddleCatalog();
+console.log(`Baking ${bakedFiddles.fiddles.length} Electron fiddle(s)`);
 export default defineConfig({
   server: {
     port: 5817,
@@ -138,6 +201,7 @@ export default defineConfig({
   source: {
     define: {
       __SHOWCASE_REGISTRY__: JSON.stringify(bakedShowcases),
+      __FIDDLE_CATALOG__: JSON.stringify(bakedFiddles),
       __SHOWCASE_PREVIEW__: JSON.stringify(isLocalSourceMode),
       __SHOWCASE_LOCAL_WORKSPACE__: JSON.stringify(isLocalWorkspace),
     },

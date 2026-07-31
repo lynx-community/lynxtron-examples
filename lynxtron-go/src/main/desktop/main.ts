@@ -617,10 +617,10 @@ function buildAppMenu(w: LynxWindowInstance) {
     helpSubmenu.push(
       { type: 'separator' },
       {
-        label: 'About Lynxtron Fiddle (Fable 5)',
+        label: 'About Lynxtron Fiddle',
         click: () =>
           dialog.showMessageBox({
-            message: 'Lynxtron Fiddle (Fable 5)',
+            message: 'Lynxtron Fiddle',
             detail: `Version ${app.getVersion()}`,
           }),
       },
@@ -653,8 +653,8 @@ const isCascadeChild = process.env.LYNXTRON_WINDOW_CASCADE === '1';
 // floating traffic lights over the explorer read as broken chrome.
 const isIdeBootTarget = process.env.LYNXTRON_BOOT_TARGET === 'ide';
 const appTitle = isSelfHostChild
-  ? 'Lynxtron Fiddle (Fable 5) · self-host'
-  : 'Lynxtron Fiddle (Fable 5)';
+  ? 'Lynxtron Fiddle · self-host'
+  : 'Lynxtron Fiddle';
 try { app.setName?.(appTitle); } catch (_) {}
 const allowMultiInstance = process.env.LYNXTRON_ALLOW_MULTI === '1' || isSelfHostChild;
 const hasSingleInstanceLock = allowMultiInstance ? true : app.requestSingleInstanceLock();
@@ -663,7 +663,7 @@ if (allowMultiInstance) {
 }
 if (!hasSingleInstanceLock) {
   console.log(
-    '[PC_Host] another Lynxtron Fiddle (Fable 5) instance is running; forwarding command line and quitting',
+    '[PC_Host] another Lynxtron Fiddle instance is running; forwarding command line and quitting',
   );
   app.quit();
 } else {
