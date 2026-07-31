@@ -1,5 +1,15 @@
 # lynxtron-go
 
+## 0.0.8
+
+### Patch Changes
+
+- 9f330d3: Refresh the Lynx toolchain used by the showcases and publish real preview
+  captures for documentation consumers. The native texture canvas artifact now
+  includes its application and extension source files.
+- Updated dependencies [9f330d3]
+  - @lynxtron-examples/cli@0.0.4
+
 ## 0.0.7
 
 ### Patch Changes
