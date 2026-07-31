@@ -10,8 +10,19 @@
   },
   "files": [
     "dist/desktop/**/*",
+    "native-texture-extension/bindings/**/*",
+    "native-texture-extension/module/**/*",
+    "native-texture-extension/scripts/**/*",
+    "native-texture-extension/CMakeLists.txt",
+    "native-texture-extension/index.cjs",
+    "native-texture-extension/package.json",
+    "src/**/*",
+    "lynx.config.ts",
+    "preview-image.webp",
+    "rspack.config.ts",
     "thumbnail.svg",
-    "thumbnail.png"
+    "thumbnail.png",
+    "tsconfig.tools.json"
   ],
   "scripts": {
     "build:native-texture": "node native-texture-extension/scripts/build.js",

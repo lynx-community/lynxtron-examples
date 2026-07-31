@@ -69,7 +69,7 @@
     "@lynx-js/types": "catalog:",
     "app-builder-lib": "26.8.1",
     "dmg-builder": "26.8.1",
-    "@rsbuild/plugin-type-check": "1.3.1",
+    "@rsbuild/plugin-type-check": "1.6.0",
     "@rspack/cli": "catalog:",
     "@rspack/core": "catalog:",
     "patch-package": "^6.4.7",
