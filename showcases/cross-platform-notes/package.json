@@ -39,6 +39,7 @@
     "@lynx-js/react": "catalog:",
     "@lynx-js/rspeedy": "catalog:",
     "@lynx-js/types": "catalog:",
+    "@lynx-js/web-core": "0.20.4",
     "@lynxtron-examples/config": "workspace:*",
     "@rspack/cli": "catalog:",
     "@rspack/core": "catalog:",
