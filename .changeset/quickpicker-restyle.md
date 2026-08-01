@@ -2,8 +2,22 @@
 'lynxtron-go': patch
 ---
 
-Restyle the Cmd+P palette to the app's own design language, layer it on top, and
-give it keyboard navigation.
+Make Cmd+P actually search the workspace, add Cmd+K, and restyle the palette to
+the app's own design language with keyboard navigation.
+
+**Cmd+P could not really search files.** Its pool was the *sidebar's* model:
+`openFolder` loads the root's direct children, and a directory's contents load
+only when the user expands it. A showcase keeps its source under `src/`, which
+is collapsed on open — so `App.tsx`, `index.tsx` and everything else real was
+invisible, and only the handful of root-level files were findable. The palette
+now indexes the workspace itself, walking it breadth-first a few directories per
+tick so the synchronous filesystem bridge does not stall the UI. With a full
+index, ordering matters: matches rank name-exact > name-prefix > name-substring
+> path-substring, and the list is capped at 200 rows.
+
+**Cmd+K** opens the same palette with `>` already typed — literally "Cmd+P then
+type `>`". The mode still derives from the prefix, so backspacing the `>` falls
+back to file search exactly as it does when typed by hand.
 
 It was the last surface still painted in hardcoded VS Code greys (`#252526`,
 `#3c3c3c`, `#007aff`), so it read as a different product from the Fiddle home
