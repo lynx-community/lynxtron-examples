@@ -73,13 +73,13 @@
   background-color: var(--background-4);
 }
 
-/* Enter activates the first row — say so visually instead of leaving the user
-   to discover it. */
-.PickerItem--first {
+/* The row Enter would activate. Arrows move it, hover moves it, and it starts
+   on the first result — so there is always exactly one, and it is visible. */
+.PickerItem--active {
   background-color: var(--bp-selected-bg);
 }
 
-.PickerItem--first:hover {
+.PickerItem--active:hover {
   background-color: var(--bp-selected-bg);
 }
 
