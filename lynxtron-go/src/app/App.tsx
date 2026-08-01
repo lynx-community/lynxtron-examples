@@ -223,7 +223,6 @@ export function App(props: { onRender?: () => void } = {}) {
     { entry: ShowcaseEntry; id: string; title: string; upstream: string } | null
   >(null);
   // Legacy chain: mount the old IDE shell for the current workspace route.
-  const [legacyIdeOpen, setLegacyIdeOpen] = useState(false);
   const [currentFileFind, setCurrentFileFind] = useState<CurrentFileFindState>({
     visible: false,
     query: '',
@@ -1776,27 +1775,31 @@ export function App(props: { onRender?: () => void } = {}) {
   // New chain (default): close the gallery and hand the showcase to the
   // Fiddle, which downloads/resolves the workspace and loads the source into
   // its editor mosaic.
+  // Leaving the workspace is what shows the Fiddle now that the surface is
+  // derived from the route. Clearing a flag while the route stayed on the old
+  // workspace was the reachable form of the impossible state: the Fiddle
+  // rendered while Cmd+P still searched the workspace you thought you left.
+  // handleRouteBack no-ops when already home, so this is safe from either.
   const openShowcaseInFiddle = useCallback((entry: ShowcaseEntry) => {
     setGalleryOpen(false);
-    setLegacyIdeOpen(false);
+    handleRouteBack();
     setPendingShowcaseTemplate(entry);
-  }, []);
+  }, [handleRouteBack]);
 
   /** Open ONE fiddle's own source in the Fiddle editors. */
   const openFiddleSource = useCallback(
     (entry: ShowcaseEntry, f: { id: string; title: string; upstream: string }) => {
       setGalleryOpen(false);
-      setLegacyIdeOpen(false);
+      handleRouteBack();
       setPendingFiddleOpen({ entry, ...f });
     },
-    [],
+    [handleRouteBack],
   );
 
   // Legacy chain: the old IDE workspace route mounted IN this window —
   // still used by Open Folder / Resume / route chevrons.
   const openShowcaseInLegacyIde = useCallback((entry: ShowcaseEntry) => {
     setGalleryOpen(false);
-    setLegacyIdeOpen(true);
     void openShowcaseEntry(entry);
   }, [openShowcaseEntry]);
 
@@ -1855,11 +1858,7 @@ export function App(props: { onRender?: () => void } = {}) {
         else if (name === 'app:openShowcaseLegacy' && entry) openShowcaseInIdeWindow(entry);
         // Opening a folder is the only way to reach file-search mode, and the
         // Open dialog is a native panel synthesised input cannot drive.
-        // setLegacyIdeOpen matches what the Gallery's "IDE" action and Open
-        // Folder both do: a workspace route alone leaves Fiddle as the main
-        // content, so opened files would land in tabs nothing renders.
         else if (name === 'app:openFolder' && typeof data?.path === 'string') {
-          setLegacyIdeOpen(true);
           openFolder(data.path);
         }
         else if (name === 'app:routeBack') handleRouteBack();
@@ -1939,7 +1938,6 @@ export function App(props: { onRender?: () => void } = {}) {
         // mount it visibly (target=ide is how a spawned Gallery-IDE window
         // boots straight into the workspace).
         setGalleryOpen(false);
-        setLegacyIdeOpen(true);
         void openShowcaseEntry(action.entry, action.navigation);
       } else {
         openShowcaseInFiddle(action.entry);
@@ -2617,19 +2615,24 @@ export function App(props: { onRender?: () => void } = {}) {
   // it was opened from — never another (self-hosted) Fiddle. The per-card
   // "IDE" action keeps the legacy open-showcase-in-workspace route alive by
   // mounting the old IDE shell — the route back-chevron leaves it again.
-  const showLegacyIde = legacyIdeOpen && route.kind === 'workspace';
+  // THE surface. It used to be `legacyIdeOpen && route.kind === 'workspace'` —
+  // two independent booleans expressing one mutually exclusive state, which
+  // made `workspace route + flag off` representable: files opened into tabs
+  // that nothing rendered, because App renders either the IDE or the Fiddle,
+  // never both. Deriving it from the route alone makes that state impossible.
+  const showLegacyIde = route.kind === 'workspace';
   // One props object for both gallery hosts — the in-shell page and the
   // legacy full overlay must never drift apart callback-by-callback.
   const galleryProps = {
     onBack: () => setGalleryOpen(false),
-    onOpenFolder: () => { setGalleryOpen(false); setLegacyIdeOpen(true); openFolderDialog(); },
+    onOpenFolder: () => { setGalleryOpen(false); openFolderDialog(); },
     onOpenShowcase: openShowcaseInFiddle,
     onOpenShowcaseLegacy: openShowcaseInIdeWindow,
     onRunShowcase: runShowcaseEntry,
     onRunFiddle: runFiddleEntry,
     onOpenFiddle: openFiddleSource,
     onRunShowcaseOnWeb: runShowcaseEntryOnWeb,
-    onDebugExampleRoute: () => { setGalleryOpen(false); setLegacyIdeOpen(true); openExampleArtifactDirect('view'); },
+    onDebugExampleRoute: () => { setGalleryOpen(false); openExampleArtifactDirect('view'); },
   };
   const galleryNode = isGalleryOpen ? <GalleryHome {...galleryProps} /> : null;
   // Legacy IDE has no Fiddle shell to host the gallery — full overlay fallback
@@ -2688,6 +2691,17 @@ export function App(props: { onRender?: () => void } = {}) {
       onThemeChange={() => setUiThemeDark(isDarkTheme())}
     />
   );
+  // Tell the main process which surface is mounted so the menu can be rebuilt
+  // for it. Only the UI knows this, and the menu is the only place the two
+  // products' accelerators can be told apart — Cmd+S has to reach ide:save
+  // here and fiddle:save there.
+  useEffect(() => {
+    try {
+      // @ts-ignore
+      NativeModules.bridge.call('setSurface', { surface: showLegacyIde ? 'workspace' : 'fiddle' }, () => {});
+    } catch (_) { /* older runtimes without the bridge keep the boot menu */ }
+  }, [showLegacyIde]);
+
   const activeLoading = showcaseLoading ?? exampleArtifactLoading;
   const canGoBack = canNavigateRouteBack(routeNavigation);
   const canGoForward = canNavigateRouteForward(routeNavigation);
