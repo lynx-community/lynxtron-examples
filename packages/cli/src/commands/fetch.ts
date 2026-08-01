@@ -23,6 +23,23 @@ import { execSync, type ExecSyncOptions } from 'child_process';
  */
 const NON_INTERACTIVE_ENV = { CI: 'true', npm_config_confirm_modules_purge: 'false' };
 
+/**
+ * `CI: 'true'` above also makes pnpm default `frozen-lockfile` to true, which
+ * we must undo. The workspace being installed into is synthesized under
+ * ~/.lynxtron-go: its manifests are rewritten from the current catalog on every
+ * fetch, while its lockfile is a cache left by whatever was fetched last. The
+ * moment the catalog moves the two disagree and every fetch dies with
+ * ERR_PNPM_OUTDATED_LOCKFILE, so the showcase never installs and the window
+ * that asked for it sits on the Fiddle forever.
+ *
+ * The inverse of a repo CI install: there the lockfile is the source of truth
+ * and must not drift; here it is a cache that has to follow the manifests.
+ *
+ * It has to be a flag. pnpm does not read `npm_config_frozen_lockfile` from the
+ * environment — setting it changes nothing, verified against pnpm 10.15.1.
+ */
+const INSTALL_FLAGS = '--no-frozen-lockfile';
+
 function execCapture(command: string, options: ExecSyncOptions = {}): void {
   try {
     execSync(command, {
@@ -119,7 +136,7 @@ async function fetchLocalTarball(
     emit({ type: 'install-start', name });
     // Scope install to just this showcase so other workspace members
     // (previously-fetched showcases) don't run their postinstall scripts.
-    execCapture(`pnpm install --filter=./showcases/${name}...`, {
+    execCapture(`pnpm install ${INSTALL_FLAGS} --filter=./showcases/${name}...`, {
       cwd: manager.getRootPath(),
       timeout: 300000,
     });
@@ -160,7 +177,7 @@ async function fetchRepoShowcase(
 
   emit({ type: 'install-start', name: resolved.name });
   execCapture(
-    `pnpm install --filter=./showcases/${resolved.name}... --registry=https://registry.npmjs.org/`,
+    `pnpm install ${INSTALL_FLAGS} --filter=./showcases/${resolved.name}... --registry=https://registry.npmjs.org/`,
     {
       cwd: manager.getRootPath(),
     }
@@ -189,7 +206,7 @@ async function fetchExternal(
   execCapture(`git clone --depth 1 ${resolved.url} ${destDir}`);
 
   emit({ type: 'install-start', name: resolved.name });
-  execCapture('pnpm install', { cwd: destDir });
+  execCapture(`pnpm install ${INSTALL_FLAGS}`, { cwd: destDir });
   emit({ type: 'install-success', name: resolved.name });
 }
 
