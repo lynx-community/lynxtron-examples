@@ -2620,7 +2620,17 @@ export function App(props: { onRender?: () => void } = {}) {
   // made `workspace route + flag off` representable: files opened into tabs
   // that nothing rendered, because App renders either the IDE or the Fiddle,
   // never both. Deriving it from the route alone makes that state impossible.
-  const showLegacyIde = route.kind === 'workspace';
+  //
+  // A window spawned as a dedicated IDE resolves its showcase asynchronously,
+  // so its route is still home for that whole stretch — it used to render the
+  // Fiddle, default template and all, until the workspace landed, and forever
+  // if resolution failed. bootTarget is known at first render, so an IDE window
+  // is an IDE from the start: empty and loading if need be, never the other
+  // product.
+  const isIdeBootWindow = (() => {
+    try { return (getExposed() as any)?.bootTarget === 'ide'; } catch (_) { return false; }
+  })();
+  const showLegacyIde = route.kind === 'workspace' || isIdeBootWindow;
   // One props object for both gallery hosts — the in-shell page and the
   // legacy full overlay must never drift apart callback-by-callback.
   const galleryProps = {
@@ -2705,11 +2715,6 @@ export function App(props: { onRender?: () => void } = {}) {
   const activeLoading = showcaseLoading ?? exampleArtifactLoading;
   const canGoBack = canNavigateRouteBack(routeNavigation);
   const canGoForward = canNavigateRouteForward(routeNavigation);
-  // A window spawned as a dedicated IDE (Gallery IDE action) has no Fiddle to
-  // navigate back to — route chevrons are meaningless chrome there.
-  const isIdeBootWindow = (() => {
-    try { return (getExposed() as any)?.bootTarget === 'ide'; } catch (_) { return false; }
-  })();
 
   return (
     <view className={'IDE' + (uiThemeDark ? '' : ' theme-light')}>
