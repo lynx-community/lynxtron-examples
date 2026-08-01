@@ -508,17 +508,19 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
     });
   }
 
-  // Cmd+P and Cmd+K exist on BOTH surfaces — each opens the palette belonging
-  // to the surface that is mounted. Everything else in this submenu is
-  // product-specific, so the two surfaces get different items rather than one
-  // shared set where half is inert.
+  // Cmd+P and Cmd+K exist on BOTH surfaces, and are the one pair that must NOT
+  // be routed by surface: the palette is a single App-level component that
+  // floats over whichever product is mounted, so App.tsx owns both events
+  // regardless. Fiddle.tsx has no quickOpen/commandPalette handler at all —
+  // sending it fiddle:* here silently killed Cmd+P and Cmd+K on the home
+  // surface. The ide: prefix is legacy naming for "App-level", not "IDE-only".
   const paletteItems: any[] = [
     {
       id: 'quickOpen',
       label: 'Quick Open…',
       accelerator: 'CmdOrCtrl+P',
       registerAccelerator: true,
-      click: () => (isWorkspace ? sendIde : sendCmd)('quickOpen'),
+      click: () => sendIde('quickOpen'),
     },
     {
       id: 'commandPalette',
@@ -529,7 +531,7 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
       // "Cmd+P then type >". Like every other shortcut here it round-trips
       // through the main process: these are menu accelerators, not Lynx key
       // handlers, which Lynx has no way to register for arrow/Escape keys.
-      click: () => (isWorkspace ? sendIde : sendCmd)('commandPalette'),
+      click: () => sendIde('commandPalette'),
     },
   ];
 
