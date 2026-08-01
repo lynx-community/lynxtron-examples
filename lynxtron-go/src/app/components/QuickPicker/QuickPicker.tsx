@@ -77,10 +77,10 @@ export function QuickPicker({
         />
         <scroll-view className="PickerResults" scroll-y>
           {mode === 'showcases' ? (
-            showcases.length > 0 ? showcases.map(s => (
+            showcases.length > 0 ? showcases.map((s, i) => (
               <view
                 key={s.name}
-                className="PickerItem PickerShowcase"
+                className={`PickerItem PickerShowcase${i === 0 ? ' PickerItem--first' : ''}`}
                 catchtap={() => onSelectShowcase?.(s)}
               >
                 <text className="PickerIcon">{'\u{1F4E6}'}</text>
@@ -91,7 +91,7 @@ export function QuickPicker({
                       <text className="PickerBadge">LOCAL</text>
                     )}
                   </view>
-                  <text className="PickerFilePath">{s.description}</text>
+                  <text className="PickerDesc">{s.description}</text>
                   {s.tags.length > 0 && (
                     <text className="PickerTags">{s.tags.join(' \u00B7 ')}</text>
                   )}
@@ -121,26 +121,24 @@ export function QuickPicker({
               </text>
             </view>
           ) : mode === 'commands' ? (
-            commands.map(cmd => (
+            commands.map((cmd, i) => (
               <view
                 key={cmd.id}
-                className="PickerItem PickerCommand"
+                className={`PickerItem PickerCommand${i === 0 ? ' PickerItem--first' : ''}`}
                 catchtap={() => handleCommandSelect(cmd)}
               >
                 <text className="PickerIcon">{'\u25B6'}</text>
                 <view className="PickerItemInfo">
                   <text className="PickerFileName">{cmd.label}</text>
-                  {cmd.keybinding && (
-                    <text className="PickerFilePath">{cmd.keybinding}</text>
-                  )}
                 </view>
+                {cmd.keybinding && <text className="PickerKeys">{cmd.keybinding}</text>}
               </view>
             ))
           ) : (
-            filteredFiles.map(f => (
+            filteredFiles.map((f, i) => (
               <view
                 key={f.fullPath}
-                className="PickerItem"
+                className={`PickerItem${i === 0 ? ' PickerItem--first' : ''}`}
                 bindtap={() => onSelect(f.fullPath)}
               >
                 <text className="PickerIcon">{fileIcon(f.name)}</text>
@@ -154,6 +152,21 @@ export function QuickPicker({
             ))
           )}
         </scroll-view>
+        {/* The palette's two behaviours are otherwise invisible: Enter takes the
+            first row, and `>` switches from files to commands. */}
+        <view className="PickerFooter">
+          <text className="PickerFooterText">
+            <text className="PickerFooterKey">Enter</text> opens the first result
+            {mode === 'files' ? (
+              <text className="PickerFooterText">
+                {'  \u00B7  '}
+                <text className="PickerFooterKey">{'>'}</text> for commands
+              </text>
+            ) : null}
+            {'  \u00B7  '}
+            <text className="PickerFooterKey">Esc</text> to close
+          </text>
+        </view>
       </view>
     </view>
   );

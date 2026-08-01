@@ -1754,7 +1754,13 @@ export function App(props: { onRender?: () => void } = {}) {
         else if (name === 'app:openShowcaseLegacy' && entry) openShowcaseInIdeWindow(entry);
         else if (name === 'app:routeBack') handleRouteBack();
         else if (name === 'app:routeForward') handleRouteForward();
-        else if (name === 'app:quickOpen') { setPickerQuery(''); setPickerMode(undefined); setPickerOpen(true); }
+        else if (name === 'app:quickOpen') {
+          // Optional {"mode","query"} so automation can reach the populated
+          // states (commands, showcases) — synthesised input cannot type.
+          setPickerQuery(typeof data?.query === 'string' ? data.query : '');
+          setPickerMode(data?.mode as any);
+          setPickerOpen(true);
+        }
         else if (name === 'app:runShowcase' && entry) void runShowcaseEntry(entry);
         else if (name === 'app:runShowcaseWeb' && entry) void runShowcaseEntryOnWeb(entry);
         // The Electron-fiddles section sits below the fold and its cards cannot
