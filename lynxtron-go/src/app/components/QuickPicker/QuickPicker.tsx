@@ -5,6 +5,15 @@ import { filterCommands } from '../../commands/registry';
 
 type PickerMode = 'files' | 'commands' | 'showcases' | 'url' | 'example' | 'bundleUrl';
 
+const PLACEHOLDER: Record<PickerMode, string> = {
+  files: 'Search files (type > for commands)…',
+  commands: 'Type a command…',
+  showcases: 'Filter showcases…',
+  url: 'Paste showcase URL and press Enter…',
+  bundleUrl: 'Paste Lynx bundle URL and press Enter…',
+  example: 'Enter example id or relative path…',
+};
+
 /** One activatable row, flattened across modes so the keyboard sees one list. */
 interface PickerRow {
   key: string;
@@ -104,15 +113,6 @@ export function QuickPicker({
     }
   }, [rows, activeKey]);
 
-  const placeholder: Record<PickerMode, string> = {
-    files: 'Search files (type > for commands)…',
-    commands: 'Type a command…',
-    showcases: 'Filter showcases…',
-    url: 'Paste showcase URL and press Enter…',
-    bundleUrl: 'Paste Lynx bundle URL and press Enter…',
-    example: 'Enter example id or relative path…',
-  };
-
   const rowClass = (key: string, extra?: string) =>
     `PickerItem${extra ? ' ' + extra : ''}${key === activeRowKey ? ' PickerItem--active' : ''}`;
 
@@ -124,7 +124,7 @@ export function QuickPicker({
           value={query}
           bindinput={(e: any) => onQueryChange(e.detail.value)}
           bindconfirm={handleConfirm}
-          placeholder={placeholder[mode]}
+          placeholder={PLACEHOLDER[mode]}
         />
         {/* Keep the highlighted row visible as the arrows walk past the fold. */}
         <scroll-view className="PickerResults" scroll-y scroll-to-index={activeIndex}>
