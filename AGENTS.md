@@ -39,12 +39,94 @@ When implementing or reviewing a feature, explicitly identify:
 - **Lynx TDZ is strict**: `useCallback` declarations must appear before any `useEffect` that references them. Lynx engine crashes on TDZ violations that browsers tolerate.
 - Use `__non_webpack_require__` in preload.ts to bypass rspack compile-time `require.resolve()`.
 
+### The failure mode to expect
+
+Unsupported browser assumptions usually fail as a **silent no-op**, not an
+exception. A typecheck and a green build prove nothing about runtime behaviour.
+Never hide a missing capability behind optional chaining — assert it and fail
+with an actionable message.
+
+### Observed runtime behaviour
+
+Collected while porting Electron's `docs/fiddles` (Lynxtron 0.0.3 → 0.0.8,
+mainly macOS). **Treat each as a hypothesis to re-probe** when Lynx, Lynxtron,
+Rspeedy, rspack, a native extension, or the OS changes — if a probe now
+succeeds, use the supported behaviour and update this list.
+
+**CSS and layout**
+- `inline-flex` / `inline-block` do not reliably keep horizontal layout — use `display: flex` with an explicit `flex-direction: row`.
+- `flex: 1` can collapse to zero height under an auto-height parent.
+- Selector support is a subset: no `:first-child` / `:nth-child`, no `min()` / `max()`. `:hover` exists on desktop but keep it colour-only — a `:hover` layout flip leaves paint ghosts.
+- `text-transform` is dropped; bake the casing into the string. Use `text-maxline="1"` for single-line truncation.
+- Fully transparent surfaces are skipped by hit testing; give an invisible tappable area a near-transparent fill, or use `display: none` to release it.
+- `-x-app-region: drag` is Lynx's spelling of Chromium's `-webkit-app-region: drag` — it is what makes a custom title bar in a frameless window a window-move handle.
+- Keyboard events exist: `bindkeydown` / `bindkeyup`, plus `global-bind*` variants that fire regardless of focus. The event carries `key`.
+
+**Assets**
+- SVG decoding renders blank; PNG through `<image>` is reliable.
+- **`<image>` does not load `https://` at all** — the loader reads the URL itself rather than going through the window's fetch handler. Bundle images locally and reference them as `file://`.
+- Icon fonts work via `lynx.addFont` with a base64 `data:font/ttf` URL, but the success callback fires without proving glyphs painted. Check visually.
+- `btoa` does not exist in the Lynx UI.
+
+**Bridge**
+- `bridge.call(method, payload, reply)` is **callback-based**, not promise-based. Wrap it once.
+- Main→UI events: `win.sendGlobalEvent(...)`, received via `lynx.getJSModule('GlobalEventEmitter')`. There is no bare `GlobalEventEmitter` global.
+- The package's ESM shim re-exports only part of the native `lynxtron` module — `Notification`, `TouchBar*`, `UtilityProcess`, `Task` and others need `createRequire`. Inspect the real exports; do not trust remembered Electron names (it is lowercase `nativeImage`, and `globalShortcut` / `nativeTheme` / `desktopCapturer` / `webContents` are absent as of 0.0.8).
+- Probe the *actual* object exposed to the UI. A bridge intended as `foundation.*` was in fact spread onto the exposed root, and optional chaining hid every dead call.
+
+**Native views**
+- Native child views float above all Lynx UI and are not clipped by Lynx ancestors. Give hosts `min-width: 0`, `min-height: 0`, `overflow: hidden` and verify in the real window.
+- Content pushed before the first attach lands in the document but does not repaint. Re-sync after the first layout.
+- Devtool screenshots **cannot see native views** — capture the OS window instead (`screencapture -x -l <CGWindowID>`).
+
+**Processes and resource loading**
+- The built-in `-on-fetch-resource` handler answers http(s) but returns empty for `file://`. It is a plain EventEmitter listener, so it can be replaced — establish ownership first, and restrict to explicit allowed roots.
+- A destructive `readProcessOutput`-style drain must have exactly **one** owner; every other consumer reads through a non-destructive cursor.
+- `spawn(process.execPath, [projectDistDir])` from a Lynxtron main process launches another Lynxtron app — this is how per-app process isolation is done.
+- App-global APIs (`Menu.setApplicationMenu`, `app.dock.setMenu`, `app.setAsDefaultProtocolClient`) are last-writer-wins across windows in one process. Independent demos need independent processes.
+- Devtool client ports (8901, 8902, …) shuffle between restarts; match the session's bundle URL, not the port. Launching more than ~6 instances at once leaves some unregistered.
+- Synthetic CDP input is not the real input path: taps work, but drags, scrolling a `<scroll-view>`, and key events do not. Repeat critical interactions with real input.
+
+## Porting a Web/Electron product into Lynxtron
+
+Treat the source as a product specification, not as code to translate.
+
+**State the contract before writing code** — source revision, artifact type,
+distribution type, the exact runtime path (which bundle, host, preload and
+native files actually run), the shortest golden flow that proves the port is
+useful, and the non-goals. Classify each source capability as `COPY` (portable
+logic), `ADAPT` (same behaviour, new platform implementation), `REPLACE` (use an
+existing Lynxtron capability), `DEFER`, or `DROP`.
+
+**Layers, with narrow typed contracts between them:** Lynx UI → preload → host →
+native extension. The UI owns presentation and product state and must not touch
+files, processes or OS windows. Preload exposes specific operations
+(`readProject`, `run`, `stop`), never raw `fs` or `child_process`. Use a native
+extension only where the other layers genuinely cannot deliver.
+
+**Implement in vertical slices**, each ending in the smallest real check:
+boot → input → execute → output/stop → persistence → polish. Do not finish a
+layer before connecting it to the next.
+
+**Verify in layers.** Static checks and unit tests, then a scoped build, then
+launching the *same distribution a user consumes* — for a showcase that is
+`dist/desktop/`, not a dev server. Then the golden flow end to end, including
+one representative failure and cleanup after stop. A green build is a screening
+signal, never acceptance.
+
+**Done means:** the golden flow runs from the real distribution; no HTML/DOM/BOM
+assumptions remain; missing bridge capabilities fail loudly; success, failure,
+stop and exit are all verified; no stale bundle is being exercised; known gaps
+are listed honestly rather than reported as supported; and every intentional
+divergence from upstream records source behaviour, target behaviour, reason and
+verification, so nobody later "fixes" it back.
+
 ## Commands
 
 - Use Node.js `>=22` for installs and builds. If needed, run `nvm use 22` before `pnpm install`.
 - `pnpm install` — install all dependencies
 - `pnpm build` — build all packages
-- `pnpm test` — run all tests (78 total: 8 CLI + 70 lynxtron-go)
+- `pnpm test` — run all tests (209 total: 14 CLI + 195 lynxtron-go)
 - `pnpm preview` — **one-command preview**: pack showcases + local registry + build + launch
 - `pnpm preview:build` — preview build without launching
 - `pnpm run generate-registry` — regenerate showcase-registry.json
@@ -98,8 +180,14 @@ packages/
               - src/workspace/    ~/.lynxtron-go workspace manager
               - src/utils/        NDJSON protocol helpers
               - __tests__/        Unit tests (vitest)
-showcases/
-  counter/    Full Lynxtron app: src/app/ (UI) + src/main/desktop/ (host) + rspack.config.ts
+showcases/    10 showcases; each a full Lynxtron app:
+              src/app/ (UI) + src/main/desktop/ (host) + rspack.config.ts
+  counter/            the minimal reference showcase
+  electron-fiddles/   Electron's docs/fiddles set — loose per-fiddle source under
+                      fiddles/<upstream/path>/, assembled into a standalone
+                      project on demand by scripts/assemble.mjs; catalog.ts is
+                      the single source of truth and lynxtron-go's gallery
+                      parses it at build time
 lynxtron-go/  Lynxtron GO IDE shell (also a self-hosting showcase)
               - src/app/          Lynx UI layer
               - src/app/commands/ Command registry + showcase commands
@@ -130,6 +218,20 @@ scripts/
 - **Command palette**: Cmd+P → `>` for commands
 - **Run menu**: `Run > Run Showcase (Cmd+R)` / `Run > Stop Showcase (Cmd+Shift+R)`
 
+### Scintilla native editor (`lynxtron-go/scintilla-extension`)
+
+- **Do not modify vendored sources under `scintilla-extension/scintilla/`.**
+  Implement product behaviour in the Lynxtron-owned adapter
+  (`module/scintilla_view.mm`), using extension points such as
+  `contentViewClass`. Every editor fix so far has been possible that way.
+- Several editor behaviours are deliberate customisations, not defaults — do not
+  "restore" them: whole-line scroll snapping is disabled on purpose (continuous
+  trackpad scrolling), the elastic-overscroll area is painted with the editor
+  theme background, margin painting is clipped to the content viewport so line
+  numbers cannot bleed into the panel below, and constructor styling plus
+  `ApplyTheme` run synchronously on the main thread to avoid a first-frame
+  14pt/default-theme flash.
+
 ### Preload Showcase API
 ```typescript
 showcase.fetch(url)       // fetch from URL (GitHub or file:// tarball)
@@ -157,4 +259,3 @@ See [docs/showcase-development.md](docs/showcase-development.md).
 - Debug panel (run status, process management)
 - URL scheme (`lynxtron-go://`) handler
 - Pure Lynx UI showcases (no main.ts)
-- `GITHUB_TOKEN` auth — remove when repo is public

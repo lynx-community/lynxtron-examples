@@ -141,7 +141,10 @@ cd packages/cli && pnpm test
 
 ## Architecture
 
-See [docs/superpowers/specs/2026-03-18-showcase-architecture-design.md](docs/superpowers/specs/2026-03-18-showcase-architecture-design.md) for the full architecture spec.
+See [AGENTS.md](AGENTS.md) for the architecture, the runtime constraints Lynx
+imposes, and the porting process; see
+[docs/showcase-development.md](docs/showcase-development.md) for how to build,
+test and release a showcase.
 
 Key design decisions:
 - **Full Lynxtron apps**: Each showcase includes host process + Lynx UI, runs as independent desktop window
