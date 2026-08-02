@@ -8,6 +8,9 @@ import { TabBar } from '../../components/TabBar/TabBar';
 import { SearchPanel } from '../../components/Search/SearchPanel';
 
 export interface IDEProps {
+  /** Set when a workspace this window was opened to prepare could not be. */
+  workspaceError?: string | null;
+  onRetryWorkspace?: () => void;
   rootPath: string;
   tabs: Tab[];
   activeTabId: string | null;
@@ -82,7 +85,12 @@ export function IDE(props: IDEProps) {
               collapsed={!props.bottomPanelOpen}
               onRatioChange={props.onEditorBottomRatioChange}
             >
-              <EditorPanel activeTabId={props.activeTabId} onEditorLayout={props.onEditorLayout} />
+              <EditorPanel
+                activeTabId={props.activeTabId}
+                workspaceError={props.workspaceError}
+                onRetryWorkspace={props.onRetryWorkspace}
+                onEditorLayout={props.onEditorLayout}
+              />
               <BottomPanel
                 onClose={props.onCloseBottomPanel}
                 rootPath={props.rootPath || undefined}

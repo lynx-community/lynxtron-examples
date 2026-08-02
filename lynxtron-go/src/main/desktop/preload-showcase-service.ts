@@ -419,6 +419,14 @@ function formatProcessOutput(output: unknown): string {
 export interface ShowcaseService {
   bridge: {
     fetch: (url: string) => Promise<string>;
+    /**
+     * Where a showcase would already be sitting if it has been fetched before,
+     * or null. `fetch` wipes and re-extracts its destination every time, so
+     * without this every open re-downloads and re-installs a workspace that is
+     * already on disk — including opening the same showcase in the other
+     * surface seconds later.
+     */
+    materializedPath: (name: string) => string | null;
     resolveRegistryPath: (relativePath: string) => string | null;
     readProcessOutput: () => ShowcaseProcessOutputEntry[];
     isRunning: (pid: number) => boolean;
@@ -450,6 +458,21 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
 
   return {
     bridge: {
+      materializedPath: (name: string): string | null => {
+        try {
+          if (!name) return null;
+          // Showcases land under <workspace>/showcases/<unscoped name>; the
+          // registry names them @lynxtron-examples/foo.
+          const bare = name.includes('/') ? name.slice(name.lastIndexOf('/') + 1) : name;
+          const dir = path.join(os.homedir(), '.lynxtron-go', 'showcases', bare);
+          // Read the manifest rather than just existsSync: a half-extracted
+          // directory from an interrupted fetch must not pass as usable.
+          const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'));
+          return pkg?.showcase ? dir : null;
+        } catch (_) {
+          return null;
+        }
+      },
       fetch: async (url: string): Promise<string> => {
         try {
           dbg(`showcase.fetch enter url=${url}`);

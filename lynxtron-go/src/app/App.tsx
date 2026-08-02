@@ -65,6 +65,7 @@ import { registerStatusBarItem } from './components/StatusBar/statusbar-registry
 import { QuickPicker } from './components/QuickPicker/QuickPicker';
 import { GalleryHome } from './components/Gallery/GalleryHome';
 import { Fiddle, type FiddlePaletteSource } from './fiddle/Fiddle';
+import { resolveShowcaseWorkspacePath } from './shared/showcase-workspace';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './fiddle/dev-preset';
 import { isDarkTheme } from './fiddle/theme';
 import { LoadingOverlay } from './components/shared/LoadingOverlay';
@@ -217,6 +218,15 @@ export function App(props: { onRender?: () => void } = {}) {
   const [runningPid, setRunningPid] = useState<number | null>(null);
   const [bottomPanelTab, setBottomPanelTab] = useState<string | undefined>(undefined);
   const [isGalleryOpen, setGalleryOpen] = useState(false);
+  // Why this window has no workspace, when it was opened expecting one. Shown
+  // in the editor area — the reason otherwise only reached the Output panel,
+  // which is closed by default, so a failed fetch looked like an idle window.
+  const [workspaceError, setWorkspaceError] = useState<string | null>(null);
+  // Retry has to reach openShowcaseEntry, which is declared *after* the
+  // resolver that records the failure — a plain reference is a TDZ crash on
+  // Lynx, so go through a ref that is filled in once it exists.
+  const openShowcaseEntryRef = useRef<((entry: ShowcaseEntry) => Promise<void>) | null>(null);
+  const [retryWorkspace, setRetryWorkspace] = useState<(() => void) | null>(null);
   // Fiddle theme tokens live on `.IDE` as CSS variables; light theme swaps
   // them via this class (see App.css). Driven by fiddle.settings.theme.
   const [uiThemeDark, setUiThemeDark] = useState(() => isDarkTheme());
@@ -685,6 +695,9 @@ export function App(props: { onRender?: () => void } = {}) {
       applyWorkspaceSession(session);
       setDirContents(new Map([[folderPath, nodes]]));
       setExpandedDirs(new Set([folderPath]));
+      // A workspace arrived, however it arrived — the failure notice is stale.
+      setWorkspaceError(null);
+      setRetryWorkspace(null);
       setStatus(`Opened ${folderPath.split('/').pop()}`);
       rememberWorkspaceSession(session);
     } catch (e) {
@@ -1111,6 +1124,27 @@ export function App(props: { onRender?: () => void } = {}) {
     try { scintillaApi()?.hideCalltip(EDITOR_ID); } catch (_) {}
     try { scintillaApi()?.detachFromWindow?.(EDITOR_ID); } catch (_) {}
   }, []);
+
+  /**
+   * Native Scintilla views paint above ALL Lynx UI, whatever the z-index says —
+   * an overlay does not cover the editor, the editor covers the overlay. The
+   * Fiddle has handled this since it grew dialogs: App passes `overlayActive`
+   * and it detaches its editors. The IDE's single editor had no equivalent, so
+   * on this surface the palette opened *behind* the code, with only its footer
+   * visible below the editor's bottom edge.
+   *
+   * Re-attach rather than repushActiveEditor: that one also re-pushes the text
+   * and jumps the caret to line 0, which is wrong for merely closing a palette.
+   */
+  useEffect(() => {
+    if (!showLegacyIde) return;
+    if (pickerOpen || isGalleryOpen) {
+      detachNativeEditorView();
+      return;
+    }
+    if (!activeTabIdRef.current) return;
+    try { scintillaApi()?.attachToWindow?.(EDITOR_ID); } catch (_) { /* ignore */ }
+  }, [showLegacyIde, pickerOpen, isGalleryOpen, detachNativeEditorView]);
 
   const handleRouteBack = useCallback(() => {
     if (!canNavigateRouteBack(routeNavigation)) return;
@@ -1739,23 +1773,36 @@ export function App(props: { onRender?: () => void } = {}) {
   }, [clearShowcaseLoading, log, openFolder, showOutput, startShowcaseLoading]);
 
   const resolveShowcaseEntryWorkspacePath = useCallback(async (entry: ShowcaseEntry): Promise<string | null> => {
-    log(`[resolveShowcaseEntryWorkspacePath] Starting, entry: ${entry.name}, SHOWCASE_LOCAL_WORKSPACE: ${SHOWCASE_LOCAL_WORKSPACE}, entry.path: ${entry.path}`);
-    const localPath = SHOWCASE_LOCAL_WORKSPACE && entry.path
-      ? showcaseApi()?.resolveRegistryPath?.(entry.path)
-      : null;
-    log(`[resolveShowcaseEntryWorkspacePath] localPath: ${localPath}`);
-    if (localPath) {
-      log(`[resolveShowcaseEntryWorkspacePath] Using local path, calling openFolder...`);
-      openFolder(localPath, 'showcase');
-      return localPath;
-    }
-    if (!entry.url) {
-      showOutput('error', `No URL available for ${entry.name}`);
+    // Same policy the Fiddle uses — local source tree, then an already
+    // materialized copy, then fetch. It used to be a second implementation of
+    // it here, and it always re-fetched: `fetch` wipes its destination, so
+    // opening a showcase in the Fiddle and then in the IDE downloaded and
+    // installed the same workspace twice.
+    log(`[resolveShowcaseEntryWorkspacePath] Starting, entry: ${entry.name}`);
+    const resolved = await resolveShowcaseWorkspacePath(entry, {
+      onReuse: (_e, p) => {
+        log(`[resolveShowcaseEntryWorkspacePath] Reusing materialized workspace: ${p}`);
+        showOutput('info', `Using workspace already on disk: ${p}`);
+      },
+      onFetchStart: () => {
+        log(`[resolveShowcaseEntryWorkspacePath] Fetching: ${entry.url}`);
+        showOutput('info', `Fetching showcase: ${entry.url}`);
+        setStatus('Fetching showcase...');
+      },
+    });
+    if (!resolved) {
+      const message = `Could not prepare a workspace for ${entry.name}.`;
+      showOutput('error', message);
+      setStatus('Showcase workspace failed');
+      setWorkspaceError(message);
+      setRetryWorkspace(() => () => { void openShowcaseEntryRef.current?.(entry); });
       return null;
     }
-    log(`[resolveShowcaseEntryWorkspacePath] Calling fetchShowcaseByUrl for: ${entry.url}`);
-    return await fetchShowcaseByUrl(entry.url, 'showcase', { showLoading: false });
-  }, [fetchShowcaseByUrl, openFolder, showOutput, log]);
+    setWorkspaceError(null);
+    setRetryWorkspace(null);
+    openFolder(resolved, 'showcase');
+    return resolved;
+  }, [openFolder, showOutput, log]);
 
   // A workspace opened without explicit file navigation (the Gallery "IDE"
   // action's deep link carries only a showcase id + target=ide) still needs a
@@ -1805,6 +1852,7 @@ export function App(props: { onRender?: () => void } = {}) {
       clearShowcaseLoading();
     }
   }, [autoOpenDefaultFile, clearShowcaseLoading, openWorkspaceFileFromDeepLink, resolveShowcaseEntryWorkspacePath, showOutput, startShowcaseLoading]);
+  openShowcaseEntryRef.current = openShowcaseEntry;
 
   // New chain (default): close the gallery and hand the showcase to the
   // Fiddle, which downloads/resolves the workspace and loads the source into
@@ -2678,6 +2726,8 @@ export function App(props: { onRender?: () => void } = {}) {
   const mainContent = showLegacyIde ? (
     <IDE
       rootPath={currentRootPath}
+      workspaceError={workspaceError}
+      onRetryWorkspace={retryWorkspace ?? undefined}
       tabs={tabs}
       activeTabId={activeTabId}
       sidebarPanel={sidebarPanel}
