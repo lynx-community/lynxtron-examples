@@ -38,6 +38,30 @@ const ROOT_DEPENDENCIES: Record<string, string> = {
   'dmg-builder': '26.8.1',
 };
 
+/**
+ * Force every copy of the toolchain in the tree to the catalog version.
+ *
+ * ROOT_DEPENDENCIES pins `@lynxtron-examples/config` to `latest`, and a
+ * PUBLISHED config carries hard dependency ranges of its own, frozen at
+ * whatever the catalog was when it was released. When the catalog moves ahead
+ * of the last publish, pnpm happily satisfies both: the root gets the new
+ * toolchain, config gets a nested old one, and the showcase's build resolves
+ * the plugin through config. Old plugin against new React is not a version
+ * warning, it is a crash —
+ *
+ *   TypeError: Cannot read properties of undefined (reading 'entries')
+ *     at @lynx-js/react-rsbuild-plugin/dist/208.js
+ *
+ * — and it took down every fetched showcase, in the Fiddle and the IDE alike,
+ * with an error naming a package the user never asked for.
+ *
+ * The synthesized workspace is ours end to end, so there is exactly one right
+ * answer for each of these packages: the version the showcase was built
+ * against. Overriding is what says that, and it holds no matter how far behind
+ * the published config drifts.
+ */
+const TOOLCHAIN_OVERRIDES: Record<string, string> = { ...CATALOG_VERSIONS };
+
 // pnpm 10 refuses to run postinstall scripts for third-party dependencies
 // unless they're allow-listed here. Without this, `@lynx-js/lynxtron`'s
 // postinstall never runs, its `dist/` (Lynxtron runtime binary + import lib)
@@ -101,6 +125,7 @@ export class WorkspaceManager {
           dependencies: { ...ROOT_DEPENDENCIES },
           pnpm: {
             onlyBuiltDependencies: [...ONLY_BUILT_DEPENDENCIES],
+            overrides: { ...TOOLCHAIN_OVERRIDES },
           },
         },
         null,
