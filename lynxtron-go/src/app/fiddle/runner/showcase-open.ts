@@ -1,4 +1,5 @@
-import { showcaseApi, foundationApi, SHOWCASE_LOCAL_WORKSPACE, type ShowcaseEntry } from '../../store';
+import { foundationApi, type ShowcaseEntry } from '../../store';
+import { resolveShowcaseWorkspacePath } from '../../shared/showcase-workspace';
 import { detectLanguage } from '../../syntax';
 import { isSafeRelativePath, type FiddleSnapshot, type FiddleFile, type EditorId } from '../state/FiddleState';
 
@@ -8,17 +9,10 @@ import { isSafeRelativePath, type FiddleSnapshot, type FiddleFile, type EditorId
 
 /** Download (or locally resolve) a showcase's workspace folder. */
 export async function resolveShowcaseWorkspace(entry: ShowcaseEntry): Promise<string | null> {
-  try {
-    if (SHOWCASE_LOCAL_WORKSPACE && entry.path) {
-      const local = showcaseApi()?.resolveRegistryPath?.(entry.path);
-      if (local) return local;
-    }
-  } catch (_) {}
-  if (!entry.url) return null;
-  const fetchFn = showcaseApi()?.fetch;
-  if (typeof fetchFn !== 'function') return null;
-  const workspace = await fetchFn(entry.url);
-  return workspace || null;
+  // One policy, shared with the IDE — see showcase-workspace.ts. This used to
+  // be a second copy of it, which meant the two surfaces could disagree about
+  // where a showcase lives while sharing every way it fails.
+  return resolveShowcaseWorkspacePath(entry);
 }
 
 const CODE_FILE = /\.(cjs|mjs|js|jsx|ts|tsx|css|scss|less|json|html)$/;
