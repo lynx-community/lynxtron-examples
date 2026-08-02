@@ -1,19 +1,17 @@
-import { LynxWindow, app, dialog } from '@lynx-js/lynxtron';
+import { LynxWindow, app, dialog, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
 // electron docs/fiddles native-ui/dialogs/open-file-or-directory main:
-// ipcMain.handle('open-file-dialog') → showOpenDialog({ properties: ['openFile','openDirectory'] }) → filePaths.
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'dialog:openFileOrDirectory') {
-      const { canceled, filePaths } = await dialog.showOpenDialog({
-        properties: ['openFile', 'openDirectory'],
-      });
-      callback.sendReply(canceled ? [] : filePaths);
-    }
+// lynxBridge.handle('dialog:openFileOrDirectory') → showOpenDialog({ properties: ['openFile','openDirectory'] }) → filePaths.
+function registerBridgeHandlers() {
+  lynxBridge.handle('dialog:openFileOrDirectory', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openFile', 'openDirectory'],
+    });
+    return canceled ? [] : filePaths;
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -30,7 +28,6 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -38,5 +35,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

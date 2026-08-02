@@ -1,16 +1,16 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
 // electron ipc/pattern-1 main: ipcMain.on('set-title') → win.setTitle().
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-message', (name, data) => {
-    if (name === 'set-title') {
-      const title = String((data as Record<string, unknown>)?.title ?? '');
-      win.setTitle(title);
-    }
+let mainWindow: LynxWindow | null = null;
+
+function registerBridgeHandlers() {
+  lynxBridge.on('set-title', (data) => {
+    const title = String((data as Record<string, unknown>)?.title ?? '');
+    mainWindow?.setTitle(title);
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -27,7 +27,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -35,5 +38,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

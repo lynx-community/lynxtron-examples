@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -8,27 +8,23 @@ import fs from 'node:fs/promises';
 // Upstream wrote `recently-used.md` next to main.js and called
 // app.addRecentDocument(path) on startup, then app.clearRecentDocuments()
 // on window-all-closed. Here we drive both from the UI via the bridge.
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-invoke', async (callback, name, data) => {
-    if (name === 'recent:add') {
-      const fileName = String(
-        (data as Record<string, unknown>)?.fileName ?? 'recently-used.md',
-      );
-      // Write into a real, user-facing location so the OS can resolve it.
-      const dir = app.getPath('documents');
-      const filePath = path.join(dir, fileName);
-      await fs.writeFile(filePath, 'Lorem Ipsum');
-      app.addRecentDocument(filePath);
-      callback.sendReply(filePath);
-      return;
-    }
-    if (name === 'recent:clear') {
-      app.clearRecentDocuments();
-      callback.sendReply(true);
-      return;
-    }
+function registerBridgeHandlers() {
+  lynxBridge.handle('recent:add', async (_event, data) => {
+    const fileName = String(
+      (data as Record<string, unknown>)?.fileName ?? 'recently-used.md',
+    );
+    // Write into a real, user-facing location so the OS can resolve it.
+    const dir = app.getPath('documents');
+    const filePath = path.join(dir, fileName);
+    await fs.writeFile(filePath, 'Lorem Ipsum');
+    app.addRecentDocument(filePath);
+    return filePath;
   });
-};
+  lynxBridge.handle('recent:clear', () => {
+    app.clearRecentDocuments();
+    return true;
+  });
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -45,7 +41,6 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -53,5 +48,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

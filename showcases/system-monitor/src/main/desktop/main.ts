@@ -1,4 +1,4 @@
-import { app, LynxWindow } from '@lynx-js/lynxtron';
+import { app, LynxWindow, lynxBridge } from '@lynx-js/lynxtron';
 import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 import path from 'path';
@@ -57,23 +57,17 @@ app.whenReady().then(() => {
     title: 'System Monitor',
   });
 
-  w.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'getSystemInfo') {
-      callback.sendReply(getSystemInfo());
-    }
-  });
+  lynxBridge.handle('getSystemInfo', () => getSystemInfo());
 
-  w.on('-lynx-message', (name, data) => {
-    if (name === 'setRefreshInterval') {
-      const intervalParam = asRecord(data).interval;
-      refreshInterval = typeof intervalParam === 'number' ? intervalParam : refreshInterval;
-      if (interval) {
-        clearInterval(interval);
-      }
-      interval = setInterval(() => {
-        w.sendGlobalEvent('systemInfoUpdate', getSystemInfo());
-      }, refreshInterval);
+  lynxBridge.on('setRefreshInterval', (data) => {
+    const intervalParam = asRecord(data).interval;
+    refreshInterval = typeof intervalParam === 'number' ? intervalParam : refreshInterval;
+    if (interval) {
+      clearInterval(interval);
     }
+    interval = setInterval(() => {
+      w.sendGlobalEvent('systemInfoUpdate', getSystemInfo());
+    }, refreshInterval);
   });
 
   w.show();

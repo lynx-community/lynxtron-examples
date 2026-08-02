@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -13,14 +13,14 @@ import path from 'node:path';
 // `window: { frame: false }`, so this fiddle's main.ts constructs it as a genuinely
 // frameless `new LynxWindow({ frame: false })` — the same window-creation the
 // main process owns in Electron. We push a confirmation back to the UI.
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-message', (name) => {
-    if (name === 'create-frameless-window') {
-      createWindow();
-      win.sendGlobalEvent('frameless-window-opened', {});
-    }
+let mainWindow: LynxWindow | null = null;
+
+function registerBridgeHandlers() {
+  lynxBridge.on('create-frameless-window', () => {
+    createWindow();
+    mainWindow?.sendGlobalEvent('frameless-window-opened', {});
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -38,7 +38,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -46,5 +49,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

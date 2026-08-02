@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -13,31 +13,31 @@ import { Notification } from '@lynxtron-examples/fiddle-kit/lynx-native';
 const NOTIFICATION_TITLE = 'Title';
 const NOTIFICATION_BODY = 'Notification from the UI. Click it to log to the interface.';
 
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'notification:showFromRenderer') {
-      const notification = new Notification({
-        title: NOTIFICATION_TITLE,
-        body: NOTIFICATION_BODY,
+let mainWindow: LynxWindow | null = null;
+
+function registerBridgeHandlers() {
+  lynxBridge.handle('notification:showFromRenderer', () => {
+    const notification = new Notification({
+      title: NOTIFICATION_TITLE,
+      body: NOTIFICATION_BODY,
+    });
+
+    // Best-effort: mirror the renderer `onclick` by pushing the click back to
+    // the UI. Not part of the confirmed API surface, so guard it.
+    try {
+      (notification as unknown as {
+        on?: (event: string, cb: () => void) => void;
+      }).on?.('click', () => {
+        mainWindow?.sendGlobalEvent('notification-clicked', 'Notification clicked!');
       });
-
-      // Best-effort: mirror the renderer `onclick` by pushing the click back to
-      // the UI. Not part of the confirmed API surface, so guard it.
-      try {
-        (notification as unknown as {
-          on?: (event: string, cb: () => void) => void;
-        }).on?.('click', () => {
-          win.sendGlobalEvent('notification-clicked', 'Notification clicked!');
-        });
-      } catch {
-        // Ignore — the button-triggered notification still shows.
-      }
-
-      notification.show();
-      callback.sendReply(true);
+    } catch {
+      // Ignore — the button-triggered notification still shows.
     }
+
+    notification.show();
+    return true;
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -54,7 +54,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -62,5 +65,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

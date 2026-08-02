@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -40,33 +40,47 @@ function probeOnline(): Promise<boolean> {
   });
 }
 
-const setupWindow = (win: LynxWindow) => {
-  let last: boolean | null = null;
-  let interval: ReturnType<typeof setInterval> | undefined;
+let mainWindow: LynxWindow | null = null;
+let lastOnline: boolean | null = null;
+let interval: ReturnType<typeof setInterval> | undefined;
 
-  const push = (online: boolean) => {
-    try {
-      win.sendGlobalEvent('online-status', { online, at: Date.now() });
-    } catch {
-      // Best-effort; a dropped event just means one missing UI update.
-    }
-  };
+const push = (online: boolean) => {
+  try {
+    mainWindow?.sendGlobalEvent('online-status', { online, at: Date.now() });
+  } catch {
+    // Best-effort; a dropped event just means one missing UI update.
+  }
+};
 
-  const check = async () => {
+const check = async () => {
+  const online = await probeOnline();
+  // Always push (the UI seeds "checking…" first); this also refreshes the
+  // timestamp so the user can see the probe is live.
+  lastOnline = online;
+  push(online);
+};
+
+function startPolling() {
+  check();
+  interval = setInterval(check, POLL_MS);
+}
+
+function registerBridgeHandlers() {
+  // Seed the UI on mount and support an on-demand recheck button.
+  lynxBridge.handle('online:status', async () => {
+    const online = lastOnline ?? (await probeOnline());
+    lastOnline = online;
+    return { online, at: Date.now() };
+  });
+  lynxBridge.handle('online:recheck', async () => {
     const online = await probeOnline();
-    // Always push (the UI seeds "checking…" first); this also refreshes the
-    // timestamp so the user can see the probe is live.
-    last = online;
+    lastOnline = online;
     push(online);
-  };
+    return { online, at: Date.now() };
+  });
+}
 
-  // Kick off polling. The UI can also request the current value on mount.
-  const start = () => {
-    check();
-    interval = setInterval(check, POLL_MS);
-  };
-  start();
-
+const setupWindow = (win: LynxWindow) => {
   // Stop the interval when this window goes away so we don't leak a timer.
   // `closed` may not be a confirmed event on every platform, so guard it.
   try {
@@ -76,20 +90,6 @@ const setupWindow = (win: LynxWindow) => {
   } catch {
     // No teardown hook available; the interval is harmless best-effort polling.
   }
-
-  // Seed the UI on mount and support an on-demand recheck button.
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'online:status') {
-      const online = last ?? (await probeOnline());
-      last = online;
-      callback.sendReply({ online, at: Date.now() });
-    } else if (name === 'online:recheck') {
-      const online = await probeOnline();
-      last = online;
-      push(online);
-      callback.sendReply({ online, at: Date.now() });
-    }
-  });
 };
 
 const WINDOW_OPTIONS = {
@@ -107,6 +107,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   setupWindow(win);
   attachDocsLinks(win);
   win.show();
@@ -115,5 +119,7 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
+  startPolling();
 });

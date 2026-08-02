@@ -1,4 +1,4 @@
-import { app, LynxWindow, dialog } from '@lynx-js/lynxtron';
+import { app, LynxWindow, dialog, lynxBridge } from '@lynx-js/lynxtron';
 import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 import path from 'path';
@@ -17,15 +17,12 @@ app.whenReady().then(() => {
     },
   });
 
-  w.on('-lynx-invoke', async (callback, name, data) => {
+  lynxBridge.handle('showDialog', (_event, data) => {
     const params = asRecord(data);
-    if (name === 'showDialog') {
-      dialog.showMessageBox({ message: String(params.message ?? '') });
-      callback.sendReply();
-    } else if (name === 'getAppVersion') {
-      callback.sendReply(app.getVersion());
-    }
+    dialog.showMessageBox({ message: String(params.message ?? '') });
   });
+
+  lynxBridge.handle('getAppVersion', () => app.getVersion());
 
   w.show();
   w.loadFile(LYNX_BUNDLE_PATH);

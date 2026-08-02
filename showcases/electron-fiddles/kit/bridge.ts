@@ -17,7 +17,7 @@ export function bridgeCall<T = any>(method: string, data?: unknown): Promise<T> 
   });
 }
 
-/** Fire-and-forget message into the main process (`win.on('-lynx-message')`). */
+/** Fire-and-forget message into the main process (`lynxBridge.on(method, ...)`). */
 export function bridgeSend(method: string, data?: unknown): void {
   NativeModules.bridge.send(method, data ?? {});
 }

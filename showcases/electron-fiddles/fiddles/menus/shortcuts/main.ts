@@ -1,4 +1,4 @@
-import { LynxWindow, Menu, app, dialog } from '@lynx-js/lynxtron';
+import { LynxWindow, Menu, app, dialog, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -22,7 +22,7 @@ function showSuccess() {
   });
 }
 
-const setupWindow = (win: LynxWindow) => {
+function setupMenu() {
   try {
     const menu = Menu.buildFromTemplate([
       {
@@ -44,18 +44,17 @@ const setupWindow = (win: LynxWindow) => {
   } catch {
     // Menu install is best-effort; the in-UI button still drives the demo.
   }
+}
 
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'shortcut:fire') {
-      // Mirror the accelerator action so the UI button is reachable without
-      // menu keyboard focus.
-      const { response } = await showSuccess();
-      callback.sendReply(response);
-    } else if (name === 'shortcut:accelerator') {
-      callback.sendReply(ACCELERATOR);
-    }
+function registerBridgeHandlers() {
+  lynxBridge.handle('shortcut:fire', async () => {
+    // Mirror the accelerator action so the UI button is reachable without
+    // menu keyboard focus.
+    const { response } = await showSuccess();
+    return response;
   });
-};
+  lynxBridge.handle('shortcut:accelerator', () => ACCELERATOR);
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -72,7 +71,6 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -80,5 +78,7 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  setupMenu();
+  registerBridgeHandlers();
   createWindow();
 });

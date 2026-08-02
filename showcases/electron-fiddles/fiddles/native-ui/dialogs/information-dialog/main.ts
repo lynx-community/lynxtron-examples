@@ -1,22 +1,20 @@
-import { LynxWindow, app, dialog } from '@lynx-js/lynxtron';
+import { LynxWindow, app, dialog, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
 // electron native-ui/dialogs/information-dialog main:
-// ipcMain.handle('open-information-dialog') → showMessageBox → return response index.
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'open-information-dialog') {
-      const { response } = await dialog.showMessageBox({
-        type: 'info',
-        title: 'Information',
-        message: "This is an information dialog. Isn't it nice?",
-        buttons: ['Yes', 'No'],
-      });
-      callback.sendReply(response);
-    }
+// lynxBridge.handle('open-information-dialog') → showMessageBox → return response index.
+function registerBridgeHandlers() {
+  lynxBridge.handle('open-information-dialog', async () => {
+    const { response } = await dialog.showMessageBox({
+      type: 'info',
+      title: 'Information',
+      message: "This is an information dialog. Isn't it nice?",
+      buttons: ['Yes', 'No'],
+    });
+    return response;
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -33,7 +31,6 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -41,5 +38,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

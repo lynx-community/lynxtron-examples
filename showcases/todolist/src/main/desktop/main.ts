@@ -1,4 +1,4 @@
-import { app, LynxWindow } from '@lynx-js/lynxtron';
+import { app, LynxWindow, lynxBridge } from '@lynx-js/lynxtron';
 import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 import path from 'path';
@@ -72,41 +72,53 @@ app.whenReady().then(() => {
     },
   });
 
-  // @ts-ignore -lynx-invoke is not in @lynx-js/lynxtron types yet
-  w.on('-lynx-invoke', async (callback: any, name: string, data: any) => {
-    try {
-      await dbReady;
-      switch (name) {
-        case 'storePath':
-          return callback.sendReply(dbPath);
-        case 'list':
-          return callback.sendReply(await listTodos());
-        case 'add': {
-          const title = String(data?.title ?? '').trim();
-          if (!title) return callback.sendReply(await listTodos());
-          await run('INSERT INTO todos (title, completed, created_at) VALUES (?, 0, ?)', [title, Date.now()]);
-          return callback.sendReply(await listTodos());
-        }
-        case 'toggle':
-          await run(
-            'UPDATE todos SET completed = CASE WHEN completed = 1 THEN 0 ELSE 1 END WHERE id = ?',
-            [data?.id],
-          );
-          return callback.sendReply(await listTodos());
-        case 'remove':
-          await run('DELETE FROM todos WHERE id = ?', [data?.id]);
-          return callback.sendReply(await listTodos());
-        case 'clearCompleted':
-          await run('DELETE FROM todos WHERE completed = 1');
-          return callback.sendReply(await listTodos());
-        default:
-          return callback.sendReply({ error: `Unknown bridge: ${name}` });
+  function wrap(fn: (data: any) => Promise<unknown> | unknown) {
+    return async (_event: any, data: any) => {
+      try {
+        await dbReady;
+        return await fn(data);
+      } catch (err: any) {
+        console.error('[todolist] bridge error:', err?.message);
+        return { error: err?.message ?? String(err) };
       }
-    } catch (err: any) {
-      console.error(`[todolist] bridge.${name} error:`, err?.message);
-      callback.sendReply({ error: err?.message ?? String(err) });
-    }
-  });
+    };
+  }
+
+  lynxBridge.handle('storePath', wrap(() => dbPath));
+  lynxBridge.handle('list', wrap(() => listTodos()));
+  lynxBridge.handle(
+    'add',
+    wrap(async (data) => {
+      const title = String(data?.title ?? '').trim();
+      if (!title) return listTodos();
+      await run('INSERT INTO todos (title, completed, created_at) VALUES (?, 0, ?)', [title, Date.now()]);
+      return listTodos();
+    }),
+  );
+  lynxBridge.handle(
+    'toggle',
+    wrap(async (data) => {
+      await run(
+        'UPDATE todos SET completed = CASE WHEN completed = 1 THEN 0 ELSE 1 END WHERE id = ?',
+        [data?.id],
+      );
+      return listTodos();
+    }),
+  );
+  lynxBridge.handle(
+    'remove',
+    wrap(async (data) => {
+      await run('DELETE FROM todos WHERE id = ?', [data?.id]);
+      return listTodos();
+    }),
+  );
+  lynxBridge.handle(
+    'clearCompleted',
+    wrap(async () => {
+      await run('DELETE FROM todos WHERE completed = 1');
+      return listTodos();
+    }),
+  );
 
   w.show();
   w.loadFile(LYNX_BUNDLE_PATH);

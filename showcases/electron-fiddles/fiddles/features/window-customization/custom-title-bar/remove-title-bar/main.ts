@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -12,33 +12,30 @@ import path from 'node:path';
 // the UI can prove the window is fully functional without a native title bar:
 // it reads the current bounds and lets the user re-title the window (the title
 // is still tracked internally even though no native bar renders it).
-const setupWindow = (win: LynxWindow) => {
-  const bounds = () => {
-    try {
-      const b = win.getBounds();
-      if (!b) return '(unavailable)';
-      return `${b.width}×${b.height} @ (${b.x}, ${b.y})`;
-    } catch {
-      return '(unavailable)';
-    }
-  };
+let mainWindow: LynxWindow | null = null;
 
-  win.on('-lynx-invoke', async (callback, name, data) => {
-    if (name === 'window:getBounds') {
-      callback.sendReply(bounds());
-      return;
-    }
-    if (name === 'window:setTitle') {
-      const title = String((data as { title?: unknown } | undefined)?.title ?? '');
-      try {
-        win.setTitle(title);
-        callback.sendReply(true);
-      } catch {
-        callback.sendReply(false);
-      }
+const bounds = () => {
+  try {
+    const b = mainWindow?.getBounds();
+    if (!b) return '(unavailable)';
+    return `${b.width}×${b.height} @ (${b.x}, ${b.y})`;
+  } catch {
+    return '(unavailable)';
+  }
+};
+
+function registerBridgeHandlers() {
+  lynxBridge.handle('window:getBounds', () => bounds());
+  lynxBridge.handle('window:setTitle', (_event, data) => {
+    const title = String((data as { title?: unknown } | undefined)?.title ?? '');
+    try {
+      mainWindow?.setTitle(title);
+      return true;
+    } catch {
+      return false;
     }
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -56,7 +53,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -64,5 +64,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

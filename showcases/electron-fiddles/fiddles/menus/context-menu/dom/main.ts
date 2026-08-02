@@ -1,4 +1,4 @@
-import { LynxWindow, Menu, app } from '@lynx-js/lynxtron';
+import { LynxWindow, Menu, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -11,35 +11,33 @@ import path from 'node:path';
 // Lynxtron adaptation: Lynx has no `contextmenu` event, so the UI long-presses
 // a specific element (`bindlongpress`) and fires `bridgeSend('context-menu')`.
 // Main builds the same role-based Menu and pops it up at the window.
-const setupWindow = (win: LynxWindow) => {
-  const menu = Menu.buildFromTemplate([
-    { role: 'copy' },
-    { role: 'cut' },
-    { role: 'paste' },
-    { role: 'selectall' },
-  ]);
+let mainWindow: LynxWindow | null = null;
 
-  const popup = () => {
-    try {
-      menu.popup({ window: win });
-    } catch {
-      // popup is best-effort — nothing to surface if the platform declines it.
-    }
-  };
+const menu = Menu.buildFromTemplate([
+  { role: 'copy' },
+  { role: 'cut' },
+  { role: 'paste' },
+  { role: 'selectall' },
+]);
 
+const popup = () => {
+  try {
+    if (mainWindow) menu.popup({ window: mainWindow });
+  } catch {
+    // popup is best-effort — nothing to surface if the platform declines it.
+  }
+};
+
+function registerBridgeHandlers() {
   // Long-press the target element → open the native context menu for it.
-  win.on('-lynx-message', (name) => {
-    if (name === 'context-menu') popup();
-  });
+  lynxBridge.on('context-menu', () => popup());
 
   // Same handler as an invoke so the UI can confirm the popup fired.
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'context-menu') {
-      popup();
-      callback.sendReply(true);
-    }
+  lynxBridge.handle('context-menu', () => {
+    popup();
+    return true;
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -56,7 +54,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -64,5 +65,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

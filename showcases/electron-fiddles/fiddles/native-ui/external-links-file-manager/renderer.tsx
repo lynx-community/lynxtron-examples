@@ -5,7 +5,7 @@ import { bridgeSend } from '@lynxtron-examples/fiddle-kit/bridge';
 // Port of electron docs/fiddles native-ui/external-links-file-manager.
 // The `shell` module opens the OS file manager and the default web browser.
 // Upstream used contextBridge + ipcRenderer.send; here we bridge into main
-// (bridgeSend → win.on('-lynx-message')) which calls shell.* on the main side.
+// (bridgeSend → lynxBridge.on) which calls shell.* on the main side.
 export function App() {
   const [url, setUrl] = useState('https://lynxjs.org');
   const [status, setStatus] = useState('');

@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -10,17 +10,15 @@ import { Notification } from '@lynxtron-examples/fiddle-kit/lynx-native';
 const NOTIFICATION_TITLE = 'Basic Notification';
 const NOTIFICATION_BODY = 'Notification from the Main process';
 
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'notification:show') {
-      new Notification({
-        title: NOTIFICATION_TITLE,
-        body: NOTIFICATION_BODY,
-      }).show();
-      callback.sendReply(true);
-    }
+function registerBridgeHandlers() {
+  lynxBridge.handle('notification:show', () => {
+    new Notification({
+      title: NOTIFICATION_TITLE,
+      body: NOTIFICATION_BODY,
+    }).show();
+    return true;
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -37,7 +35,6 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -45,5 +42,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

@@ -1,4 +1,4 @@
-import { LynxWindow, Menu, app, shell } from '@lynx-js/lynxtron';
+import { LynxWindow, Menu, app, shell, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -14,11 +14,14 @@ import path from 'node:path';
 // entirely from its window.
 const DOCS_URL = 'https://lynxjs.org';
 
-const setupWindow = (win: LynxWindow) => {
-  const newWindow = () => createWindow();
-  const closeAllWindows = () => win.close?.();
-  const openDocs = () => shell.openExternal(DOCS_URL);
+let mainWindow: LynxWindow | null = null;
+let dockAvailable = false;
 
+const newWindow = () => createWindow();
+const closeAllWindows = () => mainWindow?.close?.();
+const openDocs = () => shell.openExternal(DOCS_URL);
+
+function setupDock() {
   const dockMenu = Menu.buildFromTemplate([
     { label: 'New Window', click: newWindow },
     { label: 'Close All Windows', click: closeAllWindows },
@@ -28,7 +31,6 @@ const setupWindow = (win: LynxWindow) => {
 
   // `app.dock` is only defined on macOS. Track whether the menu was installed
   // so the UI can explain the gap on other platforms.
-  let dockAvailable = false;
   try {
     if (app.dock) {
       app.dock.setMenu(dockMenu);
@@ -37,24 +39,22 @@ const setupWindow = (win: LynxWindow) => {
   } catch {
     // setMenu is best-effort; the in-UI buttons still drive the demo.
   }
+}
 
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'dock:state') {
-      callback.sendReply({ dockAvailable, docsUrl: DOCS_URL });
-    }
-  });
+function registerBridgeHandlers() {
+  lynxBridge.handle('dock:state', () => ({ dockAvailable, docsUrl: DOCS_URL }));
 
-  win.on('-lynx-message', (name) => {
-    // Mirror each dock-menu item so the window buttons drive the same actions.
-    if (name === 'dock:newWindow') {
-      newWindow();
-    } else if (name === 'dock:closeAll') {
-      closeAllWindows();
-    } else if (name === 'dock:openDocs') {
-      openDocs();
-    }
+  // Mirror each dock-menu item so the window buttons drive the same actions.
+  lynxBridge.on('dock:newWindow', () => {
+    newWindow();
   });
-};
+  lynxBridge.on('dock:closeAll', () => {
+    closeAllWindows();
+  });
+  lynxBridge.on('dock:openDocs', () => {
+    openDocs();
+  });
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -71,7 +71,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -79,5 +82,7 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  setupDock();
+  registerBridgeHandlers();
   createWindow();
 });
