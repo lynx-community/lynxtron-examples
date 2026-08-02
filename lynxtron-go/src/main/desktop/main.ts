@@ -138,6 +138,11 @@ let pendingDeepLinkPayload: HostDeepLinkPayload | null = null;
 // Pending ⌘Q: armed by the Quit menu item, disarmed by the UI's persistDone
 // ack (which quits immediately) or by its own dead-man expiry.
 let quitFlushTimer: ReturnType<typeof setTimeout> | null = null;
+// Which product the menu is currently built for, and the window it belongs to.
+// The UI is the only thing that knows which surface it is showing, so it
+// reports through the setSurface bridge call and the menu is rebuilt to match.
+let menuSurface: MenuSurface = 'fiddle';
+let menuWindow: LynxWindowInstance | null = null;
 
 // Register native extensions
 try {
@@ -422,11 +427,39 @@ function openPreviewWindow(title: string, fileRoots: string[]): LynxWindowInstan
 // File (New Fiddle / Open / Save / Publish to Gist), Edit roles, View, Tasks
 // (Run / Stop), Help. Items send `fiddle:*` global events consumed by
 // Fiddle.tsx via GlobalEventEmitter.
-function buildAppMenu(w: LynxWindowInstance) {
+/**
+ * Which product the window is currently showing. The two surfaces listen on
+ * two different channels — `fiddle:*` is handled by Fiddle.tsx, `ide:*` by
+ * App.tsx — and only one of them is mounted at a time (App.tsx renders either
+ * the Fiddle or the IDE, never both). So a menu that always sends `fiddle:*`
+ * is silently dead on the workspace surface, which is exactly how Cmd+S,
+ * Cmd+O, Cmd+W, Cmd+J and Cmd+R came to do nothing in the IDE: the Fiddle port
+ * rewrote the menu around `fiddle:*` and left App.tsx's `ide:*` listeners with
+ * no sender at all.
+ *
+ * The renderer reports its surface through the `setSurface` bridge call, and
+ * the menu is rebuilt so every accelerator reaches the surface that is
+ * actually mounted — and so items belonging to the other product are absent
+ * rather than present-but-inert.
+ */
+type MenuSurface = 'fiddle' | 'workspace';
+
+function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
+  const isWorkspace = surface === 'workspace';
+  /** Fiddle surface only — Fiddle.tsx is unmounted on the workspace surface. */
   const sendCmd = (cmd: string, data: Record<string, unknown> = {}) => {
     console.log(`[PC_Host] menu: fiddle:${cmd}`);
     try {
       w.sendGlobalEvent(`fiddle:${cmd}`, data);
+    } catch (e) {
+      console.error(`[PC_Host] sendGlobalEvent error:`, e);
+    }
+  };
+  /** Workspace surface only — handled by App.tsx's ide:* listeners. */
+  const sendIde = (cmd: string, data: Record<string, unknown> = {}) => {
+    console.log(`[PC_Host] menu: ide:${cmd}`);
+    try {
+      w.sendGlobalEvent(`ide:${cmd}`, data);
     } catch (e) {
       console.error(`[PC_Host] sendGlobalEvent error:`, e);
     }
@@ -444,6 +477,10 @@ function buildAppMenu(w: LynxWindowInstance) {
           label: 'Preferences',
           accelerator: 'CmdOrCtrl+,',
           registerAccelerator: true,
+          // The settings dialog is a Fiddle component. Disabled rather than
+          // silently inert on the workspace surface; giving the IDE its own
+          // settings surface is a separate piece of work.
+          enabled: !isWorkspace,
           click: () => sendCmd('openSettings'),
         },
         { type: 'separator' },
@@ -471,44 +508,19 @@ function buildAppMenu(w: LynxWindowInstance) {
     });
   }
 
-  const fileSubmenu: any[] = [
-    {
-      id: 'newFiddle',
-      label: 'New Fiddle',
-      accelerator: 'CmdOrCtrl+N',
-      registerAccelerator: true,
-      click: () => sendCmd('newFiddle'),
-    },
-    { type: 'separator' },
-    {
-      id: 'open',
-      label: 'Open...',
-      accelerator: 'CmdOrCtrl+O',
-      registerAccelerator: true,
-      click: async () => {
-        const result = await dialog.showOpenDialog({
-          properties: ['openDirectory'],
-        });
-        if (!result.canceled && result.filePaths.length > 0) {
-          sendCmd('openFolder', { path: result.filePaths[0] });
-        }
-      },
-    },
+  // Cmd+P and Cmd+K exist on BOTH surfaces, and are the one pair that must NOT
+  // be routed by surface: the palette is a single App-level component that
+  // floats over whichever product is mounted, so App.tsx owns both events
+  // regardless. Fiddle.tsx has no quickOpen/commandPalette handler at all —
+  // sending it fiddle:* here silently killed Cmd+P and Cmd+K on the home
+  // surface. The ide: prefix is legacy naming for "App-level", not "IDE-only".
+  const paletteItems: any[] = [
     {
       id: 'quickOpen',
       label: 'Quick Open…',
       accelerator: 'CmdOrCtrl+P',
       registerAccelerator: true,
-      // App-level palette (predates the Fiddle menu — its ide:quickOpen
-      // listener lives in App.tsx, not Fiddle.tsx); the Fiddle-shaped menu
-      // rewrite dropped this item and Cmd+P silently died.
-      click: () => {
-        try {
-          w.sendGlobalEvent('ide:quickOpen', {});
-        } catch (e) {
-          console.error(`[PC_Host] sendGlobalEvent error:`, e);
-        }
-      },
+      click: () => sendIde('quickOpen'),
     },
     {
       id: 'commandPalette',
@@ -516,32 +528,82 @@ function buildAppMenu(w: LynxWindowInstance) {
       accelerator: 'CmdOrCtrl+K',
       registerAccelerator: true,
       // The same palette Cmd+P opens, pre-filled with '>' — i.e. exactly
-      // "Cmd+P then type >", which is how the command list was reachable
-      // before. Like every other shortcut here it has to round-trip through
-      // the main process: these are menu accelerators, not Lynx key handlers.
-      click: () => {
-        try {
-          w.sendGlobalEvent('ide:commandPalette', {});
-        } catch (e) {
-          console.error(`[PC_Host] sendGlobalEvent error:`, e);
-        }
-      },
-    },
-    { type: 'separator' },
-    {
-      id: 'save',
-      label: 'Save',
-      accelerator: 'CmdOrCtrl+S',
-      registerAccelerator: true,
-      click: () => sendCmd('save'),
-    },
-    { type: 'separator' },
-    {
-      id: 'publish',
-      label: 'Publish to Gist',
-      click: () => sendCmd('publish'),
+      // "Cmd+P then type >". Like every other shortcut here it round-trips
+      // through the main process: these are menu accelerators, not Lynx key
+      // handlers, which Lynx has no way to register for arrow/Escape keys.
+      click: () => sendIde('commandPalette'),
     },
   ];
+
+  const fileSubmenu: any[] = isWorkspace
+    ? [
+        {
+          id: 'openFolder',
+          label: 'Open Folder…',
+          accelerator: 'CmdOrCtrl+O',
+          registerAccelerator: true,
+          // App.tsx runs the native dialog itself through the openFolder
+          // bridge call. The Fiddle surface's Open… cannot stand in here: it
+          // feeds the path to loadLocalFiddle, which rejects any folder that
+          // is not already fiddle-shaped.
+          click: () => sendIde('openFolder'),
+        },
+        { type: 'separator' },
+        ...paletteItems,
+        { type: 'separator' },
+        {
+          id: 'save',
+          label: 'Save',
+          accelerator: 'CmdOrCtrl+S',
+          registerAccelerator: true,
+          click: () => sendIde('save'),
+        },
+        {
+          id: 'closeTab',
+          label: 'Close Tab',
+          accelerator: 'CmdOrCtrl+W',
+          registerAccelerator: true,
+          click: () => sendIde('closeTab'),
+        },
+      ]
+    : [
+        {
+          id: 'newFiddle',
+          label: 'New Fiddle',
+          accelerator: 'CmdOrCtrl+N',
+          registerAccelerator: true,
+          click: () => sendCmd('newFiddle'),
+        },
+        { type: 'separator' },
+        {
+          id: 'open',
+          label: 'Open...',
+          accelerator: 'CmdOrCtrl+O',
+          registerAccelerator: true,
+          click: async () => {
+            const result = await dialog.showOpenDialog({
+              properties: ['openDirectory'],
+            });
+            if (!result.canceled && result.filePaths.length > 0) {
+              sendCmd('openFolder', { path: result.filePaths[0] });
+            }
+          },
+        },
+        ...paletteItems,
+        { type: 'separator' },
+        {
+          id: 'save',
+          label: 'Save',
+          accelerator: 'CmdOrCtrl+S',
+          registerAccelerator: true,
+          click: () => sendCmd('save'),
+        },
+        {
+          id: 'publish',
+          label: 'Publish to Gist',
+          click: () => sendCmd('publish'),
+        },
+      ];
 
   if (process.platform !== 'darwin') {
     fileSubmenu.push(
@@ -569,24 +631,55 @@ function buildAppMenu(w: LynxWindowInstance) {
       { role: 'copy' },
       { role: 'paste' },
       { role: 'selectAll' },
+      // Find belongs to the IDE's file tree and editor tabs; the Fiddle has no
+      // corresponding surface, so these appear only where they work.
+      ...(isWorkspace
+        ? [
+            { type: 'separator' },
+            {
+              id: 'findInFile',
+              label: 'Find',
+              accelerator: 'CmdOrCtrl+F',
+              registerAccelerator: true,
+              click: () => sendIde('findInFile'),
+            },
+            {
+              id: 'findInFiles',
+              label: 'Find in Files',
+              accelerator: 'CmdOrCtrl+Shift+F',
+              registerAccelerator: true,
+              click: () => sendIde('findInFiles'),
+            },
+          ]
+        : []),
     ],
   });
 
   template.push({
     label: 'View',
     submenu: [
-      {
-        id: 'toggleConsole',
-        label: 'Toggle Console',
-        accelerator: 'CmdOrCtrl+J',
-        registerAccelerator: true,
-        click: () => sendCmd('toggleConsole'),
-      },
-      {
-        id: 'resetLayout',
-        label: 'Reset Editor Layout',
-        click: () => sendCmd('resetLayout'),
-      },
+      isWorkspace
+        ? {
+            id: 'togglePanel',
+            label: 'Toggle Panel',
+            accelerator: 'CmdOrCtrl+J',
+            registerAccelerator: true,
+            click: () => sendIde('togglePanel'),
+          }
+        : {
+            id: 'toggleConsole',
+            label: 'Toggle Console',
+            accelerator: 'CmdOrCtrl+J',
+            registerAccelerator: true,
+            click: () => sendCmd('toggleConsole'),
+          },
+      ...(isWorkspace
+        ? []
+        : [{
+            id: 'resetLayout',
+            label: 'Reset Editor Layout',
+            click: () => sendCmd('resetLayout'),
+          }]),
       { type: 'separator' },
       { role: 'reload' },
       { type: 'separator' },
@@ -594,7 +687,7 @@ function buildAppMenu(w: LynxWindowInstance) {
     ],
   });
 
-  template.push({
+  if (!isWorkspace) template.push({
     label: 'Tasks',
     submenu: [
       {
@@ -735,7 +828,12 @@ if (!hasSingleInstanceLock) {
     // fiddle workspaces live under tmpdir.
     installFileResourceFetcher(w, [__dirname, os.tmpdir()]);
     try {
-      buildAppMenu(w);
+      // A window spawned as a dedicated IDE boots straight into the workspace
+      // surface, so start with that menu rather than flashing the Fiddle's.
+      // The UI confirms (and thereafter reports every change) via setSurface.
+      menuSurface = isIdeBootTarget ? 'workspace' : 'fiddle';
+      menuWindow = w;
+      buildAppMenu(w, menuSurface);
       console.log('[PC_Host] buildAppMenu completed successfully');
     } catch (e) {
       console.error('[PC_Host] buildAppMenu FAILED:', e);
@@ -815,6 +913,18 @@ if (!hasSingleInstanceLock) {
               },
             });
           }
+        } else if (name === 'setSurface') {
+          const next = stringParam(params, 'surface') === 'workspace' ? 'workspace' : 'fiddle';
+          if (next !== menuSurface && menuWindow) {
+            menuSurface = next;
+            try {
+              buildAppMenu(menuWindow, next);
+              console.log(`[PC_Host] menu rebuilt for surface: ${next}`);
+            } catch (e) {
+              console.error('[PC_Host] menu rebuild FAILED:', e);
+            }
+          }
+          callback.sendReply({ ok: true, surface: menuSurface });
         } else if (name === 'getAppVersion') {
           callback.sendReply(app.getVersion());
         } else if (name === 'openFolder') {
