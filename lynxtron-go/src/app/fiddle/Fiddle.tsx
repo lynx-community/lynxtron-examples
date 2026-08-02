@@ -52,6 +52,17 @@ export interface FiddleProps {
   onStopExternalRun?: () => void;
   /** Theme setting changed — App re-reads config and swaps the UI class. */
   onThemeChange?: () => void;
+  /** Publish this Fiddle's own files to the App-level palette (Cmd+P). The
+      palette is App-level because it must float above both products, but the
+      rows have to come from whichever one is mounted — the Fiddle's editors
+      here, the workspace's file index in the IDE. */
+  onPaletteSourceChange?: (source: FiddlePaletteSource | null) => void;
+}
+
+/** What the Fiddle offers Cmd+P: its own editors, and how to reveal one. */
+export interface FiddlePaletteSource {
+  files: Array<{ id: string; name: string }>;
+  open: (id: string) => void;
 }
 
 export function Fiddle(props: FiddleProps) {
@@ -160,6 +171,24 @@ export function Fiddle(props: FiddleProps) {
     appendOutput('info', `[Fiddle] Opened ${path}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Publish the editor list upward whenever it changes, so Cmd+P on this
+  // surface lists the fiddle's own files. selectEditor is the right activate:
+  // it reveals a hidden file before focusing it, exactly like a sidebar click.
+  const paletteSourceChanged = props.onPaletteSourceChange;
+  useEffect(() => {
+    if (!paletteSourceChanged) return;
+    paletteSourceChanged({
+      files: [...fiddle.snap.files.keys()].map(id => ({
+        id,
+        name: id.split('/').pop() || id,
+      })),
+      open: (id: string) => fiddle.selectEditor(id),
+    });
+    // Withdraw on unmount: App must not offer rows for a surface that is gone.
+    return () => paletteSourceChanged(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paletteSourceChanged, fiddle.snap.files, fiddle.selectEditor]);
 
   // Theme or editor font size changed: swap the App-level UI class and
   // re-theme every live native editor.

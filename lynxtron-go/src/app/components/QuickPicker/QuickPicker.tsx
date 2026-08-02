@@ -14,6 +14,18 @@ const PLACEHOLDER: Record<PickerMode, string> = {
   example: 'Enter example id or relative path…',
 };
 
+/**
+ * Path shown under a file row. The Fiddle surface has no workspace root and
+ * its rows already carry relative ids, so guard the prefix strip: `replace`
+ * with a plain string replaces the FIRST match anywhere, and an empty root
+ * turned "src/app/App.tsx" into "srcapp/App.tsx".
+ */
+function relativeTo(rootPath: string, fullPath: string): string {
+  if (!rootPath) return fullPath;
+  const prefix = rootPath.replace(/\/+$/, '') + '/';
+  return fullPath.startsWith(prefix) ? fullPath.slice(prefix.length) : fullPath;
+}
+
 /** One activatable row, flattened across modes so the keyboard sees one list. */
 interface PickerRow {
   key: string;
@@ -202,7 +214,7 @@ export function QuickPicker({
                 <view className="PickerItemInfo">
                   <text className="PickerFileName">{f.name}</text>
                   <text className="PickerFilePath">
-                    {f.fullPath.replace(rootPath + '/', '')}
+                    {relativeTo(rootPath, f.fullPath)}
                   </text>
                 </view>
               </view>

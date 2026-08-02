@@ -64,7 +64,7 @@ import { checkDeepLinkActionReadiness } from './shared/deep-link-runtime';
 import { registerStatusBarItem } from './components/StatusBar/statusbar-registry';
 import { QuickPicker } from './components/QuickPicker/QuickPicker';
 import { GalleryHome } from './components/Gallery/GalleryHome';
-import { Fiddle } from './fiddle/Fiddle';
+import { Fiddle, type FiddlePaletteSource } from './fiddle/Fiddle';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './fiddle/dev-preset';
 import { isDarkTheme } from './fiddle/theme';
 import { LoadingOverlay } from './components/shared/LoadingOverlay';
@@ -210,6 +210,9 @@ export function App(props: { onRender?: () => void } = {}) {
   // Quick file picker state
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState('');
+  // Rows the mounted Fiddle offers Cmd+P. Null on the workspace surface, where
+  // the palette draws from the indexed file tree instead.
+  const [fiddlePalette, setFiddlePalette] = useState<FiddlePaletteSource | null>(null);
   const [pickerMode, setPickerMode] = useState<'files' | 'commands' | 'showcases' | 'url' | 'bundleUrl' | 'example' | undefined>(undefined);
   const [runningPid, setRunningPid] = useState<number | null>(null);
   const [bottomPanelTab, setBottomPanelTab] = useState<string | undefined>(undefined);
@@ -495,6 +498,25 @@ export function App(props: { onRender?: () => void } = {}) {
   }, [activeTabId, tabs]);
 
   const currentRootPath = route.kind === 'workspace' ? route.rootPath : '';
+  // THE surface: which of the two products this window is showing. It used to
+  // be `legacyIdeOpen && route.kind === 'workspace'` — two independent booleans
+  // expressing one mutually exclusive state, which made `workspace route + flag
+  // off` representable: files opened into tabs that nothing rendered, because
+  // App renders either the IDE or the Fiddle, never both. Deriving it from the
+  // route alone makes that state impossible. Declared up here with the route it
+  // comes from: the palette and the menu bridge both read it well before the
+  // render block where it used to live.
+  //
+  // A window spawned as a dedicated IDE resolves its showcase asynchronously,
+  // so its route is still home for that whole stretch — it used to render the
+  // Fiddle, default template and all, until the workspace landed, and forever
+  // if resolution failed. bootTarget is known at first render, so an IDE window
+  // is an IDE from the start: empty and loading if need be, never the other
+  // product.
+  const isIdeBootWindow = (() => {
+    try { return (getExposed() as any)?.bootTarget === 'ide'; } catch (_) { return false; }
+  })();
+  const showLegacyIde = route.kind === 'workspace' || isIdeBootWindow;
   const lastWorkspacePath = lastWorkspaceSession?.rootPath ?? null;
 
   // ── Language service: send text to Extension Host for diagnostics ──────────
@@ -1405,10 +1427,22 @@ export function App(props: { onRender?: () => void } = {}) {
     return () => { cancelled = true; };
   }, [currentRootPath]);
 
+  // Which files Cmd+P searches depends on which product is mounted. On the
+  // Fiddle surface the workspace index is meaningless — there is no workspace,
+  // and opening a workspace file would land it in IDE tabs the Fiddle does not
+  // render. The Fiddle's own editors are what "open a file" means there.
+  // `fullPath` carries the editor id, which is already the relative path the
+  // rows display.
+  let allFiles: TreeNode[] = showLegacyIde
+    ? fileIndex
+    : (fiddlePalette?.files ?? []).map(f => ({
+        name: f.name,
+        fullPath: f.id,
+        isDirectory: false,
+      }));
   // Fall back to the sidebar's contents while the index is still building, so
   // the palette is never emptier than it was before.
-  let allFiles: TreeNode[] = fileIndex;
-  if (allFiles.length === 0) {
+  if (showLegacyIde && allFiles.length === 0) {
     allFiles = [];
     for (const nodes of dirContents.values()) {
       for (const node of nodes) {
@@ -2250,9 +2284,14 @@ export function App(props: { onRender?: () => void } = {}) {
       openExampleArtifactDirect(value);
       return;
     }
-    openFile(value);
+    // Open into the mounted product. openFile writes App-level IDE tabs, which
+    // only the IDE renders — sending a Fiddle-surface selection there opened a
+    // file into state nothing displayed, which is what made Cmd+P look broken
+    // on the default surface.
+    if (showLegacyIde) openFile(value);
+    else fiddlePalette?.open(value);
     setPickerOpen(false);
-  }, [pickerMode, openFile, fetchShowcaseByUrl, openExampleArtifactDirect, runBundleUrlDirect]);
+  }, [pickerMode, showLegacyIde, fiddlePalette, openFile, fetchShowcaseByUrl, openExampleArtifactDirect, runBundleUrlDirect]);
 
   const handleSelectShowcase = useCallback((entry: ShowcaseEntry) => {
     setPickerOpen(false);
@@ -2615,22 +2654,6 @@ export function App(props: { onRender?: () => void } = {}) {
   // it was opened from — never another (self-hosted) Fiddle. The per-card
   // "IDE" action keeps the legacy open-showcase-in-workspace route alive by
   // mounting the old IDE shell — the route back-chevron leaves it again.
-  // THE surface. It used to be `legacyIdeOpen && route.kind === 'workspace'` —
-  // two independent booleans expressing one mutually exclusive state, which
-  // made `workspace route + flag off` representable: files opened into tabs
-  // that nothing rendered, because App renders either the IDE or the Fiddle,
-  // never both. Deriving it from the route alone makes that state impossible.
-  //
-  // A window spawned as a dedicated IDE resolves its showcase asynchronously,
-  // so its route is still home for that whole stretch — it used to render the
-  // Fiddle, default template and all, until the workspace landed, and forever
-  // if resolution failed. bootTarget is known at first render, so an IDE window
-  // is an IDE from the start: empty and loading if need be, never the other
-  // product.
-  const isIdeBootWindow = (() => {
-    try { return (getExposed() as any)?.bootTarget === 'ide'; } catch (_) { return false; }
-  })();
-  const showLegacyIde = route.kind === 'workspace' || isIdeBootWindow;
   // One props object for both gallery hosts — the in-shell page and the
   // legacy full overlay must never drift apart callback-by-callback.
   const galleryProps = {
@@ -2699,6 +2722,7 @@ export function App(props: { onRender?: () => void } = {}) {
       externalRunPid={runningPid}
       onStopExternalRun={stopGalleryRun}
       onThemeChange={() => setUiThemeDark(isDarkTheme())}
+      onPaletteSourceChange={setFiddlePalette}
     />
   );
   // Tell the main process which surface is mounted so the menu can be rebuilt
