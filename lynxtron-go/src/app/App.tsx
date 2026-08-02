@@ -116,6 +116,45 @@ function joinWorkspaceRootAndRelativeFile(rootPath: string, filePath: string): s
   return `${rootPath.replace(/[\\/]+$/, '')}/${filePath.replace(/^\/+/, '')}`;
 }
 
+/** Directories to read per tick while indexing a workspace for the picker. */
+const INDEX_DIRS_PER_TICK = 24;
+/** Ceiling on the picker's index, so a huge tree cannot grow it without bound. */
+const INDEX_MAX_FILES = 20000;
+/** Rows handed to the picker. The index can hold thousands; the list cannot. */
+const PICKER_MAX_ROWS = 200;
+
+/**
+ * Order matches so the file you typed the name of is not buried under files
+ * that merely live in a matching directory. A plain `includes` over the full
+ * path put `src/components/Foo/index.tsx` above `App.tsx` when searching "app"
+ * simply because "app" appears in the workspace path itself.
+ */
+function rankFiles(files: TreeNode[], query: string, rootPath: string): TreeNode[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return files;
+  const scored: Array<{ file: TreeNode; score: number }> = [];
+  for (const file of files) {
+    const name = file.name.toLowerCase();
+    // Match against the path shown in the row, not the machine-absolute one.
+    const relative = file.fullPath.startsWith(rootPath + '/')
+      ? file.fullPath.slice(rootPath.length + 1).toLowerCase()
+      : file.fullPath.toLowerCase();
+    let score: number;
+    if (name === q) score = 0;
+    else if (name.startsWith(q)) score = 1;
+    else if (name.includes(q)) score = 2;
+    else if (relative.includes(q)) score = 3;
+    else continue;
+    scored.push({ file, score });
+  }
+  // Stable within a tier: the index is built breadth-first, so shallower files
+  // — usually the ones meant — keep their head start.
+  return scored
+    .map((entry, index) => ({ ...entry, index }))
+    .sort((a, b) => a.score - b.score || a.index - b.index)
+    .map(entry => entry.file);
+}
+
 function clampDeepLinkEditorNavigation(
   text: string,
   navigation: DeepLinkFileNavigation,
@@ -1266,7 +1305,23 @@ export function App(props: { onRender?: () => void } = {}) {
       if (tabId) closeTab(tabId);
     };
     const onOpenFolder = () => { log('[IDE] ide:openFolder received'); openFolderDialog(); };
-    const onQuickOpen = () => { log('[IDE] ide:quickOpen received'); setPickerQuery(''); setPickerOpen(true); };
+    const onQuickOpen = () => {
+      log('[IDE] ide:quickOpen received');
+      setPickerQuery('');
+      // Clear any mode a previous opener set, so Cmd+P is always file search.
+      setPickerMode(undefined);
+      setPickerOpen(true);
+    };
+    // Cmd+K is Cmd+P with '>' already typed: same palette, command mode. The
+    // mode is derived from the '>' prefix rather than forced through
+    // `pickerMode`, so backspacing the '>' falls back to file search exactly
+    // as it does when the user types it by hand.
+    const onCommandPalette = () => {
+      log('[IDE] ide:commandPalette received');
+      setPickerQuery('>');
+      setPickerMode(undefined);
+      setPickerOpen(true);
+    };
     const onTogglePanel = () => {
       log('[IDE] ide:togglePanel received');
       setBottomPanelOpen(v => { const next = !v; saveLayout('layout.bottomPanelOpen', next); return next; });
@@ -1285,6 +1340,7 @@ export function App(props: { onRender?: () => void } = {}) {
       emitter.addListener('ide:closeTab', onCloseTab);
       emitter.addListener('ide:openFolder', onOpenFolder);
       emitter.addListener('ide:quickOpen', onQuickOpen);
+      emitter.addListener('ide:commandPalette', onCommandPalette);
       emitter.addListener('ide:togglePanel', onTogglePanel);
       emitter.addListener('ide:findInFile', onFindInFile);
       emitter.addListener('ide:findInFiles', onFindInFiles);
@@ -1296,6 +1352,7 @@ export function App(props: { onRender?: () => void } = {}) {
         emitter.removeListener('ide:closeTab', onCloseTab);
         emitter.removeListener('ide:openFolder', onOpenFolder);
         emitter.removeListener('ide:quickOpen', onQuickOpen);
+        emitter.removeListener('ide:commandPalette', onCommandPalette);
         emitter.removeListener('ide:togglePanel', onTogglePanel);
         emitter.removeListener('ide:findInFile', onFindInFile);
         emitter.removeListener('ide:findInFiles', onFindInFiles);
@@ -1305,18 +1362,62 @@ export function App(props: { onRender?: () => void } = {}) {
   }, [saveCurrentFile, closeTab, openFolderDialog, openCurrentFileFind]);
 
   // ── Collect all files for Cmd+P picker ────────────────────────────────────
-  const allFiles: TreeNode[] = [];
-  for (const nodes of dirContents.values()) {
-    for (const node of nodes) {
-      if (!node.isDirectory) allFiles.push(node);
+  // `dirContents` is the *sidebar's* model: openFolder loads the root's direct
+  // children and toggleDir loads a directory only when the user expands it. So
+  // searching it found the root and nothing else — a showcase keeps its source
+  // under src/, which is collapsed on open, and Cmd+P came up empty for
+  // basically every real file. The picker needs the whole workspace, so index
+  // it separately. HIDDEN (node_modules, dist, .git, …) is what keeps the walk
+  // bounded to actual source.
+  const [fileIndex, setFileIndex] = useState<TreeNode[]>([]);
+
+  useEffect(() => {
+    setFileIndex([]);
+    if (!currentRootPath) return;
+    let cancelled = false;
+    const found: TreeNode[] = [];
+    const queue: string[] = [currentRootPath];
+    // readdirStat is a synchronous bridge call, so draining the whole queue in
+    // one pass would stall the UI thread on a large workspace. A few
+    // directories per tick keeps the app responsive while the index fills in,
+    // and the picker works against whatever has been found so far.
+    const step = () => {
+      if (cancelled) return;
+      const fs = getExposed()?.fs;
+      if (!fs) return;
+      for (let i = 0; i < INDEX_DIRS_PER_TICK && queue.length > 0; i++) {
+        const dir = queue.shift()!;
+        try {
+          const entries: Array<{ name: string; isDirectory: boolean }> = fs.readdirStat(dir);
+          for (const e of entries) {
+            if (HIDDEN.has(e.name)) continue;
+            const fullPath = `${dir}/${e.name}`;
+            if (e.isDirectory) queue.push(fullPath);
+            else if (found.length < INDEX_MAX_FILES) {
+              found.push({ name: e.name, fullPath, isDirectory: false });
+            }
+          }
+        } catch (_) { /* unreadable directory — skip it rather than abort */ }
+      }
+      setFileIndex(found.slice());
+      if (queue.length > 0 && found.length < INDEX_MAX_FILES) setTimeout(step, 0);
+    };
+    setTimeout(step, 0);
+    return () => { cancelled = true; };
+  }, [currentRootPath]);
+
+  // Fall back to the sidebar's contents while the index is still building, so
+  // the palette is never emptier than it was before.
+  let allFiles: TreeNode[] = fileIndex;
+  if (allFiles.length === 0) {
+    allFiles = [];
+    for (const nodes of dirContents.values()) {
+      for (const node of nodes) {
+        if (!node.isDirectory) allFiles.push(node);
+      }
     }
   }
-  const filteredFiles = pickerQuery
-    ? allFiles.filter(f => {
-        const q = pickerQuery.toLowerCase();
-        return f.name.toLowerCase().includes(q) || f.fullPath.toLowerCase().includes(q);
-      })
-    : allFiles;
+  const filteredFiles = rankFiles(allFiles, pickerQuery, currentRootPath).slice(0, PICKER_MAX_ROWS);
 
   const clearDeepLinkStartupRetry = useCallback(() => {
     if (!deepLinkStartupRetryTimeoutRef.current) return;
@@ -1752,9 +1853,24 @@ export function App(props: { onRender?: () => void } = {}) {
         else if (name === 'app:galleryBack') setGalleryOpen(false);
         else if (name === 'app:openShowcase' && entry) openShowcaseInFiddle(entry);
         else if (name === 'app:openShowcaseLegacy' && entry) openShowcaseInIdeWindow(entry);
+        // Opening a folder is the only way to reach file-search mode, and the
+        // Open dialog is a native panel synthesised input cannot drive.
+        // setLegacyIdeOpen matches what the Gallery's "IDE" action and Open
+        // Folder both do: a workspace route alone leaves Fiddle as the main
+        // content, so opened files would land in tabs nothing renders.
+        else if (name === 'app:openFolder' && typeof data?.path === 'string') {
+          setLegacyIdeOpen(true);
+          openFolder(data.path);
+        }
         else if (name === 'app:routeBack') handleRouteBack();
         else if (name === 'app:routeForward') handleRouteForward();
-        else if (name === 'app:quickOpen') { setPickerQuery(''); setPickerMode(undefined); setPickerOpen(true); }
+        else if (name === 'app:quickOpen') {
+          // Optional {"mode","query"} so automation can reach the populated
+          // states (commands, showcases) — synthesised input cannot type.
+          setPickerQuery(typeof data?.query === 'string' ? data.query : '');
+          setPickerMode(data?.mode as any);
+          setPickerOpen(true);
+        }
         else if (name === 'app:runShowcase' && entry) void runShowcaseEntry(entry);
         else if (name === 'app:runShowcaseWeb' && entry) void runShowcaseEntryOnWeb(entry);
         // The Electron-fiddles section sits below the fold and its cards cannot
@@ -1775,7 +1891,7 @@ export function App(props: { onRender?: () => void } = {}) {
       }
     }, 500);
     return () => clearInterval(t);
-  }, [handleRouteBack, handleRouteForward, openShowcaseInFiddle, openShowcaseInIdeWindow]);
+  }, [handleRouteBack, handleRouteForward, openFolder, openShowcaseInFiddle, openShowcaseInIdeWindow]);
 
   const readDeepLinkRuntimeReadiness = useCallback(() => {
     let showcaseReady = false;

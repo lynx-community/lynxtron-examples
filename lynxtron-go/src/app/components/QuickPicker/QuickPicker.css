@@ -1,107 +1,216 @@
-/* ── Quick File Picker ───────────────────────────────────────────────────── */
+/* ── Quick Open / command palette ────────────────────────────────────────
+   Same language as the Fiddle home and the showcase gallery: panels on
+   --background-3 behind a hairline, sans-serif labels, and monospace reserved
+   for data (paths, keybindings). Colours come from the theme variables in
+   App.css — the palette used to be hardcoded VS Code greys, which is why this
+   surface read as a different product. */
+
 .PickerOverlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.55);
   display: flex;
   flex-direction: column;
   align-items: center;
+  background-color: rgba(11, 18, 32, 0.55);
+  /* Above the gallery overlay (300) and the Fiddle's dialogs (100/200): the
+     palette is opened from any of them and must never appear behind one.
+     Note z-index alone is not enough against the native Scintilla editors,
+     which paint above all Lynx UI — App.tsx passes `overlayActive` so the
+     Fiddle detaches them while this is open. */
+  z-index: 400;
 }
 
 .PickerModal {
-  margin-top: 80px;
-  width: 520px;
-  background-color: #252526;
-  border: 1px solid #454545;
-  border-radius: 6px;
-  overflow: hidden;
+  margin-top: 72px;
+  width: 560px;
+  max-width: 92%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  border-radius: 6px;
+  background-color: var(--background-3);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
 }
+
+/* ── Query ──────────────────────────────────────────────────────────────── */
 
 .PickerInput {
-  height: 42px;
-  padding: 0 14px;
-  background-color: #3c3c3c;
-  color: #cccccc;
-  font-size: 14px;
-  border-bottom: 1px solid #454545;
   width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  font-size: 14px;
+  color: var(--bp-text);
+  background-color: var(--background-4);
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--hairline);
 }
+
+/* ── Results ────────────────────────────────────────────────────────────── */
 
 .PickerResults {
-  max-height: 360px;
+  max-height: 380px;
 }
 
+/* Padding rather than a fixed height: a showcase row carries a name, a
+   description and a tag line, and a fixed 44px clipped them. */
 .PickerItem {
-  height: 44px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 0 14px;
-  border-bottom: 1px solid #2d2d2d;
+  padding: 9px 14px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--hairline);
+}
+
+.PickerItem:hover {
+  background-color: var(--background-4);
+}
+
+/* The row Enter would activate. Arrows move it, hover moves it, and it starts
+   on the first result — so there is always exactly one, and it is visible. */
+.PickerItem--active {
+  background-color: var(--bp-selected-bg);
+}
+
+.PickerItem--active:hover {
+  background-color: var(--bp-selected-bg);
 }
 
 .PickerIcon {
-  font-size: 16px;
   width: 22px;
   margin-right: 10px;
+  font-size: 15px;
+  flex-shrink: 0;
 }
 
 .PickerItemInfo {
-  flex: 1;
+  flex-grow: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 .PickerFileName {
-  color: #cccccc;
   font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--bp-text);
 }
 
+/* Paths are data. */
 .PickerFilePath {
-  color: #666666;
+  font-family: 'SF Mono', Menlo, monospace;
   font-size: 11px;
+  line-height: 16px;
+  color: var(--bp-text-muted);
   margin-top: 2px;
+}
+
+/* A showcase's description is prose, not data — it must not inherit the
+   monospace treatment that paths get. */
+.PickerDesc {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--bp-text-muted);
+  margin-top: 2px;
+}
+
+/* The accelerator sits at the trailing edge, the way it does in a real menu. */
+.PickerKeys {
+  flex-shrink: 0;
+  margin-left: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background-color: var(--background-4);
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  line-height: 15px;
+  color: var(--bp-text-muted);
 }
 
 .PickerCommand .PickerIcon {
-  color: #007aff;
+  color: #48aff0;
 }
 
 .PickerShowcase .PickerIcon {
-  color: #e5c07b;
+  color: #f5a623;
 }
 
 .PickerShowcaseHeader {
+  display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 6px;
 }
 
+/* Tinted text on a tinted ground — the same treatment as the gallery's status
+   badges, rather than a solid block that would outshout the name beside it. */
 .PickerBadge {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background-color: rgba(16, 185, 129, 0.16);
+  font-family: 'SF Mono', Menlo, monospace;
   font-size: 9px;
-  color: #28a745;
-  background-color: rgba(40, 167, 69, 0.15);
-  padding: 1px 4px;
-  border-radius: 3px;
+  line-height: 14px;
+  font-weight: 600;
+  color: #3dd68c;
 }
 
 .PickerTags {
-  color: #555555;
   font-size: 10px;
+  line-height: 15px;
+  color: var(--bp-text-muted);
+  opacity: 0.75;
   margin-top: 2px;
 }
+
+/* ── Empty and instructional states ─────────────────────────────────────── */
 
 .PickerHint {
   padding: 14px;
 }
 
 .PickerHintText {
-  color: #888888;
   font-size: 12px;
+  line-height: 18px;
+  color: var(--bp-text-muted);
+}
+
+.PickerHintCode {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  color: var(--bp-text);
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+
+.PickerFooter {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 7px 14px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--hairline);
+  background-color: var(--background-4);
+}
+
+.PickerFooterText {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--bp-text-muted);
+}
+
+.PickerFooterKey {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  color: var(--bp-text);
 }

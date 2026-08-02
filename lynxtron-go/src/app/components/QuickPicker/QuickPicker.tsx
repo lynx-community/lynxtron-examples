@@ -1,8 +1,24 @@
+import { useCallback, useEffect, useState } from '@lynx-js/react';
 import './QuickPicker.css';
 import { fileIcon, type TreeNode, type ShowcaseEntry, SHOWCASE_REGISTRY } from '../../store';
-import { filterCommands, type Command } from '../../commands/registry';
+import { filterCommands } from '../../commands/registry';
 
 type PickerMode = 'files' | 'commands' | 'showcases' | 'url' | 'example' | 'bundleUrl';
+
+const PLACEHOLDER: Record<PickerMode, string> = {
+  files: 'Search files (type > for commands)…',
+  commands: 'Type a command…',
+  showcases: 'Filter showcases…',
+  url: 'Paste showcase URL and press Enter…',
+  bundleUrl: 'Paste Lynx bundle URL and press Enter…',
+  example: 'Enter example id or relative path…',
+};
+
+/** One activatable row, flattened across modes so the keyboard sees one list. */
+interface PickerRow {
+  key: string;
+  activate: () => void;
+}
 
 interface QuickPickerProps {
   rootPath: string;
@@ -36,51 +52,90 @@ export function QuickPicker({
       )
     : [];
 
-  const handleCommandSelect = (cmd: Command) => {
-    cmd.execute();
-  };
+  // The free-text modes (url / bundleUrl / example) have no rows — Enter submits
+  // whatever was typed, so the arrows have nothing to walk.
+  const rows: PickerRow[] =
+    mode === 'commands' ? commands.map(c => ({ key: c.id, activate: () => c.execute() }))
+    : mode === 'showcases' ? showcases.map(s => ({ key: s.name, activate: () => onSelectShowcase?.(s) }))
+    : mode === 'files' ? filteredFiles.map(f => ({ key: f.fullPath, activate: () => onSelect(f.fullPath) }))
+    : [];
 
-  const handleConfirm = () => {
-    if (mode === 'url') {
+  /**
+   * Track the highlighted row by its key rather than its index, the way cmdk
+   * tracks a value: as the query narrows the list, the same row stays selected
+   * instead of the highlight sliding onto whatever now occupies that position.
+   */
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const activeIndex = Math.max(0, rows.findIndex(r => r.key === activeKey));
+  const activeRowKey = rows.length ? rows[activeIndex].key : null;
+
+  const move = useCallback((delta: number) => {
+    if (!rows.length) return;
+    // Wrap around, like cmdk's `loop`: past the last row, Down returns to the first.
+    const next = (activeIndex + delta + rows.length) % rows.length;
+    setActiveKey(rows[next].key);
+  }, [rows, activeIndex]);
+
+  const handleConfirm = useCallback(() => {
+    if (mode === 'url' || mode === 'bundleUrl' || mode === 'example') {
       onSelect(query);
-    } else if (mode === 'bundleUrl') {
-      onSelect(query);
-    } else if (mode === 'example') {
-      onSelect(query);
-    } else if (mode === 'commands' && commands.length > 0) {
-      handleCommandSelect(commands[0]);
-    } else if (mode === 'showcases' && showcases.length > 0 && onSelectShowcase) {
-      onSelectShowcase(showcases[0]);
-    } else if (mode === 'files' && filteredFiles.length > 0) {
-      onSelect(filteredFiles[0].fullPath);
+      return;
     }
-  };
+    // Activate what is highlighted, rather than blindly the first row.
+    if (rows.length) rows[activeIndex].activate();
+  }, [mode, query, onSelect, rows, activeIndex]);
 
-  const placeholder: Record<PickerMode, string> = {
-    files: 'Search files (type > for commands)\u2026',
-    commands: 'Type a command\u2026',
-    showcases: 'Filter showcases\u2026',
-    url: 'Paste showcase URL and press Enter\u2026',
-    bundleUrl: 'Paste Lynx bundle URL and press Enter\u2026',
-    example: 'Enter example id or relative path\u2026',
-  };
+  /**
+   * Lynx `<input>` exposes only blur/confirm/focus/input/selection, so the
+   * arrows cannot be read off the field itself. `global-bindkeydown` fires
+   * regardless of which node holds focus, which is exactly what a palette needs
+   * while its query field is focused. It is bound on the overlay, which only
+   * exists while the palette is open.
+   */
+  const handleKeyDown = useCallback((e: any) => {
+    const key = String(e?.key ?? e?.detail?.key ?? '');
+    if (key === 'ArrowDown') move(1);
+    else if (key === 'ArrowUp') move(-1);
+    else if (key === 'Home') { if (rows.length) setActiveKey(rows[0].key); }
+    else if (key === 'End') { if (rows.length) setActiveKey(rows[rows.length - 1].key); }
+    else if (key === 'Escape') onClose();
+    else if (key === 'Enter') handleConfirm();
+  }, [move, rows, onClose, handleConfirm]);
+
+  // When the selected row filters out (or the mode changes), fall back to the
+  // first row so Enter always has a defined target. Declared after the
+  // callbacks above: Lynx's TDZ is strict about effects referencing them.
+  useEffect(() => {
+    if (!rows.length) {
+      if (activeKey !== null) setActiveKey(null);
+    } else if (!rows.some(r => r.key === activeKey)) {
+      setActiveKey(rows[0].key);
+    }
+  }, [rows, activeKey]);
+
+  const rowClass = (key: string, extra?: string) =>
+    `PickerItem${extra ? ' ' + extra : ''}${key === activeRowKey ? ' PickerItem--active' : ''}`;
 
   return (
-    <view className="PickerOverlay" bindtap={onClose}>
+    <view className="PickerOverlay" bindtap={onClose} global-bindkeydown={handleKeyDown}>
       <view className="PickerModal" catchtap={() => {}}>
         <input
           className="PickerInput"
           value={query}
           bindinput={(e: any) => onQueryChange(e.detail.value)}
           bindconfirm={handleConfirm}
-          placeholder={placeholder[mode]}
+          placeholder={PLACEHOLDER[mode]}
         />
-        <scroll-view className="PickerResults" scroll-y>
+        {/* Keep the highlighted row visible as the arrows walk past the fold. */}
+        <scroll-view className="PickerResults" scroll-y scroll-to-index={activeIndex}>
           {mode === 'showcases' ? (
             showcases.length > 0 ? showcases.map(s => (
               <view
                 key={s.name}
-                className="PickerItem PickerShowcase"
+                className={rowClass(s.name, 'PickerShowcase')}
+                // Hover moves the selection too, so pointer and keyboard never
+                // disagree about what Enter would activate.
+                bindmouseenter={() => setActiveKey(s.name)}
                 catchtap={() => onSelectShowcase?.(s)}
               >
                 <text className="PickerIcon">{'\u{1F4E6}'}</text>
@@ -91,9 +146,9 @@ export function QuickPicker({
                       <text className="PickerBadge">LOCAL</text>
                     )}
                   </view>
-                  <text className="PickerFilePath">{s.description}</text>
+                  <text className="PickerDesc">{s.description}</text>
                   {s.tags.length > 0 && (
-                    <text className="PickerTags">{s.tags.join(' \u00B7 ')}</text>
+                    <text className="PickerTags">{s.tags.join(' · ')}</text>
                   )}
                 </view>
               </view>
@@ -124,23 +179,23 @@ export function QuickPicker({
             commands.map(cmd => (
               <view
                 key={cmd.id}
-                className="PickerItem PickerCommand"
-                catchtap={() => handleCommandSelect(cmd)}
+                className={rowClass(cmd.id, 'PickerCommand')}
+                bindmouseenter={() => setActiveKey(cmd.id)}
+                catchtap={() => cmd.execute()}
               >
-                <text className="PickerIcon">{'\u25B6'}</text>
+                <text className="PickerIcon">{'▶'}</text>
                 <view className="PickerItemInfo">
                   <text className="PickerFileName">{cmd.label}</text>
-                  {cmd.keybinding && (
-                    <text className="PickerFilePath">{cmd.keybinding}</text>
-                  )}
                 </view>
+                {cmd.keybinding && <text className="PickerKeys">{cmd.keybinding}</text>}
               </view>
             ))
           ) : (
             filteredFiles.map(f => (
               <view
                 key={f.fullPath}
-                className="PickerItem"
+                className={rowClass(f.fullPath)}
+                bindmouseenter={() => setActiveKey(f.fullPath)}
                 bindtap={() => onSelect(f.fullPath)}
               >
                 <text className="PickerIcon">{fileIcon(f.name)}</text>
@@ -154,6 +209,30 @@ export function QuickPicker({
             ))
           )}
         </scroll-view>
+        {/* The palette's behaviours are otherwise invisible. */}
+        <view className="PickerFooter">
+          <text className="PickerFooterText">
+            {rows.length > 0 ? (
+              <text className="PickerFooterText">
+                <text className="PickerFooterKey">{'↑↓'}</text> to move
+                {'  ·  '}
+                <text className="PickerFooterKey">Enter</text> to open
+              </text>
+            ) : (
+              <text className="PickerFooterText">
+                <text className="PickerFooterKey">Enter</text> to submit
+              </text>
+            )}
+            {mode === 'files' ? (
+              <text className="PickerFooterText">
+                {'  ·  '}
+                <text className="PickerFooterKey">{'>'}</text> for commands
+              </text>
+            ) : null}
+            {'  ·  '}
+            <text className="PickerFooterKey">Esc</text> to close
+          </text>
+        </view>
       </view>
     </view>
   );

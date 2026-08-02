@@ -510,6 +510,23 @@ function buildAppMenu(w: LynxWindowInstance) {
         }
       },
     },
+    {
+      id: 'commandPalette',
+      label: 'Command Palette…',
+      accelerator: 'CmdOrCtrl+K',
+      registerAccelerator: true,
+      // The same palette Cmd+P opens, pre-filled with '>' — i.e. exactly
+      // "Cmd+P then type >", which is how the command list was reachable
+      // before. Like every other shortcut here it has to round-trip through
+      // the main process: these are menu accelerators, not Lynx key handlers.
+      click: () => {
+        try {
+          w.sendGlobalEvent('ide:commandPalette', {});
+        } catch (e) {
+          console.error(`[PC_Host] sendGlobalEvent error:`, e);
+        }
+      },
+    },
     { type: 'separator' },
     {
       id: 'save',
