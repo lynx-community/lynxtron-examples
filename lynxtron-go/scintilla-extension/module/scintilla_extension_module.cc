@@ -258,6 +258,21 @@ Napi::Value ResetZoom(const Napi::CallbackInfo& info) {
   return Napi::Boolean::New(env, true);
 }
 
+// getZoom(editorId: string) -> number  (0 = configured size)
+Napi::Value GetZoom(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Expected (string editorId)")
+        .ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  std::string editorId = info[0].As<Napi::String>().Utf8Value();
+  ScintillaView* view = ScintillaRegistry::Get().GetView(editorId);
+  return Napi::Number::New(env, view ? view->GetZoom() : 0);
+}
+
 Napi::Value SetIndicators(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
@@ -512,6 +527,8 @@ Napi::Value ScintillaExtensionModuleMethodsBinder(
   exports_obj.Set("setStyles", Napi::Function::New(env, SetStyles, "setStyles"));
   exports_obj.Set("hasContentChanged",
                   Napi::Function::New(env, HasContentChanged, "hasContentChanged"));
+  exports_obj.Set("getZoom",
+                  Napi::Function::New(env, GetZoom, "getZoom"));
   exports_obj.Set("resetZoom",
                   Napi::Function::New(env, ResetZoom, "resetZoom"));
   exports_obj.Set("consumeFocusGained",

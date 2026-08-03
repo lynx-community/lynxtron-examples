@@ -24,7 +24,7 @@ interface SettingsState {
 
 const DEFAULTS: SettingsState = {
   theme: 'dark',
-  fontSize: 12,
+  fontSize: 13,
   blockAccelerators: false,
   runtimeFlags: '',
   githubToken: '',

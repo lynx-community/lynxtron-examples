@@ -685,6 +685,18 @@ void ScintillaView::ApplyLineSpacing() {
 #endif
 }
 
+int ScintillaView::GetZoom() {
+#ifdef __APPLE__
+    if (!cocoa_view_) return 0;
+    ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
+    if (!container.scintillaView) return 0;
+    if (![NSThread isMainThread]) return 0;  // read on the UI thread only
+    return (int)[container.scintillaView message:SCI_GETZOOM wParam:0 lParam:0];
+#else
+    return 0;
+#endif
+}
+
 void ScintillaView::ResetZoom() {
 #ifdef __APPLE__
     if (!cocoa_view_) return;

@@ -1,9 +1,9 @@
-import { useEffect, useRef } from '@lynx-js/react';
+import { useEffect, useRef, useState } from '@lynx-js/react';
 import { Button } from '../bp';
 import { scintillaApi } from '../../store';
 import { getEditorTitle } from '../types';
 import { scintillaIdFor } from '../state/useFiddle';
-import { applyEditorTheme, editorFontSize, isDarkTheme, resetEditorZoom } from '../theme';
+import { applyEditorTheme, editorFontSize, editorZoomLevel, isDarkTheme, resetEditorZoom } from '../theme';
 import type { FiddleFile } from '../state/FiddleState';
 import './Editors.css';
 
@@ -52,6 +52,17 @@ export function EditorPane(props: EditorPaneProps) {
     }, 150);
   };
 
+  // Polled rather than pushed: SCN_ZOOM fires on the native side and this
+  // module never calls into the Lynx JS thread from a notification. One read
+  // per second is far below what a pinch costs anyway.
+  const [zoomed, setZoomed] = useState(false);
+  useEffect(() => {
+    const tick = () => setZoomed(editorZoomLevel(file.id) !== 0);
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [file.id]);
+
   return (
     <view
       className={'MosaicWindow' + (props.active ? ' MosaicWindow--active' : '')}
@@ -69,13 +80,17 @@ export function EditorPane(props: EditorPaneProps) {
           {/* Pinch zoom is per-pane and sticky; this is the only way back to
               the configured size. `refresh` because the icon font carries only
               maximize/minimize/refresh — anything else renders as a literal
-              '?', which is worse than an approximate glyph with a clear title. */}
+              '?', which is worse than an approximate glyph with a clear title.
+              Lit while the pane IS zoomed: otherwise the only clue is that the
+              text looks unlike its neighbours', and the button reads as a
+              control with no state. */}
           <Button
             icon="refresh"
             small
             minimal
-            title="Reset zoom to the configured font size"
-            onClick={() => resetEditorZoom(file.id)}
+            active={zoomed}
+            title={zoomed ? 'Zoomed — reset to the configured font size' : 'Reset zoom'}
+            onClick={() => { resetEditorZoom(file.id); setZoomed(false); }}
           />
           <Button icon="maximize" small minimal title="Maximize" onClick={() => props.onMaximize(file.id)} />
           <Button icon="cross" small minimal title="Hide" onClick={() => props.onHide(file.id)} />

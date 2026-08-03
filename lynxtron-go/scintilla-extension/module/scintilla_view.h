@@ -49,6 +49,11 @@ class ScintillaView : public lynx::pub::LynxNativeView {
   // zoomed text look wrong. Called on SCN_ZOOM and after ApplyTheme.
   void ApplyLineSpacing();
 
+  // Scintilla's per-view zoom level, 0 when the editor is at its configured
+  // size. The UI needs it to show that a pane is zoomed at all — otherwise the
+  // only clue is that the text looks different from its neighbours.
+  int GetZoom();
+
   // Restore this editor to the configured font size (zoom level 0).
   void ResetZoom();
 

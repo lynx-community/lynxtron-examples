@@ -50,14 +50,16 @@
   font-family: monospace;
   overflow: hidden;
 }
-.Outputs-Empty { color: var(--bp-text-muted); font-size: 12px; }
+.Outputs-Empty { color: var(--bp-text-muted); font-size: 13px; }
 .Outputs-Line {
   display: flex;
   column-gap: 8px;
   padding: 1px 0;
   font-family: "SF Mono", Menlo, Consolas, monospace;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  /* Not bold: run output is a wall of monospace, and 600 across all of it left
+     nothing for the intent colours to stand out against. */
+  font-weight: 400;
   line-height: 1.5;
 }
 .Outputs-Line--stderr .Outputs-Message { color: #ff7373; }

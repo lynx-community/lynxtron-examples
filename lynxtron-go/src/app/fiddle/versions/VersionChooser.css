@@ -13,3 +13,64 @@
 .Version-Check { color: #48aff0; font-size: 14px; }
 .Version-Empty { color: var(--bp-text-muted); font-size: 13px; }
 .Version-CatalogList { max-height: 260px; min-height: 100px; }
+
+/* ── Typography ───────────────────────────────────────────────────────────
+   The dialog was built out of inline styles — a font size and a letter
+   spacing repeated at each call site, section labels padded 12px while their
+   rows were padded 12px plus a border radius, and a monospace path that set
+   its own family. Nothing lined up down the left edge and no two labels agreed
+   on a size. One set of classes, one left edge. */
+.Version-Section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 12px 6px 12px;
+}
+.Version-SectionLabel {
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--bp-text-muted);
+}
+.Version-SectionAction {
+  font-size: 11px;
+  line-height: 14px;
+  color: #48aff0;
+  cursor: pointer;
+}
+.Version-ItemMain {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* A version is a name; a path is data. */
+.Version-ItemMeta {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--bp-text-muted);
+  margin-top: 1px;
+}
+.Version-ItemRemove {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.Version-ItemRemoveText {
+  font-size: 11px;
+  line-height: 15px;
+  color: #ff7373;
+}
+.Version-ItemHead {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 6px;
+}
+/* The bundled row is the only one that carries a badge; it should not sit
+   taller than the rows beneath it because of it. */
+.Version-Item { min-height: 40px; }

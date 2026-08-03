@@ -135,34 +135,49 @@
 /* Two square 18px targets on one baseline. Equal box, equal glyph size, no
    padding asymmetry — the pair used to sit on a transform: scale(0.75), which
    left them different apparent sizes and off the title's baseline. */
+/* Three targets that were crammed edge to edge at 1px apart, reading as one
+   smudge. Each gets room around its glyph and air between them. */
 .MosaicToolbar-Controls {
   display: flex;
   flex-direction: row;
   align-items: center;
-  column-gap: 1px;
+  column-gap: 4px;
+  margin-left: 8px;
   flex-shrink: 0;
 }
 .MosaicToolbar-Controls .bp3-button {
-  width: 18px;
-  min-width: 18px;
-  height: 18px;
-  min-height: 18px;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  min-height: 20px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 3px;
+  border-radius: 4px;
   color: var(--bp-text-muted);
   opacity: 0.55;
+  /* Reserved at rest so the lit state cannot shift its neighbours. */
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
 }
 .MosaicToolbar-Controls .bp3-button .bp3-icon {
-  font-size: 10px;
-  line-height: 10px;
+  font-size: 11px;
+  line-height: 11px;
 }
 .MosaicToolbar-Controls .bp3-button:hover {
   color: var(--bp-text);
   opacity: 1;
   background-color: rgba(255, 255, 255, 0.1);
+}
+/* ON. The pane is zoomed, and stays zoomed until this is pressed — a state,
+   so it is drawn as one: lit ring, lit glyph, full opacity. */
+.MosaicToolbar-Controls .bp3-button.bp3-active {
+  opacity: 1;
+  color: var(--bp-text);
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.32);
 }
 /* The native editor's frame is set from this element's Lynx layout rect, and
    native views are NOT clipped by Lynx parents — this body must never be laid

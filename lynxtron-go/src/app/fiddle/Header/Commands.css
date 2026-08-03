@@ -50,8 +50,10 @@
   flex-shrink: 1;
   min-width: 0;
   text-align: center;
-  font-size: 13px;
-  color: var(--text-color-3); /* text-color-3 */
+  /* Matches .bp3-button — the title sits on the same row as Run and Console
+     and was reading a step smaller than everything around it. */
+  font-size: 14px;
+  color: var(--text-color-3);
   overflow: hidden;
   text-overflow: ellipsis;
   margin: 0 10px;

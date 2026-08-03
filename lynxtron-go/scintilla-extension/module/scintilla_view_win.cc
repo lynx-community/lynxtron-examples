@@ -944,6 +944,12 @@ void ScintillaView::ApplyLineSpacing() {
   SciSend(hwnd, SCI_SETEXTRADESCENT, (effective * 3) / 10, 0);
 }
 
+int ScintillaView::GetZoom() {
+  HWND hwnd = AsHwnd(win_view_);
+  if (!hwnd || !::IsWindow(hwnd)) return 0;
+  return static_cast<int>(SciSend(hwnd, SCI_GETZOOM, 0, 0));
+}
+
 void ScintillaView::ResetZoom() {
   HWND hwnd = AsHwnd(win_view_);
   if (!hwnd || !::IsWindow(hwnd)) return;
