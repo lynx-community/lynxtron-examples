@@ -26,54 +26,38 @@
   min-width: 0;
 }
 
-/* ── Sash (draggable divider) ────────────────────────────────────────────── */
+/* ── Sash (draggable divider) ─────────────────────────────────────────────
+   The sash IS the seam. It used to draw its line through `.Sash::after` with
+   `content: ''` — Lynx has no generated content, so that rule, and the
+   `:hover::after` / `:active::after` accent with it, never rendered anything.
+   The divider was therefore an invisible 4px band you could not see and got no
+   feedback from while dragging.
+   Now the sash paints itself: 3px, coloured as the seam, brightening to the
+   accent when grabbed. Painted width EQUALS laid-out width — the previous
+   attempt widened the grab area with transparent borders and background-clip,
+   neither of which Lynx honours, and the sash measured 0 wide. The overshoot
+   trick is not available here; SashOverlay already keeps a fast drag alive
+   once it starts, which is what the extra width was for. */
 .Sash {
-  /* NOT transparent: fully-transparent views are skipped by Lynx hit-testing */
-  background-color: rgba(128, 128, 128, 0.02);
+  background-color: var(--background-2);
   z-index: 10;
   flex-shrink: 0;
 }
+.Sash:hover,
+.Sash:active {
+  background-color: #007fd4;
+}
 
 .SashH {
-  /* 9px of grabbable width, 1px of laid-out width: the hit area overhangs into
-     the neighbours instead of spending real estate. It used to lay out 4px,
-     which is what made the sidebar seam read as a heavy bar. */
-  width: 9px;
-  margin: 0 -4px;
+  width: 3px;
   height: 100%;
   cursor: col-resize;
 }
 
 .SashV {
-  height: 9px;
-  margin: -4px 0;
+  height: 3px;
   width: 100%;
   cursor: row-resize;
-}
-
-/* Visible line in the center of the sash */
-.Sash::after {
-  content: '';
-  position: absolute;
-  background-color: transparent;
-}
-
-.SashH::after {
-  width: 1px;
-  height: 100%;
-  left: 1px;
-}
-
-.SashV::after {
-  height: 1px;
-  width: 100%;
-  top: 1px;
-}
-
-/* Show accent color on hover/drag */
-.Sash:hover::after,
-.Sash:active::after {
-  background-color: #007fd4;
 }
 
 /* ── Drag overlay (captures mouse during drag) ──────────────────────────── */

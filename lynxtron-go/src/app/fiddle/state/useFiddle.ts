@@ -381,6 +381,18 @@ export function useFiddle(): UseFiddleResult {
             text = current;
           } catch (_) { continue; }
 
+          // The pane you are typing in IS the focused one. Clicking into a
+          // native Scintilla view never reaches the Lynx pane's bindtap —
+          // native views consume their own input — so without this the active
+          // pane only ever changed from the sidebar, and the highlight sat on
+          // whichever file you last picked there rather than the one you are
+          // working in. A real focus signal needs SCN_FOCUSIN surfaced from
+          // the extension the way ConsumeContentChanged already is; this
+          // catches the case that matters most in the meantime.
+          if (snapRef.current.activeEditorId !== id) {
+            setSnap(prev => (prev.activeEditorId === id ? prev : { ...prev, activeEditorId: id }));
+          }
+
           // Ref-only update — React state is untouched unless dirty flips.
           liveText.current.set(id, text);
           const dirty = text !== f.savedContent;

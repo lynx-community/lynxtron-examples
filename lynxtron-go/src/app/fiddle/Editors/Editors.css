@@ -21,11 +21,12 @@
   min-width: 0;
   overflow: hidden;
   position: relative;
-  /* Frameless. There used to be THREE separators stacked between the sidebar
-     and the first line of code: this 3px inset, a light wash tinting it, and a
-     3px margin on every pane — 6px of lit gutter, which read as a heavy band
-     rather than a seam. The gutter is now a single dark hairline: no inset, no
-     wash, and the darkest background showing through 1px pane margins. */
+  /* One ground, seams darker than the panels — the relationship a modern
+     editor uses, rather than upstream's light wash sitting ON TOP of the app
+     background (three stacked separators: a 3px inset, the wash tinting it,
+     and a 3px pane margin). The seam is the darkest background showing between
+     panes, at the same 3px weight as the split sashes so every division in the
+     window reads as one system. */
   padding: 0;
   background-color: var(--background-2);
 }
@@ -41,12 +42,12 @@
   z-index: 10;
 }
 .MosaicSashH {
-  width: 9px;
+  width: 11px;
   margin-left: -4px;
   cursor: col-resize;
 }
 .MosaicSashV {
-  height: 9px;
+  height: 11px;
   margin-top: -4px;
   cursor: row-resize;
 }
@@ -73,7 +74,8 @@
   flex: 1;
   min-height: 0;
   min-width: 0;
-  margin: 1px;
+  /* 1.5px a side — the 3px seam between neighbours, half of it from each. */
+  margin: 1.5px;
   overflow: hidden;
   background-color: var(--background-1); /* editor.background — matches native Scintilla theme */
 }
