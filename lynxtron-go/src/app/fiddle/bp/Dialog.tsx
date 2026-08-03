@@ -14,7 +14,7 @@ export function Dialog(props: DialogProps) {
   if (!props.isOpen) return null;
   const style = props.width ? { width: props.width + 'px' } as any : undefined;
   return (
-    <view className="bp3-dialog-overlay">
+    <cover-view className="bp3-dialog-overlay">
       <view className="bp3-dialog" style={style}>
         <view className="bp3-dialog-header">
           <text className="bp3-dialog-title">{props.title}</text>
@@ -23,6 +23,6 @@ export function Dialog(props: DialogProps) {
         <view className="bp3-dialog-body">{props.children}</view>
         {props.footer ? <view className="bp3-dialog-footer">{props.footer}</view> : null}
       </view>
-    </view>
+    </cover-view>
   );
 }

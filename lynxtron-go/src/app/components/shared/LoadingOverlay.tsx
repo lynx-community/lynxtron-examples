@@ -13,11 +13,11 @@ export function LoadingOverlay({ visible, message }: LoadingOverlayProps) {
   if (!visible) return null;
 
   return (
-    <view className="LoadingOverlay" catchtap={() => {}}>
+    <cover-view className="LoadingOverlay" catchtap={() => {}}>
       <view className="LoadingOverlayContent">
         <view className="LoadingOverlaySpinner" />
         {message ? <text className="LoadingOverlayMessage">{message}</text> : null}
       </view>
-    </view>
+    </cover-view>
   );
 }

@@ -67,9 +67,9 @@
   overflow: hidden;
 }
 
-/* Gallery renders above the still-mounted Fiddle (whose native editors are
-   detached while the overlay is up) — unmounting the Fiddle would kill its
-   editor buffers. Opaque: the Fiddle underneath must not shine through. */
+/* Gallery renders in a cover-view slice above the still-mounted Fiddle and its
+   native editors — unmounting the Fiddle would kill their buffers. Opaque: the
+   Fiddle underneath must not shine through. */
 .GalleryOverlay {
   position: absolute;
   left: 0;

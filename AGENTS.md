@@ -75,7 +75,9 @@ succeeds, use the supported behaviour and update this list.
 - Probe the *actual* object exposed to the UI. A bridge intended as `foundation.*` was in fact spread onto the exposed root, and optional chaining hid every dead call.
 
 **Native views**
-- Native child views float above all Lynx UI and are not clipped by Lynx ancestors. Give hosts `min-width: 0`, `min-height: 0`, `overflow: hidden` and verify in the real window.
+- Native child views float above the regular Lynx surface and are not clipped by Lynx ancestors. Give hosts `min-width: 0`, `min-height: 0`, `overflow: hidden` and verify in the real window.
+- UI that must cover a native child view must use a `<cover-view>` root. Clay renders its children into a platform overlay slice; ordinary `<view>` plus `z-index` cannot cross the native-view boundary. Keep the covered native view attached so focus, selection, scroll position, and paint state remain stable.
+- A desktop native view must use the `lynx_view_t` passed as its registration opaque to resolve `lynx_view_get_native_window()`. On macOS mount it inside the returned renderer view so Clay's sibling `ClayOverlayView` remains above the whole subtree. On Windows use a child HWND under the returned parent and do not raise it above Clay's child overlay windows. Never rediscover the host via `keyWindow`, foreground-window enumeration, or an owned popup — those escape Clay's overlay ordering and break multi-window isolation.
 - Content pushed before the first attach lands in the document but does not repaint. Re-sync after the first layout.
 - Devtool screenshots **cannot see native views** — capture the OS window instead (`screencapture -x -l <CGWindowID>`).
 

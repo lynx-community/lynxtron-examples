@@ -6,6 +6,8 @@ export {};
 // @lynx-js/types).
 declare module '@lynx-js/types' {
   interface IntrinsicElements {
+    /** Desktop built-in that paints its children in a platform overlay slice. */
+    'cover-view': import('@lynx-js/types').StandardProps;
     'scintilla-view': import('@lynx-js/types').StandardProps & {
       'editor-id'?: string;
       content?: string;
@@ -28,6 +30,7 @@ declare module '@lynx-js/types' {
 declare global {
   namespace JSX {
     interface IntrinsicElements {
+      'cover-view': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
       'scintilla-view': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
         'editor-id'?: string;
         content?: string;

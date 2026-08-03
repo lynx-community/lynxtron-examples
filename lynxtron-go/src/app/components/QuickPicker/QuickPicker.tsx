@@ -129,7 +129,7 @@ export function QuickPicker({
     `PickerItem${extra ? ' ' + extra : ''}${key === activeRowKey ? ' PickerItem--active' : ''}`;
 
   return (
-    <view className="PickerOverlay" bindtap={onClose} global-bindkeydown={handleKeyDown}>
+    <cover-view className="PickerOverlay" bindtap={onClose} global-bindkeydown={handleKeyDown}>
       <view className="PickerModal" catchtap={() => {}}>
         <input
           className="PickerInput"
@@ -246,6 +246,6 @@ export function QuickPicker({
           </text>
         </view>
       </view>
-    </view>
+    </cover-view>
   );
 }

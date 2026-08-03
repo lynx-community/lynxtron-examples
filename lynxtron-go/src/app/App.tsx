@@ -1125,27 +1125,6 @@ export function App(props: { onRender?: () => void } = {}) {
     try { scintillaApi()?.detachFromWindow?.(EDITOR_ID); } catch (_) {}
   }, []);
 
-  /**
-   * Native Scintilla views paint above ALL Lynx UI, whatever the z-index says —
-   * an overlay does not cover the editor, the editor covers the overlay. The
-   * Fiddle has handled this since it grew dialogs: App passes `overlayActive`
-   * and it detaches its editors. The IDE's single editor had no equivalent, so
-   * on this surface the palette opened *behind* the code, with only its footer
-   * visible below the editor's bottom edge.
-   *
-   * Re-attach rather than repushActiveEditor: that one also re-pushes the text
-   * and jumps the caret to line 0, which is wrong for merely closing a palette.
-   */
-  useEffect(() => {
-    if (!showLegacyIde) return;
-    if (pickerOpen || isGalleryOpen) {
-      detachNativeEditorView();
-      return;
-    }
-    if (!activeTabIdRef.current) return;
-    try { scintillaApi()?.attachToWindow?.(EDITOR_ID); } catch (_) { /* ignore */ }
-  }, [showLegacyIde, pickerOpen, isGalleryOpen, detachNativeEditorView]);
-
   const handleRouteBack = useCallback(() => {
     if (!canNavigateRouteBack(routeNavigation)) return;
     const currentSession = workspaceSessionRef.current;
@@ -2695,9 +2674,9 @@ export function App(props: { onRender?: () => void } = {}) {
   }, [saveLayout]);
 
   // Fiddle is the main content and stays MOUNTED under the gallery, which
-  // renders as a full-page overlay (unmounting the Fiddle kills its native
-  // editor buffers; overlayActive detaches them instead — same machinery as
-  // dialogs). Per-instance scoping falls out structurally: each Fiddle
+  // renders in a cover-view overlay slice above its native editors (unmounting
+  // the Fiddle would kill their buffers). Per-instance scoping falls out
+  // structurally: each Fiddle
   // instance owns its overlay, so gallery "Open" always targets the instance
   // it was opened from — never another (self-hosted) Fiddle. The per-card
   // "IDE" action keeps the legacy open-showcase-in-workspace route alive by
@@ -2719,9 +2698,9 @@ export function App(props: { onRender?: () => void } = {}) {
   // Legacy IDE has no Fiddle shell to host the gallery — full overlay fallback
   // (standalone: the page carries its own Back since there is no commands bar).
   const galleryOverlay = showLegacyIde && isGalleryOpen ? (
-    <view className="GalleryOverlay">
+    <cover-view className="GalleryOverlay">
       <GalleryHome {...galleryProps} standalone />
-    </view>
+    </cover-view>
   ) : null;
   const mainContent = showLegacyIde ? (
     <IDE
@@ -2762,9 +2741,9 @@ export function App(props: { onRender?: () => void } = {}) {
         const entry = SHOWCASE_REGISTRY.find(e => e.name === FIDDLE_SHOWCASE_NAME);
         if (entry) void runFiddleEntry(entry, id);
       }}
-      // Quick Open (Cmd+P) is an App-level overlay just like the gallery —
-      // native editors float above every Lynx layer, so the Fiddle must
-      // detach them while the palette is up or it renders half-hidden.
+      // Quick Open (Cmd+P) is an App-level cover-view just like the gallery.
+      // Keep this signal so an app-level surface closes any Fiddle-owned dialog
+      // that would otherwise compete with it in overlay-slice order.
       overlayActive={isGalleryOpen || pickerOpen}
       galleryOpen={isGalleryOpen}
       gallery={galleryNode}

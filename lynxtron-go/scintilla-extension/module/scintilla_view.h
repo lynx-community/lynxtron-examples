@@ -18,7 +18,7 @@ namespace extension {
 
 class ScintillaView : public lynx::pub::LynxNativeView {
  public:
-  ScintillaView();
+  explicit ScintillaView(lynx_view_t* lynx_view);
   ~ScintillaView();
 
   bool IsSurfaceEnabled() override { return false; } // Use a platform child view directly, not a surface.
@@ -90,6 +90,10 @@ class ScintillaView : public lynx::pub::LynxNativeView {
   void ApplyTheme(bool dark, int size_pt);
 
 private:
+  // Non-owning. The LynxView owns every registered native-view instance and
+  // outlives it. Keeping the originating view removes the key-window/global
+  // HWND heuristics and gives each editor the correct platform parent.
+  lynx_view_t* lynx_view_ = nullptr;
   void* cocoa_view_ = nullptr; // Pointer to ScintillaCocoa (NSView)
   void* win_host_ = nullptr;   // Pointer to the Win32 child host HWND
   void* win_view_ = nullptr;   // Pointer to the Win32 Scintilla HWND
@@ -103,8 +107,8 @@ private:
   bool has_pending_content_ = false;
   std::string editor_id_;
   std::atomic<bool> content_changed_{false};
-  // Host-driven detach (dialogs/overlays/drags): while set, OnLayoutChanged's
-  // lazy attach must NOT re-add the view — it would float above the overlay.
+  // Explicit route/host detach: while set, OnLayoutChanged must not re-add
+  // the view until AttachToWindow clears it.
   std::atomic<bool> detached_by_host_{false};
   // Last layout rect (pt) so AttachToWindow can restore the frame even when
   // layout changed while detached. Guarded by dwell_mutex_ (written on the
