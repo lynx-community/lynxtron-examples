@@ -25,7 +25,6 @@
 }
 /* border-color-2 is #1e2527 in BOTH themes (upstream token) — right for dark,
    a harsh black line in light. Light gets the mosaic-toolbar hairline. */
-.theme-light .FiddleSidebar { border-right: 1px solid var(--hairline); }
 .theme-light .FiddleSidebar-Section--modules { border-bottom: none; }
 .FiddleSidebar-SectionHeader {
   display: flex;

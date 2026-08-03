@@ -130,6 +130,24 @@ export function Fiddle(props: FiddleProps) {
   // open. That constraint is layout, not compositing — it outlived the
   // Scintilla z-order problem that first forced the hoist.
   const [overflowOpen, setOverflowOpen] = useState(false);
+  // Reported by the main process on enter-/leave-full-screen: only it can see
+  // the traffic lights come and go.
+  const [fullScreen, setFullScreen] = useState(false);
+  useEffect(() => {
+    const handler = (data: any) => {
+      try {
+        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+        setFullScreen(!!parsed?.fullScreen);
+      } catch (_) { /* malformed payload — keep the last known state */ }
+    };
+    let emitter: any = null;
+    try {
+      // @ts-ignore
+      emitter = lynx.getJSModule('GlobalEventEmitter');
+      emitter?.addListener('ide:fullScreen', handler);
+    } catch (_) {}
+    return () => { try { emitter?.removeListener('ide:fullScreen', handler); } catch (_) {} };
+  }, []);
   const isMacPlatform = (() => {
     try { return getExposed()?.platform === 'darwin'; } catch (_) { return false; }
   })();
@@ -602,6 +620,7 @@ export function Fiddle(props: FiddleProps) {
         onOpenHelp={handleOpenHelp}
         onOpenVersionChooser={() => setVersionsOpen(true)}
         onOpenPalette={props.onOpenPalette}
+        fullScreen={fullScreen}
         overflowOpen={overflowOpen}
         onToggleOverflow={() => setOverflowOpen(v => !v)}
         currentVersion={currentVersion}

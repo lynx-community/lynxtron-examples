@@ -16,6 +16,7 @@ export interface HeaderProps {
   onOpenHelp: () => void;
   onOpenVersionChooser: () => void;
   onOpenPalette?: () => void;
+  fullScreen?: boolean;
   overflowOpen?: boolean;
   onToggleOverflow?: () => void;
   currentVersion: string;
@@ -43,6 +44,7 @@ export function Header(props: HeaderProps) {
         onOpenHelp={props.onOpenHelp}
         onOpenVersionChooser={props.onOpenVersionChooser}
         onOpenPalette={props.onOpenPalette}
+        fullScreen={props.fullScreen}
         overflowOpen={props.overflowOpen}
         onToggleOverflow={props.onToggleOverflow}
         currentVersion={props.currentVersion}

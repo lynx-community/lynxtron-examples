@@ -31,6 +31,12 @@
      not a third colour, and not a wash laid over the app background. */
   padding: 0;
   background-color: var(--surface-chrome);
+  /* Pull the outer edge under its neighbours. Pane margins make the 3px seams
+     BETWEEN panes, but they also leave half a seam against the header, the
+     sidebar and the console — frame around the frame. Negative margin absorbs
+     exactly that outer half, so the only divisions left are the ones between
+     two things. */
+  margin: -1.5px;
 }
 .MosaicCell {
   position: absolute;
@@ -99,7 +105,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 0 3px 0 10px;
+  padding: 0 8px 0 10px;
   background-color: var(--surface-content);
   border-bottom-width: 1px;
   border-bottom-style: solid;
@@ -141,15 +147,15 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  column-gap: 4px;
-  margin-left: 8px;
+  column-gap: 6px;
+  margin-left: 12px;
   flex-shrink: 0;
 }
 .MosaicToolbar-Controls .bp3-button {
-  width: 20px;
-  min-width: 20px;
-  height: 20px;
-  min-height: 20px;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  min-height: 16px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -163,8 +169,8 @@
   border-color: transparent;
 }
 .MosaicToolbar-Controls .bp3-button .bp3-icon {
-  font-size: 11px;
-  line-height: 11px;
+  font-size: 9px;
+  line-height: 9px;
 }
 .MosaicToolbar-Controls .bp3-button:hover {
   color: var(--bp-text);

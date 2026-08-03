@@ -827,6 +827,21 @@ if (!hasSingleInstanceLock) {
     // The app's own UI bundle fetches assets from its dist dir; materialized
     // fiddle workspaces live under tmpdir.
     installFileResourceFetcher(w, [__dirname, os.tmpdir()]);
+    // The traffic lights vanish in macOS fullscreen, and the space reserved for
+    // them becomes dead width at the left of the commands bar. Only the main
+    // process can see the transition, so it reports it and the UI lets the bar
+    // reclaim the gap.
+    try {
+      const reportFullScreen = () => {
+        try { w.sendGlobalEvent('ide:fullScreen', { fullScreen: w.isFullScreen() }); } catch (_) {}
+      };
+      w.on('enter-full-screen', reportFullScreen);
+      w.on('leave-full-screen', reportFullScreen);
+      reportFullScreen();
+    } catch (e) {
+      console.warn('[PC_Host] full-screen reporting unavailable:', e);
+    }
+
     try {
       // A window spawned as a dedicated IDE boots straight into the workspace
       // surface, so start with that menu rather than flashing the Fiddle's.

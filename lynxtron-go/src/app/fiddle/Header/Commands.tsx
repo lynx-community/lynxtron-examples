@@ -20,6 +20,8 @@ export interface CommandsProps {
   onOpenVersionChooser: () => void;
   /** App-level palette (⌘P / ⌘K). The bar is its only visible affordance. */
   onOpenPalette?: () => void;
+  /** macOS fullscreen hides the traffic lights; the bar reclaims their space. */
+  fullScreen?: boolean;
   /** The overflow panel is rendered by Fiddle — the 51px header clips it, and
       it has to suppress the native editors to be visible at all. */
   overflowOpen?: boolean;
@@ -51,11 +53,13 @@ export function Commands(props: CommandsProps) {
   const isMac = (() => { try { return getExposed()?.platform === 'darwin'; } catch (_) { return false; } })();
 
   return (
-    <view className={'commands bp3-dark' + (isMac ? ' is-mac' : '')}>
+    <view className={'commands bp3-dark' + (isMac && !props.fullScreen ? ' is-mac' : '')}>
+      {/* The traffic lights are laid out, not padded around. macOS removes them
+          in fullscreen, and a hardcoded inset leaves that width dead — so the
+          gap is a flex item the bar drops when the main process reports the
+          window went fullscreen. */}
+      {isMac && !props.fullScreen ? <view className="commands-trafficlights" /> : null}
       <view className="commands-left">
-        <ControlGroup>
-          <Button icon="cog" title="Settings" onClick={props.onOpenSettings} />
-        </ControlGroup>
         <ControlGroup>
           <Button
             icon="saved"
@@ -138,6 +142,11 @@ export function Commands(props: CommandsProps) {
           disabled={gallery}
           onClick={props.onPublishGist}
         />
+        {/* App-scoped, like the overflow beside it — and moving it off the left
+            evens the two clusters, which is what lets the centred title sit
+            near the real centre of the window rather than the centre of
+            whatever space the left cluster left over. */}
+        <Button icon="cog" title="Settings" minimal onClick={props.onOpenSettings} />
         <Button
           icon="more"
           title="More commands"

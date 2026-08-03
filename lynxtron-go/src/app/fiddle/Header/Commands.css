@@ -2,6 +2,17 @@
    flex space-between, 30px content row inside the 50px header.
    Upstream: the WHOLE commands bar is the window drag region
    (-webkit-app-region: drag) with no-drag holes punched over controls. */
+/* The traffic lights as a flex item rather than a padding: 68px of lights plus
+   12px of air before the first control, dropped entirely in fullscreen where
+   macOS removes them. The old `.commands.is-mac { padding-left: 74px }` put the
+   first button 6px from the close button and kept the same dead width when the
+   lights were gone. */
+.commands-trafficlights {
+  width: 80px;
+  height: 100%;
+  flex-shrink: 0;
+}
+
 .commands {
   display: flex;
   flex-direction: row;
@@ -40,20 +51,47 @@
 }
 /* upstream: .commands .bp3-control-group { margin-right: 0.5rem; } */
 .commands-left .bp3-control-group {
-  margin-right: 8px;
+  margin-right: 6px;
 }
 .commands-right {
-  column-gap: 5px;
+  column-gap: 4px;
+}
+
+/* ── Control scale ────────────────────────────────────────────────────────
+   A 30px/14px button row is a toolbar from 2015. Modern editors run their app
+   bar at ~26px with 12px labels and spend the difference on the title, which
+   is the only thing in the bar that says what you are looking at. */
+.commands .bp3-button {
+  height: 26px;
+  min-height: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+  border-radius: 5px;
+}
+.commands .bp3-button .bp3-button-text {
+  font-size: 12px;
+}
+.commands .bp3-button .bp3-icon {
+  font-size: 12px;
+}
+.commands .bp3-input,
+.commands .bp3-input-group .bp3-input {
+  height: 26px;
+  min-height: 26px;
+  font-size: 12px;
+  border-radius: 5px;
 }
 /* upstream: .commands > .title — centered, ellipsized, max-width 20vw */
 .commands-title {
   flex-shrink: 1;
+  flex-grow: 0;
   min-width: 0;
   text-align: center;
-  /* Matches .bp3-button — the title sits on the same row as Run and Console
-     and was reading a step smaller than everything around it. */
-  font-size: 14px;
-  color: var(--text-color-3);
+  /* The largest thing in the bar, now that the controls have come down to
+     12px: it is the only element that tells you which fiddle is open. */
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bp-text);
   overflow: hidden;
   text-overflow: ellipsis;
   margin: 0 10px;
