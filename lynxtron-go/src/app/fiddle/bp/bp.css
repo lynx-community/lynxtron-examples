@@ -411,7 +411,7 @@
    and an accelerator with nothing between them. Grow from the text's own
    width instead, and let the label be pushed out by margin. */
 .bp3-menu-item-text {
-  flex-grow: 1;
+  flex-grow: 0;
   flex-shrink: 1;
   flex-basis: auto;
   font-size: 13px;
@@ -420,7 +420,7 @@
 }
 .bp3-menu-item.bp3-disabled .bp3-menu-item-text,
 .bp3-menu-item.bp3-disabled .bp3-menu-item-icon { color: var(--bp-text-muted); }
-.bp3-menu-item-label { flex-shrink: 0; margin-left: auto; color: var(--bp-text-muted); font-size: 11px; }
+.bp3-menu-item-label { flex-shrink: 0; color: var(--bp-text-muted); font-size: 11px; }
 .bp3-menu-item.bp3-intent-danger { color: #db3737; }
 .bp3-menu-divider {
   height: 1px;

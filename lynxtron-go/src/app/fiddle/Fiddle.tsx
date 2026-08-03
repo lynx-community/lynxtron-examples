@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from '@lynx-js/react';
 import { SplitContainer } from '../components/Layout/SplitContainer';
 import { Header } from './Header/Header';
-import { Menu, MenuItem, MenuDivider } from './bp/Menu';
+import { Menu, MenuItem } from './bp/Menu';
 import { FiddleSidebar } from './Sidebar/FiddleSidebar';
 import { Editors } from './Editors/Editors';
 import { Outputs } from './Outputs/Outputs';
@@ -573,14 +573,12 @@ export function Fiddle(props: FiddleProps) {
                 disabled={!!props.galleryOpen}
                 onClick={() => { setOverflowOpen(false); void handleSave(); }}
               />
-              <MenuDivider />
               <MenuItem
                 icon="history"
                 text="Gist History"
                 disabled={fiddle.snap.source.kind !== 'gist' || !!props.galleryOpen}
                 onClick={() => { setOverflowOpen(false); setHistoryOpen(true); }}
               />
-              <MenuDivider />
               <MenuItem
                 icon="help"
                 text="Help"

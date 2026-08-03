@@ -3,8 +3,11 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
-  background-color: var(--background-2);   /* background-2 */
-  border-bottom: 1px solid var(--border-color-1); /* upstream @border */
+  /* CONTENT, same ground as the code. Run output is something you read, not
+     part of the frame — it wore --background-2, the SEAM tone, which is why
+     the console read as a hole in the window rather than a panel of it. */
+  background-color: var(--background-1);
+  border-bottom-width: 0;
 }
 .Outputs-Header {
   height: 28px;
@@ -12,8 +15,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: var(--background-3);   /* background-3 */
-  border-bottom: 1px solid var(--border-color-1); /* upstream @border */
+  background-color: var(--background-4);
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--hairline);
   column-gap: 10px;
 }
 .Outputs-HeaderLeft { display: flex; align-items: center; gap: 10px; }

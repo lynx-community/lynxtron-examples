@@ -3,8 +3,11 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
-  background-color: var(--background-1);   /* background-1 */
-  border-right: 1px solid var(--border-color-2); /* border-color-2 */
+  /* CHROME. The sidebar wore --background-1, the CONTENT tone, so it read as
+     another editor surface rather than as frame. The seam to its right is the
+     split sash now, not a border here. */
+  background-color: var(--background-4);
+  border-right-width: 0;
 }
 .FiddleSidebar-Section {
   flex-shrink: 0;
@@ -27,7 +30,12 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background-color: var(--background-3);   /* background-3 */
+  /* Flat chrome, separated by rule rather than by tone: --background-3 is
+     reserved for surfaces that FLOAT above chrome (dialogs, menus, hover). */
+  background-color: var(--background-4);
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--hairline);
 }
 .FiddleSidebar-SectionTitle {
   font-size: 13px;
@@ -61,7 +69,7 @@
   cursor: pointer;
 }
 .FiddleSidebar-Item:hover { background-color: var(--background-3); }  /* background-3 */
-.FiddleSidebar-Item--active { background-color: var(--background-4); border-left: 3px solid var(--foreground-1); padding-left: 9px; }
+.FiddleSidebar-Item--active { background-color: var(--bp-selected-bg); border-left: 3px solid var(--foreground-1); padding-left: 9px; }
 .FiddleSidebar-ItemIcon { color: var(--foreground-3); flex-shrink: 0; }  /* foreground-3 */
 .FiddleSidebar-Item--active .FiddleSidebar-ItemIcon { color: var(--foreground-1); }  /* foreground-1 */
 .FiddleSidebar-ItemLabel {

@@ -122,14 +122,28 @@
   right: 12px;
   pointer-events: auto;
   z-index: 501;
-  min-width: 210px;
-  padding: 4px;
+  /* Sized by its content, deliberately. Two stacked min-widths (210 here, 180
+     on .bp3-menu) reserved space the items never filled, and
+     `margin-left: auto` — which does not push in Lynx — left the accelerators
+     sitting against the text with all that reserved width dead to the right of
+     them. A panel that hugs its rows cannot have a gap to explain. */
   border-radius: 6px;
   background-color: var(--background-3);
   border-width: 1px;
   border-style: solid;
   border-color: var(--hairline);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.commands-overflow .bp3-menu {
+  min-width: 0;
+  background-color: transparent;
+  box-shadow: none;
+  padding: 4px;
+}
+/* Fixed gap from the label, not flushed to an edge that isn't there. */
+.commands-overflow .bp3-menu-item {
+  padding: 5px 10px;
+  column-gap: 12px;
 }
 /* Same key cap as the bar's, so an accelerator looks identical wherever it is
    shown. Right-aligned, so the keys read as a column down the trailing edge. */
@@ -142,6 +156,7 @@
   background-color: rgba(255, 255, 255, 0.06);
   border-radius: 3px;
   padding: 1px 4px;
+  margin-left: 0;
   opacity: 0.75;
 }
 .commands-overflow .bp3-menu-item:hover .bp3-menu-item-label {

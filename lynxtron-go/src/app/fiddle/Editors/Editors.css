@@ -84,12 +84,11 @@
    toolbar plus a drop shadow below — two separators for one edge, and the top
    one duplicates the gutter that already separates the panes. One line, on the
    side that actually divides label from content. */
-/* Unfocused chrome sits FLUSH with the pane body and recedes; only the
-   hairline underneath tells label from code. The previous pass had this
-   backwards — every idle toolbar was painted --background-2 (#1d2427, darker
-   than the #2f3241 body) so the idle panes shouted and the focused one, on
-   --background-3 (#2c2e3b, near-identical to the body), disappeared into it.
-   The state that matters is the one that should stand out. */
+/* CHROME, on the same tone as the sidebar and the console's tab strip. The
+   window now says one thing consistently: content is the lightest surface,
+   chrome is a step down from it, seams are the darkest. A pane's toolbar is
+   frame around code, so it belongs with the frame — flushing it with the code
+   (the previous pass) made the tiers ambiguous in the other direction. */
 .MosaicToolbar {
   height: 26px;
   min-height: 26px;
@@ -98,7 +97,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 3px 0 10px;
-  background-color: var(--background-1);
+  background-color: var(--background-4);
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--hairline);
