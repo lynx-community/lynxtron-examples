@@ -1,8 +1,8 @@
-# @lynxtron-examples/config
+# @lynxtron-examples/electron-fiddles
 
-## 0.0.5
+## 0.1.0
 
-### Patch Changes
+### Minor Changes
 
 - dd950b6: Add the `electron-fiddles` showcase — the complete Electron `docs/fiddles` set
   ported to Lynxtron (55 fiddles: 37 working, 7 partial, 11 N/A) — and surface it
@@ -43,25 +43,13 @@
   opens its page in the published API reference. The lists are derived from each
   fiddle's own source rather than hand-written.
 
-## 0.0.4
-
 ### Patch Changes
 
-- 9f330d3: Refresh the Lynx toolchain used by the showcases and publish real preview
-  captures for documentation consumers. The native texture canvas artifact now
-  includes its application and extension source files.
+- 28c3775: Migrate every showcase from the deprecated per-window `win.on('-lynx-invoke')`
+  and `win.on('-lynx-message')` listeners to the process-global `lynxBridge.handle()`
+  and `lynxBridge.on()` API.
 
-## 0.0.3
-
-### Patch Changes
-
-- a3096be: Republish so `package.json` `dependencies` carry real version specifiers instead of the `catalog:` protocol. The previously published `0.0.1` tarball still contained `catalog:` refs, which caused `pnpm install` to fail with `ERR_PNPM_SPEC_NOT_SUPPORTED_BY_ANY_RESOLVER` when the Lynxtron GO app tried to install a fetched showcase.
-
-## 0.0.2-alpha.0
-
-### Patch Changes
-
-- 0068442: Set up the release pipeline: publish the shared build config and the public
-  showcases (benchmark, file-explorer, floating-clock, system-monitor) to npm
-  via Changesets + npm OIDC trusted publishing, and build Lynxtron GO installers
-  and showcase tarballs as GitHub Release assets.
+  Each showcase's dispatch switch is split into per-method handlers, and
+  registration is hoisted to `app.whenReady()` so windows that reopen (e.g. the
+  gallery's `activate` handler, the benchmark's second window) do not
+  re-register the same handler.

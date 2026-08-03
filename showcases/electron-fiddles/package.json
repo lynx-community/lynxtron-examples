@@ -1,6 +1,6 @@
 {
   "name": "@lynxtron-examples/electron-fiddles",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "main.js",
   "private": true,
   "repository": {
@@ -15,7 +15,7 @@
     "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop"
   },
   "showcase": {
-    "description": "Electron docs/fiddles ported to Lynxtron \u2014 gallery of API demos",
+    "description": "Electron docs/fiddles ported to Lynxtron — gallery of API demos",
     "thumbnail": "thumbnail.png",
     "tags": [
       "fiddle",
