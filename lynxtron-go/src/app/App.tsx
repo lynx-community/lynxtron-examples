@@ -2755,6 +2755,9 @@ export function App(props: { onRender?: () => void } = {}) {
       onStopExternalRun={stopGalleryRun}
       onThemeChange={() => setUiThemeDark(isDarkTheme())}
       onPaletteSourceChange={setFiddlePalette}
+      // The bar's ⌘P button and the menu accelerator open the same palette in
+      // the same state — a second, subtly different opener would drift.
+      onOpenPalette={() => { setPickerQuery(''); setPickerMode(undefined); setPickerOpen(true); }}
     />
   );
   // Tell the main process which surface is mounted so the menu can be rebuilt

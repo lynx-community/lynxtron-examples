@@ -18,17 +18,28 @@ export interface CommandsProps {
   onOpenSettings: () => void;
   onOpenHelp: () => void;
   onOpenVersionChooser: () => void;
+  /** App-level palette (⌘P / ⌘K). The bar is its only visible affordance. */
+  onOpenPalette?: () => void;
+  /** The overflow panel is rendered by Fiddle — the 51px header clips it, and
+      it has to suppress the native editors to be visible at all. */
+  overflowOpen?: boolean;
+  onToggleOverflow?: () => void;
   currentVersion: string;
   gistId: string | null;
   isRunning: boolean;
   title: string;
 }
 
-// Mirrors upstream Fiddle's commands.tsx: left cluster (settings /
-// version+run / console), centered window title (mac), right cluster
-// (address bar / gist history / gist action). Extra entry points that
-// upstream keeps in the app menu (new fiddle, browse showcases, save)
-// live as minimal icons at the far right until the menu port lands.
+// Left cluster is the verbs — settings, version, run, console, gallery, and
+// the palette. Centre is the window title (and the drag region). Right is the
+// gist round trip, plus an overflow for the entry points that already live in
+// the app menu with accelerators.
+//
+// Upstream keeps new/save/help out of the bar entirely, in the app menu. We
+// used to keep all three as icons at the far right, which crowded the gist
+// address into a field too narrow to read a URL in. The overflow is the middle
+// ground: reachable by pointer, but not spending bar width on commands that
+// have keys.
 export function Commands(props: CommandsProps) {
   const [gistInput, setGistInput] = useState('');
   // While the gallery page covers the fiddle, its DOCUMENT controls are
@@ -79,6 +90,17 @@ export function Commands(props: CommandsProps) {
             onClick={props.onToggleGallery}
           />
         </ControlGroup>
+        {/* Gallery's sibling: one browses showcases by eye, the other jumps by
+            typing. The accelerator is the label — a palette nobody knows the
+            key for is a palette nobody opens. */}
+        <ControlGroup className="commands-palette">
+          <Button
+            icon="search"
+            text={isMac ? '\u2318P' : 'Ctrl+P'}
+            title="Quick Open (files) · type > for commands, or press \u2318K"
+            onClick={() => props.onOpenPalette?.()}
+          />
+        </ControlGroup>
       </view>
       {/* hiddenInset window: the flexible middle of the header is the drag
           region (-x-app-region: drag) — controls live outside it, so the
@@ -87,7 +109,7 @@ export function Commands(props: CommandsProps) {
         <text className="commands-title" text-maxline="1">{props.title}</text>
       </view>
       <view className="commands-right">
-        <view className={'commands-address' + (gistInput ? '' : ' empty')}>
+        <view className="commands-address">
           {/* One gating mechanism (disabled), and one validator: onLoadGist's
               parseGistId decides what's loadable, for Enter and click alike. */}
           <InputGroup
@@ -101,7 +123,8 @@ export function Commands(props: CommandsProps) {
             rightElement={
               <Button
                 icon="cloud-download"
-                title="Load Fiddle"
+                text="Load"
+                title="Load Fiddle from this gist"
                 small
                 disabled={!gistInput || gallery}
                 onClick={() => { if (gistInput) props.onLoadGist(gistInput); }}
@@ -110,21 +133,18 @@ export function Commands(props: CommandsProps) {
           />
         </view>
         <Button
-          icon="history"
-          title="Gist History"
-          disabled={!props.gistId || gallery}
-          onClick={props.onOpenHistory}
-        />
-        <Button
           icon="upload"
           text={props.gistId ? 'Update' : 'Publish'}
           disabled={gallery}
           onClick={props.onPublishGist}
         />
-        <Button icon="add" title="New Fiddle" minimal disabled={gallery} onClick={props.onNewFiddle} />
-        <Button icon="floppy-disk" title="Save Fiddle" minimal disabled={gallery} onClick={props.onSave} />
-        {/* App-scoped like Settings/Console — stays live over the gallery. */}
-        <Button icon="help" title="Help" minimal onClick={props.onOpenHelp} />
+        <Button
+          icon="more"
+          title="More commands"
+          minimal
+          active={!!props.overflowOpen}
+          onClick={() => props.onToggleOverflow?.()}
+        />
       </view>
     </view>
   );

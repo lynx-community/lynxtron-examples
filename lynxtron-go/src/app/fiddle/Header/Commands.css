@@ -56,9 +56,12 @@
   text-overflow: ellipsis;
   margin: 0 10px;
 }
-/* upstream: .address-bar width min(max(200px, 30vw), 420px); empty →
-   min(max(160px, 25vw), 300px). Lynx has no min()/max() CSS — approximate
-   with flex-basis clamps. */
+/* ONE width, always. Upstream animates the address bar between two widths
+   (empty 300px / filled 420px), which means the field grows out from under the
+   caret the instant you type the first character — the text you are entering
+   moves while you enter it. A field that changes size while focused is a field
+   you cannot aim at, so we spend the same width whether or not it holds a URL.
+   380px is chosen to show a full gist URL without truncation. */
 .commands-address {
   display: flex;
   flex-direction: row;
@@ -66,12 +69,64 @@
   flex-grow: 0;
   flex-shrink: 1;
   flex-basis: 380px;
-  min-width: 200px;
+  min-width: 240px;
   max-width: 420px;
-  transition: flex-basis 0.4s;
 }
-.commands-address.empty {
-  flex-basis: 280px;
-  min-width: 160px;
-  max-width: 300px;
+
+/* ── Palette entry ────────────────────────────────────────────────────────
+   The accelerator IS the label. Rendered as data (mono, muted, tabular) so it
+   reads as a key to press rather than a word to click — the icon carries the
+   verb. */
+.commands-palette .bp3-button-text {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  color: var(--bp-text-muted);
+  letter-spacing: 0.02em;
+}
+.commands-palette .bp3-button:hover .bp3-button-text {
+  color: var(--bp-text);
+}
+
+/* ── Overflow ─────────────────────────────────────────────────────────────
+   Commands that already carry accelerators live here rather than spending bar
+   width. Anchored under the bar's right edge, above everything the Fiddle
+   paints — but note native editors paint above all Lynx UI regardless, which
+   is why the menu sits over the header strip rather than reaching into the
+   editor mosaic below it. */
+.commands-overflow-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Not transparent: Lynx skips fully transparent views in hit-testing, so a
+     clear backdrop would never receive the dismiss tap. */
+  background-color: rgba(0, 0, 0, 0.001);
+  pointer-events: auto;
+  z-index: 500;
+}
+/* Anchored to the shell, not the bar — Fiddle renders it into the platform
+   overlay host, so `top` clears the 51px header rather than the 30px command
+   row. The host is click-through by default; both layers opt back in. */
+.commands-overflow {
+  position: absolute;
+  top: 54px;
+  right: 12px;
+  pointer-events: auto;
+  z-index: 501;
+  min-width: 210px;
+  padding: 4px;
+  border-radius: 6px;
+  background-color: var(--background-3);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+/* Accelerators are data — same treatment as the palette chip, right-aligned so
+   the column of keys reads down the menu's trailing edge. */
+.commands-overflow .bp3-menu-item-label {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  color: var(--bp-text-muted);
 }

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from '@lynx-js/react';
 import { SplitContainer } from '../components/Layout/SplitContainer';
 import { Header } from './Header/Header';
+import { Menu, MenuItem, MenuDivider } from './bp/Menu';
 import { FiddleSidebar } from './Sidebar/FiddleSidebar';
 import { Editors } from './Editors/Editors';
 import { Outputs } from './Outputs/Outputs';
@@ -19,7 +20,7 @@ import { spawnRuntimeForWorkspace } from './runner/spawnRuntime';
 import { loadGistFiddle, parseGistId, publishGistFiddle } from './gist/gist-loader';
 import { loadLocalFiddle } from './runner/open';
 import { resolveShowcaseWorkspace, loadShowcaseFiddle, loadSingleFiddle, writeFiddleToWorkspace } from './runner/showcase-open';
-import { showcaseApi, appendFiddleOutput as appendOutput, type ShowcaseEntry, foundationApi } from '../store';
+import { showcaseApi, appendFiddleOutput as appendOutput, type ShowcaseEntry, foundationApi, getExposed } from '../store';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './dev-preset';
 import { applyEditorThemeAll, setThemeSetting } from './theme';
 import './Fiddle.css';
@@ -53,6 +54,8 @@ export interface FiddleProps {
   onStopExternalRun?: () => void;
   /** Theme setting changed — App re-reads config and swaps the UI class. */
   onThemeChange?: () => void;
+  /** Open the App-level palette. The commands bar is its only visible entry. */
+  onOpenPalette?: () => void;
   /** Publish this Fiddle's own files to the App-level palette (Cmd+P). The
       palette is App-level because it must float above both products, but the
       rows have to come from whichever one is mounted — the Fiddle's editors
@@ -121,6 +124,15 @@ export function Fiddle(props: FiddleProps) {
   // one shared cover-view host. Clay composites their children into one platform overlay slice,
   // so they can cover Scintilla without detaching its native view. Close local
   // dialogs when an App-level surface opens to keep overlay-slice order simple.
+  //
+  // The commands-bar overflow is owned here, not in Commands: the header has
+  // overflow:hidden, so a menu anchored inside the bar is clipped before it can
+  // open. That constraint is layout, not compositing — it outlived the
+  // Scintilla z-order problem that first forced the hoist.
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const isMacPlatform = (() => {
+    try { return getExposed()?.platform === 'darwin'; } catch (_) { return false; }
+  })();
   useEffect(() => {
     if (!props.overlayActive) return;
     setTemplatePickerOpen(false);
@@ -128,6 +140,7 @@ export function Fiddle(props: FiddleProps) {
     setVersionsOpen(false);
     setHistoryOpen(false);
     setTourOpen(false);
+    setOverflowOpen(false);
   }, [props.overlayActive]);
 
   const handleToggleGallery = useCallback(() => {
@@ -535,6 +548,48 @@ export function Fiddle(props: FiddleProps) {
 
   return (
     <view className="Fiddle bp3-dark">
+      {/* Routed through the platform overlay, not rendered inside the bar. Two
+          separate walls stand between a bar-anchored menu and the screen: the
+          header clips its own children, and the native editor still paints in a
+          platform layer that ordinary Lynx z-index cannot cross. The cover-view
+          host clears both — it is outside the header and it is a platform layer
+          of its own. */}
+      {overflowOpen ? (
+        <PlatformOverlay priority={120}>
+          <view className="commands-overflow-backdrop" bindtap={() => setOverflowOpen(false)} />
+          <view className="commands-overflow">
+            <Menu>
+              <MenuItem
+                icon="add"
+                text="New Fiddle"
+                label={isMacPlatform ? '\u2318N' : 'Ctrl+N'}
+                disabled={!!props.galleryOpen}
+                onClick={() => { setOverflowOpen(false); setTemplatePickerOpen(true); }}
+              />
+              <MenuItem
+                icon="floppy-disk"
+                text="Save Fiddle"
+                label={isMacPlatform ? '\u2318S' : 'Ctrl+S'}
+                disabled={!!props.galleryOpen}
+                onClick={() => { setOverflowOpen(false); void handleSave(); }}
+              />
+              <MenuDivider />
+              <MenuItem
+                icon="history"
+                text="Gist History"
+                disabled={fiddle.snap.source.kind !== 'gist' || !!props.galleryOpen}
+                onClick={() => { setOverflowOpen(false); setHistoryOpen(true); }}
+              />
+              <MenuDivider />
+              <MenuItem
+                icon="help"
+                text="Help"
+                onClick={() => { setOverflowOpen(false); handleOpenHelp(); }}
+              />
+            </Menu>
+          </view>
+        </PlatformOverlay>
+      ) : null}
       <Header
         onToggleConsole={() => setConsoleShowing(v => !v)}
         galleryOpen={props.galleryOpen}
@@ -548,6 +603,9 @@ export function Fiddle(props: FiddleProps) {
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenHelp={handleOpenHelp}
         onOpenVersionChooser={() => setVersionsOpen(true)}
+        onOpenPalette={props.onOpenPalette}
+        overflowOpen={overflowOpen}
+        onToggleOverflow={() => setOverflowOpen(v => !v)}
         currentVersion={currentVersion}
         gistId={fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.ref ?? null : null}
         isConsoleShowing={isConsoleShowing}

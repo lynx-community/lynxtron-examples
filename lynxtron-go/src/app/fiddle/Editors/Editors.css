@@ -59,9 +59,13 @@
   /* NOT transparent — see .MosaicSash */
   background-color: rgba(128, 128, 128, 0.02);
 }
-/* Every mosaic pane (leaf) — square, borderless; separation comes purely
-   from the 3px+3px gutter gaps (upstream tiles have no radius/shadow, and
-   rounded corners read as ragged seams at this gap size) */
+/* Every mosaic pane is an object with an edge.
+   Upstream leaves tiles borderless and lets a 6px gutter of lighter wash imply
+   the seam; at this contrast the panes read as one continuous field with gaps
+   punched in it, and the eye has to work out where a file starts. A single
+   hairline is enough to close each pane — and it gives focus somewhere to
+   live, which upstream signals only by tinting the title text.
+   Still square: a radius at a 6px gutter frays into ragged seams. */
 .MosaicWindow {
   display: flex;
   flex-direction: column;
@@ -71,41 +75,73 @@
   margin: 3px;
   overflow: hidden;
   background-color: var(--background-1); /* editor.background — matches native Scintilla theme */
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
 }
-/* upstream .mosaic-window-toolbar: 30px, background-1, subtle inset shadow */
+/* The focused pane is stated by its edge, not by a glow or a ring: the border
+   brightens and its toolbar lifts a step. Structural, so it survives being
+   read at a glance across four panes. */
+.MosaicWindow--active {
+  border-color: var(--border-color-2, #4b5563);
+}
+/* Chrome, and it should read as chrome: one step darker than the code it sits
+   on, closed by a hairline underneath. Upstream draws a border ABOVE the
+   toolbar plus a drop shadow below — two separators for one edge, and the top
+   one duplicates the gutter that already separates the panes. One line, on the
+   side that actually divides label from content. */
 .MosaicToolbar {
-  height: 30px;
-  min-height: 30px;
+  height: 28px;
+  min-height: 28px;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 0 5px 0 15px;
-  background-color: var(--background-1); /* background-1 */
-  border-top: 1px solid var(--hairline);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  padding: 0 4px 0 10px;
+  background-color: var(--background-2);
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--hairline);
 }
+.MosaicWindow--active .MosaicToolbar {
+  background-color: var(--background-3);
+}
+/* A pane title is a file path — data, so mono, per the project's rule that
+   mono is never decoration. 12px: chrome should sit below the code it labels,
+   and 14px had the label competing with the source. */
 .MosaicToolbar-Title {
-  font-size: 14px;
-  color: var(--text-color-3); /* text-color-3 */
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+  color: var(--text-color-3);
   flex-shrink: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Focused file (sidebar selection): brighter title, subtle — upstream shows
-   no ring around the focused tile. */
 .MosaicToolbar-Title--active {
-  color: var(--foreground-1, #9feafa);
+  color: var(--bp-text, #f5f8fa);
 }
-/* upstream .mosaic-controls: transform scale(0.75), buttons spaced 8px */
+/* No transform: scale(). Scaling the control cluster shrinks its hit targets
+   and knocks the glyphs off the text baseline — the buttons are sized small
+   instead, which keeps them aligned and tappable. */
 .MosaicToolbar-Controls {
   display: flex;
   flex-direction: row;
   align-items: center;
-  column-gap: 8px;
-  transform: scale(0.75);
+  column-gap: 2px;
   flex-shrink: 0;
+}
+.MosaicToolbar-Controls .bp3-button {
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0 4px;
+  font-size: 11px;
+  color: var(--bp-text-muted);
+}
+.MosaicToolbar-Controls .bp3-button:hover {
+  color: var(--bp-text);
 }
 /* The native editor's frame is set from this element's Lynx layout rect, and
    native views are NOT clipped by Lynx parents — this body must never be laid

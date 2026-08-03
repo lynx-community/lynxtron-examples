@@ -53,7 +53,10 @@ export function EditorPane(props: EditorPaneProps) {
   };
 
   return (
-    <view className="MosaicWindow" bindtap={() => props.onFocus(file.id)}>
+    <view
+      className={'MosaicWindow' + (props.active ? ' MosaicWindow--active' : '')}
+      bindtap={() => props.onFocus(file.id)}
+    >
       <view className="MosaicToolbar">
         <text
           className={'MosaicToolbar-Title' + (props.active ? ' MosaicToolbar-Title--active' : '')}
