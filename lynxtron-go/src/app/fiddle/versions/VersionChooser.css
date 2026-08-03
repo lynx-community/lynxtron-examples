@@ -1,4 +1,4 @@
-.Version-List { display: flex; flex-direction: column; gap: 4px; }
+.Version-List { display: flex; flex-direction: column; row-gap: 2px; }
 .Version-Item {
   display: flex;
   align-items: center;
@@ -74,3 +74,5 @@
 /* The bundled row is the only one that carries a badge; it should not sit
    taller than the rows beneath it because of it. */
 .Version-Item { min-height: 40px; }
+/* The first label needs no lead-in — the dialog body's padding is its space. */
+.Version-Section--first { padding-top: 0; }

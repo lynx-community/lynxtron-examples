@@ -99,6 +99,9 @@ export function VersionChooser(props: VersionChooserProps) {
     <>
       <Dialog isOpen={props.isOpen} title="Lynxtron Version" onClose={props.onClose} width={640}>
         <view className="Version-List">
+          <view className="Version-Section Version-Section--first">
+            <text className="Version-SectionLabel">BUNDLED</text>
+          </view>
           <view
             className={'Version-Item' + (props.selectedLocalName == null ? ' Version-Item--active' : '')}
             bindtap={() => props.onSelect(null)}

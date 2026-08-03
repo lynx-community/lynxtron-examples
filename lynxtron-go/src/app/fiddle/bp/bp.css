@@ -464,7 +464,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 4px;
+  column-gap: 4px;
   padding: 2px 8px;
   border-radius: 3px;
   background-color: #5c7080;
@@ -480,7 +480,23 @@
 .bp3-tag.bp3-intent-success { background-color: #0f9960; }
 .bp3-tag.bp3-intent-warning { background-color: #d9822b; }
 .bp3-tag.bp3-intent-danger { background-color: #db3737; }
-.bp3-tag-text { color: inherit; font-size: inherit; }
+/* `minimal` used to be dead the moment an intent was set: it is written above
+   the intent rules at equal specificity, so the solid fill won and every
+   minimal tag rendered as a block of saturated colour. Minimal means tinted
+   text on a tint of its own colour — the intent still reads, without a badge
+   shouting louder than the row it labels. */
+.bp3-tag.bp3-minimal.bp3-intent-primary { background-color: rgba(19,124,189,0.18); }
+.bp3-tag.bp3-minimal.bp3-intent-success { background-color: rgba(15,153,96,0.18); }
+.bp3-tag.bp3-minimal.bp3-intent-warning { background-color: rgba(217,130,43,0.18); }
+.bp3-tag.bp3-minimal.bp3-intent-danger  { background-color: rgba(219,55,55,0.18); }
+/* Lynx <text> does not inherit colour or size from its parent <view>, so
+   `inherit` here resolved to the default, not to the tag's. Stated per intent. */
+.bp3-tag-text { color: var(--bp-text); font-size: 11px; line-height: 15px; }
+.bp3-tag.bp3-minimal .bp3-tag-text { color: var(--bp-text-muted); }
+.bp3-tag.bp3-minimal.bp3-intent-primary .bp3-tag-text { color: #7cc2f0; }
+.bp3-tag.bp3-minimal.bp3-intent-success .bp3-tag-text { color: #3dd68c; }
+.bp3-tag.bp3-minimal.bp3-intent-warning .bp3-tag-text { color: #e0a26b; }
+.bp3-tag.bp3-minimal.bp3-intent-danger  .bp3-tag-text { color: #ff7373; }
 .bp3-tag-remove {
   cursor: pointer;
   padding: 0 2px;
