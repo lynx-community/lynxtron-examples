@@ -140,6 +140,29 @@
 
 namespace extension {
 
+#ifdef __APPLE__
+namespace {
+
+void MountInLynxRendererHost(NSView* parent, NSView* nativeView) {
+    if (!parent || !nativeView) return;
+    if (nativeView.superview != parent) {
+        [nativeView removeFromSuperview];
+        [parent addSubview:nativeView];
+    }
+}
+
+NSRect FrameInPlatformParent(NSView* parent, float left, float top,
+                             float width, float height) {
+    if (parent.isFlipped) {
+        return NSMakeRect(left, top, width, height);
+    }
+    return NSMakeRect(left, parent.bounds.size.height - top - height,
+                      width, height);
+}
+
+}  // namespace
+#endif
+
 // Diagnostic logging is opt-in: OnLayoutChanged fires on every sash-drag
 // frame, so unconditional printf turns a drag into a stdout flood. Set
 // LYNXTRON_SCINTILLA_LOG=1 to trace the attach/layout lifecycle (the
@@ -150,7 +173,8 @@ static bool ScxVerbose() {
 }
 #define SCX_LOG(...) do { if (ScxVerbose()) { printf(__VA_ARGS__); fflush(stdout); } } while (0)
 
-ScintillaView::ScintillaView() {
+ScintillaView::ScintillaView(lynx_view_t* lynx_view)
+    : lynx_view_(lynx_view) {
     SCX_LOG("ScintillaView::ScintillaView constructor called\n");
 #ifdef __APPLE__
     // Ensure UI operations happen on main thread
@@ -281,9 +305,9 @@ void ScintillaView::OnPropertiesChanged(const lynx::pub::LynxValue& attrs,
         }
     }
 
-    // Host suppression state (dialog/overlay open) must land before the
-    // first layout pass — panes created UNDER an open dialog (mosaic rebuild
-    // while Settings is up) would otherwise lazily attach above it.
+    // Backward-compatible explicit host-detach state. Product overlays now
+    // use cover-view and leave Scintilla mounted below ClayOverlayView; route
+    // or workspace transitions may still use this channel.
     if (attrs.HasProperty("suppressed")) {
         std::string v = attrs.GetProperty("suppressed").StdString();
         bool sup = !(v == "false" || v == "0");
@@ -342,21 +366,17 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
     if (detached_by_host_.load(std::memory_order_relaxed)) return;
     ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
     // So we just need to ensure the container resizes its subviews (ScintillaView).
-    auto attachToWindow = [container]() {
+    lynx_view_t* lynx_view = lynx_view_;
+    auto attachToWindow = [container, lynx_view]() {
         if (container.hostDetached) return; // detach won the race — stay out
-        if (container.superview != nil) return;
-        // Prefer keyWindow, fall back to mainWindow, then first available
-        // window. KNOWN LIMITATION: with several windows in one process this
-        // can attach to whichever window happens to be key — the fallback
-        // chain is a heuristic, not multi-window support (gap 2b).
-        NSWindow* window = [NSApp keyWindow];
-        if (!window) window = [NSApp mainWindow];
-        if (!window) window = [[NSApp windows] firstObject];
-        if (window) {
-            SCX_LOG("ScintillaView::OnLayoutChanged: Adding container to window contentView\n");
-            [window.contentView addSubview:container];
+        NSView* parent = lynx_view
+            ? (__bridge NSView*)lynx_view_get_native_window(lynx_view)
+            : nil;
+        if (parent) {
+            SCX_LOG("ScintillaView::OnLayoutChanged: Mounting in Lynx renderer host\n");
+            MountInLynxRendererHost(parent, container);
         } else {
-            SCX_LOG("ScintillaView::OnLayoutChanged: Warning - No window found to add subview\n");
+            SCX_LOG("ScintillaView::OnLayoutChanged: Warning - Lynx native parent unavailable\n");
         }
     };
 
@@ -366,10 +386,7 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
     auto setFrameInWindow = [container, left, top, width, height]() {
         NSView* parent = container.superview;
         if (!parent) return;
-        CGFloat parentH = parent.bounds.size.height;
-        CGFloat flippedY = parentH - top - height;
-        NSRect frame = NSMakeRect(left, flippedY, width, height);
-        [container setFrame:frame];
+        [container setFrame:FrameInPlatformParent(parent, left, top, width, height)];
     };
 
     if ([NSThread isMainThread]) {
@@ -618,25 +635,19 @@ void ScintillaView::AttachToWindow() {
     }
     auto doAttach = ^{
         container.hostDetached = NO;
-        if (container.superview == nil) {
-            NSWindow* window = [NSApp keyWindow];
-            if (!window) window = [NSApp mainWindow];
-            if (!window) window = [[NSApp windows] firstObject];
-            if (window) {
-                [window.contentView addSubview:container];
-            } else {
-                SCX_LOG("ScintillaView::AttachToWindow: Warning - No window found to add subview\n");
-                return;
-            }
+        NSView* parent = lynx_view_
+            ? (__bridge NSView*)lynx_view_get_native_window(lynx_view_)
+            : nil;
+        if (!parent) {
+            SCX_LOG("ScintillaView::AttachToWindow: Warning - Lynx native parent unavailable\n");
+            return;
         }
+        MountInLynxRendererHost(parent, container);
         // Restore the LAST layout rect — the layout may have changed while we
         // were detached (sash drags relayout constantly) and those
         // OnLayoutChanged passes intentionally skipped attach/setFrame.
         if (w > 0 && h > 0 && container.superview != nil) {
-            NSView* parent = container.superview;
-            CGFloat parentH = parent.bounds.size.height;
-            CGFloat flippedY = parentH - top - h;
-            [container setFrame:NSMakeRect(left, flippedY, w, h)];
+            [container setFrame:FrameInPlatformParent(parent, left, top, w, h)];
         }
     };
     if ([NSThread isMainThread]) {
@@ -805,7 +816,8 @@ std::string ScintillaRegistry::CaptureWindowToBase64() {
 }  // namespace extension
 
 LYNX_EXTERN_C lynx_native_view_t* scintilla_view_create_view(void* opaque) {
-  auto* view = new extension::ScintillaView();
+  auto* view = new extension::ScintillaView(
+      static_cast<lynx_view_t*>(opaque));
   
   auto* native_wrapper = view->native_view(); 
   

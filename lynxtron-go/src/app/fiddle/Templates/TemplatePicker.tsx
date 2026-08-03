@@ -11,7 +11,7 @@ export interface TemplatePickerProps {
 
 export function TemplatePicker(props: TemplatePickerProps) {
   return (
-    <view className="TemplatePicker-Overlay">
+    <cover-view className="TemplatePicker-Overlay">
       <view className="TemplatePicker">
         <view className="TemplatePicker-Header">
           <text className="TemplatePicker-Title">New Fiddle from Template</text>
@@ -59,6 +59,6 @@ export function TemplatePicker(props: TemplatePickerProps) {
           </view>
         </scroll-view>
       </view>
-    </view>
+    </cover-view>
   );
 }

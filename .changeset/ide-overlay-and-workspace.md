@@ -6,12 +6,14 @@ Three fixes found while testing the IDE surface.
 
 **The palette opened behind the code.** Native Scintilla views paint above all
 Lynx UI whatever the z-index says, so an overlay does not cover the editor — the
-editor covers the overlay. The Fiddle has handled this since it grew dialogs
-(App passes `overlayActive` and it detaches its editors); the IDE's single
-editor had no equivalent, so on that surface only the palette's footer showed
-below the editor's bottom edge. It now detaches while the palette or gallery is
-open, and re-attaches after — re-attach only, since re-pushing the text would
-also jump the caret to line 0.
+editor covers the overlay. The palette, gallery, dialogs, loading state, and
+toasts now use `cover-view`, which composites their children into a platform
+overlay slice above native views. The Scintilla extension now keeps the
+originating `lynx_view_t`, mounts its NSView/HWND under that view's native
+parent, and keeps the editor below Clay's overlay host instead of guessing the
+key window and floating above the entire Lynx surface. Editors stay attached
+while overlays are open, preserving focus, selection, scroll position, and
+paint state.
 
 **One resolver, and reuse what is already on disk.** The Fiddle and the IDE are
 two views of one workspace, but each carried its own copy of "local source tree,

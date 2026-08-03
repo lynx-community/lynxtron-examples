@@ -18,7 +18,7 @@ export function Alert(props: AlertProps) {
   if (!props.isOpen) return null;
   const showCancel = typeof props.onCancel === 'function';
   return (
-    <view className="bp3-dialog-overlay">
+    <cover-view className="bp3-dialog-overlay">
       <view className="bp3-alert">
         {props.icon ? (
           <view className="bp3-alert-icon">
@@ -41,6 +41,6 @@ export function Alert(props: AlertProps) {
           />
         </view>
       </view>
-    </view>
+    </cover-view>
   );
 }

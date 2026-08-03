@@ -52,8 +52,10 @@ export function ToasterHost() {
     return () => { listeners.delete(l); };
   }, []);
   const dismiss = useCallback((id: string) => AppToaster.dismiss(id), []);
+  // Avoid keeping an empty platform overlay slice alive between notifications.
+  if (toasts.length === 0) return null;
   return (
-    <view className="bp3-toast-container">
+    <cover-view className="bp3-toast-container">
       {toasts.map(t => {
         const cls = 'bp3-toast' + (t.intent && t.intent !== 'none' ? ' bp3-intent-' + t.intent : '');
         return (
@@ -66,6 +68,6 @@ export function ToasterHost() {
           </view>
         );
       })}
-    </view>
+    </cover-view>
   );
 }

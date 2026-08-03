@@ -506,7 +506,7 @@ Napi::Value ScintillaExtensionModuleMethodsBinder(
 
 void ScintillaExtensionModule::OnLynxViewCreate(lynx_view_t* lynx_view) {
   lynx_view_register_native_view(lynx_view, "scintilla-view",
-                                 &scintilla_view_create_view, nullptr);
+                                 &scintilla_view_create_view, lynx_view);
 }
 void ScintillaExtensionModule::OnLynxViewDestroy() {}
 void ScintillaExtensionModule::OnRuntimeInit() {}

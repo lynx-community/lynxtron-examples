@@ -15,8 +15,6 @@ export interface EditorPaneProps {
   onMaximize: (id: string) => void;
   onFocus: (id: string) => void;
   pushContent: (id: string) => void;
-  /** Host has a dialog/overlay up — the native view must stay detached. */
-  suppressed?: boolean;
 }
 
 /**
@@ -72,10 +70,8 @@ export function EditorPane(props: EditorPaneProps) {
           editor-id={scintillaIdFor(file.id)}
           font-size={String(editorFontSize())}
           theme-dark={isDarkTheme() ? 'true' : 'false'}
-          suppressed={props.suppressed ? 'true' : 'false'}
         />
       </view>
     </view>
   );
 }
-
