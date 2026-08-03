@@ -15,19 +15,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* In the console's own ground, not a bar across the top of it. The hairline
-     stays because output scrolls underneath and needs somewhere to stop. */
+  /* In the console's own ground, and with nothing drawn under it: a rule there
+     would re-cap the panel that removing the background just opened up. */
   background-color: var(--surface-content);
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: var(--hairline);
+  border-bottom-width: 0;
   column-gap: 10px;
 }
 .Outputs-HeaderLeft { display: flex; align-items: center; gap: 10px; }
+/* Same panel title as the sidebar's sections — one kind of label, one size. */
 .Outputs-Title {
-  font-size: 11px;
-  color: var(--bp-text-muted);
-  letter-spacing: 0.5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color-1);
+  letter-spacing: 0.3px;
 }
 .Outputs-Status { display: flex; align-items: center; gap: 6px; }
 .Outputs-HeaderRight {

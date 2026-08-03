@@ -44,7 +44,8 @@
   background-color: var(--surface-content);
 }
 .FiddleSidebar-SectionTitle {
-  font-size: 13px;
+  /* Panel title, shared with the console's — see Outputs.css. */
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-color-1);              /* text-color-1 */
   letter-spacing: 0.3px;

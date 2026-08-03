@@ -118,7 +118,13 @@ export function Settings(props: SettingsProps) {
                 </view>
               </FormGroup>
               <FormGroup label="Editor font size" helperText="Applies to the code editors immediately.">
+                {/* Needs a width. The inner <input> is `flex: 1` — flex-basis
+                    0 — so in a group with no width of its own it collapses to
+                    nothing, which is what this field had been: a 0px box with
+                    the value inside it and no way to type. The gist address bar
+                    escaped it only because its container is a fixed 280px. */}
                 <InputGroup
+                  className="SettingsNumberInput"
                   value={String(state.fontSize)}
                   onChange={(v) => update('fontSize', Math.max(8, Math.min(32, parseInt(v, 10) || 12)))}
                 />
