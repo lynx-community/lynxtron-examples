@@ -25,7 +25,7 @@ export function isDarkTheme(): boolean {
 
 export function editorFontSize(): number {
   const n = parseInt(String(settings()?.fontSize), 10);
-  return Number.isFinite(n) && n >= 8 && n <= 32 ? n : 13;
+  return Number.isFinite(n) && n >= 8 && n <= 32 ? n : 12;
 }
 
 export function setThemeSetting(theme: ThemeSetting): void {

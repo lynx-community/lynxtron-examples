@@ -24,7 +24,7 @@ interface SettingsState {
 
 const DEFAULTS: SettingsState = {
   theme: 'dark',
-  fontSize: 13,
+  fontSize: 12,
   blockAccelerators: false,
   runtimeFlags: '',
   githubToken: '',
@@ -120,7 +120,7 @@ export function Settings(props: SettingsProps) {
               <FormGroup label="Editor font size" helperText="Applies to the code editors immediately.">
                 <InputGroup
                   value={String(state.fontSize)}
-                  onChange={(v) => update('fontSize', Math.max(8, Math.min(32, parseInt(v, 10) || 13)))}
+                  onChange={(v) => update('fontSize', Math.max(8, Math.min(32, parseInt(v, 10) || 12)))}
                 />
               </FormGroup>
               <FormGroup label="Custom themes" helperText="Import your own theme JSON to skin the whole app.">

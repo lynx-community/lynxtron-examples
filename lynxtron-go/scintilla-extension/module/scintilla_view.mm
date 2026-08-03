@@ -122,12 +122,14 @@
 }
 
 // ScintillaNotificationProtocol — fires on the main thread for every
-// Scintilla notification. We only care about content mutations and dwell events.
+// Scintilla notification. We care about content mutations, focus, and dwell.
 - (void)notification:(SCNotification*)n {
     if (!_owner) return;
     if (n->nmhdr.code == SCN_MODIFIED &&
         (n->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))) {
         _owner->OnContentModified();
+    } else if (n->nmhdr.code == SCN_FOCUSIN) {
+        _owner->OnFocusGained();
     } else if (n->nmhdr.code == SCN_DWELLSTART) {
         _owner->OnDwellStart(n->position, (int)n->x, (int)n->y);
     } else if (n->nmhdr.code == SCN_DWELLEND) {
@@ -681,9 +683,18 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
     const long ctBack  = dark ? 0x262525 : 0xF3F3F3;
     const long ctFore  = dark ? 0xD4D4D4 : 0x000000;
     const int  size    = size_pt > 0 ? size_pt : 14;
+    // Scintilla has no line-height: you buy leading with extra ascent and
+    // descent, in pixels. Derived from the size so the proportion holds when
+    // the Settings font size changes, and split unevenly — more above than
+    // below reads better for code, where descenders are rare and the eye
+    // tracks the top of the line.
+    const long extraAsc  = (long)((size * 4) / 10);
+    const long extraDesc = (long)((size * 3) / 10);
     theme_dark_ = dark;
     font_size_pt_ = size;
     auto doApply = ^{
+        [container.scintillaView message:SCI_SETEXTRAASCENT wParam:extraAsc lParam:0];
+        [container.scintillaView message:SCI_SETEXTRADESCENT wParam:extraDesc lParam:0];
         [container.scintillaView message:SCI_STYLESETBACK wParam:STYLE_DEFAULT lParam:bg];
         [container.scintillaView message:SCI_STYLESETFORE wParam:STYLE_DEFAULT lParam:fg];
         [container.scintillaView message:SCI_STYLESETSIZE wParam:STYLE_DEFAULT lParam:size];

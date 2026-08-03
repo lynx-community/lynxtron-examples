@@ -218,6 +218,26 @@ Napi::Value HasContentChanged(const Napi::CallbackInfo& info) {
   return Napi::Boolean::New(env, changed);
 }
 
+// consumeFocusGained(editorId: string) -> bool
+// Polled like hasContentChanged: Scintilla raises SCN_FOCUSIN on the main
+// thread, the view latches it, and the UI drains the flag on its existing
+// tick. A push callback would have to cross into the Lynx JS thread from a
+// native notification, which this module deliberately never does.
+Napi::Value ConsumeFocusGained(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Expected (string editorId)")
+        .ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  std::string editorId = info[0].As<Napi::String>().Utf8Value();
+  ScintillaView* view = ScintillaRegistry::Get().GetView(editorId);
+  bool gained = view ? view->ConsumeFocusGained() : false;
+  return Napi::Boolean::New(env, gained);
+}
+
 Napi::Value SetIndicators(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
@@ -472,6 +492,8 @@ Napi::Value ScintillaExtensionModuleMethodsBinder(
   exports_obj.Set("setStyles", Napi::Function::New(env, SetStyles, "setStyles"));
   exports_obj.Set("hasContentChanged",
                   Napi::Function::New(env, HasContentChanged, "hasContentChanged"));
+  exports_obj.Set("consumeFocusGained",
+                  Napi::Function::New(env, ConsumeFocusGained, "consumeFocusGained"));
   exports_obj.Set("setIndicators",
                   Napi::Function::New(env, SetIndicators, "setIndicators"));
   exports_obj.Set("clearIndicators",

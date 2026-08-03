@@ -13,25 +13,29 @@
 }
 .FiddleSidebar-Section {
   flex-shrink: 0;
-  border-bottom: 1px solid var(--border-color-2);
 }
 .FiddleSidebar-Section--modules {
   border-bottom: none;
-  border-top: 1px solid var(--border-color-2);
-  padding-bottom: 12px;
+  /* Editors and Modules ARE two panels — the seam between them is the frame,
+     the same tone as every other seam in the window rather than a near-black
+     line of its own. */
+  border-top: 3px solid var(--surface-chrome);
+  padding-bottom: 8px;
   margin-top: auto;
 }
 /* border-color-2 is #1e2527 in BOTH themes (upstream token) — right for dark,
    a harsh black line in light. Light gets the mosaic-toolbar hairline. */
 .theme-light .FiddleSidebar { border-right: 1px solid var(--hairline); }
-.theme-light .FiddleSidebar-Section { border-bottom: 1px solid var(--hairline); }
-.theme-light .FiddleSidebar-Section--modules { border-bottom: none; border-top: 1px solid var(--hairline); }
+.theme-light .FiddleSidebar-Section--modules { border-bottom: none; }
 .FiddleSidebar-SectionHeader {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  /* 30px, matching the console's header — the three panel titles in this
+     window are the same kind of thing and should not be three sizes. */
+  height: 30px;
+  padding: 0 12px;
   /* No background of its own: a section header sits IN the panel rather than
      capping it, which is what keeps the dark area large and leaves chrome for
      the few places that mean something. Not `transparent` — Lynx skips fully

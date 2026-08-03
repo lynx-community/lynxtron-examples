@@ -43,6 +43,16 @@ class ScintillaView : public lynx::pub::LynxNativeView {
   // the last call. Safe to call from any thread.
   bool ConsumeContentChanged() { return content_changed_.exchange(false, std::memory_order_relaxed); }
 
+  // Called from Scintilla's SCN_FOCUSIN notification on the main thread.
+  // Clicking into a native editor never reaches the Lynx view that hosts it —
+  // native views consume their own input — so without this the UI cannot know
+  // which pane the user is actually working in.
+  void OnFocusGained() { focus_gained_.store(true, std::memory_order_relaxed); }
+
+  // Returns true and resets the flag if this editor took focus since the last
+  // call. Safe to call from any thread.
+  bool ConsumeFocusGained() { return focus_gained_.exchange(false, std::memory_order_relaxed); }
+
   // Diagnostic squiggle indicators.
   // Each range: (startByte, lengthBytes, style) where style 0=error,1=warning,2=info.
   // Clears all existing indicators then fills the supplied ranges.
@@ -107,6 +117,7 @@ private:
   bool has_pending_content_ = false;
   std::string editor_id_;
   std::atomic<bool> content_changed_{false};
+  std::atomic<bool> focus_gained_{false};
   // Explicit route/host detach: while set, OnLayoutChanged must not re-add
   // the view until AttachToWindow clears it.
   std::atomic<bool> detached_by_host_{false};
