@@ -1,4 +1,4 @@
-import { app, LynxWindow } from '@lynx-js/lynxtron';
+import { app, LynxWindow, lynxBridge } from '@lynx-js/lynxtron';
 import path from 'node:path';
 import fs from 'node:fs';
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -57,11 +57,9 @@ app.whenReady().then(() => {
     title: 'Electron Fiddles on Lynxtron',
   });
 
-  home.on('-lynx-message', (name, data) => {
-    if (name === 'launchFiddle') {
-      const id = String((data as Record<string, unknown>)?.id ?? '');
-      if (id) launchFiddle(id);
-    }
+  lynxBridge.on('launchFiddle', (data) => {
+    const id = String((data as Record<string, unknown>)?.id ?? '');
+    if (id) launchFiddle(id);
   });
 
   home.show();

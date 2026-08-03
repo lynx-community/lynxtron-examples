@@ -1,4 +1,4 @@
-import { LynxWindow, app, shell } from '@lynx-js/lynxtron';
+import { LynxWindow, app, shell, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -10,9 +10,11 @@ const SCHEME = 'electron-fiddle';
 //   app.on('open-url', (e, url) => …)        ← macOS deep-link delivery
 // Electron shows the url in a dialog.showErrorBox; here we forward it to the UI
 // via win.sendGlobalEvent so it renders inline (matches Lynxtron's push model).
-const setupWindow = (win: LynxWindow) => {
-  const pushLink = (url: string) => win.sendGlobalEvent('deep-link', url);
+let mainWindow: LynxWindow | null = null;
 
+const pushLink = (url: string) => mainWindow?.sendGlobalEvent('deep-link', url);
+
+function registerBridgeHandlers() {
   // Deliver real deep links (fires only when packaged & registered with the OS).
   try {
     app.on('open-url', (_event: unknown, url: string) => pushLink(url));
@@ -20,29 +22,26 @@ const setupWindow = (win: LynxWindow) => {
     // best-effort: some platforms/builds may not emit 'open-url'.
   }
 
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'protocol:register') {
-      let ok = false;
-      try {
-        ok = app.setAsDefaultProtocolClient(SCHEME) !== false;
-      } catch {
-        ok = false;
-      }
-      callback.sendReply(ok);
+  lynxBridge.handle('protocol:register', () => {
+    try {
+      return app.setAsDefaultProtocolClient(SCHEME) !== false;
+    } catch {
+      return false;
     }
   });
 
-  win.on('-lynx-message', (name, data) => {
+  lynxBridge.on('protocol:open-external', (data) => {
     const payload = data as Record<string, unknown> | undefined;
-    if (name === 'protocol:open-external') {
-      const url = String(payload?.url ?? '');
-      if (url) shell.openExternal(url);
-    } else if (name === 'protocol:simulate') {
-      // Inject a deep link so the demo is testable without a packaged build.
-      pushLink(String(payload?.url ?? `${SCHEME}://open`));
-    }
+    const url = String(payload?.url ?? '');
+    if (url) shell.openExternal(url);
   });
-};
+
+  lynxBridge.on('protocol:simulate', (data) => {
+    // Inject a deep link so the demo is testable without a packaged build.
+    const payload = data as Record<string, unknown> | undefined;
+    pushLink(String(payload?.url ?? `${SCHEME}://open`));
+  });
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -59,7 +58,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -67,5 +69,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

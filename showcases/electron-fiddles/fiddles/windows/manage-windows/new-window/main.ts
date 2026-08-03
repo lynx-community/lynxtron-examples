@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -11,15 +11,15 @@ import path from 'node:path';
 // via `createWindow()` — this fiddle owns window creation the same way
 // Electron's main process owns `new BrowserWindow()`. We then push a
 // confirmation back to the UI so it can report which window it spawned.
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-message', (name, data) => {
-    if (name === 'new-window') {
-      const id = String((data as Record<string, unknown>)?.id ?? 'first-app');
-      createWindow();
-      win.sendGlobalEvent('window-opened', { id });
-    }
+let mainWindow: LynxWindow | null = null;
+
+function registerBridgeHandlers() {
+  lynxBridge.on('new-window', (data) => {
+    const id = String((data as Record<string, unknown>)?.id ?? 'first-app');
+    createWindow();
+    mainWindow?.sendGlobalEvent('window-opened', { id });
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -36,7 +36,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -44,5 +47,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

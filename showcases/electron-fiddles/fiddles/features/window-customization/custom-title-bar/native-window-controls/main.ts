@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -18,25 +18,46 @@ import path from 'node:path';
 // window is a genuine, movable/resizable window: the platform (so the UI can
 // explain whether it shows macOS traffic lights or a Windows/Linux overlay) and
 // the current bounds (updated on move/resize).
+let mainWindow: LynxWindow | null = null;
+
+const bounds = () => {
+  try {
+    const b = mainWindow?.getBounds();
+    if (!b) return '(unavailable)';
+    return `${b.width}×${b.height} @ (${b.x}, ${b.y})`;
+  } catch {
+    return '(unavailable)';
+  }
+};
+
+const pushBounds = () => {
+  try {
+    mainWindow?.sendGlobalEvent('window-bounds', { bounds: bounds() });
+  } catch {
+    // Best-effort; a dropped update just means one stale readout.
+  }
+};
+
+function registerBridgeHandlers() {
+  lynxBridge.handle('controls:info', () => {
+    let platform = 'unknown';
+    try {
+      // process.platform is available in the main process.
+      platform = (globalThis as any).process?.platform ?? 'unknown';
+    } catch {
+      platform = 'unknown';
+    }
+    let name_ = '';
+    try {
+      name_ = app.getName();
+    } catch {
+      name_ = '';
+    }
+    return { platform, appName: name_, bounds: bounds() };
+  });
+}
+
 const setupWindow = (win: LynxWindow) => {
-  const bounds = () => {
-    try {
-      const b = win.getBounds();
-      if (!b) return '(unavailable)';
-      return `${b.width}×${b.height} @ (${b.x}, ${b.y})`;
-    } catch {
-      return '(unavailable)';
-    }
-  };
-
-  const pushBounds = () => {
-    try {
-      win.sendGlobalEvent('window-bounds', { bounds: bounds() });
-    } catch {
-      // Best-effort; a dropped update just means one stale readout.
-    }
-  };
-
   // Keep the on-screen bounds readout live as the user drags / resizes the
   // window using the native controls + edges.
   try {
@@ -45,25 +66,6 @@ const setupWindow = (win: LynxWindow) => {
   } catch {
     // Platform may not fire these; the initial read below still populates.
   }
-
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'controls:info') {
-      let platform = 'unknown';
-      try {
-        // process.platform is available in the main process.
-        platform = (globalThis as any).process?.platform ?? 'unknown';
-      } catch {
-        platform = 'unknown';
-      }
-      let name_ = '';
-      try {
-        name_ = app.getName();
-      } catch {
-        name_ = '';
-      }
-      callback.sendReply({ platform, appName: name_, bounds: bounds() });
-    }
-  });
 };
 
 const WINDOW_OPTIONS = {
@@ -82,6 +84,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   setupWindow(win);
   attachDocsLinks(win);
   win.show();
@@ -90,5 +96,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

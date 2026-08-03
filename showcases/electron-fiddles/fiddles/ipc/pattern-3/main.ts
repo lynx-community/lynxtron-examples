@@ -1,12 +1,14 @@
-import { LynxWindow, Menu, app } from '@lynx-js/lynxtron';
+import { LynxWindow, Menu, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
 // electron ipc/pattern-3 main: application menu items send 'update-counter' to
 // the renderer; renderer echoes the value back via 'counter-value'.
-const setupWindow = (win: LynxWindow) => {
-  const push = (delta: number) => win.sendGlobalEvent('update-counter', delta);
+let mainWindow: LynxWindow | null = null;
 
+const push = (delta: number) => mainWindow?.sendGlobalEvent('update-counter', delta);
+
+function setupMenu() {
   try {
     const menu = Menu.buildFromTemplate([
       {
@@ -21,17 +23,18 @@ const setupWindow = (win: LynxWindow) => {
   } catch {
     // Application menu is best-effort; the in-UI buttons still drive the demo.
   }
+}
 
-  win.on('-lynx-message', (name, data) => {
-    if (name === 'nudge') {
-      push(Number((data as Record<string, unknown>)?.delta ?? 0));
-    } else if (name === 'counter-value') {
-      // Electron logs the echoed value to the Node console.
-      // eslint-disable-next-line no-console
-      console.log('[ipc-pattern-3] counter-value =', (data as Record<string, unknown>)?.value);
-    }
+function registerBridgeHandlers() {
+  lynxBridge.on('nudge', (data) => {
+    push(Number((data as Record<string, unknown>)?.delta ?? 0));
   });
-};
+  lynxBridge.on('counter-value', (data) => {
+    // Electron logs the echoed value to the Node console.
+    // eslint-disable-next-line no-console
+    console.log('[ipc-pattern-3] counter-value =', (data as Record<string, unknown>)?.value);
+  });
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -48,7 +51,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -56,5 +62,7 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  setupMenu();
+  registerBridgeHandlers();
   createWindow();
 });

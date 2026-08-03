@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -8,26 +8,24 @@ import { Notification } from '@lynxtron-examples/fiddle-kit/lynx-native';
 // HTML5 `window.Notification` from the renderer; Lynx has no such API, so the
 // UI bridges into main, which shows a real OS notification via Lynxtron's
 // `Notification` (Electron-compatible).
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-invoke', async (callback, name, data) => {
-    if (name === 'show-notification') {
-      const kind = (data as { kind?: string } | undefined)?.kind;
-      const opts =
-        kind === 'advanced'
-          ? {
-              title: 'Notification with subtitle',
-              subtitle: 'A custom subtitle',
-              body: 'Short message plus a subtitle line',
-            }
-          : {
-              title: 'Basic Notification',
-              body: 'Short message part',
-            };
-      new Notification(opts).show();
-      callback.sendReply(opts.title);
-    }
+function registerBridgeHandlers() {
+  lynxBridge.handle('show-notification', (_event, data) => {
+    const kind = (data as { kind?: string } | undefined)?.kind;
+    const opts =
+      kind === 'advanced'
+        ? {
+            title: 'Notification with subtitle',
+            subtitle: 'A custom subtitle',
+            body: 'Short message plus a subtitle line',
+          }
+        : {
+            title: 'Basic Notification',
+            body: 'Short message part',
+          };
+    new Notification(opts).show();
+    return opts.title;
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -44,7 +42,6 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -52,5 +49,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -11,29 +11,30 @@ function basename(p: string): string {
   return idx >= 0 ? cleaned.slice(idx + 1) || cleaned : cleaned;
 }
 
-const setupWindow = (win: LynxWindow) => {
-  let file = '';
-  let edited = false;
+let mainWin: LynxWindow | null = null;
+let file = '';
+let edited = false;
 
-  const apply = () => {
-    const name = file ? basename(file) : 'Untitled';
-    const title = edited ? `${name} — Edited` : name;
-    win.setTitle(title);
-    return { file, edited, title };
-  };
-
-  win.on('-lynx-invoke', async (callback, name, data) => {
-    if (name === 'repfile:get') {
-      callback.sendReply({ file, edited, title: win.getTitle?.() ?? '' });
-    } else if (name === 'repfile:setFile') {
-      file = String((data as Record<string, unknown>)?.file ?? '');
-      callback.sendReply(apply());
-    } else if (name === 'repfile:toggleEdited') {
-      edited = !edited;
-      callback.sendReply(apply());
-    }
-  });
+const apply = () => {
+  const name = file ? basename(file) : 'Untitled';
+  const title = edited ? `${name} — Edited` : name;
+  mainWin?.setTitle(title);
+  return { file, edited, title };
 };
+
+function registerBridgeHandlers() {
+  lynxBridge.handle('repfile:get', () => {
+    return { file, edited, title: mainWin?.getTitle?.() ?? '' };
+  });
+  lynxBridge.handle('repfile:setFile', (_event, data) => {
+    file = String((data as Record<string, unknown>)?.file ?? '');
+    return apply();
+  });
+  lynxBridge.handle('repfile:toggleEdited', () => {
+    edited = !edited;
+    return apply();
+  });
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -50,7 +51,7 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
+  mainWin = win;
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -58,5 +59,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

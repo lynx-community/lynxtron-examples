@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import type { Rectangle } from '@lynx-js/lynxtron';
 import path from 'node:path';
@@ -8,46 +8,52 @@ import path from 'node:path';
 // renderer. Lynxtron exposes the window bounds API directly, so this drives the
 // fiddle's OWN window: it replies with live bounds, applies bounds/deltas from
 // the UI, and pushes 'bounds-changed' whenever the window is moved or resized.
-const setupWindow = (win: LynxWindow) => {
-  const bounds = (): Rectangle => win.getBounds();
+let mainWindow: LynxWindow | null = null;
 
-  const push = () => win.sendGlobalEvent('bounds-changed', bounds());
+const bounds = (): Rectangle | null => mainWindow?.getBounds() ?? null;
 
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'window:getBounds') {
-      callback.sendReply(bounds());
-    }
-  });
+const push = () => {
+  const b = bounds();
+  if (b) mainWindow?.sendGlobalEvent('bounds-changed', b);
+};
 
-  win.on('-lynx-message', (name, data) => {
+function registerBridgeHandlers() {
+  lynxBridge.handle('window:getBounds', () => bounds());
+
+  lynxBridge.on('window:setBounds', (data) => {
+    const b = bounds();
+    if (!b) return;
     const d = (data ?? {}) as Partial<Rectangle>;
-    if (name === 'window:setBounds') {
-      win.setBounds({
-        x: Math.round(d.x ?? bounds().x),
-        y: Math.round(d.y ?? bounds().y),
-        width: Math.round(d.width ?? bounds().width),
-        height: Math.round(d.height ?? bounds().height),
-      });
-      push();
-    } else if (name === 'window:nudge') {
-      // Relative move/resize: dx/dy shift position, dw/dh grow/shrink size.
-      const b = bounds();
-      const nudge = (data ?? {}) as {
-        dx?: number;
-        dy?: number;
-        dw?: number;
-        dh?: number;
-      };
-      win.setBounds({
-        x: b.x + Math.round(nudge.dx ?? 0),
-        y: b.y + Math.round(nudge.dy ?? 0),
-        width: Math.max(200, b.width + Math.round(nudge.dw ?? 0)),
-        height: Math.max(150, b.height + Math.round(nudge.dh ?? 0)),
-      });
-      push();
-    }
+    mainWindow?.setBounds({
+      x: Math.round(d.x ?? b.x),
+      y: Math.round(d.y ?? b.y),
+      width: Math.round(d.width ?? b.width),
+      height: Math.round(d.height ?? b.height),
+    });
+    push();
   });
 
+  lynxBridge.on('window:nudge', (data) => {
+    // Relative move/resize: dx/dy shift position, dw/dh grow/shrink size.
+    const b = bounds();
+    if (!b) return;
+    const nudge = (data ?? {}) as {
+      dx?: number;
+      dy?: number;
+      dw?: number;
+      dh?: number;
+    };
+    mainWindow?.setBounds({
+      x: b.x + Math.round(nudge.dx ?? 0),
+      y: b.y + Math.round(nudge.dy ?? 0),
+      width: Math.max(200, b.width + Math.round(nudge.dw ?? 0)),
+      height: Math.max(150, b.height + Math.round(nudge.dh ?? 0)),
+    });
+    push();
+  });
+}
+
+const setupWindow = (win: LynxWindow) => {
   // Mirror upstream: report bounds live as the OS window is dragged / resized.
   win.on('move', push);
   win.on('resize', push);
@@ -68,6 +74,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   setupWindow(win);
   attachDocsLinks(win);
   win.show();
@@ -76,5 +86,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

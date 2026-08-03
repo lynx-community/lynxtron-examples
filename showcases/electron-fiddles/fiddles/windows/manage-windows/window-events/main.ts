@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -11,6 +11,18 @@ import path from 'node:path';
 // restore / move / resize), so this adaptation subscribes to those and pushes
 // each one to the UI via `win.sendGlobalEvent` — the same "events observed in
 // main, forwarded to the UI" pattern the original demonstrates.
+let mainWindow: LynxWindow | null = null;
+
+const boundsString = (): string | undefined => {
+  try {
+    const b = mainWindow?.getBounds();
+    if (!b) return undefined;
+    return `${b.width}×${b.height} @ (${b.x}, ${b.y})`;
+  } catch {
+    return undefined;
+  }
+};
+
 const setupWindow = (win: LynxWindow) => {
   // Forward a named window event to the UI. `detail` carries any extra info
   // (e.g. bounds for move/resize) so the log line can be descriptive.
@@ -19,16 +31,6 @@ const setupWindow = (win: LynxWindow) => {
       win.sendGlobalEvent('window-event', { type, detail: detail ?? '', at: Date.now() });
     } catch {
       // Best-effort; a dropped event just means one missing log line.
-    }
-  };
-
-  const bounds = (): string | undefined => {
-    try {
-      const b = win.getBounds();
-      if (!b) return undefined;
-      return `${b.width}×${b.height} @ (${b.x}, ${b.y})`;
-    } catch {
-      return undefined;
     }
   };
 
@@ -49,16 +51,14 @@ const setupWindow = (win: LynxWindow) => {
   bind('unmaximize', () => push('unmaximize'));
   bind('minimize', () => push('minimize'));
   bind('restore', () => push('restore'));
-  bind('move', () => push('move', bounds()));
-  bind('resize', () => push('resize', bounds()));
-
-  // Let the UI request the current bounds on mount so the log starts populated.
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'window:getBounds') {
-      callback.sendReply(bounds() ?? '(unavailable)');
-    }
-  });
+  bind('move', () => push('move', boundsString()));
+  bind('resize', () => push('resize', boundsString()));
 };
+
+function registerBridgeHandlers() {
+  // Let the UI request the current bounds on mount so the log starts populated.
+  lynxBridge.handle('window:getBounds', () => boundsString() ?? '(unavailable)');
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -75,6 +75,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   setupWindow(win);
   attachDocsLinks(win);
   win.show();
@@ -83,5 +87,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

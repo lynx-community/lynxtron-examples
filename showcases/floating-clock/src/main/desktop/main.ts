@@ -1,9 +1,15 @@
-import { app, LynxWindow } from "@lynx-js/lynxtron";
+import { app, LynxWindow, lynxBridge } from "@lynx-js/lynxtron";
 import { LYNX_BUNDLE_PATH } from "./vendorPaths";
 
 let mainWindow: LynxWindow | null = null;
 
 app.whenReady().then(() => {
+  // Register the invoke handler once; it survives across window recreation.
+  lynxBridge.handle("close", () => {
+    mainWindow?.close();
+    return "";
+  });
+
   createWindow();
 
   app.on("activate", () => {
@@ -26,23 +32,6 @@ function createWindow() {
     title: "Floating Clock",
     frame: false,
     transparent: true,
-  });
-
-  // 处理来自 Lynx 的调用 - bridge.call
-  mainWindow.on("-lynx-invoke", (event, methodName) => {
-    if (!mainWindow) {
-      event.sendReply("");
-      return;
-    }
-
-    switch (methodName) {
-      case "close":
-        mainWindow.close();
-        event.sendReply("");
-        break;
-      default:
-        event.sendReply("");
-    }
   });
 
   mainWindow.show();

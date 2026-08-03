@@ -141,8 +141,8 @@ so fiddles use ergonomic helpers:
 
 | Electron | Lynxtron (native) | Shared helper |
 |---|---|---|
-| `ipcRenderer.send` / `ipcMain.on` | `NativeModules.bridge.send(m, p)` → `win.on('-lynx-message')` | `bridgeSend(m, p)` |
-| `ipcRenderer.invoke` / `ipcMain.handle` | `NativeModules.bridge.call(m, p, cb)` → `win.on('-lynx-invoke')` + `callback.sendReply()` | `await bridgeCall(m, p)` |
+| `ipcRenderer.send` / `ipcMain.on` | `NativeModules.bridge.send(m, p)` → `lynxBridge.on(m, handler)` | `bridgeSend(m, p)` |
+| `ipcRenderer.invoke` / `ipcMain.handle` | `NativeModules.bridge.call(m, p, cb)` → `lynxBridge.handle(m, handler)` | `await bridgeCall(m, p)` |
 | `webContents.send` / `ipcRenderer.on` | `win.sendGlobalEvent(e, d)` → `lynx.getJSModule('GlobalEventEmitter')` | `onGlobalEvent(e, cb)` |
 | `contextBridge.exposeInMainWorld` | `contextBridge.exposeInLynxBTS` → `NativeModules.nodejs.exposed` | `exposed(key)` |
 

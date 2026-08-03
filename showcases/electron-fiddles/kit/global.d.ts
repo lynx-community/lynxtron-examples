@@ -6,11 +6,12 @@
 declare const NativeModules: {
   bridge: {
     /**
-     * Request/response into main (`win.on('-lynx-invoke')` + `callback.sendReply`).
+     * Request/response into main (`lynxBridge.handle(method, handler)` — the
+     * handler's return value is delivered here).
      * Callback-style: the reply is delivered to the 3rd-arg callback.
      */
     call: (method: string, params: unknown, callback: (reply: any) => void) => void;
-    /** Fire-and-forget into main (`win.on('-lynx-message')`). */
+    /** Fire-and-forget into main (`lynxBridge.on(method, ...)`). */
     send: (method: string, data?: unknown) => void;
   };
   /** Values exposed from preload via `contextBridge.exposeInLynxBTS`. */

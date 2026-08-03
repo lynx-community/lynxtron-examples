@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -45,18 +45,16 @@ function collectAppInfo(): AppInfo {
   };
 }
 
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'app:getInfo') {
-      try {
-        callback.sendReply(collectAppInfo());
-      } catch (err) {
-        console.error('[app-information] collectAppInfo failed:', err);
-        callback.sendReply({ name: 'error', version: String((err as Error)?.message ?? err), appPath: '', paths: [] });
-      }
+function registerBridgeHandlers() {
+  lynxBridge.handle('app:getInfo', () => {
+    try {
+      return collectAppInfo();
+    } catch (err) {
+      console.error('[app-information] collectAppInfo failed:', err);
+      return { name: 'error', version: String((err as Error)?.message ?? err), appPath: '', paths: [] };
     }
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -73,7 +71,6 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -81,5 +78,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

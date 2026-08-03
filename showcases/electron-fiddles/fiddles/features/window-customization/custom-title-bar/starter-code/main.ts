@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -9,9 +9,10 @@ import path from 'node:path';
 // fiddle declares no window options at all, so it gets the platform default
 // chrome. The handler below only reports the resulting window state back to the
 // UI so the baseline is observable rather than asserted.
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name !== 'window:describeChrome') return;
+let mainWindow: LynxWindow | null = null;
+
+function registerBridgeHandlers() {
+  lynxBridge.handle('window:describeChrome', () => {
     const safe = <T,>(fn: () => T, fallback: T): T => {
       try {
         return fn();
@@ -19,17 +20,17 @@ const setupWindow = (win: LynxWindow) => {
         return fallback;
       }
     };
-    const b = safe(() => win.getBounds(), undefined as any);
-    callback.sendReply({
+    const b = safe(() => mainWindow?.getBounds(), undefined as any);
+    return {
       platform: process.platform,
       frame: 'default (not overridden)',
       titleBarStyle: 'default (not overridden)',
-      title: safe(() => win.getTitle(), '(unavailable)'),
-      resizable: String(safe(() => win.isResizable(), '(unavailable)')),
+      title: safe(() => mainWindow?.getTitle(), '(unavailable)'),
+      resizable: String(safe(() => mainWindow?.isResizable(), '(unavailable)')),
       bounds: b ? `${b.width}×${b.height} @ (${b.x}, ${b.y})` : '(unavailable)',
-    });
+    };
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -46,7 +47,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -54,5 +58,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

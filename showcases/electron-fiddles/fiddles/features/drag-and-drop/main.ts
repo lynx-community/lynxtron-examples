@@ -1,4 +1,4 @@
-import { LynxWindow, app, dialog, shell } from '@lynx-js/lynxtron';
+import { LynxWindow, app, dialog, shell, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -18,40 +18,35 @@ interface DroppedFile {
   size: number;
 }
 
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'dnd:pickFile') {
-      const { canceled, filePaths } = await dialog.showOpenDialog({
-        properties: ['openFile'],
-      });
-      if (canceled || filePaths.length === 0) {
-        callback.sendReply(null);
-        return;
-      }
-      const filePath = filePaths[0];
-      let size = 0;
-      try {
-        size = fs.statSync(filePath).size;
-      } catch {
-        size = 0;
-      }
-      const file: DroppedFile = {
-        path: filePath,
-        name: path.basename(filePath),
-        size,
-      };
-      callback.sendReply(file);
+function registerBridgeHandlers() {
+  lynxBridge.handle('dnd:pickFile', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openFile'],
+    });
+    if (canceled || filePaths.length === 0) {
+      return null;
     }
+    const filePath = filePaths[0];
+    let size = 0;
+    try {
+      size = fs.statSync(filePath).size;
+    } catch {
+      size = 0;
+    }
+    const file: DroppedFile = {
+      path: filePath,
+      name: path.basename(filePath),
+      size,
+    };
+    return file;
   });
 
-  win.on('-lynx-message', (name, data) => {
+  lynxBridge.on('dnd:reveal', (data) => {
     const payload = data as { path?: string } | undefined;
-    if (name === 'dnd:reveal') {
-      const filePath = String(payload?.path ?? '');
-      if (filePath) shell.showItemInFolder(filePath);
-    }
+    const filePath = String(payload?.path ?? '');
+    if (filePath) shell.showItemInFolder(filePath);
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -68,7 +63,6 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -76,5 +70,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

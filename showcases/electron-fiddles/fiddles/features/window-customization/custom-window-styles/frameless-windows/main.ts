@@ -1,4 +1,4 @@
-import { LynxWindow, app } from '@lynx-js/lynxtron';
+import { LynxWindow, app, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
@@ -15,32 +15,81 @@ import path from 'node:path';
 // frameless. This main handler is the piece Electron leaves to the app: it turns
 // the in-content buttons into real window operations via the LynxWindow API
 // (Electron keeps this main-process window API; only the renderer is Lynx now).
+let mainWindow: LynxWindow | null = null;
+
+const state = () => {
+  let bounds = '(unavailable)';
+  let maximized = false;
+  try {
+    const b = mainWindow?.getBounds();
+    if (b) bounds = `${b.width}×${b.height} @ (${b.x}, ${b.y})`;
+  } catch {
+    // Best-effort — a dropped read just leaves the placeholder.
+  }
+  try {
+    maximized = mainWindow?.isMaximized() ?? false;
+  } catch {
+    maximized = false;
+  }
+  return { bounds, maximized };
+};
+
+const pushState = () => {
+  try {
+    mainWindow?.sendGlobalEvent('window-state', state());
+  } catch {
+    // Best-effort; a dropped update just means one stale readout.
+  }
+};
+
+function registerBridgeHandlers() {
+  // Fire-and-forget window commands from the custom title bar buttons.
+  lynxBridge.on('window:minimize', () => {
+    try {
+      mainWindow?.minimize();
+    } catch {
+      // Ignore — e.g. close racing with a late message.
+    }
+  });
+  lynxBridge.on('window:maximize', () => {
+    try {
+      // One button toggles maximize / restore, like a real title-bar control.
+      if (mainWindow?.isMaximized()) mainWindow.unmaximize();
+      else mainWindow?.maximize();
+      pushState();
+    } catch {
+      // Ignore — e.g. close racing with a late message.
+    }
+  });
+  lynxBridge.on('window:center', () => {
+    try {
+      mainWindow?.center();
+      pushState();
+    } catch {
+      // Ignore — e.g. close racing with a late message.
+    }
+  });
+  lynxBridge.on('window:close', () => {
+    try {
+      mainWindow?.close();
+    } catch {
+      // Ignore — e.g. close racing with a late message.
+    }
+  });
+
+  // Request/response for the initial state so the UI can render before any event.
+  lynxBridge.handle('window:state', () => {
+    let platform = 'unknown';
+    try {
+      platform = (globalThis as any).process?.platform ?? 'unknown';
+    } catch {
+      platform = 'unknown';
+    }
+    return { ...state(), platform };
+  });
+}
+
 const setupWindow = (win: LynxWindow) => {
-  const state = () => {
-    let bounds = '(unavailable)';
-    let maximized = false;
-    try {
-      const b = win.getBounds();
-      if (b) bounds = `${b.width}×${b.height} @ (${b.x}, ${b.y})`;
-    } catch {
-      // Best-effort — a dropped read just leaves the placeholder.
-    }
-    try {
-      maximized = win.isMaximized();
-    } catch {
-      maximized = false;
-    }
-    return { bounds, maximized };
-  };
-
-  const pushState = () => {
-    try {
-      win.sendGlobalEvent('window-state', state());
-    } catch {
-      // Best-effort; a dropped update just means one stale readout.
-    }
-  };
-
   // Keep the on-screen readout live as the window moves / resizes / (un)maximizes
   // in response to the in-content controls below.
   try {
@@ -51,40 +100,6 @@ const setupWindow = (win: LynxWindow) => {
   } catch {
     // Some platforms may not fire every event; the invoke read still populates.
   }
-
-  // Fire-and-forget window commands from the custom title bar buttons.
-  win.on('-lynx-message', (name) => {
-    try {
-      if (name === 'window:minimize') {
-        win.minimize();
-      } else if (name === 'window:maximize') {
-        // One button toggles maximize / restore, like a real title-bar control.
-        if (win.isMaximized()) win.unmaximize();
-        else win.maximize();
-        pushState();
-      } else if (name === 'window:center') {
-        win.center();
-        pushState();
-      } else if (name === 'window:close') {
-        win.close();
-      }
-    } catch {
-      // Ignore — e.g. close racing with a late message.
-    }
-  });
-
-  // Request/response for the initial state so the UI can render before any event.
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'window:state') {
-      let platform = 'unknown';
-      try {
-        platform = (globalThis as any).process?.platform ?? 'unknown';
-      } catch {
-        platform = 'unknown';
-      }
-      callback.sendReply({ ...state(), platform });
-    }
-  });
 };
 
 const WINDOW_OPTIONS = {
@@ -103,6 +118,10 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
+  mainWindow = win;
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null;
+  });
   setupWindow(win);
   attachDocsLinks(win);
   win.show();
@@ -111,5 +130,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

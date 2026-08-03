@@ -1,19 +1,17 @@
-import { LynxWindow, app, dialog } from '@lynx-js/lynxtron';
+import { LynxWindow, app, dialog, lynxBridge } from '@lynx-js/lynxtron';
 import { attachDocsLinks } from '@lynxtron-examples/fiddle-kit/docs-main';
 import path from 'node:path';
 
-// electron save-dialog main: ipcMain.handle('save-dialog') → showSaveDialog.
-const setupWindow = (win: LynxWindow) => {
-  win.on('-lynx-invoke', async (callback, name) => {
-    if (name === 'save-dialog') {
-      const { canceled, filePath } = await dialog.showSaveDialog({
-        title: 'Save an Image',
-        filters: [{ name: 'Images', extensions: ['jpg', 'png', 'gif'] }],
-      });
-      callback.sendReply(canceled ? null : (filePath ?? null));
-    }
+// electron save-dialog main: lynxBridge.handle('save-dialog') → showSaveDialog.
+function registerBridgeHandlers() {
+  lynxBridge.handle('save-dialog', async () => {
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: 'Save an Image',
+      filters: [{ name: 'Images', extensions: ['jpg', 'png', 'gif'] }],
+    });
+    return canceled ? null : (filePath ?? null);
   });
-};
+}
 
 const WINDOW_OPTIONS = {
   width: 720,
@@ -30,7 +28,6 @@ function createWindow(): LynxWindow {
   const win = new LynxWindow({
     ...WINDOW_OPTIONS,
   } as any);
-  setupWindow(win);
   attachDocsLinks(win);
   win.show();
   win.loadFile(path.join(__dirname, 'main.lynx.bundle'));
@@ -38,5 +35,6 @@ function createWindow(): LynxWindow {
 }
 
 app.whenReady().then(() => {
+  registerBridgeHandlers();
   createWindow();
 });

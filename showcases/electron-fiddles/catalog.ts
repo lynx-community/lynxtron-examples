@@ -85,7 +85,7 @@ export const FIDDLES: FiddleMeta[] = [
     id: 'ipc-pattern-1',
     title: 'IPC: Renderer → Main (one-way)',
     category: 'IPC',
-    description: 'UI sends a message to main to set the window title (bridge.send → -lynx-message).',
+    description: 'UI sends a message to main to set the window title (bridge.send → lynxBridge.on).',
     status: 'working',
     upstream: 'ipc/pattern-1',
   },
