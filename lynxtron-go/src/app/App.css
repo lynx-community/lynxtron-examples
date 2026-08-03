@@ -49,9 +49,16 @@
      --surface-content must stay in step with the native Scintilla background,
      which ApplyTheme sets in scintilla_view.mm / scintilla_view_win.cc (BGR
      there, not RGB). Change one and change the other. */
-  --surface-content: #1d2427;
-  --surface-chrome: #2c2e3b;
-  --surface-raised: #383c4e;
+  /* One hue for the whole neutral ramp. These used to disagree: #1d2427 had
+     its green channel ABOVE the red/blue midpoint (a teal cast) while
+     #2c2e3b and #383c4e sat below it (violet) — so the content surface and
+     the chrome around it were tinted toward different colours, which is what
+     made the window read as two products stacked rather than one. The
+     reference editors keep every neutral in one family; this ramp is that
+     family, on the violet-slate side the chrome was already on. */
+  --surface-content: #1b1d26;
+  --surface-chrome: #262a36;
+  --surface-raised: #333747;
 
   /* Overlays. A tint over whatever is beneath, for hover, pressed and lit
      states. These MUST be tokens: a literal rgba(255,255,255,…) is invisible
@@ -80,7 +87,7 @@
      so the two tiers were the same surface in practice — the frame has to be
      far enough from the page to be seen as frame. */
   --surface-content: #ffffff;
-  --surface-chrome: #e4e9ef;
+  --surface-chrome: #eceef3;
   --surface-raised: #ffffff;
   --overlay-soft: rgba(16, 22, 26, 0.05);
   --overlay-strong: rgba(16, 22, 26, 0.1);
