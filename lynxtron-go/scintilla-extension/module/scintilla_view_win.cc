@@ -936,7 +936,9 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   font_size_pt_ = size;
   HWND hwnd = AsHwnd(win_view_);
   if (!hwnd || !::IsWindow(hwnd)) return;
-  const LPARAM bg      = dark ? 0x41322F : 0xFEFFFF;
+  // BGR. Dark #1d2427 -> 0x27241d, matching --surface-content in App.css —
+  // kept in step with the macOS path in scintilla_view.mm.
+  const LPARAM bg      = dark ? 0x27241d : 0xFFFFFF;
   const LPARAM fg      = dark ? 0xD4D4D4 : 0x000000;
   const LPARAM kw      = dark ? 0xD69C56 : 0xFF0000;
   const LPARAM strc    = dark ? 0x7891CE : 0x1515A3;
@@ -944,7 +946,7 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   const LPARAM num     = dark ? 0xA8CEB5 : 0x588609;
   const LPARAM typ     = dark ? 0xB0C94E : 0x997F26;
   const LPARAM lnFore  = dark ? 0x858585 : 0x937823;
-  const LPARAM lnBack  = dark ? 0x41322F : 0xF5F5F5;
+  const LPARAM lnBack  = dark ? 0x27241d : 0xF5F5F5;
   SciSend(hwnd, SCI_STYLESETBACK, STYLE_DEFAULT, bg);
   SciSend(hwnd, SCI_STYLESETFORE, STYLE_DEFAULT, fg);
   SciSend(hwnd, SCI_STYLESETSIZE, STYLE_DEFAULT, size);

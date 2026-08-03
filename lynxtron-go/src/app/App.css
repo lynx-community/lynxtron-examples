@@ -11,20 +11,6 @@
   --foreground-1: #9feafa;
   --foreground-2: #8ac7d6;
   --foreground-3: #608291;
-  /* Surface tiers. The names are ordinal, so what each one MEANS has to be
-     written down or it drifts — which it had: the sidebar (chrome) wore the
-     content tone and the console (content) wore the seam tone, leaving no
-     readable relationship between any two surfaces.
-       CONTENT  --background-1  what you read: code editors, run output.
-                                Keyed to the native Scintilla theme, so this
-                                one cannot move without retheming the editor.
-       CHROME   --background-4  frame around content: header, sidebar, pane
-                                toolbars, the console's tab strip.
-       RAISED   --background-3  surfaces that float ABOVE chrome: dialogs,
-                                popovers, menus, hover states.
-       SEAM     --background-2  the ground showing between panels: gutters,
-                                sashes, the app background.
-     Content is the lightest, chrome a step down, seams the darkest. */
   --background-4: #21232d;
   --background-3: #2c2e3b;
   --background-2: #1d2427;
@@ -44,6 +30,28 @@
   --bp-surface-deep: #1a1a1a;
   --bp-selected-bg: #094771;
   --hairline: rgba(255, 255, 255, 0.1);
+
+  /* ── Surface tiers ──────────────────────────────────────────────────────
+     Named by ROLE, because the --background-N names are ordinal and carry no
+     meaning — which is how the sidebar ended up wearing the editor's tone and
+     the console the gutter's.
+
+     The rule is the one a modern editor uses, and it is about AREA: the big
+     surfaces you read are the DARKEST, and the thin chrome wrapped around them
+     is LIGHTER. Seams share the chrome tone, because a gap between panels is
+     the frame showing through — not a third thing.
+
+       CONTENT  code editors, run output, the file tree. Large and dark.
+       CHROME   header, pane toolbars, tab strips, section headers, AND every
+                seam: gutters, sashes, the app ground.
+       RAISED   floats above chrome: dialogs, popovers, menus, hover.
+
+     --surface-content must stay in step with the native Scintilla background,
+     which ApplyTheme sets in scintilla_view.mm / scintilla_view_win.cc (BGR
+     there, not RGB). Change one and change the other. */
+  --surface-content: #1d2427;
+  --surface-chrome: #2c2e3b;
+  --surface-raised: #383c4e;
 }
 
 /* themes-defaults.ts defaultLight.common */
@@ -51,6 +59,9 @@
   --foreground-1: #9feafa;
   --foreground-2: #256e80;
   --foreground-3: #608291;
+  --surface-content: #ffffff;
+  --surface-chrome: #eef1f4;
+  --surface-raised: #ffffff;
   --background-4: #fbfbfb;
   --background-3: #fbfbfb;
   --background-2: #d6dde0;

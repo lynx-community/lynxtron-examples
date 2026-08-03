@@ -39,7 +39,7 @@
    trick is not available here; SashOverlay already keeps a fast drag alive
    once it starts, which is what the extra width was for. */
 .Sash {
-  background-color: var(--background-2);
+  background-color: var(--surface-chrome);
   z-index: 10;
   flex-shrink: 0;
 }

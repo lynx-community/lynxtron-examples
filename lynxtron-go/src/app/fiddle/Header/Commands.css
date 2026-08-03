@@ -128,7 +128,7 @@
      sitting against the text with all that reserved width dead to the right of
      them. A panel that hugs its rows cannot have a gap to explain. */
   border-radius: 6px;
-  background-color: var(--background-3);
+  background-color: var(--surface-raised);
   border-width: 1px;
   border-style: solid;
   border-color: var(--hairline);

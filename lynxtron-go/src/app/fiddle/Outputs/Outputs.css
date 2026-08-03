@@ -6,7 +6,7 @@
   /* CONTENT, same ground as the code. Run output is something you read, not
      part of the frame — it wore --background-2, the SEAM tone, which is why
      the console read as a hole in the window rather than a panel of it. */
-  background-color: var(--background-1);
+  background-color: var(--surface-content);
   border-bottom-width: 0;
 }
 .Outputs-Header {
@@ -15,7 +15,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: var(--background-4);
+  background-color: var(--surface-chrome);
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--hairline);

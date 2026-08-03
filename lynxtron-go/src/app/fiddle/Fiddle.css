@@ -7,7 +7,7 @@
   /* Containing block for the commands overflow, which is absolutely positioned
      against the shell rather than the header (the header clips its children). */
   position: relative;
-  background-color: var(--background-2);  /* background-2 */
+  background-color: var(--surface-chrome);
   color: var(--text-color-3);              /* text-color-3 */
 }
 .FiddleBody {

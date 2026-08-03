@@ -6,7 +6,9 @@
   /* CHROME. The sidebar wore --background-1, the CONTENT tone, so it read as
      another editor surface rather than as frame. The seam to its right is the
      split sash now, not a border here. */
-  background-color: var(--background-4);
+  /* CONTENT. Current practice reads the file tree as something you scan, not
+     as frame — so it shares the editors' ground rather than the header's. */
+  background-color: var(--surface-content);
   border-right-width: 0;
 }
 .FiddleSidebar-Section {
@@ -32,7 +34,7 @@
   padding: 8px 12px;
   /* Flat chrome, separated by rule rather than by tone: --background-3 is
      reserved for surfaces that FLOAT above chrome (dialogs, menus, hover). */
-  background-color: var(--background-4);
+  background-color: var(--surface-chrome);
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--hairline);

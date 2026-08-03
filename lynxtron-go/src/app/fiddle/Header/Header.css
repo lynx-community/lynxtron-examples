@@ -6,7 +6,7 @@
   height: 51px;
   min-height: 51px;
   max-height: 51px;
-  background-color: var(--background-3);   /* background-3 — upstream header bg */
+  background-color: var(--surface-chrome);
   /* Upstream separates the header with its box-shadow ring rgba(16,22,26,.2)
      (commands.less), not border-color-2 — #1e2527 solid reads as a harsh
      black line in light mode. A border avoids sibling-stacking shadow loss. */
