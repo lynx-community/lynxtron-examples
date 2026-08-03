@@ -833,7 +833,13 @@ if (!hasSingleInstanceLock) {
     // reclaim the gap.
     try {
       const reportFullScreen = () => {
-        try { w.sendGlobalEvent('ide:fullScreen', { fullScreen: w.isFullScreen() }); } catch (_) {}
+        try {
+          const fullScreen = w.isFullScreen();
+          console.log(`[PC_Host] full-screen: ${fullScreen}`);
+          w.sendGlobalEvent('ide:fullScreen', { fullScreen });
+        } catch (e) {
+          console.warn('[PC_Host] full-screen report failed:', e);
+        }
       };
       w.on('enter-full-screen', reportFullScreen);
       w.on('leave-full-screen', reportFullScreen);
