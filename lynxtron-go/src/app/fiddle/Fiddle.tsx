@@ -518,6 +518,14 @@ export function Fiddle(props: FiddleProps) {
       // @ts-ignore
       try { NativeModules.bridge.send('persistDone', {}); } catch (_) {}
     },
+    // Same shape as the ide:fullScreen event the main process sends, so
+    // automation can exercise the layout response without the OS: the window
+    // chrome cannot be driven from here, but everything downstream of the flag
+    // can. Sits with setTheme because it is the same kind of thing — a piece of
+    // app state that only the host can normally change.
+    'fiddle:setFullScreen': (data: any) => {
+      setFullScreen(!!data?.fullScreen);
+    },
     'fiddle:setTheme': (data: any) => {
       const t = data?.theme;
       if (t === 'dark' || t === 'light' || t === 'system') {
