@@ -406,16 +406,21 @@
    menu item's label styling on .bp3-menu-item never reached this element —
    the text rendered at the default colour, which on this surface is invisible.
    The icon and the accelerator showed only because they set their own. */
+/* NOT `flex: 1` — that is flex-basis 0, and a <text> given a zero basis
+   collapses to zero width here, which is why menu items rendered as an icon
+   and an accelerator with nothing between them. Grow from the text's own
+   width instead, and let the label be pushed out by margin. */
 .bp3-menu-item-text {
-  flex: 1;
-  min-width: 0;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: auto;
   font-size: 13px;
   line-height: 18px;
   color: var(--bp-text);
 }
 .bp3-menu-item.bp3-disabled .bp3-menu-item-text,
 .bp3-menu-item.bp3-disabled .bp3-menu-item-icon { color: var(--bp-text-muted); }
-.bp3-menu-item-label { color: var(--bp-text-muted); font-size: 11px; }
+.bp3-menu-item-label { flex-shrink: 0; margin-left: auto; color: var(--bp-text-muted); font-size: 11px; }
 .bp3-menu-item.bp3-intent-danger { color: #db3737; }
 .bp3-menu-divider {
   height: 1px;

@@ -57,7 +57,10 @@ export function EditorPane(props: EditorPaneProps) {
       className={'MosaicWindow' + (props.active ? ' MosaicWindow--active' : '')}
       bindtap={() => props.onFocus(file.id)}
     >
-      <view className="MosaicToolbar">
+      {/* The active class is set HERE rather than matched through the pane via
+          `.MosaicWindow--active .MosaicToolbar` — descendant selectors are not
+          something to bet a visible state on in Lynx's CSS subset. */}
+      <view className={'MosaicToolbar' + (props.active ? ' MosaicToolbar--active' : '')}>
         <text
           className={'MosaicToolbar-Title' + (props.active ? ' MosaicToolbar-Title--active' : '')}
           text-maxline="1"

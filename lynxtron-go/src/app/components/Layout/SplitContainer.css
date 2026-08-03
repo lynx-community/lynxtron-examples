@@ -35,15 +35,18 @@
 }
 
 .SashH {
-  width: 10px;
-  margin: 0 -3px; /* widen hit area without moving layout (upstream: 6px overhang) */
+  /* 9px of grabbable width, 1px of laid-out width: the hit area overhangs into
+     the neighbours instead of spending real estate. It used to lay out 4px,
+     which is what made the sidebar seam read as a heavy bar. */
+  width: 9px;
+  margin: 0 -4px;
   height: 100%;
   cursor: col-resize;
 }
 
 .SashV {
-  height: 10px;
-  margin: -3px 0;
+  height: 9px;
+  margin: -4px 0;
   width: 100%;
   cursor: row-resize;
 }

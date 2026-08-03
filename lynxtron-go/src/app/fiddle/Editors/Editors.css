@@ -21,10 +21,13 @@
   min-width: 0;
   overflow: hidden;
   position: relative;
-  padding: 3px;
-  /* upstream .mosaic.mosaic-blueprint-theme { background: #bdbdbd15 } —
-     a light wash over the app background is the inter-pane gutter color */
-  background-color: rgba(189, 189, 189, 0.08);
+  /* Frameless. There used to be THREE separators stacked between the sidebar
+     and the first line of code: this 3px inset, a light wash tinting it, and a
+     3px margin on every pane — 6px of lit gutter, which read as a heavy band
+     rather than a seam. The gutter is now a single dark hairline: no inset, no
+     wash, and the darkest background showing through 1px pane margins. */
+  padding: 0;
+  background-color: var(--background-2);
 }
 .MosaicCell {
   position: absolute;
@@ -38,13 +41,13 @@
   z-index: 10;
 }
 .MosaicSashH {
-  width: 10px;
-  margin-left: -5px;
+  width: 9px;
+  margin-left: -4px;
   cursor: col-resize;
 }
 .MosaicSashV {
-  height: 10px;
-  margin-top: -5px;
+  height: 9px;
+  margin-top: -4px;
   cursor: row-resize;
 }
 .MosaicSashH:hover, .MosaicSashH:active { background-color: rgba(0, 127, 212, 0.35); }
@@ -59,32 +62,20 @@
   /* NOT transparent — see .MosaicSash */
   background-color: rgba(128, 128, 128, 0.02);
 }
-/* Every mosaic pane is an object with an edge.
-   Upstream leaves tiles borderless and lets a 6px gutter of lighter wash imply
-   the seam; at this contrast the panes read as one continuous field with gaps
-   punched in it, and the eye has to work out where a file starts. A single
-   hairline is enough to close each pane — and it gives focus somewhere to
-   live, which upstream signals only by tinting the title text.
-   Still square: a radius at a 6px gutter frays into ragged seams. */
+/* A pane carries no frame of its own. Its own toolbar already names it and the
+   1px of dark gutter around it already separates it; a border on top of both
+   was a third line saying the same thing. Focus lives entirely in the toolbar,
+   which is the part you are looking at anyway.
+   Square: a radius at a 1px gutter has nothing to sit in. */
 .MosaicWindow {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
   min-width: 0;
-  margin: 3px;
+  margin: 1px;
   overflow: hidden;
   background-color: var(--background-1); /* editor.background — matches native Scintilla theme */
-  border-width: 1px;
-  border-style: solid;
-  border-color: var(--hairline);
-}
-/* Focus brightens the edge. Note the token trap: --border-color-2 is #1e2527,
-   DARKER than --hairline's 10% white, so "brighten the border" via that token
-   made the focused pane recede instead. A white overlay is the only thing on
-   this palette that reliably reads as lighter. */
-.MosaicWindow--active {
-  border-color: rgba(255, 255, 255, 0.24);
 }
 /* Chrome, and it should read as chrome: one step darker than the code it sits
    on, closed by a hairline underneath. Upstream draws a border ABOVE the
@@ -111,10 +102,10 @@
   border-bottom-color: var(--hairline);
 }
 /* Focused: the toolbar lifts off the body. A white overlay rather than a token
-   — see .MosaicWindow--active. */
-.MosaicWindow--active .MosaicToolbar {
-  background-color: rgba(255, 255, 255, 0.08);
-  border-bottom-color: rgba(255, 255, 255, 0.18);
+   — nothing in this palette is lighter than the #2f3241 pane body. */
+.MosaicToolbar--active {
+  background-color: rgba(255, 255, 255, 0.09);
+  border-bottom-color: rgba(255, 255, 255, 0.2);
 }
 /* A pane title is a file path — data, so mono, per the project's rule that
    mono is never decoration. 12px: chrome should sit below the code it labels,
