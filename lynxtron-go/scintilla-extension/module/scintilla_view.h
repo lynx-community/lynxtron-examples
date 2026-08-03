@@ -43,6 +43,15 @@ class ScintillaView : public lynx::pub::LynxNativeView {
   // the last call. Safe to call from any thread.
   bool ConsumeContentChanged() { return content_changed_.exchange(false, std::memory_order_relaxed); }
 
+  // Re-derive line spacing from the size actually being rendered. Extra
+  // ascent/descent are absolute pixels, so they do NOT follow a pinch zoom —
+  // the glyphs grew and the leading stayed, which is the one thing that made
+  // zoomed text look wrong. Called on SCN_ZOOM and after ApplyTheme.
+  void ApplyLineSpacing();
+
+  // Restore this editor to the configured font size (zoom level 0).
+  void ResetZoom();
+
   // Called from Scintilla's SCN_FOCUSIN notification on the main thread.
   // Clicking into a native editor never reaches the Lynx view that hosts it —
   // native views consume their own input — so without this the UI cannot know

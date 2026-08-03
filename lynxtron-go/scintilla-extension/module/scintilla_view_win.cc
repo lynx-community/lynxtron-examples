@@ -316,6 +316,8 @@ void DispatchScintillaNotification(SCNotification* notification) {
   if (notification->nmhdr.code == SCN_MODIFIED &&
       (notification->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))) {
     view->OnContentModified();
+  } else if (notification->nmhdr.code == SCN_ZOOM) {
+    view->ApplyLineSpacing();
   } else if (notification->nmhdr.code == SCN_FOCUSIN) {
     view->OnFocusGained();
   } else if (notification->nmhdr.code == SCN_DWELLSTART) {
@@ -929,6 +931,26 @@ void ScintillaView::FocusEditor() {
   }
 }
 
+// See scintilla_view.mm — leading is absolute pixels and must follow the size
+// actually rendered, which pinch zoom changes without touching ApplyTheme.
+void ScintillaView::ApplyLineSpacing() {
+  HWND hwnd = AsHwnd(win_view_);
+  if (!hwnd || !::IsWindow(hwnd)) return;
+  const int base = font_size_pt_ > 0 ? font_size_pt_ : 14;
+  LPARAM zoom = SciSend(hwnd, SCI_GETZOOM, 0, 0);
+  long effective = static_cast<long>(base) + static_cast<long>(zoom);
+  if (effective < 4) effective = 4;
+  SciSend(hwnd, SCI_SETEXTRAASCENT, (effective * 4) / 10, 0);
+  SciSend(hwnd, SCI_SETEXTRADESCENT, (effective * 3) / 10, 0);
+}
+
+void ScintillaView::ResetZoom() {
+  HWND hwnd = AsHwnd(win_view_);
+  if (!hwnd || !::IsWindow(hwnd)) return;
+  SciSend(hwnd, SCI_SETZOOM, 0, 0);
+  ApplyLineSpacing();
+}
+
 void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   const int size = size_pt > 0 ? size_pt : 14;
   // OnPropertiesChanged normally runs before OnLayoutChanged creates the
@@ -938,6 +960,7 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   font_size_pt_ = size;
   HWND hwnd = AsHwnd(win_view_);
   if (!hwnd || !::IsWindow(hwnd)) return;
+  ApplyLineSpacing();
   // BGR. Dark #1d2427 -> 0x27241d, matching --surface-content in App.css —
   // kept in step with the macOS path in scintilla_view.mm.
   const LPARAM bg      = dark ? 0x27241d : 0xFFFFFF;
@@ -949,9 +972,6 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   const LPARAM typ     = dark ? 0xB0C94E : 0x997F26;
   const LPARAM lnFore  = dark ? 0x858585 : 0x937823;
   const LPARAM lnBack  = dark ? 0x27241d : 0xF5F5F5;
-  // Leading, in pixels, derived from the size — see scintilla_view.mm.
-  SciSend(hwnd, SCI_SETEXTRAASCENT, (size * 4) / 10, 0);
-  SciSend(hwnd, SCI_SETEXTRADESCENT, (size * 3) / 10, 0);
   SciSend(hwnd, SCI_STYLESETBACK, STYLE_DEFAULT, bg);
   SciSend(hwnd, SCI_STYLESETFORE, STYLE_DEFAULT, fg);
   SciSend(hwnd, SCI_STYLESETSIZE, STYLE_DEFAULT, size);

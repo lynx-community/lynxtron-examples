@@ -28,6 +28,18 @@ export function editorFontSize(): number {
   return Number.isFinite(n) && n >= 8 && n <= 32 ? n : 12;
 }
 
+/**
+ * Put an editor back to the configured font size.
+ *
+ * Scintilla keeps a per-view zoom level that pinch gestures move and nothing
+ * else touches — not a theme change, not a font size change — so a pane the
+ * user zoomed stays zoomed with no way back. Resetting also re-derives the
+ * line spacing, which is absolute pixels and has to follow the rendered size.
+ */
+export function resetEditorZoom(fileId: string): void {
+  try { scintillaApi()?.resetZoom?.(scintillaIdFor(fileId)); } catch (_) {}
+}
+
 export function setThemeSetting(theme: ThemeSetting): void {
   try {
     const cfg = foundationApi()?.config;

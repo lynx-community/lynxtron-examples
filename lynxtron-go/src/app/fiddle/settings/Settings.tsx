@@ -45,6 +45,14 @@ export function Settings(props: SettingsProps) {
   const [panel, setPanel] = useState<Panel>('general');
   const [state, setState] = useState<SettingsState>(DEFAULTS);
   const [addThemeOpen, setAddThemeOpen] = useState(false);
+  /**
+   * The font size field is typed into, so it cannot be driven straight from
+   * the clamped number. Clamping on every keystroke meant the first digit of
+   * "18" became 8 and the caret jumped — the field rewrote what you typed
+   * before you finished typing it. The draft holds exactly what is in the box;
+   * the setting is committed only once the draft is a usable number.
+   */
+  const [fontSizeDraft, setFontSizeDraft] = useState<string | null>(null);
   const [ghUser, setGhUser] = useState<GitHubUser | null>(null);
   const [ghValidating, setGhValidating] = useState(false);
 
@@ -53,7 +61,11 @@ export function Settings(props: SettingsProps) {
     if (cached) setGhUser(cached);
   }, []);
 
-  useEffect(() => { if (props.isOpen) setState(loadPersisted()); }, [props.isOpen]);
+  useEffect(() => {
+    if (!props.isOpen) return;
+    setState(loadPersisted());
+    setFontSizeDraft(null);
+  }, [props.isOpen]);
 
   const update = <K extends keyof SettingsState>(k: K, v: SettingsState[K]) => {
     setState(prev => {
@@ -125,8 +137,17 @@ export function Settings(props: SettingsProps) {
                     escaped it only because its container is a fixed 280px. */}
                 <InputGroup
                   className="SettingsNumberInput"
-                  value={String(state.fontSize)}
-                  onChange={(v) => update('fontSize', Math.max(8, Math.min(32, parseInt(v, 10) || 12)))}
+                  value={fontSizeDraft ?? String(state.fontSize)}
+                  onChange={(v) => {
+                    // Keep the raw text so the box shows what was typed —
+                    // including the transient "1" on the way to "18", and the
+                    // empty string on the way to replacing the value.
+                    const raw = v.replace(/[^0-9]/g, '').slice(0, 2);
+                    setFontSizeDraft(raw);
+                    const n = parseInt(raw, 10);
+                    if (Number.isFinite(n) && n >= 8 && n <= 32) update('fontSize', n);
+                  }}
+                  onSubmit={() => setFontSizeDraft(null)}
                 />
               </FormGroup>
               <FormGroup label="Custom themes" helperText="Import your own theme JSON to skin the whole app.">

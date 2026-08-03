@@ -3,7 +3,7 @@ import { Button } from '../bp';
 import { scintillaApi } from '../../store';
 import { getEditorTitle } from '../types';
 import { scintillaIdFor } from '../state/useFiddle';
-import { applyEditorTheme, editorFontSize, isDarkTheme } from '../theme';
+import { applyEditorTheme, editorFontSize, isDarkTheme, resetEditorZoom } from '../theme';
 import type { FiddleFile } from '../state/FiddleState';
 import './Editors.css';
 
@@ -66,6 +66,17 @@ export function EditorPane(props: EditorPaneProps) {
           text-maxline="1"
         >{getEditorTitle(file.id)}</text>
         <view className="MosaicToolbar-Controls">
+          {/* Pinch zoom is per-pane and sticky; this is the only way back to
+              the configured size. `refresh` because the icon font carries only
+              maximize/minimize/refresh — anything else renders as a literal
+              '?', which is worse than an approximate glyph with a clear title. */}
+          <Button
+            icon="refresh"
+            small
+            minimal
+            title="Reset zoom to the configured font size"
+            onClick={() => resetEditorZoom(file.id)}
+          />
           <Button icon="maximize" small minimal title="Maximize" onClick={() => props.onMaximize(file.id)} />
           <Button icon="cross" small minimal title="Hide" onClick={() => props.onHide(file.id)} />
         </view>

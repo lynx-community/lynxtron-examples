@@ -128,6 +128,8 @@
     if (n->nmhdr.code == SCN_MODIFIED &&
         (n->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))) {
         _owner->OnContentModified();
+    } else if (n->nmhdr.code == SCN_ZOOM) {
+        _owner->ApplyLineSpacing();
     } else if (n->nmhdr.code == SCN_FOCUSIN) {
         _owner->OnFocusGained();
     } else if (n->nmhdr.code == SCN_DWELLSTART) {
@@ -660,6 +662,42 @@ void ScintillaView::AttachToWindow() {
 #endif
 }
 
+// Scintilla has no line-height: leading is bought with extra ascent and
+// descent, in absolute pixels. They must therefore be recomputed from the size
+// actually on screen — the configured size PLUS the zoom level — or a pinch
+// zoom grows the glyphs and leaves the leading behind. Split unevenly, more
+// above than below: descenders are rare in code and the eye tracks the top of
+// the line.
+void ScintillaView::ApplyLineSpacing() {
+#ifdef __APPLE__
+    if (!cocoa_view_) return;
+    ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
+    const int base = font_size_pt_ > 0 ? font_size_pt_ : 14;
+    auto doApply = ^{
+        if (!container.scintillaView) return;
+        const long zoom = (long)[container.scintillaView message:SCI_GETZOOM wParam:0 lParam:0];
+        long effective = (long)base + zoom;
+        if (effective < 4) effective = 4;
+        [container.scintillaView message:SCI_SETEXTRAASCENT wParam:(effective * 4) / 10 lParam:0];
+        [container.scintillaView message:SCI_SETEXTRADESCENT wParam:(effective * 3) / 10 lParam:0];
+    };
+    if ([NSThread isMainThread]) doApply(); else dispatch_async(dispatch_get_main_queue(), doApply);
+#endif
+}
+
+void ScintillaView::ResetZoom() {
+#ifdef __APPLE__
+    if (!cocoa_view_) return;
+    ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
+    auto doReset = ^{
+        if (!container.scintillaView) return;
+        [container.scintillaView message:SCI_SETZOOM wParam:0 lParam:0];
+    };
+    if ([NSThread isMainThread]) doReset(); else dispatch_async(dispatch_get_main_queue(), doReset);
+    ApplyLineSpacing();
+#endif
+}
+
 void ScintillaView::ApplyTheme(bool dark, int size_pt) {
 #ifdef __APPLE__
     if (!cocoa_view_) return;
@@ -683,18 +721,10 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
     const long ctBack  = dark ? 0x262525 : 0xF3F3F3;
     const long ctFore  = dark ? 0xD4D4D4 : 0x000000;
     const int  size    = size_pt > 0 ? size_pt : 14;
-    // Scintilla has no line-height: you buy leading with extra ascent and
-    // descent, in pixels. Derived from the size so the proportion holds when
-    // the Settings font size changes, and split unevenly — more above than
-    // below reads better for code, where descenders are rare and the eye
-    // tracks the top of the line.
-    const long extraAsc  = (long)((size * 4) / 10);
-    const long extraDesc = (long)((size * 3) / 10);
     theme_dark_ = dark;
     font_size_pt_ = size;
+    ApplyLineSpacing();
     auto doApply = ^{
-        [container.scintillaView message:SCI_SETEXTRAASCENT wParam:extraAsc lParam:0];
-        [container.scintillaView message:SCI_SETEXTRADESCENT wParam:extraDesc lParam:0];
         [container.scintillaView message:SCI_STYLESETBACK wParam:STYLE_DEFAULT lParam:bg];
         [container.scintillaView message:SCI_STYLESETFORE wParam:STYLE_DEFAULT lParam:fg];
         [container.scintillaView message:SCI_STYLESETSIZE wParam:STYLE_DEFAULT lParam:size];

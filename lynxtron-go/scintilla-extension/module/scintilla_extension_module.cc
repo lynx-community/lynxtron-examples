@@ -238,6 +238,26 @@ Napi::Value ConsumeFocusGained(const Napi::CallbackInfo& info) {
   return Napi::Boolean::New(env, gained);
 }
 
+// resetZoom(editorId: string) -> bool
+// Pinch zoom has no other way back: Scintilla keeps a per-view zoom level that
+// survives theme changes, so an editor the user zoomed stays zoomed forever
+// unless something sets it to 0.
+Napi::Value ResetZoom(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Expected (string editorId)")
+        .ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  std::string editorId = info[0].As<Napi::String>().Utf8Value();
+  ScintillaView* view = ScintillaRegistry::Get().GetView(editorId);
+  if (!view) return Napi::Boolean::New(env, false);
+  view->ResetZoom();
+  return Napi::Boolean::New(env, true);
+}
+
 Napi::Value SetIndicators(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
@@ -492,6 +512,8 @@ Napi::Value ScintillaExtensionModuleMethodsBinder(
   exports_obj.Set("setStyles", Napi::Function::New(env, SetStyles, "setStyles"));
   exports_obj.Set("hasContentChanged",
                   Napi::Function::New(env, HasContentChanged, "hasContentChanged"));
+  exports_obj.Set("resetZoom",
+                  Napi::Function::New(env, ResetZoom, "resetZoom"));
   exports_obj.Set("consumeFocusGained",
                   Napi::Function::New(env, ConsumeFocusGained, "consumeFocusGained"));
   exports_obj.Set("setIndicators",
