@@ -342,10 +342,11 @@ files from the pending changesets.
 
 Merging that PR triggers publishing:
 
-- **npm** — `@lynxtron-examples/config` is published to the public npm registry
-  via `changeset publish` using npm **OIDC trusted publishing** (no long-lived
-  `NPM_TOKEN`). `@lynxtron-examples/cli` is `private: true` — it is bundled
-  inside Lynxtron GO at build time and is not published to npm.
+- **npm** — the public `@lynxtron-examples/*` packages are published to the npm
+  registry via `changeset publish`, authenticated with the repository's
+  `NPM_TOKEN` secret (an npm automation token). `@lynxtron-examples/cli` is
+  `private: true` — it is bundled inside Lynxtron GO at build time and is not
+  published to npm.
 - **GitHub Release** — a `lynxtron-go-v<version>` release is created with:
   - Lynxtron GO installers: `*.dmg` (macOS) and `*-Setup.exe` (Windows), built via
     `lynxtron-builder`.
@@ -353,8 +354,8 @@ Merging that PR triggers publishing:
     `.node` addons are host-platform specific).
 
 Native artifacts (installers + showcase tarballs) are built on their matching OS
-runner. The npm publish requires `@lynxtron-examples/config` on npmjs to have an
-OIDC trusted publisher configured, pointing at this repository's release workflow.
+runner. The npm publish uses the `NPM_TOKEN` repository secret; provenance is
+enabled via `NPM_CONFIG_PROVENANCE: true` and `id-token: write`.
 
 ### Building release artifacts locally
 
