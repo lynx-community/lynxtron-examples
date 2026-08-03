@@ -388,8 +388,9 @@
 }
 .bp3-menu-item {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 8px;
+  column-gap: 10px;
   padding: 5px 10px;
   border-radius: 3px;
   cursor: pointer;
@@ -400,8 +401,20 @@
 .bp3-menu-item.bp3-active { background-color: #137cbd; color: var(--text-color-1); }
 .bp3-menu-item.bp3-disabled { opacity: 0.5; cursor: not-allowed; }
 .bp3-menu-item.bp3-disabled:hover { background: none; }
-.bp3-menu-item-icon { flex-shrink: 0; }
-.bp3-menu-item-text { flex: 1; }
+.bp3-menu-item-icon { flex-shrink: 0; color: var(--bp-text-muted); font-size: 14px; }
+/* Lynx <text> does NOT inherit colour or size from its parent <view>, so a
+   menu item's label styling on .bp3-menu-item never reached this element —
+   the text rendered at the default colour, which on this surface is invisible.
+   The icon and the accelerator showed only because they set their own. */
+.bp3-menu-item-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--bp-text);
+}
+.bp3-menu-item.bp3-disabled .bp3-menu-item-text,
+.bp3-menu-item.bp3-disabled .bp3-menu-item-icon { color: var(--bp-text-muted); }
 .bp3-menu-item-label { color: var(--bp-text-muted); font-size: 11px; }
 .bp3-menu-item.bp3-intent-danger { color: #db3737; }
 .bp3-menu-divider {

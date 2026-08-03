@@ -79,42 +79,53 @@
   border-style: solid;
   border-color: var(--hairline);
 }
-/* The focused pane is stated by its edge, not by a glow or a ring: the border
-   brightens and its toolbar lifts a step. Structural, so it survives being
-   read at a glance across four panes. */
+/* Focus brightens the edge. Note the token trap: --border-color-2 is #1e2527,
+   DARKER than --hairline's 10% white, so "brighten the border" via that token
+   made the focused pane recede instead. A white overlay is the only thing on
+   this palette that reliably reads as lighter. */
 .MosaicWindow--active {
-  border-color: var(--border-color-2, #4b5563);
+  border-color: rgba(255, 255, 255, 0.24);
 }
 /* Chrome, and it should read as chrome: one step darker than the code it sits
    on, closed by a hairline underneath. Upstream draws a border ABOVE the
    toolbar plus a drop shadow below — two separators for one edge, and the top
    one duplicates the gutter that already separates the panes. One line, on the
    side that actually divides label from content. */
+/* Unfocused chrome sits FLUSH with the pane body and recedes; only the
+   hairline underneath tells label from code. The previous pass had this
+   backwards — every idle toolbar was painted --background-2 (#1d2427, darker
+   than the #2f3241 body) so the idle panes shouted and the focused one, on
+   --background-3 (#2c2e3b, near-identical to the body), disappeared into it.
+   The state that matters is the one that should stand out. */
 .MosaicToolbar {
-  height: 28px;
-  min-height: 28px;
+  height: 26px;
+  min-height: 26px;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 0 4px 0 10px;
-  background-color: var(--background-2);
+  padding: 0 3px 0 10px;
+  background-color: var(--background-1);
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--hairline);
 }
+/* Focused: the toolbar lifts off the body. A white overlay rather than a token
+   — see .MosaicWindow--active. */
 .MosaicWindow--active .MosaicToolbar {
-  background-color: var(--background-3);
+  background-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.18);
 }
 /* A pane title is a file path — data, so mono, per the project's rule that
    mono is never decoration. 12px: chrome should sit below the code it labels,
    and 14px had the label competing with the source. */
 .MosaicToolbar-Title {
   font-family: 'SF Mono', Menlo, monospace;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 11px;
+  line-height: 15px;
   letter-spacing: 0.01em;
-  color: var(--text-color-3);
+  color: var(--bp-text-muted);
+  opacity: 0.7;
   flex-shrink: 1;
   min-width: 0;
   overflow: hidden;
@@ -122,26 +133,42 @@
 }
 .MosaicToolbar-Title--active {
   color: var(--bp-text, #f5f8fa);
+  opacity: 1;
 }
 /* No transform: scale(). Scaling the control cluster shrinks its hit targets
    and knocks the glyphs off the text baseline — the buttons are sized small
    instead, which keeps them aligned and tappable. */
+/* Two square 18px targets on one baseline. Equal box, equal glyph size, no
+   padding asymmetry — the pair used to sit on a transform: scale(0.75), which
+   left them different apparent sizes and off the title's baseline. */
 .MosaicToolbar-Controls {
   display: flex;
   flex-direction: row;
   align-items: center;
-  column-gap: 2px;
+  column-gap: 1px;
   flex-shrink: 0;
 }
 .MosaicToolbar-Controls .bp3-button {
-  min-width: 22px;
-  min-height: 22px;
-  padding: 0 4px;
-  font-size: 11px;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
   color: var(--bp-text-muted);
+  opacity: 0.55;
+}
+.MosaicToolbar-Controls .bp3-button .bp3-icon {
+  font-size: 10px;
+  line-height: 10px;
 }
 .MosaicToolbar-Controls .bp3-button:hover {
   color: var(--bp-text);
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 /* The native editor's frame is set from this element's Lynx layout rect, and
    native views are NOT clipped by Lynx parents — this body must never be laid

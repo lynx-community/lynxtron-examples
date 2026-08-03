@@ -22,8 +22,19 @@ Give the commands bar room to breathe, and the palette a way to be found.
 
 - **The gist field no longer resizes while you type.** It animated between two
   widths depending on whether it had content, so the field grew out from under
-  the caret at the first keystroke. One width now, wide enough for a full gist
-  URL.
+  the caret at the first keystroke. Fixed at 280px.
+
+- **Accelerators look like accelerators.** Every shortcut shown in the UI — the
+  palette button, every overflow item — now uses one key-cap treatment: 10px
+  mono on a tinted ground, quiet by default and brought to full contrast on
+  hover. Previously the palette hint was plain text large enough to compete with
+  the label beside it.
+
+- **Menu item text was invisible.** Lynx `<text>` does not inherit colour or
+  size from its parent `<view>`, and `.bp3-menu-item-text` set neither — the
+  styling lived on the item wrapper. Icons and accelerators showed because they
+  set their own. The Menu primitive had never been rendered before this change,
+  so nothing had exercised it.
 
 - **Editor panes read as objects.** Each pane closes with a hairline instead of
   relying on gutter gaps alone, and the focused one states itself structurally —

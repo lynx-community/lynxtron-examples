@@ -67,24 +67,32 @@
   flex-direction: row;
   align-items: center;
   flex-grow: 0;
-  flex-shrink: 1;
-  flex-basis: 380px;
-  min-width: 240px;
-  max-width: 420px;
+  flex-shrink: 0;
+  flex-basis: 280px;
+  width: 280px;
 }
 
 /* ── Palette entry ────────────────────────────────────────────────────────
-   The accelerator IS the label. Rendered as data (mono, muted, tabular) so it
-   reads as a key to press rather than a word to click — the icon carries the
-   verb. */
+   The accelerator IS the label, set as a key cap: mono on a tinted ground with
+   a hairline, the same treatment every accelerator gets (see .KeyHint in
+   bp.css). Small and quiet — it teaches the shortcut once and then stops
+   asking for attention; hover brings it up to full contrast. */
 .commands-palette .bp3-button-text {
   font-family: 'SF Mono', Menlo, monospace;
-  font-size: 11px;
-  color: var(--bp-text-muted);
+  font-size: 10px;
+  line-height: 14px;
   letter-spacing: 0.02em;
+  color: var(--bp-text-muted);
+  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-left: 1px;
+  opacity: 0.75;
 }
 .commands-palette .bp3-button:hover .bp3-button-text {
   color: var(--bp-text);
+  background-color: rgba(255, 255, 255, 0.12);
+  opacity: 1;
 }
 
 /* ── Overflow ─────────────────────────────────────────────────────────────
@@ -123,10 +131,21 @@
   border-color: var(--hairline);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
-/* Accelerators are data — same treatment as the palette chip, right-aligned so
-   the column of keys reads down the menu's trailing edge. */
+/* Same key cap as the bar's, so an accelerator looks identical wherever it is
+   shown. Right-aligned, so the keys read as a column down the trailing edge. */
 .commands-overflow .bp3-menu-item-label {
+  flex-shrink: 0;
   font-family: 'SF Mono', Menlo, monospace;
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 14px;
   color: var(--bp-text-muted);
+  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  padding: 1px 4px;
+  opacity: 0.75;
+}
+.commands-overflow .bp3-menu-item:hover .bp3-menu-item-label {
+  color: var(--bp-text);
+  background-color: rgba(255, 255, 255, 0.12);
+  opacity: 1;
 }
