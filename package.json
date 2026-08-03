@@ -7,7 +7,7 @@
     "lint": "pnpm -r run lint",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "pnpm build && changeset publish",
+    "release": "pnpm build && changeset publish --no-git-tag",
     "generate-registry": "node --experimental-strip-types scripts/generate-registry.ts",
     "local-registry": "node scripts/preview.mjs",
     "local-registry:build": "node scripts/preview.mjs --no-launch",
