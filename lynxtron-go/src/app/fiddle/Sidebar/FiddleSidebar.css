@@ -32,12 +32,12 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  /* Flat chrome, separated by rule rather than by tone: --background-3 is
-     reserved for surfaces that FLOAT above chrome (dialogs, menus, hover). */
-  background-color: var(--surface-chrome);
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: var(--hairline);
+  /* No background of its own: a section header sits IN the panel rather than
+     capping it, which is what keeps the dark area large and leaves chrome for
+     the few places that mean something. Not `transparent` — Lynx skips fully
+     transparent views in hit-testing; the panel's own ground is the same
+     colour and stays tappable. */
+  background-color: var(--surface-content);
 }
 .FiddleSidebar-SectionTitle {
   font-size: 13px;
@@ -71,7 +71,10 @@
   cursor: pointer;
 }
 .FiddleSidebar-Item:hover { background-color: var(--background-3); }  /* background-3 */
-.FiddleSidebar-Item--active { background-color: var(--bp-selected-bg); border-left: 3px solid var(--foreground-1); padding-left: 9px; }
+/* Selection speaks the same language as the pane titles: chrome marks the one
+   thing you are working in. A saturated block would now be the only one in the
+   window, competing with the syntax colours it sits beside. */
+.FiddleSidebar-Item--active { background-color: var(--surface-chrome); border-left: 3px solid var(--foreground-1); padding-left: 9px; }
 .FiddleSidebar-ItemIcon { color: var(--foreground-3); flex-shrink: 0; }  /* foreground-3 */
 .FiddleSidebar-Item--active .FiddleSidebar-ItemIcon { color: var(--foreground-1); }  /* foreground-1 */
 .FiddleSidebar-ItemLabel {

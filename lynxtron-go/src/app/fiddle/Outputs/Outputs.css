@@ -15,7 +15,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: var(--surface-chrome);
+  /* In the console's own ground, not a bar across the top of it. The hairline
+     stays because output scrolls underneath and needs somewhere to stop. */
+  background-color: var(--surface-content);
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--hairline);

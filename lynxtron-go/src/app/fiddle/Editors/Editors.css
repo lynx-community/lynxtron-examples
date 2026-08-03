@@ -86,11 +86,12 @@
    toolbar plus a drop shadow below — two separators for one edge, and the top
    one duplicates the gutter that already separates the panes. One line, on the
    side that actually divides label from content. */
-/* CHROME, on the same tone as the sidebar and the console's tab strip. The
-   window now says one thing consistently: content is the lightest surface,
-   chrome is a step down from it, seams are the darkest. A pane's toolbar is
-   frame around code, so it belongs with the frame — flushing it with the code
-   (the previous pass) made the tiers ambiguous in the other direction. */
+/* An idle pane has no chrome at all: its title sits in the pane's own ground,
+   above its own code. Chrome is spent on ONE thing — the pane you are working
+   in — so the two layers are legible at a glance instead of being a permanent
+   frame you stop seeing.
+   The border stays 1px at all times and only changes colour, so gaining focus
+   cannot nudge the code down a pixel. */
 .MosaicToolbar {
   height: 26px;
   min-height: 26px;
@@ -99,16 +100,15 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 3px 0 10px;
-  background-color: var(--surface-chrome);
+  background-color: var(--surface-content);
   border-bottom-width: 1px;
   border-bottom-style: solid;
-  border-bottom-color: var(--hairline);
+  border-bottom-color: transparent;
 }
-/* Focused: the toolbar lifts off the body. A white overlay rather than a token
-   — nothing in this palette is lighter than the #2f3241 pane body. */
+/* Focused: the one place chrome appears inside the mosaic. */
 .MosaicToolbar--active {
-  background-color: rgba(255, 255, 255, 0.09);
-  border-bottom-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--surface-chrome);
+  border-bottom-color: var(--hairline);
 }
 /* A pane title is a file path — data, so mono, per the project's rule that
    mono is never decoration. 12px: chrome should sit below the code it labels,
