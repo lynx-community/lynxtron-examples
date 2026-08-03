@@ -977,7 +977,7 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   const LPARAM num     = dark ? 0xA8CEB5 : 0x588609;
   const LPARAM typ     = dark ? 0xB0C94E : 0x997F26;
   const LPARAM lnFore  = dark ? 0x858585 : 0x937823;
-  const LPARAM lnBack  = dark ? 0x27241d : 0xF5F5F5;
+  const LPARAM lnBack  = dark ? 0x27241d : 0xFFFFFF;  // one flat ground, both themes
   SciSend(hwnd, SCI_STYLESETBACK, STYLE_DEFAULT, bg);
   SciSend(hwnd, SCI_STYLESETFORE, STYLE_DEFAULT, fg);
   SciSend(hwnd, SCI_STYLESETSIZE, STYLE_DEFAULT, size);

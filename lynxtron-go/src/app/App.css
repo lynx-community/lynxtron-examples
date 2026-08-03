@@ -52,6 +52,22 @@
   --surface-content: #1d2427;
   --surface-chrome: #2c2e3b;
   --surface-raised: #383c4e;
+
+  /* Overlays. A tint over whatever is beneath, for hover, pressed and lit
+     states. These MUST be tokens: a literal rgba(255,255,255,…) is invisible
+     on a light ground, and hardcoding one is how a state silently stops
+     existing when the theme flips. Direction is the only difference — light
+     over dark, dark over light. */
+  --overlay-soft: rgba(255, 255, 255, 0.06);
+  --overlay-strong: rgba(255, 255, 255, 0.12);
+  --edge-strong: rgba(255, 255, 255, 0.32);
+
+  /* Log intents. Tuned for their ground: the dark values are bright tints that
+     go muddy on white, so the light theme darkens them rather than reusing
+     them. Colour carries meaning here, which means it has to stay legible in
+     both themes, not just the one it was picked in. */
+  --log-error: #ff7373;
+  --log-info: #48aff0;
 }
 
 /* themes-defaults.ts defaultLight.common */
@@ -59,9 +75,18 @@
   --foreground-1: #9feafa;
   --foreground-2: #256e80;
   --foreground-3: #608291;
+  /* Same rule as dark, read for a light ground: content is the surface the
+     text sits on and chrome recedes from it. #eef1f4 was only ~4% off white,
+     so the two tiers were the same surface in practice — the frame has to be
+     far enough from the page to be seen as frame. */
   --surface-content: #ffffff;
-  --surface-chrome: #eef1f4;
+  --surface-chrome: #e4e9ef;
   --surface-raised: #ffffff;
+  --overlay-soft: rgba(16, 22, 26, 0.05);
+  --overlay-strong: rgba(16, 22, 26, 0.1);
+  --edge-strong: rgba(16, 22, 26, 0.28);
+  --log-error: #c23030;
+  --log-info: #106ba3;
   --background-4: #fbfbfb;
   --background-3: #fbfbfb;
   --background-2: #d6dde0;

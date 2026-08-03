@@ -169,15 +169,15 @@
 .MosaicToolbar-Controls .bp3-button:hover {
   color: var(--bp-text);
   opacity: 1;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--overlay-strong);
 }
 /* ON. The pane is zoomed, and stays zoomed until this is pressed — a state,
    so it is drawn as one: lit ring, lit glyph, full opacity. */
 .MosaicToolbar-Controls .bp3-button.bp3-active {
   opacity: 1;
   color: var(--bp-text);
-  background-color: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.32);
+  background-color: var(--overlay-strong);
+  border-color: var(--edge-strong);
 }
 /* The native editor's frame is set from this element's Lynx layout rect, and
    native views are NOT clipped by Lynx parents — this body must never be laid

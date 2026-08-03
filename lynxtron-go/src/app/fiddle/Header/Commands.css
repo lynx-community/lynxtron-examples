@@ -85,7 +85,7 @@
   line-height: 14px;
   letter-spacing: 0.02em;
   color: var(--bp-text-muted);
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: var(--overlay-soft);
   border-radius: 3px;
   padding: 1px 4px;
   margin-left: 1px;
@@ -93,7 +93,7 @@
 }
 .commands-palette .bp3-button:hover .bp3-button-text {
   color: var(--bp-text);
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: var(--overlay-strong);
   opacity: 1;
 }
 
@@ -136,6 +136,9 @@
   border-color: var(--hairline);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
+.theme-light .commands-overflow {
+  box-shadow: 0 6px 18px rgba(16, 22, 26, 0.18);
+}
 .commands-overflow .bp3-menu {
   min-width: 0;
   background-color: transparent;
@@ -155,7 +158,7 @@
   font-size: 10px;
   line-height: 14px;
   color: var(--bp-text-muted);
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: var(--overlay-soft);
   border-radius: 3px;
   padding: 1px 4px;
   margin-left: 0;
@@ -163,6 +166,6 @@
 }
 .commands-overflow .bp3-menu-item:hover .bp3-menu-item-label {
   color: var(--bp-text);
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: var(--overlay-strong);
   opacity: 1;
 }
