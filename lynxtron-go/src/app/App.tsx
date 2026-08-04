@@ -69,6 +69,7 @@ import { resolveShowcaseWorkspacePath } from './shared/showcase-workspace';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './fiddle/dev-preset';
 import { isDarkTheme } from './fiddle/theme';
 import { LoadingOverlay } from './components/shared/LoadingOverlay';
+import { PlatformOverlay, PlatformOverlayHost } from './components/shared/PlatformOverlay';
 // Fiddle is the main page; the legacy IDE shell stays mountable behind the
 // gallery's per-card "IDE" action (old open-showcase-in-workspace route).
 import { IDE } from './components/IDE/IDE';
@@ -2674,7 +2675,7 @@ export function App(props: { onRender?: () => void } = {}) {
   }, [saveLayout]);
 
   // Fiddle is the main content and stays MOUNTED under the gallery, which
-  // renders in a cover-view overlay slice above its native editors (unmounting
+  // renders through the shared platform overlay host above its native editors (unmounting
   // the Fiddle would kill their buffers). Per-instance scoping falls out
   // structurally: each Fiddle
   // instance owns its overlay, so gallery "Open" always targets the instance
@@ -2698,9 +2699,11 @@ export function App(props: { onRender?: () => void } = {}) {
   // Legacy IDE has no Fiddle shell to host the gallery — full overlay fallback
   // (standalone: the page carries its own Back since there is no commands bar).
   const galleryOverlay = showLegacyIde && isGalleryOpen ? (
-    <cover-view className="GalleryOverlay">
-      <GalleryHome {...galleryProps} standalone />
-    </cover-view>
+    <PlatformOverlay priority={300}>
+      <view className="GalleryOverlay">
+        <GalleryHome {...galleryProps} standalone />
+      </view>
+    </PlatformOverlay>
   ) : null;
   const mainContent = showLegacyIde ? (
     <IDE
@@ -2741,7 +2744,7 @@ export function App(props: { onRender?: () => void } = {}) {
         const entry = SHOWCASE_REGISTRY.find(e => e.name === FIDDLE_SHOWCASE_NAME);
         if (entry) void runFiddleEntry(entry, id);
       }}
-      // Quick Open (Cmd+P) is an App-level cover-view just like the gallery.
+      // Quick Open (Cmd+P) is an App-level platform overlay just like the gallery.
       // Keep this signal so an app-level surface closes any Fiddle-owned dialog
       // that would otherwise compete with it in overlay-slice order.
       overlayActive={isGalleryOpen || pickerOpen}
@@ -2804,6 +2807,8 @@ export function App(props: { onRender?: () => void } = {}) {
           onClose={() => { setPickerOpen(false); setPickerMode(undefined); }}
         />
       )}
+
+      <PlatformOverlayHost />
 
     </view>
   );

@@ -7,8 +7,9 @@ Three fixes found while testing the IDE surface.
 **The palette opened behind the code.** Native Scintilla views paint above all
 Lynx UI whatever the z-index says, so an overlay does not cover the editor — the
 editor covers the overlay. The palette, gallery, dialogs, loading state, and
-toasts now use `cover-view`, which composites their children into a platform
-overlay slice above native views. The Scintilla extension now keeps the
+toasts now register with one shared `cover-view` host, which composites their
+children into a platform overlay slice above native views without creating a
+second macOS overlay surface during rapid modal transitions. The Scintilla extension now keeps the
 originating `lynx_view_t`, mounts its NSView/HWND under that view's native
 parent, and keeps the editor below Clay's overlay host instead of guessing the
 key window and floating above the entire Lynx surface. Editors stay attached

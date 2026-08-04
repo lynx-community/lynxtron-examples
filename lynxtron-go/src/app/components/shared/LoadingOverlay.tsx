@@ -1,4 +1,5 @@
 import './LoadingOverlay.css';
+import { PlatformOverlay } from './PlatformOverlay';
 
 interface LoadingOverlayProps {
   visible: boolean;
@@ -13,11 +14,13 @@ export function LoadingOverlay({ visible, message }: LoadingOverlayProps) {
   if (!visible) return null;
 
   return (
-    <cover-view className="LoadingOverlay" catchtap={() => {}}>
-      <view className="LoadingOverlayContent">
-        <view className="LoadingOverlaySpinner" />
-        {message ? <text className="LoadingOverlayMessage">{message}</text> : null}
+    <PlatformOverlay priority={160}>
+      <view className="LoadingOverlay" catchtap={() => {}}>
+        <view className="LoadingOverlayContent">
+          <view className="LoadingOverlaySpinner" />
+          {message ? <text className="LoadingOverlayMessage">{message}</text> : null}
+        </view>
       </view>
-    </cover-view>
+    </PlatformOverlay>
   );
 }

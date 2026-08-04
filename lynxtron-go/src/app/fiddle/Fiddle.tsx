@@ -26,6 +26,7 @@ import './Fiddle.css';
 import './settings/Settings.css';
 import './versions/VersionChooser.css';
 import './tour/WelcomeTour.css';
+import { PlatformOverlay } from '../components/shared/PlatformOverlay';
 
 export interface FiddleProps {
   rootPath: string | null;
@@ -41,7 +42,7 @@ export interface FiddleProps {
   onFiddleOpenConsumed?: () => void;
   /** Build + launch the single fiddle currently loaded. */
   onRunFiddleSource?: (fiddleId: string) => void;
-  /** An App-level cover-view is active; close any competing Fiddle dialog. */
+  /** An App-level platform overlay is active; close any competing Fiddle dialog. */
   overlayActive?: boolean;
   /** Gallery page rendered INSIDE the shell (covers the sidebar+editors
       region only — the commands bar and console stay live around it). */
@@ -76,6 +77,13 @@ export function Fiddle(props: FiddleProps) {
   const [tourOpen, setTourOpen] = useState(devBoot?.openSurface === 'tour');
   const [historyOpen, setHistoryOpen] = useState(devBoot?.openSurface === 'history');
   const [currentShowcase, setCurrentShowcase] = useState<ShowcaseEntry | null>(null);
+  const [mainRegionHeight, setMainRegionHeight] = useState(0);
+
+  const handleMainRegionLayout = useCallback((e: any) => {
+    const height = e?.detail?.height;
+    if (typeof height !== 'number' || height <= 0) return;
+    setMainRegionHeight(current => current === height ? current : height);
+  }, []);
   // Real runtime version from the foundation bridge (engine report or the
   // bundled package manifest); prop override kept for tests/self-host.
   const currentVersion = props.lynxtronVersion
@@ -110,7 +118,7 @@ export function Fiddle(props: FiddleProps) {
   }, []);
 
   // Dialogs, the gallery, the command palette, loading states, and toasts use
-  // cover-view. Clay composites their children into a platform overlay slice,
+  // one shared cover-view host. Clay composites their children into one platform overlay slice,
   // so they can cover Scintilla without detaching its native view. Close local
   // dialogs when an App-level surface opens to keep overlay-slice order simple.
   useEffect(() => {
@@ -560,7 +568,7 @@ export function Fiddle(props: FiddleProps) {
           collapsed={!isConsoleShowing}
           collapseTarget="second"
         >
-          <view className="FiddleMain">
+          <view className="FiddleMain" bindlayoutchange={handleMainRegionLayout}>
             <SplitContainer
               direction="horizontal"
               initialRatio={0.18}
@@ -587,9 +595,6 @@ export function Fiddle(props: FiddleProps) {
                 pushContent={fiddle.pushContent}
               />
             </SplitContainer>
-            {props.galleryOpen && props.gallery ? (
-              <cover-view className="FiddleGalleryLayer">{props.gallery}</cover-view>
-            ) : null}
           </view>
           <Outputs
             runningPid={runner.pid}
@@ -600,6 +605,18 @@ export function Fiddle(props: FiddleProps) {
           />
         </SplitContainer>
       </view>
+      {props.galleryOpen && props.gallery ? (
+        <PlatformOverlay priority={50}>
+          <view
+            className="FiddleGalleryLayer"
+            style={mainRegionHeight > 0
+              ? { top: '51px', height: `${mainRegionHeight}px` }
+              : undefined}
+          >
+            {props.gallery}
+          </view>
+        </PlatformOverlay>
+      ) : null}
       {templatePickerOpen && (
         <TemplatePicker
           onPickBlank={() => { fiddle.loadTemplate('blank'); setCurrentShowcase(null); setTemplatePickerOpen(false); }}

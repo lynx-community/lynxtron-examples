@@ -38,4 +38,5 @@
   height: 100%;
   z-index: 50;
   display: flex;
+  pointer-events: auto;
 }

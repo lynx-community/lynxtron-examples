@@ -235,6 +235,7 @@
   align-items: center;
   justify-content: center;
   z-index: 100;
+  pointer-events: auto;
 }
 .bp3-dialog {
   width: 500px;
@@ -525,7 +526,7 @@
 }
 
 /* ── Toaster ──────────────────────────────────────────────────────────── */
-/* cover-view gives the toast host a platform overlay slice, so notifications
+/* The shared cover-view gives the toast host a platform overlay slice, so notifications
    stay visible over native Scintilla as well as regular Lynx content. */
 .bp3-toast-container {
   position: absolute;

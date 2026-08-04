@@ -1,6 +1,7 @@
 import { SHOWCASE_REGISTRY, type ShowcaseEntry } from '../../store';
 import { Button, Icon } from '../bp';
 import './TemplatePicker.css';
+import { PlatformOverlay } from '../../components/shared/PlatformOverlay';
 
 export interface TemplatePickerProps {
   onPickBlank: () => void;
@@ -11,8 +12,9 @@ export interface TemplatePickerProps {
 
 export function TemplatePicker(props: TemplatePickerProps) {
   return (
-    <cover-view className="TemplatePicker-Overlay">
-      <view className="TemplatePicker">
+    <PlatformOverlay priority={100}>
+      <view className="TemplatePicker-Overlay">
+        <view className="TemplatePicker">
         <view className="TemplatePicker-Header">
           <text className="TemplatePicker-Title">New Fiddle from Template</text>
           <Button icon="cross" minimal onClick={props.onCancel} />
@@ -58,7 +60,8 @@ export function TemplatePicker(props: TemplatePickerProps) {
             </view>
           </view>
         </scroll-view>
+        </view>
       </view>
-    </cover-view>
+    </PlatformOverlay>
   );
 }
