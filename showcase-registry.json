@@ -15,6 +15,20 @@
       ]
     },
     {
+      "name": "@lynxtron-examples/codex-demo",
+      "description": "Agent-neutral Codex-style desktop client with OpenCode ACP integration",
+      "path": "showcases/codex-demo",
+      "thumbnail": "showcases/codex-demo/thumbnail.png",
+      "tags": [
+        "agent",
+        "developer-tools",
+        "opencode"
+      ],
+      "targets": [
+        "desktop"
+      ]
+    },
+    {
       "name": "@lynxtron-examples/counter",
       "description": "Minimal counter example demonstrating state management",
       "path": "showcases/counter",

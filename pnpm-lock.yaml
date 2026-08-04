@@ -272,6 +272,49 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  showcases/codex-demo:
+    dependencies:
+      '@lynx-js/lynxtron':
+        specifier: 'catalog:'
+        version: 0.0.8
+    devDependencies:
+      '@lynx-js/lynxtron-dev-plugins':
+        specifier: 'catalog:'
+        version: 0.0.8(@rsbuild/core@2.1.7(core-js@3.47.0))
+      '@lynx-js/react':
+        specifier: 'catalog:'
+        version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
+      '@lynx-js/rspeedy':
+        specifier: 'catalog:'
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+      '@lynx-js/types':
+        specifier: 'catalog:'
+        version: 4.1.0
+      '@lynxtron-examples/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@rspack/cli':
+        specifier: 'catalog:'
+        version: 2.1.7(@rspack/core@2.1.7(@swc/helpers@0.5.23))
+      '@rspack/core':
+        specifier: 'catalog:'
+        version: 2.1.7(@swc/helpers@0.5.23)
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.0
+      concurrently:
+        specifier: 'catalog:'
+        version: 8.2.2
+      cross-env:
+        specifier: 'catalog:'
+        version: 10.1.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.6(@types/debug@4.1.13)(@types/node@22.20.0)(jiti@2.7.0)(jsdom@26.1.0)(terser@5.48.0)
+
   showcases/counter:
     dependencies:
       '@lynx-js/lynxtron':
