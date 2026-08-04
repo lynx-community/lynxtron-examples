@@ -665,22 +665,30 @@
 }
 
 /* ── Tooltip ──────────────────────────────────────────────────────────────
-   Lynx draws no tooltip of its own, so this is the whole mechanism. The
-   anchor wraps the control and positions the bubble below it; the bubble is
-   absolutely placed and therefore escapes nothing — a tooltip on a control
-   inside a clipped 51px header will be cut off, which is why the commands bar
-   anchors its own copy at the shell level instead. */
+   Lynx draws no tooltip of its own, so this is the whole mechanism. The anchor
+   only marks and measures the control; the bubble is rendered into the shared
+   platform overlay host, which is what lets it leave the clipped 51px header
+   and still land above the native editor.
+
+   The frame is the positioning element — an absolutely placed row whose own
+   geometry is computed from the anchor's measured rect (see Tooltip.tsx). The
+   bubble inside it never positions itself, so one bubble style serves both
+   alignments. */
 .bp3-tooltip-anchor {
-  position: relative;
   display: flex;
   flex-direction: row;
   align-items: center;
 }
-.bp3-tooltip {
+.bp3-tooltip-frame {
   position: absolute;
-  top: 30px;
-  left: 0;
-  z-index: 600;
+  display: flex;
+  flex-direction: row;
+  pointer-events: none;
+}
+.bp3-tooltip-frame--end {
+  justify-content: flex-end;
+}
+.bp3-tooltip {
   display: flex;
   flex-direction: row;
   align-items: center;

@@ -106,6 +106,14 @@
 .commands .bp3-button .bp3-icon {
   opacity: 0.72;
 }
+/* The mark keeps its own colour and full strength while the glyphs around it
+   are muted — it is the one thing in the bar that is not an instruction.
+   Sized explicitly: Lynx images have no intrinsic size to fall back on. */
+.commands-mark {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
 .commands .bp3-button:hover .bp3-icon,
 .commands .bp3-button.bp3-active .bp3-icon,
 .commands .bp3-button.bp3-intent-primary .bp3-icon {

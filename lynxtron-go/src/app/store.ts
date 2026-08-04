@@ -128,6 +128,11 @@ export const SHOWCASE_PREVIEW: boolean =
 export const SHOWCASE_LOCAL_WORKSPACE: boolean =
   typeof __SHOWCASE_LOCAL_WORKSPACE__ !== 'undefined' ? __SHOWCASE_LOCAL_WORKSPACE__ : false;
 
+/** file:// URL of the Lynxtron mark beside the bundle; empty under vitest. */
+declare const __BRAND_MARK_URL__: string;
+export const BRAND_MARK_URL: string =
+  typeof __BRAND_MARK_URL__ !== 'undefined' ? __BRAND_MARK_URL__ : '';
+
 // ── Output log ────────────────────────────────────────────────────────────
 
 export type LogLevel = 'info' | 'error' | 'warn';

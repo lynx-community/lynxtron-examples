@@ -71,6 +71,20 @@ function resolveThumbnailUrl(thumbnail: string | null): string | null {
   return pathToFileURL(path.resolve(__dirname, 'dist', 'desktop', 'thumbnails', staged)).href;
 }
 
+/**
+ * The Lynxtron mark, as a URL the renderer can actually load.
+ *
+ * Same constraint as the thumbnails above — `<image>` reads the URL itself and
+ * will not take https — and the same shape of answer: rspack copies
+ * ./resources/lynxtron.png next to the bundle (see rspack.config.ts) and the
+ * app is handed the file:// URL of the copy. Baking it as a define rather than
+ * importing it keeps the app source free of a path that only resolves after a
+ * build.
+ */
+const BRAND_MARK_URL = pathToFileURL(
+  path.resolve(__dirname, 'dist', 'desktop', 'brand', 'lynxtron.png'),
+).href;
+
 function buildShowcaseRegistry() {
   try {
     const registry = JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
@@ -204,6 +218,7 @@ export default defineConfig({
       __FIDDLE_CATALOG__: JSON.stringify(bakedFiddles),
       __SHOWCASE_PREVIEW__: JSON.stringify(isLocalSourceMode),
       __SHOWCASE_LOCAL_WORKSPACE__: JSON.stringify(isLocalWorkspace),
+      __BRAND_MARK_URL__: JSON.stringify(BRAND_MARK_URL),
     },
   },
   plugins: [
