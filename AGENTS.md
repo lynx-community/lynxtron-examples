@@ -55,7 +55,9 @@ succeeds, use the supported behaviour and update this list.
 
 **CSS and layout**
 - `inline-flex` / `inline-block` do not reliably keep horizontal layout — use `display: flex` with an explicit `flex-direction: row`.
-- `flex: 1` can collapse to zero height under an auto-height parent.
+- `flex: 1` can collapse to zero height under an auto-height parent, and collapses a `<text>` to **zero width** in a row. Lynx 3.9 changed the shorthand to parse the omitted basis as `0%` rather than `0`, which does not help: `min-content` is unsupported and the shrink lower bound is `0px`, so nothing holds the text open the way `min-width: auto` does on the web. Use `flex-grow: 1` with `flex-basis: auto`.
+- Inheritance is off by default but this repo turns it on (`enableCSSInheritance` in `lynx.config.ts`), and the default list already covers `color`, `font-family`, `font-size`, `font-style`, `font-weight`, `letter-spacing`, `line-height`, `text-align`, `text-decoration`, `text-shadow`, `direction`. A `<text>` that comes out unstyled is usually **not** an inheritance failure — check for a collapsed box or a more specific rule first. Declaring `customCSSInheritanceList` replaces the default list rather than extending it.
+- `filter` supports `blur`, `grayscale`, `brightness`, `contrast`, `saturate` — **not `invert`**, and `brightness` cannot lift black. A monochrome asset that must work on both themes needs two files.
 - Selector support is a subset: no `:first-child` / `:nth-child`, no `min()` / `max()`. `:hover` exists on desktop but keep it colour-only — a `:hover` layout flip leaves paint ghosts.
 - `text-transform` is dropped; bake the casing into the string. Use `text-maxline="1"` for single-line truncation.
 - Fully transparent surfaces are skipped by hit testing; give an invisible tappable area a near-transparent fill, or use `display: none` to release it.
@@ -66,6 +68,7 @@ succeeds, use the supported behaviour and update this list.
 - SVG decoding renders blank; PNG through `<image>` is reliable.
 - **`<image>` does not load `https://` at all** — the loader reads the URL itself rather than going through the window's fetch handler. Bundle images locally and reference them as `file://`.
 - Icon fonts work via `lynx.addFont` with a base64 `data:font/ttf` URL, but the success callback fires without proving glyphs painted. Check visually.
+- **A custom font stops resolving once a platform overlay slice has been created, for the rest of the window's life.** Open any `<cover-view>`-hosted surface once and every glyph repainted afterwards comes back as tofu; glyphs already rasterized keep painting, so the damage looks intermittent and is easy to blame on the wrong change. Measured on Lynx 4.1 / Lynxtron 0.0.8. It is not the registration mechanism — re-registering under a fresh family name succeeds (the callback fires, the generation advances) and still renders tofu, and a `@font-face` compiled into the bundle with an inlined `data:` URI fails identically. There is no application-level workaround; the fix belongs in the compositor.
 - `btoa` does not exist in the Lynx UI.
 
 **Bridge**
@@ -80,7 +83,7 @@ succeeds, use the supported behaviour and update this list.
 - Route application overlays through one shared `<cover-view>` host on the current macOS runtime. Rapidly adding a second external overlay surface can race Clay's asynchronous present path; a single host can stack multiple Lynx overlay subtrees without exercising that surface-growth path.
 - A desktop native view must use the `lynx_view_t` passed as its registration opaque to resolve `lynx_view_get_native_window()`. On macOS mount it inside the returned renderer view so Clay's sibling `ClayOverlayView` remains above the whole subtree. On Windows use a child HWND under the returned parent and do not raise it above Clay's child overlay windows. Never rediscover the host via `keyWindow`, foreground-window enumeration, or an owned popup — those escape Clay's overlay ordering and break multi-window isolation.
 - Content pushed before the first attach lands in the document but does not repaint. Re-sync after the first layout.
-- Devtool screenshots **cannot see native views** — capture the OS window instead (`screencapture -x -l <CGWindowID>`).
+- Devtool screenshots **cannot see native views**, and cannot see `<cover-view>` content either — in both modes (`lynxview` and `--fullscreen`) an open palette, dialog, or gallery is simply absent from the image, while the same subtree is plainly there in `DOM.getDocument`. Do not read a missing overlay in a screenshot as a rendering bug; capture the OS window instead (`screencapture -x -l <CGWindowID>`).
 
 **Processes and resource loading**
 - The built-in `-on-fetch-resource` handler answers http(s) but returns empty for `file://`. It is a plain EventEmitter listener, so it can be replaced — establish ownership first, and restrict to explicit allowed roots.
@@ -89,6 +92,8 @@ succeeds, use the supported behaviour and update this list.
 - App-global APIs (`Menu.setApplicationMenu`, `app.dock.setMenu`, `app.setAsDefaultProtocolClient`) are last-writer-wins across windows in one process. Independent demos need independent processes.
 - Devtool client ports (8901, 8902, …) shuffle between restarts; match the session's bundle URL, not the port. Launching more than ~6 instances at once leaves some unregistered.
 - Synthetic CDP input is not the real input path: taps work, but drags, scrolling a `<scroll-view>`, and key events do not. Repeat critical interactions with real input.
+- `Runtime.evaluate` lands in the JS **shell**, not the card — `lynx` is undefined there, which is easy to misread as "CDP cannot reach the app". It can: the card's scope is `multiApps[currentAppId]`, so `multiApps[0].lynx.createSelectorQuery()…` runs real app code, and `multiApps[0].setTimeout` is the card's timer (the shell has none). This makes `boundingClientRect`, `scrollIntoView`, and `GlobalEventEmitter` reachable from a script, which is the difference between guessing at layout and measuring it.
+- `SelectorQuery.invoke({ method: 'boundingClientRect' | 'scrollIntoView' })` both work on desktop. An `id` prop surfaces in the CDP tree as the `idSelector` attribute, not `id` — searching a DOM dump for `id` finds nothing and suggests, wrongly, that the id never applied.
 
 ## Porting a Web/Electron product into Lynxtron
 
