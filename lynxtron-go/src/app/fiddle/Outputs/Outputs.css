@@ -1,4 +1,12 @@
 .Outputs {
+  /* ── Panels as cards on the ground ──────────────────────────────────────
+     A small radius, not a decorative one. The window's background is the ground
+     now, and a 6px corner is what makes each panel read as a thing sitting on
+     it rather than a region carved out of it. Larger would be a widget; this is
+     just enough to stop the seams reading as cracks. */
+  border-radius: 6px;
+  overflow: hidden;
+
   display: flex;
   flex-direction: column;
   width: 100%;

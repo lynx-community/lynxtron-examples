@@ -49,7 +49,7 @@
      sidebar and the console — frame around the frame. Negative margin absorbs
      exactly that outer half, so the only divisions left are the ones between
      two things. */
-  margin: -1.5px;
+  margin: -3px;
 }
 .MosaicCell {
   position: absolute;
@@ -95,9 +95,18 @@
   flex: 1;
   min-height: 0;
   min-width: 0;
-  /* 1.5px a side — the 3px seam between neighbours, half of it from each. */
-  margin: 1.5px;
+  /* 3px a side — a 6px seam between neighbours, half of it from each. Widened
+     with the radius: a 3px gap cannot show a 6px corner, so the panes read as
+     one grid with hairlines rather than as separate surfaces. */
+  margin: 3px;
   overflow: hidden;
+  /* Same 6px as the sidebar and the console, so every panel in the window is
+     the same object. NOTE: Lynx `overflow: hidden` does not clip a native
+     child, so the editor's own square corners sit inside this radius — the
+     toolbar rounds cleanly, the code area does not. Kept because at 6px the
+     effect reads as a soft edge rather than a mismatch; revisit if the radius
+     ever grows. */
+  border-radius: 6px;
   /* No background: this box IS the pane, so anything painted here is painted
      over the editor. The code's ground comes from the native side (ApplyTheme's
      bg, kept in step with --surface-content), which is the only layer under the

@@ -61,58 +61,70 @@ export function Commands(props: CommandsProps) {
           window went fullscreen. */}
       {isMac && !props.fullScreen ? <view className="commands-trafficlights" /> : null}
       <view className="commands-left">
-        <ControlGroup>
-          {/* The mark itself, not a stand-in glyph. `saved` was a tick — it
-              said "saved", which this button has never meant.
-
-              Both lockups are rendered and CSS shows one. Picking in JS would
-              mean threading the resolved theme down here for a value that is
-              already expressed as a class on the root. */}
-          <Tooltip content="Choose Lynxtron version">
-            <Button
-              iconNode={BRAND_MARK_URL ? (
-                <view className="commands-mark">
-                  <image className="commands-mark-art commands-mark-art--on-light" src={BRAND_MARK_URL} />
-                  <image className="commands-mark-art commands-mark-art--on-dark" src={BRAND_MARK_ON_DARK_URL} />
-                </view>
-              ) : null}
-              rightIcon="chevron-down"
-              text={props.currentVersion}
-              disabled={gallery}
-              onClick={props.onOpenVersionChooser}
-            />
-          </Tooltip>
+        {/* Text and a chevron, nothing else. A mark here competed with the one
+            on Run for the same glance, and this control is a value you are
+            reading — a version — not an action you are taking. */}
+        <Tooltip content="Choose Lynxtron version">
           <Button
-            icon={props.isRunning ? 'stop' : 'play'}
-            text={props.isRunning ? 'Stop' : 'Run'}
-            intent={props.isRunning ? 'danger' : 'primary'}
-            disabled={gallery && !props.isRunning}
-            onClick={props.onRun}
+            className="commands-version"
+            rightIcon="chevron-down"
+            text={props.currentVersion}
+            minimal
+            disabled={gallery}
+            onClick={props.onOpenVersionChooser}
           />
-        </ControlGroup>
-        {/* The only label in the bar that was pure repetition: this toggles a
-            panel whose state is already on screen, so the word said nothing the
-            console itself wasn't saying. It could only go once hovering could
-            still name it. */}
-        <ControlGroup>
+        </Tooltip>
+        {/* The one filled control in the bar, and the only one that keeps a
+            word. It wears the Lynxtron mark rather than a play triangle: this
+            is not "play media", it is "build this and launch Lynxtron", and
+            the mark says which runtime is about to start. Stop keeps a square,
+            because the mark cannot mean stop. */}
+        <Button
+          className="commands-run"
+          iconNode={!props.isRunning && BRAND_MARK_URL
+            ? <image className="commands-run-mark" src={BRAND_MARK_URL} />
+            : undefined}
+          icon={props.isRunning ? 'stop' : undefined}
+          text={props.isRunning ? 'Stop' : 'Run'}
+          intent={props.isRunning ? 'danger' : 'primary'}
+          disabled={gallery && !props.isRunning}
+          onClick={props.onRun}
+        />
+        {/* A field, not a button. Search reads as somewhere you type, so it
+            wears the recessed ground an input has and the accelerator sits in
+            it the way placeholder text would. On the left because that is
+            where you look for it — it was on the right only to balance the
+            title, which is the wrong reason to place a control. */}
+        <Tooltip content="Quick Open — type > for commands" hotkey={isMac ? '⌘K' : 'Ctrl+K'}>
+          <Button
+            className="commands-search"
+            icon="search"
+            text={isMac ? '⌘P' : 'Ctrl+P'}
+            minimal
+            onClick={() => props.onOpenPalette?.()}
+          />
+        </Tooltip>
+        <view className="commands-views">
           <Tooltip content={props.isConsoleShowing ? 'Hide console' : 'Show console'}>
             <Button
               icon="console"
+              minimal
               active={props.isConsoleShowing}
               onClick={props.onToggleConsole}
             />
           </Tooltip>
-        </ControlGroup>
-        <ControlGroup>
+          {/* Gallery drops its word for the same reason Console did: it is a
+              view toggle whose state is on screen, and hovering still names
+              it. */}
           <Tooltip content={gallery ? 'Back to Fiddle' : 'Browse showcases'}>
             <Button
               icon="folder-open"
-              text="Gallery"
+              minimal
               active={gallery}
               onClick={props.onToggleGallery}
             />
           </Tooltip>
-        </ControlGroup>
+        </view>
       </view>
       {/* hiddenInset window: the flexible middle of the header is the drag
           region (-x-app-region: drag) — controls live outside it, so the
@@ -133,9 +145,11 @@ export function Commands(props: CommandsProps) {
         <view className="commands-address">
           {/* One gating mechanism (disabled), and one validator: onLoadGist's
               parseGistId decides what's loadable, for Enter and click alike. */}
+          {/* No leading icon. It was a magnifier, which now reads as a second
+              search in a bar that already has one, and at this width it sat on
+              top of the placeholder. The placeholder is the label. */}
           <InputGroup
-            placeholder="https://gist.github.com/..."
-            leftIcon="geosearch"
+            placeholder="gist URL"
             fill
             disabled={gallery}
             value={gistInput}
@@ -148,58 +162,37 @@ export function Commands(props: CommandsProps) {
           <Tooltip content="Load this gist as a Fiddle" align="end">
             <Button
               icon="cloud-download"
-              text="Load"
               small
+              minimal
               disabled={!gistInput || gallery}
               onClick={() => { if (gistInput) props.onLoadGist(gistInput); }}
             />
           </Tooltip>
         </view>
-        <Tooltip
-          content={props.gistId ? 'Update the gist this Fiddle came from' : 'Publish these files as a GitHub gist'}
-          align="end"
-        >
-          <Button
-            icon="upload"
-            text={props.gistId ? 'Update' : 'Publish'}
-            disabled={gallery}
-            onClick={props.onPublishGist}
-          />
-        </Tooltip>
-        {/* Search lives on the right, the way it does in the editors this bar is
-            modelled on — and it is what brings the two clusters to within a
-            few pixels of each other, which is what lets the title be centred
-            without spending its own width on the correction. The accelerator
-            is the label: a palette nobody knows the key for is a palette
-            nobody opens. */}
-        <ControlGroup className="commands-palette">
+        <view className="commands-divider" />
+        {/* The trailing icon rail. Everything here is app scope rather than
+            document scope, and none of it is what you came to the bar to do —
+            so it is a row of quiet glyphs, and the words live in the tooltips
+            that name them. */}
+        <view className="commands-rail">
           <Tooltip
-            content="Quick Open — type > for commands"
-            hotkey={isMac ? '⌘K' : 'Ctrl+K'}
+            content={props.gistId ? 'Update the gist this Fiddle came from' : 'Publish these files as a GitHub gist'}
             align="end"
           >
+            <Button icon="upload" minimal disabled={gallery} onClick={props.onPublishGist} />
+          </Tooltip>
+          <Tooltip content="Settings" align="end">
+            <Button icon="cog" minimal onClick={props.onOpenSettings} />
+          </Tooltip>
+          <Tooltip content="More commands" align="end">
             <Button
-              icon="search"
-              text={isMac ? '\u2318P' : 'Ctrl+P'}
-              onClick={() => props.onOpenPalette?.()}
+              icon="more"
+              minimal
+              active={!!props.overflowOpen}
+              onClick={() => props.onToggleOverflow?.()}
             />
           </Tooltip>
-        </ControlGroup>
-        {/* App-scoped, like the overflow beside it — and moving it off the left
-            evens the two clusters, which is what lets the centred title sit
-            near the real centre of the window rather than the centre of
-            whatever space the left cluster left over. */}
-        <Tooltip content="Settings" align="end">
-          <Button icon="cog" minimal onClick={props.onOpenSettings} />
-        </Tooltip>
-        <Tooltip content="More commands" align="end">
-          <Button
-            icon="more"
-            minimal
-            active={!!props.overflowOpen}
-            onClick={() => props.onToggleOverflow?.()}
-          />
-        </Tooltip>
+        </view>
       </view>
     </view>
   );

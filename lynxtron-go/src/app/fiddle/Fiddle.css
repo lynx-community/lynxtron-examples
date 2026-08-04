@@ -18,6 +18,12 @@
   min-width: 0;
   display: flex;
   width: 100%;
+  /* Ground around the panels, so their corners have something to sit in. A
+     radius only reads when there is space outside it — with the panels flush to
+     the window edge and to each other, 6px of corner was invisible and the
+     window still read as one carved slab. This is the difference between
+     "regions of a window" and "panels on a surface". */
+  padding: 0 7px 7px 7px;
   /* Also unpainted, for the same reason. The sash strips between console,
      sidebar and editors now show `.IDE` — which is the chrome tone, so they
      read as the same seam as the ones inside the mosaic instead of the older

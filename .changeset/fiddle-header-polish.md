@@ -67,3 +67,25 @@ Give the commands bar room to breathe, and the palette a way to be found.
   saying they existed. The collection now takes the first grid slot; its one
   action is Browse, because opening or running "all 55 fiddles" is exactly the
   confusion the collection was split up to avoid.
+
+- **The bar is one filled control and a row of glyphs.** Run wears the Lynxtron
+  mark instead of a play triangle — this builds a project and starts a runtime,
+  and the mark says which one — and it is the only shape in the chrome. The
+  version chooser drops the mark it used to carry (two marks competing in one
+  glance, on the quietest control in the bar) and is now text with a chevron.
+  Search moves to the left, where you look for it, and is shaped like the field
+  it opens rather than a button. Console, Gallery, Load, Publish, Settings and
+  the overflow are icons; the tooltips carry their names. A hairline separates
+  the gist field from the app rail, because two cloud arrows either side of
+  nothing read as one set of four.
+
+- **Panels sit on the ground instead of being carved out of it.** 6px corners
+  on the sidebar, the console and every editor pane, with real space around
+  them — a radius is invisible if the panel is flush to its neighbours, so the
+  seam widened to 6px and the whole group is inset from the window edge.
+
+- **The overflow menu can be dismissed again.** Its backdrop was
+  `position: fixed`, and Lynx promotes a fixed node directly under the root —
+  which lifted the dismiss surface straight out of the platform overlay it was
+  rendered into, behind an overlay that was already swallowing every tap meant
+  for it. Absolute keeps it inside; the geometry is identical.
