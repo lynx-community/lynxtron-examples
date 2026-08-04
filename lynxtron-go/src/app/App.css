@@ -5,7 +5,15 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #1e1e1e;
+  /* The one background under the editor mosaic. A native editor is a platform
+     subview of the renderer host: it draws above the host's own layer, which is
+     where the ROOT element's background lands, and below every descendant
+     background, which Clay promotes to its own sublayer. So this is the only
+     element that can paint across a pane without hiding it — which makes it the
+     app's ground, and every seam the mosaic shows is this colour.
+     It was a hardcoded #1e1e1e that light mode never overrode; the shell used
+     to cover it, and now that the shell cannot, it has to follow the theme. */
+  background-color: var(--surface-chrome);
   position: relative;
   /* Upstream Fiddle theme tokens (themes-defaults.ts defaultDark.common). */
   --foreground-1: #9feafa;

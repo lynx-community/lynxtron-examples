@@ -7,7 +7,9 @@
   /* Containing block for the commands overflow, which is absolutely positioned
      against the shell rather than the header (the header clips its children). */
   position: relative;
-  background-color: var(--surface-chrome);
+  /* No background. The shell spans the editor mosaic, and anything painted
+     across a pane hides the native editor under it — see the note at the top of
+     Editors.css. The ground comes from `.IDE`. */
   color: var(--text-color-3);              /* text-color-3 */
 }
 .FiddleBody {
@@ -16,9 +18,10 @@
   min-width: 0;
   display: flex;
   width: 100%;
-  /* Matches the mosaic gutter base so the sash strips between console/
-     sidebar/editors read as one continuous app background. */
-  background-color: var(--background-2);
+  /* Also unpainted, for the same reason. The sash strips between console,
+     sidebar and editors now show `.IDE` — which is the chrome tone, so they
+     read as the same seam as the ones inside the mosaic instead of the older
+     --background-2 they used to carry. */
 }
 
 /* Middle region (sidebar + editors) — the gallery layer covers exactly this,

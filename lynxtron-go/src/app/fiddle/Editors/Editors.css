@@ -1,7 +1,20 @@
 /* Mosaic editor grid — ported from fiddle's mosaic.less / editors.less.
    Visible gutters come from the 3px root inset + 3px tile margins showing
    the darker background through (upstream .mosaic-root inset 3px +
-   .mosaic-tile margin 3px over background-4). */
+   .mosaic-tile margin 3px over background-4).
+
+   ── NOTHING THAT COVERS A PANE MAY PAINT A BACKGROUND ────────────────────
+   The native editor is a platform subview of the Lynx renderer host. It draws
+   above the host's own layer — which is where the ROOT element's background
+   ends up — and below every descendant background, because Clay gives those
+   their own sublayers. So a background anywhere on the path down to a pane is
+   an opaque sheet over the editor, and the pane comes up blank.
+
+   That is a constraint, not a bug: it is the price of Scintilla living inside
+   the Lynx hierarchy, which is what lets overlays cover it at all. The seam
+   colour therefore comes from `.IDE` (App.css), the one element allowed to
+   paint under the panes. Backgrounds are spent on leaves that do not overlap a
+   pane — the header, the sidebar, the console, each pane's own toolbar. */
 .FiddleEditors {
   display: flex;
   flex-direction: column;
@@ -10,7 +23,6 @@
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-  background-color: var(--surface-chrome);
 }
 /* Flat mosaic surface: every pane and sash is an absolutely-positioned child
    keyed by file id, so layout changes (expand / hide / sash drag) are pure
@@ -28,9 +40,10 @@
      panes, at the same 3px weight as the split sashes so every division in the
      window reads as one system. */
   /* A seam is the frame showing between panels, so it wears the chrome tone —
-     not a third colour, and not a wash laid over the app background. */
+     not a third colour, and not a wash laid over the app background. It is
+     painted by `.IDE` and shows through here; this element cannot paint it
+     itself without covering every pane (see the note at the top). */
   padding: 0;
-  background-color: var(--surface-chrome);
   /* Pull the outer edge under its neighbours. Pane margins make the 3px seams
      BETWEEN panes, but they also leave half a seam against the header, the
      sidebar and the console — frame around the frame. Negative margin absorbs
@@ -85,7 +98,10 @@
   /* 1.5px a side — the 3px seam between neighbours, half of it from each. */
   margin: 1.5px;
   overflow: hidden;
-  background-color: var(--surface-content); /* in step with ApplyTheme's bg */
+  /* No background: this box IS the pane, so anything painted here is painted
+     over the editor. The code's ground comes from the native side (ApplyTheme's
+     bg, kept in step with --surface-content), which is the only layer under the
+     text anyway. */
 }
 /* Chrome, and it should read as chrome: one step darker than the code it sits
    on, closed by a hairline underneath. Upstream draws a border ABOVE the
