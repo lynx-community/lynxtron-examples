@@ -411,6 +411,11 @@ void ScintillaView::SetContent(const char* data, size_t length) {
             if (current == text) return;
         }
         [container.scintillaView message:SCI_SETTEXT wParam:0 lParam:(sptr_t)text.c_str()];
+        // SetContent is the host's document-load/replace operation, not a
+        // user edit. SCI_SETTEXT records the replacement in Scintilla's undo
+        // history, which otherwise makes the first Cmd+Z after opening a file
+        // restore the pre-load empty document.
+        [container.scintillaView message:SCI_EMPTYUNDOBUFFER wParam:0 lParam:0];
         [container.scintillaView setNeedsDisplay:YES];
     };
     if ([NSThread isMainThread]) {

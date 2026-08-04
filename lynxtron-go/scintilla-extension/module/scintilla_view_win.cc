@@ -746,6 +746,9 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
   }
   if (has_content) {
     SciSend(hwnd, SCI_SETTEXT, 0, AsLParam(text.c_str()));
+    // Pending content is the initial document baseline. Do not expose the
+    // control's pre-load empty buffer as an undo step.
+    SciSend(hwnd, SCI_EMPTYUNDOBUFFER, 0, 0);
     RedrawEditorWindow(hwnd);
     DebugLog("OnLayoutChanged applied pending content after layout length=" +
              std::to_string(text.size()));
@@ -858,6 +861,10 @@ void ScintillaView::SetContent(const char* data, size_t length) {
     }
   }
   SciSend(hwnd, SCI_SETTEXT, 0, AsLParam(text.c_str()));
+  // SetContent is an authoritative document replacement from the host, not
+  // a user edit. Without clearing this entry, the first Ctrl+Z after opening
+  // a file restores the empty control created before the load.
+  SciSend(hwnd, SCI_EMPTYUNDOBUFFER, 0, 0);
   RedrawEditorWindow(hwnd);
   {
     std::lock_guard<std::mutex> lock(content_mutex_);
