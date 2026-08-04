@@ -967,9 +967,9 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   HWND hwnd = AsHwnd(win_view_);
   if (!hwnd || !::IsWindow(hwnd)) return;
   ApplyLineSpacing();
-  // BGR. Dark #1b1d26 -> 0x261d1b, matching --surface-content in App.css —
+  // BGR. Dark #22252f -> 0x2f2522, matching --surface-content in App.css —
   // kept in step with the macOS path in scintilla_view.mm.
-  const LPARAM bg      = dark ? 0x261d1b : 0xFFFFFF;
+  const LPARAM bg      = dark ? 0x2f2522 : 0xFFFFFF;
   const LPARAM fg      = dark ? 0xD4D4D4 : 0x000000;
   const LPARAM kw      = dark ? 0xD69C56 : 0xFF0000;
   const LPARAM strc    = dark ? 0x7891CE : 0x1515A3;
@@ -977,7 +977,7 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   const LPARAM num     = dark ? 0xA8CEB5 : 0x588609;
   const LPARAM typ     = dark ? 0xB0C94E : 0x997F26;
   const LPARAM lnFore  = dark ? 0x858585 : 0x937823;
-  const LPARAM lnBack  = dark ? 0x261d1b : 0xFFFFFF;  // one flat ground, both themes
+  const LPARAM lnBack  = dark ? 0x2f2522 : 0xFFFFFF;  // one flat ground, both themes
   SciSend(hwnd, SCI_STYLESETBACK, STYLE_DEFAULT, bg);
   SciSend(hwnd, SCI_STYLESETFORE, STYLE_DEFAULT, fg);
   SciSend(hwnd, SCI_STYLESETSIZE, STYLE_DEFAULT, size);

@@ -55,10 +55,17 @@
      the chrome around it were tinted toward different colours, which is what
      made the window read as two products stacked rather than one. The
      reference editors keep every neutral in one family; this ramp is that
-     family, on the violet-slate side the chrome was already on. */
-  --surface-content: #1b1d26;
-  --surface-chrome: #262a36;
-  --surface-raised: #333747;
+     family, on the violet-slate side the chrome was already on.
+
+     Luminance is set separately from hue, because conflating them is how this
+     ramp drifted: the pass that unified the hue also dropped content from 34.7
+     to 29.2 relative luminance, on top of the intended move off the original
+     50.4, and the window went muddy. Content sits at 37 now, with chrome and
+     raised a clear 12 and 14 above it. Change the hue OR the level, never both
+     in one edit. */
+  --surface-content: #22252f;
+  --surface-chrome: #2d313f;
+  --surface-raised: #3a3f50;
 
   /* Overlays. A tint over whatever is beneath, for hover, pressed and lit
      states. These MUST be tokens: a literal rgba(255,255,255,…) is invisible

@@ -66,10 +66,43 @@
   min-height: 26px;
   padding: 0 8px;
   font-size: 12px;
+  line-height: 26px;
   border-radius: 5px;
+}
+/* Frameless secondaries. Every control in the bar carried a filled box and a
+   ring, so the row read as a strip of chips and the one button that matters —
+   Run — had to shout over the rest. Only the primary keeps a fill; the others
+   are their label until you reach for them. Light only: the dark bar already
+   reads this way, because its fill is a hair off the bar's own tone. */
+.theme-light .commands .bp3-button {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+.theme-light .commands .bp3-button:hover {
+  background-color: var(--overlay-soft);
+}
+.theme-light .commands .bp3-button.bp3-active {
+  background-color: var(--overlay-strong);
+  box-shadow: none;
+}
+/* The primary is the exception: it keeps its fill, which is the point. */
+.theme-light .commands .bp3-button.bp3-intent-primary {
+  background-color: #2b8fd8;
+}
+/* Icons carry the verb, not the emphasis — a step lighter than the label so
+   the row reads as text with marks beside it rather than a wall of glyphs. */
+.commands .bp3-button .bp3-icon {
+  opacity: 0.72;
+}
+.commands .bp3-button:hover .bp3-icon,
+.commands .bp3-button.bp3-active .bp3-icon,
+.commands .bp3-button.bp3-intent-primary .bp3-icon {
+  opacity: 1;
 }
 .commands .bp3-button .bp3-button-text {
   font-size: 12px;
+  line-height: 26px;
 }
 .commands .bp3-button .bp3-icon {
   font-size: 12px;

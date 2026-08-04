@@ -716,10 +716,10 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
     ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
     // BGR palettes. Dark = the compile-time Fiddle Dark constants; Light =
     // VS-Light token colors on Fiddle Light backgrounds.
-    // BGR. Dark #1b1d26 -> 0x261d1b, matching --surface-content in App.css:
+    // BGR. Dark #22252f -> 0x2f2522, matching --surface-content in App.css:
     // the editor is the largest CONTENT surface, and chrome sits lighter
     // around it. Change one and change the other.
-    const long bg      = dark ? 0x261d1b : 0xFFFFFF;
+    const long bg      = dark ? 0x2f2522 : 0xFFFFFF;
     const long fg      = dark ? 0xD4D4D4 : 0x000000;
     const long kw      = dark ? 0xD69C56 : 0xFF0000;
     const long str     = dark ? 0x7891CE : 0x1515A3;
@@ -727,7 +727,7 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
     const long num     = dark ? 0xA8CEB5 : 0x588609;
     const long typ     = dark ? 0xB0C94E : 0x997F26;
     const long lnFore  = dark ? 0x858585 : 0x937823;
-    const long lnBack  = dark ? 0x261d1b : 0xFFFFFF;  // one flat ground, both themes
+    const long lnBack  = dark ? 0x2f2522 : 0xFFFFFF;  // one flat ground, both themes
     const long caret   = dark ? 0xADAFAE : 0x000000;
     const long selBack = dark ? 0xBB6A26 : 0xFFD6AD;
     const long ctBack  = dark ? 0x262525 : 0xF3F3F3;
