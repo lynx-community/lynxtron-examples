@@ -13,19 +13,21 @@ import type {
   PlanEntry,
   PreviewTab,
   ReviewSnapshot,
+  TimelineEntry,
+  TimelineKind,
+  TimelinePage,
   ToolItem,
 } from '../shared/agent';
 import './App.css';
+import { VirtualTimeline, type VirtualTimelineHandle } from './components/VirtualTimeline';
 
-type TimelineKind = 'user' | 'assistant' | 'reasoning' | 'tool' | 'plan' | 'error';
-
-interface TimelineItem {
-  id: string;
+interface PendingTextDelta {
+  event: AgentEvent;
   kind: TimelineKind;
-  text?: string;
-  tool?: ToolItem;
-  plan?: PlanEntry[];
+  text: string;
 }
+
+const STREAM_FLUSH_INTERVAL_MS = 40;
 
 const AGENTS_TAB: PreviewTab = {
   id: 'agents',
@@ -138,16 +140,26 @@ function ReviewFileSection({ file, diff }: { file: ChangedFile; diff?: FileDiff 
   );
 }
 
-function mergeText(items: TimelineItem[], event: AgentEvent, kind: TimelineKind): TimelineItem[] {
+function mergeText(items: TimelineEntry[], event: AgentEvent, kind: TimelineKind): TimelineEntry[] {
   const id = `${kind}:${event.messageId ?? event.cursor}`;
   const index = items.findIndex((item) => item.id === id);
-  if (index < 0) return [...items, { id, kind, text: event.text ?? '' }];
+  if (index < 0) return [...items, { sequence: event.cursor, id, kind, text: event.text ?? '' }];
   const next = [...items];
   next[index] = { ...next[index], text: `${next[index].text ?? ''}${event.text ?? ''}` };
   return next;
 }
 
-function MessageCard({ item }: { item: TimelineItem }) {
+function mergeTimelineEntries(history: TimelineEntry[], additions: TimelineEntry[]): TimelineEntry[] {
+  const next = [...history];
+  for (const addition of additions) {
+    const index = next.findIndex((item) => item.id === addition.id);
+    if (index < 0) next.push(addition);
+    else next[index] = addition;
+  }
+  return next;
+}
+
+function MessageCard({ item }: { item: TimelineEntry }) {
   if (item.kind === 'user') {
     return (
       <view className="message-row message-row--user">
@@ -208,7 +220,11 @@ export function App() {
   const [tasks, setTasks] = useState<AgentTask[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState('');
   const [workspace, setWorkspace] = useState('');
-  const [items, setItems] = useState<TimelineItem[]>([]);
+  const [historyItems, setHistoryItems] = useState<TimelineEntry[]>([]);
+  const [liveItems, setLiveItems] = useState<TimelineEntry[]>([]);
+  const [historyBefore, setHistoryBefore] = useState<number | undefined>();
+  const [historyHasMore, setHistoryHasMore] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [composerInputKey, setComposerInputKey] = useState(0);
   const [permission, setPermission] = useState<PermissionRequest | null>(null);
@@ -224,6 +240,19 @@ export function App() {
   const seenCursors = useRef(new Set<number>());
   const selectedTaskIdRef = useRef('');
   const reviewSignatureRef = useRef('');
+  const pendingTextRef = useRef(new Map<string, PendingTextDelta>());
+  const pendingTextTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timelineRef = useRef<VirtualTimelineHandle | null>(null);
+
+  const items = useMemo(() => {
+    const merged = [...historyItems];
+    for (const liveItem of liveItems) {
+      const index = merged.findIndex((item) => item.id === liveItem.id);
+      if (index < 0) merged.push(liveItem);
+      else merged[index] = liveItem;
+    }
+    return merged;
+  }, [historyItems, liveItems]);
 
   const selectedTask = useMemo(
     () => tasks.find((task) => task.id === selectedTaskId) ?? null,
@@ -254,6 +283,41 @@ export function App() {
       ?? String(model.currentValue ?? model.name);
   }, [selectedTask, selectedBackend]);
 
+  const flushPendingText = useCallback(() => {
+    if (pendingTextTimerRef.current !== null) {
+      clearTimeout(pendingTextTimerRef.current);
+      pendingTextTimerRef.current = null;
+    }
+    if (pendingTextRef.current.size === 0) return;
+    const pending = [...pendingTextRef.current.values()];
+    pendingTextRef.current.clear();
+    setLiveItems((current) => pending.reduce(
+      (next, entry) => mergeText(next, { ...entry.event, text: entry.text }, entry.kind),
+      current,
+    ));
+  }, []);
+
+  const clearPendingText = useCallback(() => {
+    if (pendingTextTimerRef.current !== null) {
+      clearTimeout(pendingTextTimerRef.current);
+      pendingTextTimerRef.current = null;
+    }
+    pendingTextRef.current.clear();
+  }, []);
+
+  const queueTextDelta = useCallback((event: AgentEvent, kind: TimelineKind) => {
+    const id = `${kind}:${event.messageId ?? event.cursor}`;
+    const existing = pendingTextRef.current.get(id);
+    pendingTextRef.current.set(id, {
+      event,
+      kind,
+      text: `${existing?.text ?? ''}${event.text ?? ''}`,
+    });
+    if (pendingTextTimerRef.current === null) {
+      pendingTextTimerRef.current = setTimeout(flushPendingText, STREAM_FLUSH_INTERVAL_MS);
+    }
+  }, [flushPendingText]);
+
   const applyEvent = useCallback((event: AgentEvent) => {
     if (seenCursors.current.has(event.cursor)) return;
     seenCursors.current.add(event.cursor);
@@ -270,22 +334,23 @@ export function App() {
     }
 
     if (!event.taskId || event.taskId !== selectedTaskIdRef.current) return;
+    if (event.type !== 'message-delta' && event.type !== 'reasoning-delta') flushPendingText();
     switch (event.type) {
       case 'user-message':
-        setItems((current) => mergeText(current, event, 'user'));
+        setLiveItems((current) => mergeText(current, event, 'user'));
         break;
       case 'message-delta':
-        setItems((current) => mergeText(current, event, 'assistant'));
+        queueTextDelta(event, 'assistant');
         break;
       case 'reasoning-delta':
-        setItems((current) => mergeText(current, event, 'reasoning'));
+        queueTextDelta(event, 'reasoning');
         break;
       case 'tool':
         if (event.tool) {
-          setItems((current) => {
+          setLiveItems((current) => {
             const id = `tool:${event.tool!.toolCallId}`;
             const index = current.findIndex((item) => item.id === id);
-            if (index < 0) return [...current, { id, kind: 'tool', tool: event.tool }];
+            if (index < 0) return [...current, { sequence: event.cursor, id, kind: 'tool', tool: event.tool }];
             const next = [...current];
             next[index] = { ...next[index], tool: { ...next[index].tool, ...event.tool } as ToolItem };
             return next;
@@ -293,7 +358,7 @@ export function App() {
         }
         break;
       case 'plan':
-        setItems((current) => [...current.filter((item) => item.id !== 'plan'), { id: 'plan', kind: 'plan', plan: event.plan }]);
+        setLiveItems((current) => [...current.filter((item) => item.id !== 'plan'), { sequence: event.cursor, id: 'plan', kind: 'plan', plan: event.plan }]);
         break;
       case 'permission':
         setPermission(event.permission ?? null);
@@ -301,17 +366,62 @@ export function App() {
       case 'permission-resolved':
         setPermission(null);
         break;
+      case 'turn-state':
+        if (event.status && event.status !== 'running' && event.status !== 'waiting') {
+          setLiveItems((current) => {
+            if (current.length > 0) setHistoryItems((history) => mergeTimelineEntries(history, current));
+            return [];
+          });
+        }
+        break;
       case 'error':
-        setItems((current) => [...current, { id: `error:${event.cursor}`, kind: 'error', text: event.error }]);
-        setError(event.error ?? 'Agent error');
+        setLiveItems((current) => [...current, { sequence: event.cursor, id: `error:${event.cursor}`, kind: 'error', text: event.error }]);
         break;
     }
-  }, []);
+  }, [flushPendingText, queueTextDelta]);
 
   const refreshSnapshot = useCallback(async () => {
     const snapshot = await callBridge<EventSnapshot>('agent:eventsSince', { cursor: 0 });
     snapshot.events.forEach(applyEvent);
   }, [applyEvent]);
+
+  const loadLatestTimeline = useCallback(async (taskId: string) => {
+    const page = await callBridge<TimelinePage>('agent:timelinePage', { taskId, limit: 50 });
+    if (selectedTaskIdRef.current !== taskId) return;
+    setHistoryItems(page.items);
+    setLiveItems([]);
+    setHistoryBefore(page.before);
+    setHistoryHasMore(page.hasMore);
+  }, []);
+
+  const loadEarlierTimeline = useCallback(async () => {
+    const taskId = selectedTaskIdRef.current;
+    if (!taskId || !historyHasMore || historyLoading || historyBefore === undefined) return;
+    setHistoryLoading(true);
+    try {
+      const page = await callBridge<TimelinePage>('agent:timelinePage', {
+        taskId,
+        before: historyBefore,
+        limit: 50,
+      });
+      if (selectedTaskIdRef.current !== taskId) return;
+      setHistoryItems((current) => {
+        const existing = new Set(current.map((item) => item.id));
+        return [...page.items.filter((item) => !existing.has(item.id)), ...current];
+      });
+      setHistoryBefore(page.before);
+      setHistoryHasMore(page.hasMore);
+    } catch (caught) {
+      if (selectedTaskIdRef.current === taskId) setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      if (selectedTaskIdRef.current === taskId) setHistoryLoading(false);
+    }
+  }, [historyBefore, historyHasMore, historyLoading]);
+
+  const jumpToRandomTimelinePosition = useCallback(() => {
+    if (items.length === 0) return;
+    timelineRef.current?.scrollToIndex(Math.floor(Math.random() * items.length), true);
+  }, [items.length]);
 
   const resetPreviews = useCallback(() => {
     setPreviewTabs(INITIAL_PREVIEW_TABS);
@@ -391,6 +501,7 @@ export function App() {
         if (taskList[0].backendId === 'opencode' && openCode?.status === 'ready') {
           await callBridge<AgentTask>('agent:loadTask', { taskId: taskList[0].id });
         }
+        await loadLatestTimeline(taskList[0].id);
       }
       await refreshSnapshot();
     } catch (caught) {
@@ -398,7 +509,7 @@ export function App() {
     } finally {
       setInitialized(true);
     }
-  }, [refreshSnapshot]);
+  }, [loadLatestTimeline, refreshSnapshot]);
 
   const chooseWorkspace = useCallback(async () => {
     try {
@@ -418,7 +529,11 @@ export function App() {
       setTasks((current) => [task, ...current.filter((item) => item.id !== task.id)]);
       selectedTaskIdRef.current = task.id;
       setSelectedTaskId(task.id);
-      setItems([]);
+      clearPendingText();
+      setHistoryItems([]);
+      setLiveItems([]);
+      setHistoryBefore(undefined);
+      setHistoryHasMore(false);
       setPermission(null);
       resetPreviews();
     } catch (caught) {
@@ -426,14 +541,18 @@ export function App() {
     } finally {
       setBusy(false);
     }
-  }, [workspace, backendId, busy, resetPreviews]);
+  }, [workspace, backendId, busy, resetPreviews, clearPendingText]);
 
   const selectTask = useCallback(async (task: AgentTask) => {
     if (task.id === selectedTaskId) return;
     selectedTaskIdRef.current = task.id;
     setSelectedTaskId(task.id);
     setWorkspace(task.cwd);
-    setItems([]);
+    clearPendingText();
+    setHistoryItems([]);
+    setLiveItems([]);
+    setHistoryBefore(undefined);
+    setHistoryHasMore(false);
     setPermission(null);
     setError('');
     resetPreviews();
@@ -444,9 +563,10 @@ export function App() {
         setError(caught instanceof Error ? caught.message : String(caught));
       }
     }
+    await loadLatestTimeline(task.id);
     seenCursors.current.clear();
     await refreshSnapshot();
-  }, [selectedTaskId, refreshSnapshot, resetPreviews]);
+  }, [selectedTaskId, refreshSnapshot, resetPreviews, clearPendingText, loadLatestTimeline]);
 
   const submit = useCallback(async () => {
     const text = prompt.trim();
@@ -492,8 +612,11 @@ export function App() {
     const handler = (...args: unknown[]) => applyEvent(args[0] as AgentEvent);
     emitter.addListener('agent:event', handler);
     initialize();
-    return () => emitter.removeListener('agent:event', handler);
-  }, [applyEvent, initialize]);
+    return () => {
+      emitter.removeListener('agent:event', handler);
+      clearPendingText();
+    };
+  }, [applyEvent, initialize, clearPendingText]);
 
   useEffect(() => {
     if (!selectedTaskId) return;
@@ -616,8 +739,9 @@ export function App() {
         </view>
 
         <view className="conversation">
-          <scroll-view scroll-y className="transcript">
-            {!selectedTask ? (
+          {items.length === 0 ? (
+            <scroll-view scroll-y className="transcript">
+              {!selectedTask ? (
               <view className="welcome">
                 <view className="welcome-mark"><text className="welcome-mark-text">C</text></view>
                 <text className="welcome-title">Build with any coding agent</text>
@@ -627,49 +751,70 @@ export function App() {
                   <view className="welcome-action welcome-action--secondary" bindtap={chooseWorkspace}><text className="welcome-action-secondary-text">Choose workspace</text></view>
                 </view>
               </view>
-            ) : null}
-            {selectedTask && items.length === 0 ? (
+              ) : null}
+              {selectedTask ? (
               <view className="task-empty">
                 <text className="task-empty-kicker">READY</text>
                 <text className="task-empty-title">What should {selectedBackend?.label ?? 'the agent'} work on?</text>
                 <text className="task-empty-copy">The agent can inspect this workspace, edit files, run commands, and ask before sensitive actions.</text>
               </view>
-            ) : null}
-            {items.map((item) => <MessageCard key={item.id} item={item} />)}
-            {selectedTask && review.files.length > 0 ? (
-              <view className="change-card">
-                <view className="change-card-header">
-                  <view className="change-card-icon"><text className="change-card-icon-text">＋</text></view>
-                  <view className="change-card-title-wrap">
-                    <text className="change-card-title">Edited {review.files.length} {review.files.length === 1 ? 'file' : 'files'}</text>
-                    <view className="change-card-totals">
-                      <text className="change-card-add">+{review.additions}</text>
-                      <text className="change-card-delete">−{review.deletions}</text>
-                    </view>
-                  </view>
-                  <view className="change-card-actions">
-                    <view className="change-card-undo"><text className="change-card-undo-text">Undo</text><text className="change-card-undo-icon">↶</text></view>
-                    <view className="change-card-review" bindtap={openReview}><text className="change-card-review-text">Review</text></view>
-                  </view>
-                </view>
-                <view className="change-card-files">
-                  {review.files.slice(0, 3).map((file) => (
-                    <view className="change-card-file" key={file.path} bindtap={openReview}>
-                      <text className="change-card-file-path" text-maxline="1">{shortPath(file.path)}</text>
-                      <view className="change-card-file-totals">
-                        <text className="change-card-file-add">+{file.additions}</text>
-                        <text className="change-card-file-delete">−{file.deletions}</text>
+              ) : null}
+              {error ? <view className="inline-error"><text className="inline-error-text selectable-text" text-selection={true} flatten={false}>{error}</text></view> : null}
+            </scroll-view>
+          ) : (
+            <VirtualTimeline
+              ref={timelineRef}
+              id="conversation-timeline"
+              items={items}
+              renderItem={(item) => <MessageCard item={item} />}
+              onReachStart={loadEarlierTimeline}
+              footer={(
+                <view className="timeline-footer-content">
+                  {historyLoading ? <text className="timeline-history-loading">Loading earlier messages…</text> : null}
+                  {selectedTask && review.files.length > 0 ? (
+                    <view className="change-card">
+                      <view className="change-card-header">
+                        <view className="change-card-icon"><text className="change-card-icon-text">＋</text></view>
+                        <view className="change-card-title-wrap">
+                          <text className="change-card-title">Edited {review.files.length} {review.files.length === 1 ? 'file' : 'files'}</text>
+                          <view className="change-card-totals">
+                            <text className="change-card-add">+{review.additions}</text>
+                            <text className="change-card-delete">−{review.deletions}</text>
+                          </view>
+                        </view>
+                        <view className="change-card-actions">
+                          <view className="change-card-undo"><text className="change-card-undo-text">Undo</text><text className="change-card-undo-icon">↶</text></view>
+                          <view className="change-card-review" bindtap={openReview}><text className="change-card-review-text">Review</text></view>
+                        </view>
+                      </view>
+                      <view className="change-card-files">
+                        {review.files.slice(0, 3).map((file) => (
+                          <view className="change-card-file" key={file.path} bindtap={openReview}>
+                            <text className="change-card-file-path" text-maxline="1">{shortPath(file.path)}</text>
+                            <view className="change-card-file-totals">
+                              <text className="change-card-file-add">+{file.additions}</text>
+                              <text className="change-card-file-delete">−{file.deletions}</text>
+                            </view>
+                          </view>
+                        ))}
+                        {review.files.length > 3 ? (
+                          <view className="change-card-more" bindtap={openReview}><text className="change-card-more-text">{review.files.length - 3} more changed files</text></view>
+                        ) : null}
                       </view>
                     </view>
-                  ))}
-                  {review.files.length > 3 ? (
-                    <view className="change-card-more" bindtap={openReview}><text className="change-card-more-text">{review.files.length - 3} more changed files</text></view>
                   ) : null}
+                  {error ? <view className="inline-error"><text className="inline-error-text selectable-text" text-selection={true} flatten={false}>{error}</text></view> : null}
                 </view>
-              </view>
-            ) : null}
-            {error ? <view className="inline-error"><text className="inline-error-text selectable-text" text-selection={true} flatten={false}>{error}</text></view> : null}
-          </scroll-view>
+              )}
+            />
+          )}
+
+          {items.length > 1 ? (
+            <view className="timeline-jump-controls">
+              <view className="timeline-jump-button" bindtap={jumpToRandomTimelinePosition}><text className="timeline-jump-text">Random</text></view>
+              <view className="timeline-jump-button" bindtap={() => timelineRef.current?.scrollToTail(true)}><text className="timeline-jump-text">Latest</text></view>
+            </view>
+          ) : null}
 
           {permission ? (
             <view className="permission-bar">

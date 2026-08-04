@@ -34,6 +34,16 @@ export default defineConfig({
       patterns: [
         { from: './package.json', to: 'package.json' },
         { from: './output/bundle/lynx/', to: '.' },
+        { from: './opencode/opencode.json', to: 'opencode/opencode.json' },
+        { from: './opencode/skills/', to: 'opencode/skills/' },
+        {
+          from: './.generated/computer-use-runtime/',
+          to: 'opencode/runtime/',
+        },
+        {
+          from: './.generated/opencode-runtime/',
+          to: 'opencode/agent-runtime/',
+        },
       ],
     }),
     ...(isDev ? [pluginLynxtron({ isDev, entry: path.resolve(__dirname, './dist/desktop') })] : []),

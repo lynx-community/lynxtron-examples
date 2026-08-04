@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import path from 'path';
 import type {
   AgentEvent,
   AgentTask,
@@ -11,6 +12,9 @@ import type {
   ReviewSnapshot,
   StartTaskInput,
   TaskStatus,
+  TimelineEntry,
+  TimelineKind,
+  TimelinePage,
   ToolItem,
 } from '../../../shared/agent';
 import { AcpClient, type AcpServerRequest } from './acp-client';
@@ -60,7 +64,10 @@ export class AgentRuntime {
   private readonly permissions = new Map<string, PendingPermission>();
   private readonly lastUserMessageByTask = new Map<string, string>();
   private readonly eventBuffer: AgentEvent[] = [];
+  private readonly timelineByTask = new Map<string, TimelineEntry[]>();
+  private readonly suppressReplayForTasks = new Set<string>();
   private cursor = 0;
+  private timelineSequence = 0;
   private openCodeClient: AcpClient | null = null;
   private openCodeInfo: BackendInfo | null = null;
   private readonly reviewService = new ReviewService();
@@ -68,6 +75,8 @@ export class AgentRuntime {
   constructor(
     private readonly store: TaskStore,
     private readonly emitToWindow: Emit,
+    private readonly openCodeConfigDir = path.join(__dirname, 'opencode'),
+    private readonly computerUseBin = '',
   ) {
     for (const stored of store.load()) {
       const task = { ...stored, status: 'idle' as TaskStatus };
@@ -99,6 +108,23 @@ export class AgentRuntime {
     return {
       cursor: this.cursor,
       events: this.eventBuffer.filter((event) => event.cursor > cursor),
+    };
+  }
+
+  timelinePage(taskId: string, before?: number, limit = 50): TimelinePage {
+    this.requireTask(taskId);
+    const timeline = this.timelineByTask.get(taskId) ?? [];
+    const boundedLimit = Math.max(1, Math.min(200, Math.floor(limit) || 50));
+    const eligible = before === undefined
+      ? timeline
+      : timeline.filter((entry) => entry.sequence < before);
+    const items = eligible.slice(Math.max(0, eligible.length - boundedLimit)).map((entry) => ({ ...entry }));
+    const hasMore = eligible.length > items.length;
+    return {
+      items,
+      before: hasMore ? items[0]?.sequence : undefined,
+      hasMore,
+      total: timeline.length,
     };
   }
 
@@ -144,7 +170,14 @@ export class AgentRuntime {
     this.sessionToTask.set(task.sessionId, task.id);
     task.lastTurnChangedFiles = [];
     this.lastUserMessageByTask.delete(task.id);
-    const response = asRecord(await client.loadSession(task.sessionId, task.cwd));
+    this.timelineByTask.set(task.id, []);
+    this.suppressReplayForTasks.add(task.id);
+    let response: Record<string, any>;
+    try {
+      response = asRecord(await client.loadSession(task.sessionId, task.cwd));
+    } finally {
+      this.suppressReplayForTasks.delete(task.id);
+    }
     if (Array.isArray(response.configOptions)) task.configOptions = response.configOptions as ConfigOption[];
     task.status = 'idle';
     task.updatedAt = Date.now();
@@ -281,7 +314,15 @@ export class AgentRuntime {
     this.openCodeInfo = info;
     if (info.status !== 'ready' || !info.command) throw new Error(info.detail ?? 'OpenCode is not installed.');
 
-    const client = new AcpClient({ command: info.command, args: ['acp', '--pure'], cwd });
+    const client = new AcpClient({
+      command: info.command,
+      args: ['acp', '--pure'],
+      cwd,
+      env: {
+        OPENCODE_CONFIG_DIR: this.openCodeConfigDir,
+        CODEX_DEMO_COMPUTER_USE_BIN: this.computerUseBin,
+      },
+    });
     client.on('notification', (message) => this.handleNotification(message));
     client.on('request', (request: AcpServerRequest) => this.handleServerRequest(client, request));
     client.on('fatal', (error: Error) => {
@@ -405,8 +446,58 @@ export class AgentRuntime {
 
   private push(event: Omit<AgentEvent, 'cursor' | 'at'>): void {
     const complete = { ...event, cursor: ++this.cursor, at: Date.now() } as AgentEvent;
+    this.recordTimeline(complete);
+    if (complete.taskId && this.suppressReplayForTasks.has(complete.taskId)) return;
     this.eventBuffer.push(complete);
     if (this.eventBuffer.length > 2_000) this.eventBuffer.splice(0, this.eventBuffer.length - 2_000);
     this.emitToWindow(complete);
+  }
+
+  private recordTimeline(event: AgentEvent): void {
+    if (!event.taskId) return;
+    let kind: TimelineKind | undefined;
+    let id = '';
+    if (event.type === 'user-message') {
+      kind = 'user';
+      id = `user:${event.messageId ?? event.cursor}`;
+    } else if (event.type === 'message-delta') {
+      kind = 'assistant';
+      id = `assistant:${event.messageId ?? event.cursor}`;
+    } else if (event.type === 'reasoning-delta') {
+      kind = 'reasoning';
+      id = `reasoning:${event.messageId ?? event.cursor}`;
+    } else if (event.type === 'tool' && event.tool) {
+      kind = 'tool';
+      id = `tool:${event.tool.toolCallId}`;
+    } else if (event.type === 'plan') {
+      kind = 'plan';
+      id = 'plan';
+    } else if (event.type === 'error') {
+      kind = 'error';
+      id = `error:${event.cursor}`;
+    }
+    if (!kind) return;
+
+    const timeline = this.timelineByTask.get(event.taskId) ?? [];
+    this.timelineByTask.set(event.taskId, timeline);
+    const index = timeline.findIndex((entry) => entry.id === id);
+    if (index < 0) {
+      timeline.push({
+        sequence: ++this.timelineSequence,
+        id,
+        kind,
+        text: event.type === 'error' ? event.error : event.text,
+        tool: event.tool,
+        plan: event.plan,
+      });
+      return;
+    }
+    const current = timeline[index];
+    timeline[index] = {
+      ...current,
+      text: event.text === undefined ? current.text : `${current.text ?? ''}${event.text}`,
+      tool: event.tool ? { ...current.tool, ...event.tool } as ToolItem : current.tool,
+      plan: event.plan ?? current.plan,
+    };
   }
 }

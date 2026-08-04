@@ -13,6 +13,15 @@ onlyBuiltDependencies:
   - '@lynx-js/lynxtron-builder'
   - 'better-sqlite3'
 
+allowBuilds:
+  '@lynx-js/lynxtron': true
+  '@lynx-js/lynxtron-builder': true
+  core-js: true
+  esbuild: true
+  sqlite3: true
+  electron-winstaller: true
+  open-computer-use: true
+
 catalog:
   '@lynx-js/lynxtron': 0.0.8
   '@lynx-js/lynxtron-builder': 0.0.8

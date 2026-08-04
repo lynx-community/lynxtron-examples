@@ -1,9 +1,12 @@
 import { app, dialog, LynxWindow, Menu } from '@lynx-js/lynxtron';
 import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
+import { cpSync, mkdirSync } from 'fs';
 import path from 'path';
 import type { BridgeResult, StartTaskInput } from '../../shared/agent';
 import { AgentRuntime } from './agents/runtime';
 import { TaskStore } from './agents/task-store';
+import { installComputerUseRuntime } from './computer-use-runtime';
+import { installOpenCodeRuntime } from './opencode-runtime';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 
 function asRecord(value: unknown): Record<string, any> {
@@ -16,6 +19,24 @@ function ok<T>(value: T): BridgeResult<T> {
 
 function fail(error: unknown): BridgeResult<never> {
   return { ok: false, error: error instanceof Error ? error.message : String(error) };
+}
+
+function prepareOpenCodeConfig(): { configDir: string; computerUseBin: string; openCodeBin: string } {
+  const source = path.join(__dirname, 'opencode');
+  const target = path.join(app.getPath('userData'), 'codex-demo', 'opencode');
+  mkdirSync(target, { recursive: true });
+  cpSync(path.join(source, 'opencode.json'), path.join(target, 'opencode.json'), { force: true });
+  cpSync(path.join(source, 'skills'), path.join(target, 'skills'), { recursive: true, force: true });
+
+  const computerUseBin = installComputerUseRuntime(
+    path.join(source, 'runtime'),
+    path.join(app.getPath('userData'), 'codex-demo', 'runtime'),
+  );
+  const openCodeBin = installOpenCodeRuntime(
+    path.join(source, 'agent-runtime'),
+    path.join(app.getPath('userData'), 'codex-demo', 'opencode-runtime'),
+  );
+  return { configDir: target, computerUseBin, openCodeBin };
 }
 
 app.whenReady().then(() => {
@@ -36,6 +57,8 @@ app.whenReady().then(() => {
     },
   });
 
+  const prepared = prepareOpenCodeConfig();
+  process.env.OPENCODE_BIN = prepared.openCodeBin;
   const store = new TaskStore(path.join(app.getPath('userData'), 'codex-demo', 'tasks.json'));
   const runtime = new AgentRuntime(store, (event) => {
     try {
@@ -43,7 +66,7 @@ app.whenReady().then(() => {
     } catch (error) {
       console.error('[Codex Demo] Failed to push agent event:', error);
     }
-  });
+  }, prepared.configDir, prepared.computerUseBin);
 
   const menuTemplate: any[] = [];
   if (process.platform === 'darwin') menuTemplate.push({ role: 'appMenu' });
@@ -72,6 +95,13 @@ app.whenReady().then(() => {
           break;
         case 'agent:eventsSince':
           callback.sendReply(ok(runtime.eventsSince(Number(params.cursor ?? 0))));
+          break;
+        case 'agent:timelinePage':
+          callback.sendReply(ok(runtime.timelinePage(
+            String(params.taskId ?? ''),
+            params.before === undefined ? undefined : Number(params.before),
+            Number(params.limit ?? 50),
+          )));
           break;
         case 'review:snapshot':
           callback.sendReply(ok(runtime.reviewSnapshot(String(params.taskId ?? ''))));
