@@ -1,0 +1,30 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import type { AgentEvent } from '../../../shared/agent';
+import { AgentRuntime } from './runtime';
+import { TaskStore } from './task-store';
+
+describe('AgentRuntime', () => {
+  it('normalizes mock agent turns into the same event stream as real agents', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'codex-demo-runtime-'));
+    const events: AgentEvent[] = [];
+    const runtime = new AgentRuntime(new TaskStore(join(directory, 'tasks.json')), (event) => events.push(event));
+
+    try {
+      const task = await runtime.startTask({ backendId: 'mock', cwd: directory });
+      runtime.startPrompt(task.id, 'verify the adapter');
+      await new Promise((resolve) => setTimeout(resolve, 750));
+
+      expect(events.some((event) => event.type === 'reasoning-delta')).toBe(true);
+      expect(events.some((event) => event.type === 'plan')).toBe(true);
+      expect(events.filter((event) => event.type === 'message-delta').map((event) => event.text).join(''))
+        .toContain('verify the adapter');
+      expect(runtime.listTasks()[0].status).toBe('complete');
+      expect(runtime.eventsSince(0).cursor).toBeGreaterThan(0);
+    } finally {
+      runtime.dispose();
+    }
+  });
+});
