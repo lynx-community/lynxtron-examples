@@ -30,11 +30,12 @@ Give the commands bar room to breathe, and the palette a way to be found.
   hover. Previously the palette hint was plain text large enough to compete with
   the label beside it.
 
-- **Menu item text was invisible.** Lynx `<text>` does not inherit colour or
-  size from its parent `<view>`, and `.bp3-menu-item-text` set neither — the
-  styling lived on the item wrapper. Icons and accelerators showed because they
-  set their own. The Menu primitive had never been rendered before this change,
-  so nothing had exercised it.
+- **Menu item text was invisible.** `.bp3-menu-item-text` carried `flex: 1`,
+  whose zero basis collapses a `<text>` to zero width in a row: Lynx has no
+  `min-content` and its shrink floor is `0px`, so nothing holds the text open
+  the way `min-width: auto` does on the web. It grows with `flex-grow` and an
+  `auto` basis instead. The Menu primitive had never been rendered before this
+  change, so nothing had exercised it.
 
 - **Editor panes read as objects.** Each pane closes with a hairline instead of
   relying on gutter gaps alone, and the focused one states itself structurally —
@@ -45,3 +46,24 @@ Give the commands bar room to breathe, and the palette a way to be found.
   sits below the code it names. The control cluster is no longer
   `transform: scale(0.75)` — scaling shrank the hit targets and knocked the
   glyphs off the baseline; the buttons are simply sized small.
+
+- **The bar has tooltips, and Console has dropped its label.** Lynx draws no
+  tooltip and `title` is inert here — the only "tooltip" in the Lynxtron API is
+  a vibrancy material name — so every `title` in this bar promised an
+  affordance that did not exist, and no control could shed its word. A bar
+  tooltip was blocked twice over: the header clips its children, and the native
+  editor painted above all Lynx UI. Both are gone, so the bubble now renders
+  through the shared platform overlay host, positioned from the anchor's
+  measured rect. Console, whose label only repeated a panel already on screen,
+  is now an icon.
+
+- **The version button wears the Lynxtron mark** instead of `saved`, a tick
+  that said "saved" — something that button has never meant. Two lockups ship,
+  because the mark is a near-black disc that reads as a hole on the dark bar,
+  and Lynx's `filter` has no `invert` to derive one at runtime.
+
+- **The gallery's Electron Fiddles collection has a card.** All 55 sat below
+  ten full-bleed cards, past two screens, with nothing on the first screen
+  saying they existed. The collection now takes the first grid slot; its one
+  action is Browse, because opening or running "all 55 fiddles" is exactly the
+  confusion the collection was split up to avoid.
