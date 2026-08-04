@@ -44,6 +44,29 @@ function tagTint(tag: string): (typeof TAG_TINTS)[number] {
   return TAG_TINTS[h % TAG_TINTS.length];
 }
 
+/**
+ * The fiddles section lives below ten full-bleed cards — well past two screens
+ * on a normal window — so nothing on the first screen said the collection was
+ * there at all. It gets a card in the grid like everything else, and the card
+ * takes you to it.
+ */
+const FIDDLES_SECTION_ID = 'gallery-fiddles-section';
+
+function scrollToFiddles() {
+  try {
+    // @ts-ignore — SelectorQuery is a runtime global, not in the app types.
+    lynx.createSelectorQuery()
+      .select(`#${FIDDLES_SECTION_ID}`)
+      .invoke({
+        method: 'scrollIntoView',
+        params: { scrollIntoViewOptions: { block: 'start', behavior: 'smooth' } },
+        success: () => {},
+        fail: () => {},
+      })
+      .exec();
+  } catch (_) { /* no query available — the section is still reachable by scrolling */ }
+}
+
 const FIDDLE_STATUS_LABEL: Record<string, string> = {
   working: 'working',
   partial: 'partial',
@@ -81,7 +104,7 @@ function ElectronFiddlesSection({
 
   return (
     <>
-      <view className="GallerySectionRule">
+      <view className="GallerySectionRule" id={FIDDLES_SECTION_ID}>
         <text className="GallerySectionLabel">
           ELECTRON FIDDLES ON LYNXTRON · {String(fiddles.length)}
         </text>
@@ -170,6 +193,11 @@ export function GalleryHome({
   const featured = fiddleShowcase
     ? SHOWCASE_REGISTRY.filter(e => e.name !== FIDDLE_SHOWCASE_NAME)
     : SHOWCASE_REGISTRY;
+  // The collection card is one of the cards under this rule, so the count has
+  // to include it — a header that disagrees with what is under it is worse
+  // than no header.
+  const showsCollectionCard = !!fiddleShowcase && FIDDLE_CATALOG.fiddles.length > 0;
+  const gridCount = featured.length + (showsCollectionCard ? 1 : 0);
 
   return (
     <view className="GalleryHome">
@@ -195,11 +223,56 @@ export function GalleryHome({
         </view>
 
         <view className="GallerySectionRule">
-          <text className="GallerySectionLabel">FEATURED SHOWCASES · {String(featured.length)}</text>
+          <text className="GallerySectionLabel">FEATURED SHOWCASES · {String(gridCount)}</text>
           <view className="GallerySectionLine" />
         </view>
 
         <view className="GalleryGrid">
+          {/* First slot, because it is the largest thing here and used to be the
+              least visible. It is a collection, not a showcase: opening or
+              running "all 55 fiddles" is meaningless, so its one action is to
+              take you to them. */}
+          {showsCollectionCard && fiddleShowcase ? (
+            <view className="GalleryCard" bindtap={scrollToFiddles}>
+              <view className="GalleryThumb">
+                {fiddleShowcase.thumbnail ? (
+                  <image className="GalleryThumbImage" src={fiddleShowcase.thumbnail} mode="aspectFill" />
+                ) : (
+                  <view className="GalleryThumbFallback">
+                    <text className="GalleryThumbFallbackText">EF</text>
+                  </view>
+                )}
+                <view className="GalleryThumbOverlay">
+                  <text className="GalleryThumbOverlayText">
+                    {String(FIDDLE_CATALOG.fiddles.length)} FIDDLES
+                  </text>
+                </view>
+              </view>
+
+              <view className="GalleryCardBody">
+                <view className="GalleryCardTitleRow">
+                  <text className="GalleryCardTitle" text-maxline="1">Electron Fiddles</text>
+                  <view className="GalleryTagRow">
+                    <view className="GalleryTag GalleryTag--teal">
+                      <text className="GalleryTagText GalleryTagText--teal">collection</text>
+                    </view>
+                  </view>
+                </view>
+                <text className="GalleryCardDescription" text-maxline="2">
+                  {fiddleShowcase.description}
+                </text>
+              </view>
+
+              <view className="GalleryCardFooter" catchtap={() => {}}>
+                <view
+                  className="GalleryCardAction GalleryCardAction--primary"
+                  bindtap={scrollToFiddles}
+                >
+                  <text className="GalleryCardActionText GalleryCardActionText--primary">Browse</text>
+                </view>
+              </view>
+            </view>
+          ) : null}
           {featured.map(entry => (
             <view
               key={entry.name}
