@@ -2695,9 +2695,19 @@ export function App(props: { onRender?: () => void } = {}) {
     onRunShowcaseOnWeb: runShowcaseEntryOnWeb,
     onDebugExampleRoute: () => { setGalleryOpen(false); openExampleArtifactDirect('view'); },
   };
-  const galleryNode = isGalleryOpen ? <GalleryHome {...galleryProps} /> : null;
-  // Legacy IDE has no Fiddle shell to host the gallery — full overlay fallback
-  // (standalone: the page carries its own Back since there is no commands bar).
+  /**
+   * `standalone` on both paths, because the gallery always has to carry its own
+   * exit now. It renders into the shared cover-view, and that platform overlay
+   * swallows input for the WHOLE window while it is up — measured: with the
+   * gallery open, a tap on the commands bar's Gallery toggle does nothing,
+   * while the identical tap works with no overlay. `pointer-events: none` on
+   * the host does not reach the platform layer.
+   *
+   * So the bar's pressed toggle, which used to be the way back, is unreachable
+   * from here, and a full-page surface with no exit inside itself is a trap.
+   */
+  const galleryNode = isGalleryOpen ? <GalleryHome {...galleryProps} standalone /> : null;
+  // Legacy IDE has no Fiddle shell to host the gallery — full overlay fallback.
   const galleryOverlay = showLegacyIde && isGalleryOpen ? (
     <PlatformOverlay priority={300}>
       <view className="GalleryOverlay">

@@ -444,6 +444,25 @@ function openPreviewWindow(title: string, fileRoots: string[]): LynxWindowInstan
  */
 type MenuSurface = 'fiddle' | 'workspace';
 
+/**
+ * Re-issue whichever load brought this window up. The same two branches as the
+ * initial load, deliberately: a dev window points at the rspeedy server and a
+ * packaged one at the bundle on disk, and a reload that swapped between them
+ * would be a different window, not the same one again.
+ */
+function reloadWindow(w: LynxWindowInstance) {
+  try {
+    if (isDev) {
+      w.loadURL('http://localhost:3000/main.lynx.bundle');
+    } else {
+      w.loadFile(LYNX_BUNDLE_PATH);
+    }
+    console.log('[PC_Host] menu: reload');
+  } catch (e: any) {
+    console.error('[PC_Host] reload failed:', e?.message ?? String(e));
+  }
+}
+
 function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
   const isWorkspace = surface === 'workspace';
   /** Fiddle surface only — Fiddle.tsx is unmounted on the workspace surface. */
@@ -681,7 +700,20 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
             click: () => sendCmd('resetLayout'),
           }]),
       { type: 'separator' },
-      { role: 'reload' },
+      /**
+       * Reload has to be spelled out. `{ role: 'reload' }` is an Electron role
+       * and Lynxtron has no web contents to reload — LynxWindow offers
+       * loadFile/loadURL/loadBundle and no reload() — so the item drew a label
+       * and did nothing. Its default accelerator also collided with ⌘R, which
+       * this app spends on Run; Run keeps it, and reloading takes ⇧⌘R.
+       */
+      {
+        id: 'reloadBundle',
+        label: 'Reload',
+        accelerator: 'CmdOrCtrl+Shift+R',
+        registerAccelerator: true,
+        click: () => reloadWindow(w),
+      },
       { type: 'separator' },
       { role: 'togglefullscreen' },
     ],
