@@ -108,11 +108,29 @@
 }
 /* The mark keeps its own colour and full strength while the glyphs around it
    are muted — it is the one thing in the bar that is not an instruction.
-   Sized explicitly: Lynx images have no intrinsic size to fall back on. */
+   Sized explicitly: Lynx images have no intrinsic size to fall back on.
+
+   Both lockups ship and the theme picks one. Dark is the default (the root
+   carries .theme-light only when light), so the reverse is the one that shows
+   unless told otherwise. */
 .commands-mark {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
+  display: flex;
+}
+.commands-mark-art {
+  width: 14px;
+  height: 14px;
+}
+.commands-mark-art--on-light {
+  display: none;
+}
+.theme-light .commands-mark-art--on-light {
+  display: flex;
+}
+.theme-light .commands-mark-art--on-dark {
+  display: none;
 }
 .commands .bp3-button:hover .bp3-icon,
 .commands .bp3-button.bp3-active .bp3-icon,

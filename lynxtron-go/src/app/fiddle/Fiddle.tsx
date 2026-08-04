@@ -502,6 +502,9 @@ export function Fiddle(props: FiddleProps) {
     'fiddle:run': () => handleRun(),
     'fiddle:stop': () => { if (runner.isRunning) runner.stop(); },
     'fiddle:toggleConsole': () => setConsoleShowing(v => !v),
+    // The gallery is the largest surface in the app and had no automation
+    // entry, so it could only ever be checked by hand.
+    'fiddle:toggleGallery': () => handleToggleGallery(),
     'fiddle:resetLayout': () => fiddle.resetLayout(),
     // Dev automation: drive sidebar interactions headlessly (eye toggle /
     // file select) — real mouse taps need Accessibility trust agents lack.

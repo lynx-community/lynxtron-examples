@@ -128,10 +128,17 @@ export const SHOWCASE_PREVIEW: boolean =
 export const SHOWCASE_LOCAL_WORKSPACE: boolean =
   typeof __SHOWCASE_LOCAL_WORKSPACE__ !== 'undefined' ? __SHOWCASE_LOCAL_WORKSPACE__ : false;
 
-/** file:// URL of the Lynxtron mark beside the bundle; empty under vitest. */
+/**
+ * file:// URLs of the Lynxtron mark beside the bundle; empty under vitest.
+ * Two lockups: the stock mark is a near-black disc, which is a hole on the
+ * dark bar, so dark surfaces get the reverse.
+ */
 declare const __BRAND_MARK_URL__: string;
+declare const __BRAND_MARK_ON_DARK_URL__: string;
 export const BRAND_MARK_URL: string =
   typeof __BRAND_MARK_URL__ !== 'undefined' ? __BRAND_MARK_URL__ : '';
+export const BRAND_MARK_ON_DARK_URL: string =
+  typeof __BRAND_MARK_ON_DARK_URL__ !== 'undefined' ? __BRAND_MARK_ON_DARK_URL__ : '';
 
 // ── Output log ────────────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
 import { useState } from '@lynx-js/react';
-import { BRAND_MARK_URL, getExposed } from '../../store';
+import { BRAND_MARK_ON_DARK_URL, BRAND_MARK_URL, getExposed } from '../../store';
 import { Button, ControlGroup, InputGroup } from '../bp';
 import { Tooltip } from '../bp/Tooltip';
 import './Commands.css';
@@ -63,12 +63,19 @@ export function Commands(props: CommandsProps) {
       <view className="commands-left">
         <ControlGroup>
           {/* The mark itself, not a stand-in glyph. `saved` was a tick — it
-              said "saved", which this button has never meant. */}
+              said "saved", which this button has never meant.
+
+              Both lockups are rendered and CSS shows one. Picking in JS would
+              mean threading the resolved theme down here for a value that is
+              already expressed as a class on the root. */}
           <Tooltip content="Choose Lynxtron version">
             <Button
-              iconNode={BRAND_MARK_URL
-                ? <image className="commands-mark" src={BRAND_MARK_URL} />
-                : null}
+              iconNode={BRAND_MARK_URL ? (
+                <view className="commands-mark">
+                  <image className="commands-mark-art commands-mark-art--on-light" src={BRAND_MARK_URL} />
+                  <image className="commands-mark-art commands-mark-art--on-dark" src={BRAND_MARK_ON_DARK_URL} />
+                </view>
+              ) : null}
               rightIcon="chevron-down"
               text={props.currentVersion}
               disabled={gallery}
