@@ -50,6 +50,11 @@
   flex-shrink: 0;
 }
 /* upstream: .commands .bp3-control-group { margin-right: 0.5rem; } */
+/* Grouped controls used to touch, so a neighbour's hover wash ran straight
+   into Run's green edge and the two read as one smeared shape. */
+.commands .bp3-control-group {
+  column-gap: 4px;
+}
 .commands-left .bp3-control-group {
   margin-right: 6px;
 }
@@ -66,7 +71,6 @@
   min-height: 26px;
   padding: 0 8px;
   font-size: 12px;
-  line-height: 26px;
   border-radius: 5px;
 }
 /* Frameless secondaries, in BOTH themes. Whether a control is a box or a label
@@ -107,9 +111,16 @@
 .commands .bp3-button.bp3-intent-primary .bp3-icon {
   opacity: 1;
 }
+/* line-height 1 and let align-items do the work. A 26px line box inside a 26px
+   button centres only if its half-leading divides evenly, and the icon beside
+   it renders at line-height 1 — so the label and its icon were sitting on
+   different centres. */
 .commands .bp3-button .bp3-button-text {
   font-size: 12px;
-  line-height: 26px;
+  line-height: 1;
+}
+.commands .bp3-button .bp3-icon {
+  line-height: 1;
 }
 .commands .bp3-button .bp3-icon {
   font-size: 12px;
@@ -161,8 +172,15 @@
      Making it merely shrinkable did nothing: the drag region only ever gets
      the leftover, so nothing was ever pressing on it. */
   flex-shrink: 0;
-  flex-basis: 200px;
-  width: 200px;
+  flex-basis: 262px;
+  width: 262px;
+  column-gap: 4px;
+}
+/* The field takes the row; Load sits next to it at its own size. */
+.commands-address .bp3-input-group {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 /* ── Palette entry ────────────────────────────────────────────────────────

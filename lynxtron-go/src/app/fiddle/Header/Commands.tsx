@@ -122,16 +122,17 @@ export function Commands(props: CommandsProps) {
             value={gistInput}
             onChange={setGistInput}
             onSubmit={(v) => { if (v) props.onLoadGist(v); }}
-            rightElement={
-              <Button
-                icon="cloud-download"
-                text="Load"
-                title="Load Fiddle from this gist"
-                small
-                disabled={!gistInput || gallery}
-                onClick={() => { if (gistInput) props.onLoadGist(gistInput); }}
-              />
-            }
+          />
+          {/* Beside the field, not inside it. As a rightElement it was absolutely
+              positioned over the input, so the URL ran underneath the button and
+              the two read as one confused control. */}
+          <Button
+            icon="cloud-download"
+            text="Load"
+            title="Load Fiddle from this gist"
+            small
+            disabled={!gistInput || gallery}
+            onClick={() => { if (gistInput) props.onLoadGist(gistInput); }}
           />
         </view>
         <Button

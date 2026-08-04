@@ -663,3 +663,49 @@
     0 2px 4px rgba(16,22,26,0.2),
     0 8px 24px rgba(16,22,26,0.2);
 }
+
+/* ── Tooltip ──────────────────────────────────────────────────────────────
+   Lynx draws no tooltip of its own, so this is the whole mechanism. The
+   anchor wraps the control and positions the bubble below it; the bubble is
+   absolutely placed and therefore escapes nothing — a tooltip on a control
+   inside a clipped 51px header will be cut off, which is why the commands bar
+   anchors its own copy at the shell level instead. */
+.bp3-tooltip-anchor {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.bp3-tooltip {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  z-index: 600;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 6px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background-color: var(--surface-raised);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+}
+.bp3-tooltip-text {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--bp-text);
+}
+/* Same key cap as the bar and the overflow — one treatment everywhere. */
+.bp3-tooltip-key {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--bp-text-muted);
+  background-color: var(--overlay-soft);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
