@@ -2781,6 +2781,25 @@ export function App(props: { onRender?: () => void } = {}) {
     } catch (_) { /* older runtimes without the bridge keep the boot menu */ }
   }, [showLegacyIde]);
 
+  /**
+   * The app's ground is the WINDOW's background, not an element's — nothing in
+   * the Lynx tree may paint across a native editor without hiding it, and the
+   * root `<view>` is no exception. Only the UI knows which theme resolved, so
+   * it hands main the colour; main owns the window.
+   * Kept in step with --surface-chrome in App.css: this is the seam colour the
+   * mosaic, the sashes and the app edge all show.
+   */
+  useEffect(() => {
+    try {
+      // @ts-ignore
+      NativeModules.bridge.call(
+        'setWindowBackground',
+        { color: uiThemeDark ? '#2d313f' : '#eceef3' },
+        () => {},
+      );
+    } catch (_) { /* older runtimes keep whatever the window was created with */ }
+  }, [uiThemeDark]);
+
   const activeLoading = showcaseLoading ?? exampleArtifactLoading;
   const canGoBack = canNavigateRouteBack(routeNavigation);
   const canGoForward = canNavigateRouteForward(routeNavigation);

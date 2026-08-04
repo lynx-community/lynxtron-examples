@@ -151,6 +151,24 @@ export function Fiddle(props: FiddleProps) {
   const isMacPlatform = (() => {
     try { return getExposed()?.platform === 'darwin'; } catch (_) { return false; }
   })();
+  /**
+   * Detaching is not free: live text lives in the native view, and a reattached
+   * pane does not repaint on its own. Flush before it goes and re-push after it
+   * comes back — setText is idempotent, so the re-push heals drift without ever
+   * clearing the style bytes. #46 removed this along with the dialog-detach it
+   * belonged to; the gallery still needs it.
+   */
+  useEffect(() => {
+    if (props.galleryOpen) {
+      fiddle.flushAll();
+    } else {
+      for (const f of fiddle.snap.files.values()) {
+        if (f.visible) fiddle.pushContent(f.id);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.galleryOpen]);
+
   useEffect(() => {
     if (!props.overlayActive) return;
     setTemplatePickerOpen(false);
@@ -679,8 +697,19 @@ export function Fiddle(props: FiddleProps) {
                 onHideEditor={fiddle.hideEditor}
                 onResetLayout={fiddle.resetLayout}
                 pushContent={fiddle.pushContent}
+                suppressed={!!props.galleryOpen}
               />
             </SplitContainer>
+            {/* In the tree, not in the platform overlay. The gallery REPLACES
+                the editors rather than floating over them, so the native views
+                detach and there is nothing left for a cover-view to cover — and
+                a plain view leaves the rest of the window live, which is the
+                whole point: the bar's pressed Gallery toggle is the way back.
+                A cover-view here made the entire window deaf to input, so the
+                only exit sat in the one place that could not be clicked. */}
+            {props.galleryOpen && props.gallery ? (
+              <view className="FiddleGalleryLayer">{props.gallery}</view>
+            ) : null}
           </view>
           <Outputs
             runningPid={runner.pid}
@@ -691,18 +720,6 @@ export function Fiddle(props: FiddleProps) {
           />
         </SplitContainer>
       </view>
-      {props.galleryOpen && props.gallery ? (
-        <PlatformOverlay priority={50}>
-          <view
-            className="FiddleGalleryLayer"
-            style={mainRegionHeight > 0
-              ? { top: '51px', height: `${mainRegionHeight}px` }
-              : undefined}
-          >
-            {props.gallery}
-          </view>
-        </PlatformOverlay>
-      ) : null}
       {templatePickerOpen && (
         <TemplatePicker
           onPickBlank={() => { fiddle.loadTemplate('blank'); setCurrentShowcase(null); setTemplatePickerOpen(false); }}

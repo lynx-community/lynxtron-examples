@@ -15,6 +15,12 @@ export interface EditorPaneProps {
   onMaximize: (id: string) => void;
   onFocus: (id: string) => void;
   pushContent: (id: string) => void;
+  /**
+   * Detach the native view. #46 kept this channel open for exactly this: a
+   * surface that REPLACES the editors rather than floating over them does not
+   * need a platform overlay, and a plain Lynx view cannot cover a native one.
+   */
+  suppressed?: boolean;
 }
 
 /**
@@ -102,6 +108,7 @@ export function EditorPane(props: EditorPaneProps) {
           editor-id={scintillaIdFor(file.id)}
           font-size={String(editorFontSize())}
           theme-dark={isDarkTheme() ? 'true' : 'false'}
+          suppressed={props.suppressed ? 'true' : 'false'}
         />
       </view>
     </view>

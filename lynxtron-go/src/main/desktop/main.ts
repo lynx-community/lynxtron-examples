@@ -825,6 +825,11 @@ if (!hasSingleInstanceLock) {
     const w = new LynxWindow({
       width: 1200,
       height: 800,
+      // The ground under everything, including the native editors. Dark is the
+      // boot default; the UI corrects it via setWindowBackground once it knows
+      // which theme resolved. Without this the window comes up white and the
+      // seams flash before the first report.
+      backgroundColor: '#2d313f',
       ...devPosition,
       title: isIdeBootTarget ? 'Lynxtron IDE' : appTitle,
       // Upstream Fiddle: no visible titlebar — traffic lights float over the
@@ -978,6 +983,25 @@ if (!hasSingleInstanceLock) {
             }
           }
           callback.sendReply({ ok: true, surface: menuSurface });
+        } else if (name === 'setWindowBackground') {
+          /**
+           * The app's ground lives on the WINDOW, not on a Lynx element.
+           * A native editor is a platform subview of the renderer host, so any
+           * Lynx background above it paints over it — including the app root,
+           * which is a `<view>` inside `<page>` and gets its own sublayer. The
+           * window is the only surface strictly below both.
+           * The UI owns the theme, so it reports the colour rather than main
+           * re-deriving a palette it does not have.
+           */
+          const color = stringParam(params, 'color');
+          if (color && menuWindow) {
+            try {
+              menuWindow.setBackgroundColor(color);
+            } catch (e) {
+              console.error('[PC_Host] setBackgroundColor FAILED:', e);
+            }
+          }
+          callback.sendReply({ ok: true });
         } else if (name === 'getAppVersion') {
           callback.sendReply(app.getVersion());
         } else if (name === 'openFolder') {
