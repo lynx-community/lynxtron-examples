@@ -50,6 +50,9 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          # npm >=11.5.1 is required for OIDC trusted publishing. Node 22 ships
+          # with npm 10.x, so upgrade explicitly before `changeset publish` runs.
+          npm i -g npm@latest
           npm i -g corepack@latest --force
           corepack enable
           pnpm install
