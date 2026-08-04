@@ -3259,6 +3259,7 @@ text {
 
 .conversation {
   background-color: #ffffff;
+  position: relative;
 }
 
 .transcript {
@@ -3302,6 +3303,48 @@ text {
   color: #2f333a;
   font-size: 14px;
   line-height: 22px;
+}
+
+.timeline-footer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.timeline-history-loading {
+  color: #8a8f99;
+  font-size: 11px;
+  text-align: center;
+}
+
+.timeline-jump-controls {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 20;
+  display: flex;
+  gap: 6px;
+}
+
+.timeline-jump-button {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid #dedfe3;
+  border-radius: 14px;
+  background-color: rgba(255, 255, 255, 0.94);
+}
+
+.timeline-jump-button:active {
+  background-color: #f0f1f3;
+}
+
+.timeline-jump-text {
+  color: #656a73;
+  font-size: 10px;
+  font-weight: 600;
 }
 
 .tool-card,

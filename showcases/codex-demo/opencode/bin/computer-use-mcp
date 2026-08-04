@@ -1,0 +1,37 @@
+#!/bin/sh
+set -eu
+
+command_name="${1:-mcp}"
+if [ "$command_name" = "--help" ] || [ "$command_name" = "help" ]; then
+  echo "Usage: computer-use-mcp [mcp|doctor]"
+  exit 0
+fi
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+bundled_client="${script_dir}/../runtime/Open Computer Use.app/Contents/MacOS/OpenComputerUse"
+client="${OPEN_COMPUTER_USE_BIN:-${bundled_client}}"
+
+if [ -f "$client" ] && [ ! -x "$client" ]; then
+  chmod u+x "$client" 2>/dev/null || true
+fi
+
+if [ "$command_name" = "doctor" ]; then
+  if [ ! -x "$client" ]; then
+    echo "missing: $client" >&2
+    exit 1
+  fi
+  exec "$client" doctor
+fi
+
+if [ "$command_name" != "mcp" ]; then
+  echo "Unknown command: $command_name" >&2
+  exit 2
+fi
+
+if [ ! -x "$client" ]; then
+  echo "Open Computer Use runtime not found at $client" >&2
+  echo "Reinstall dependencies or set OPEN_COMPUTER_USE_BIN." >&2
+  exit 1
+fi
+
+exec "$client" mcp

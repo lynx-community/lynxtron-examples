@@ -1,0 +1,22 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "computer_use": {
+      "type": "local",
+      "command": [
+        "{env:CODEX_DEMO_COMPUTER_USE_BIN}",
+        "mcp"
+      ],
+      "enabled": true,
+      "timeout": 10000
+    }
+  },
+  "permission": {
+    "computer_use_*": "ask",
+    "computer_use_list_apps": "allow",
+    "computer_use_get_app_state": "allow",
+    "skill": {
+      "computer-use": "allow"
+    }
+  }
+}

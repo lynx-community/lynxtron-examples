@@ -12,6 +12,8 @@ output/
 
 build/
 **/build/
+.generated/
+**/.generated/
 
 *.tgz
 *.node

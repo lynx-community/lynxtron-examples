@@ -1,0 +1,11 @@
+.virtual-timeline {
+  min-height: 0;
+  flex: 1;
+  padding: 24px 26px 30px;
+}
+
+.virtual-timeline-item,
+.virtual-timeline-footer {
+  width: 100%;
+  padding-bottom: 20px;
+}

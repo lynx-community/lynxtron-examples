@@ -9,9 +9,12 @@
     "directory": "showcases/codex-demo"
   },
   "scripts": {
-    "build": "rspeedy build && rspack build",
-    "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
-    "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop",
+    "prepare:computer-use": "node scripts/prepare-computer-use-runtime.mjs",
+    "prepare:opencode": "node scripts/prepare-opencode-runtime.mjs",
+    "smoke:computer-use": "node scripts/smoke-computer-use-mcp.mjs",
+    "build": "pnpm run prepare:computer-use && pnpm run prepare:opencode && rspeedy build && rspack build",
+    "dev": "pnpm run prepare:computer-use && pnpm run prepare:opencode && cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
+    "start": "cross-env TARGET_ENV=desktop pnpm run build && lynxtron ./dist/desktop",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p src/app/tsconfig.json && tsc --noEmit -p src/main/desktop/tsconfig.json"
   },
@@ -26,7 +29,8 @@
     "minToolchainVersion": "0.0.8"
   },
   "dependencies": {
-    "@lynx-js/lynxtron": "catalog:"
+    "@lynx-js/lynxtron": "catalog:",
+    "open-computer-use": "0.3.1"
   },
   "devDependencies": {
     "@lynxtron-examples/config": "workspace:*",

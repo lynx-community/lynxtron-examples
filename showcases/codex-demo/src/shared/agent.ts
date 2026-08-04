@@ -117,6 +117,24 @@ export interface EventSnapshot {
   events: AgentEvent[];
 }
 
+export type TimelineKind = 'user' | 'assistant' | 'reasoning' | 'tool' | 'plan' | 'error';
+
+export interface TimelineEntry {
+  sequence: number;
+  id: string;
+  kind: TimelineKind;
+  text?: string;
+  tool?: ToolItem;
+  plan?: PlanEntry[];
+}
+
+export interface TimelinePage {
+  items: TimelineEntry[];
+  before?: number;
+  hasMore: boolean;
+  total: number;
+}
+
 export type ChangedFileStatus =
   | 'added'
   | 'modified'

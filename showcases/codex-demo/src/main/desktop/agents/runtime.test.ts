@@ -23,6 +23,16 @@ describe('AgentRuntime', () => {
         .toContain('verify the adapter');
       expect(runtime.listTasks()[0].status).toBe('complete');
       expect(runtime.eventsSince(0).cursor).toBeGreaterThan(0);
+
+      const latest = runtime.timelinePage(task.id, undefined, 2);
+      expect(latest.total).toBe(4);
+      expect(latest.items).toHaveLength(2);
+      expect(latest.items.at(-1)?.kind).toBe('assistant');
+      expect(latest.hasMore).toBe(true);
+
+      const earlier = runtime.timelinePage(task.id, latest.before, 2);
+      expect(earlier.items.map((item) => item.kind)).toEqual(['user', 'reasoning']);
+      expect(earlier.hasMore).toBe(false);
     } finally {
       runtime.dispose();
     }
