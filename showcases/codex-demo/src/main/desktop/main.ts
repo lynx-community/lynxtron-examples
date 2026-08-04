@@ -27,7 +27,10 @@ app.whenReady().then(() => {
     title: 'Codex Demo',
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 18, y: 16 },
-    backgroundColor: '#f7f8fa',
+    transparent: true,
+    backgroundColor: '#00000000',
+    vibrancy: 'under-window',
+    visualEffectState: 'active',
     lynxPreference: {
       preload: path.join(__dirname, 'preload.js'),
     },
@@ -69,6 +72,15 @@ app.whenReady().then(() => {
           break;
         case 'agent:eventsSince':
           callback.sendReply(ok(runtime.eventsSince(Number(params.cursor ?? 0))));
+          break;
+        case 'review:snapshot':
+          callback.sendReply(ok(runtime.reviewSnapshot(String(params.taskId ?? ''))));
+          break;
+        case 'review:fileDiff':
+          callback.sendReply(ok(runtime.fileDiff(
+            String(params.taskId ?? ''),
+            String(params.path ?? ''),
+          )));
           break;
         case 'agent:startTask':
           callback.sendReply(ok(await runtime.startTask(params as StartTaskInput)));
