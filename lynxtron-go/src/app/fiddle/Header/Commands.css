@@ -69,26 +69,31 @@
   line-height: 26px;
   border-radius: 5px;
 }
-/* Frameless secondaries. Every control in the bar carried a filled box and a
-   ring, so the row read as a strip of chips and the one button that matters —
-   Run — had to shout over the rest. Only the primary keeps a fill; the others
-   are their label until you reach for them. Light only: the dark bar already
-   reads this way, because its fill is a hair off the bar's own tone. */
-.theme-light .commands .bp3-button {
+/* Frameless secondaries, in BOTH themes. Whether a control is a box or a label
+   is a structural decision about hierarchy, not a colour one — scoping it to
+   light was wrong, and it left the two themes with different bars. Every
+   control used to carry a filled box and a ring, so the row read as a strip of
+   chips and the one button that matters had to shout over the rest. Now only
+   the primary is a shape; the others are their label until you reach for them. */
+.commands .bp3-button {
   background-color: transparent;
   background-image: none;
   box-shadow: none;
 }
-.theme-light .commands .bp3-button:hover {
+.commands .bp3-button:hover {
   background-color: var(--overlay-soft);
 }
-.theme-light .commands .bp3-button.bp3-active {
+.commands .bp3-button.bp3-active {
   background-color: var(--overlay-strong);
   box-shadow: none;
 }
-/* The primary is the exception: it keeps its fill, which is the point. */
-.theme-light .commands .bp3-button.bp3-intent-primary {
-  background-color: #2b8fd8;
+/* The primary is the exception, and the exception is the point: it is the only
+   filled shape in the bar, and it wears the brand. */
+.commands .bp3-button.bp3-intent-primary {
+  background-color: var(--brand);
+}
+.commands .bp3-button.bp3-intent-primary:hover {
+  background-color: var(--brand-hover);
 }
 /* Icons carry the verb, not the emphasis — a step lighter than the label so
    the row reads as text with marks beside it rather than a wall of glyphs. */

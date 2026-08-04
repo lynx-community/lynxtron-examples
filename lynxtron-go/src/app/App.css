@@ -82,6 +82,17 @@
      both themes, not just the one it was picked in. */
   --log-error: #ff7373;
   --log-info: #48aff0;
+
+  /* Brand. The green the launch window uses, and the same family as the
+     repo's --ok — but a distinct ROLE: --ok reports an outcome, --brand marks
+     the action that is the point of the app. It is one value in both themes,
+     because a brand colour that changes with the theme is not a brand colour.
+     The label is near-black in both: the green is bright enough that dark ink
+     beats white on it either way. */
+  --brand: #3dd68c;
+  --brand-hover: #34c47e;
+  --brand-active: #2ab070;
+  --brand-ink: #0d2118;
 }
 
 /* themes-defaults.ts defaultLight.common */
