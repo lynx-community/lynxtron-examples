@@ -108,6 +108,23 @@
     inset 0 -1px 0 rgba(16,22,26,0.2);
 }
 .bp3-button.bp3-intent-primary:hover { background-color: #106ba3; }
+/* Light mode was making the primary read as a slab of dark navy, from two
+   causes at once: `color: var(--text-color-1)` flips to BLACK on light, and
+   the inset ring is rgba(16,22,26,0.4) — a dark edge drawn for a dark bar,
+   which on a light one closes the button in and drags the whole fill down.
+   A primary on a light ground wants a lighter blue, a white label, and an
+   edge made of its own colour rather than of black. */
+.theme-light .bp3-button.bp3-intent-primary {
+  background-color: #2b8fd8;
+  background-image: none;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(16, 22, 26, 0.08);
+}
+.theme-light .bp3-button.bp3-intent-primary .bp3-button-text,
+.theme-light .bp3-button.bp3-intent-primary .bp3-icon { color: #ffffff; }
+.theme-light .bp3-button.bp3-intent-primary:hover { background-color: #1f7fc4; }
+.theme-light .bp3-button.bp3-intent-primary:active,
+.theme-light .bp3-button.bp3-intent-primary.bp3-active { background-color: #1a6ea9; }
 .bp3-button.bp3-intent-primary:active,
 .bp3-button.bp3-intent-primary.bp3-active { background-color: #0e5a8a; }
 .bp3-button.bp3-intent-danger {

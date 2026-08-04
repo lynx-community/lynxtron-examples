@@ -96,6 +96,10 @@
   text-overflow: ellipsis;
   margin: 0 10px;
 }
+/* Half of the traffic-light lane, spent as a right margin: a centred item with
+   margin M sits M/2 to the left of where it would be. 80px of lane, 80px of
+   margin, 40px of shift — which is the offset the lane creates. */
+.commands-title--offset { margin-right: 90px; }
 /* ONE width, always. Upstream animates the address bar between two widths
    (empty 300px / filled 420px), which means the field grows out from under the
    caret the instant you type the first character — the text you are entering

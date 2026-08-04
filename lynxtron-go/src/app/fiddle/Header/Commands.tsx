@@ -110,7 +110,16 @@ export function Commands(props: CommandsProps) {
           region (-x-app-region: drag) — controls live outside it, so the
           undocumented no-drag value is never needed. */}
       <view className="commands-drag">
-        <text className="commands-title" text-maxline="1">{props.title}</text>
+        {/* The lane sits only on the left, so a title centred in the space
+            between the clusters lands right of the window's centre. A mirror
+            spacer on the right squares it but leaves the right cluster short
+            of the edge, which reads as bad alignment — so the correction lives
+            on the title instead: a centred flex item with a right margin
+            shifts left by half of it. */}
+        <text
+          className={'commands-title' + (isMac && !props.fullScreen ? ' commands-title--offset' : '')}
+          text-maxline="1"
+        >{props.title}</text>
       </view>
       <view className="commands-right">
         <view className="commands-address">
@@ -154,12 +163,6 @@ export function Commands(props: CommandsProps) {
           active={!!props.overflowOpen}
           onClick={() => props.onToggleOverflow?.()}
         />
-        {/* Mirrors the traffic-light lane. The two clusters are within 3px of
-            each other, but the lane sits only on the left, so the space between
-            them — and the title centred in it — was pushed 42px right of the
-            window's centre. Balancing the sides is what makes "centred" mean
-            centred on the window rather than on the leftovers. */}
-        {isMac && !props.fullScreen ? <view className="commands-trafficlights" /> : null}
       </view>
     </view>
   );
