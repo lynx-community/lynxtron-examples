@@ -104,7 +104,10 @@
    same blue this app already spends on links and info logs. */
 .bp3-button.bp3-intent-primary {
   background-color: var(--brand);
-  background-image: none;
+  /* Top-lit, like the launch window's mark and Quick Start button: a flat fill
+     next to frameless neighbours reads as a swatch, a lit one reads as a
+     surface you can press. */
+  background-image: linear-gradient(to bottom, var(--brand-hi), var(--brand));
   color: var(--brand-ink);
   box-shadow: none;
 }
@@ -112,7 +115,10 @@
 .bp3-button.bp3-intent-primary .bp3-icon {
   color: var(--brand-ink);
 }
-.bp3-button.bp3-intent-primary:hover { background-color: var(--brand-hover); }
+.bp3-button.bp3-intent-primary:hover {
+  background-color: var(--brand-hover);
+  background-image: linear-gradient(to bottom, var(--brand), var(--brand-hover));
+}
 .bp3-button.bp3-intent-primary:active,
 .bp3-button.bp3-intent-primary.bp3-active { background-color: var(--brand-active); }
 .bp3-button.bp3-intent-danger {

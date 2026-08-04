@@ -83,16 +83,20 @@
   --log-error: #ff7373;
   --log-info: #48aff0;
 
-  /* Brand. The green the launch window uses, and the same family as the
-     repo's --ok — but a distinct ROLE: --ok reports an outcome, --brand marks
-     the action that is the point of the app. It is one value in both themes,
-     because a brand colour that changes with the theme is not a brand colour.
-     The label is near-black in both: the green is bright enough that dark ink
-     beats white on it either way. */
-  --brand: #3dd68c;
-  --brand-hover: #34c47e;
-  --brand-active: #2ab070;
-  --brand-ink: #0d2118;
+  /* Brand. The green the launch window uses — a distinct ROLE from --ok, which
+     reports an outcome; --brand marks the action the app exists for.
+     The HUE is fixed across themes; the rendering is not, and saying otherwise
+     earlier was wrong. A colour reads differently against #22252f than against
+     white, so dark takes a more saturated green and light a paler one — same
+     brand, adapted to its ground, which is what every brand does. The label
+     stays near-black on both: the green is bright enough that dark ink wins.
+     The gradient is the launch window's, and gives the one filled shape in the
+     bar some depth to distinguish it from a flat swatch. */
+  --brand: #3ddd8c;
+  --brand-hi: #57e89f;
+  --brand-hover: #34cb7f;
+  --brand-active: #2ab470;
+  --brand-ink: #0b2417;
 }
 
 /* themes-defaults.ts defaultLight.common */
@@ -112,6 +116,13 @@
   --edge-strong: rgba(16, 22, 26, 0.28);
   --log-error: #c23030;
   --log-info: #106ba3;
+  /* Paler on a white ground — the dark theme's saturation reads as a shout
+     here, where nothing else is saturated at all. */
+  --brand: #62d99a;
+  --brand-hi: #86e6b3;
+  --brand-hover: #52cd8c;
+  --brand-active: #43bd7d;
+  --brand-ink: #0b2417;
   --background-4: #fbfbfb;
   --background-3: #fbfbfb;
   --background-2: #d6dde0;

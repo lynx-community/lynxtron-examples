@@ -94,17 +94,6 @@ export function Commands(props: CommandsProps) {
             onClick={props.onToggleGallery}
           />
         </ControlGroup>
-        {/* Gallery's sibling: one browses showcases by eye, the other jumps by
-            typing. The accelerator is the label — a palette nobody knows the
-            key for is a palette nobody opens. */}
-        <ControlGroup className="commands-palette">
-          <Button
-            icon="search"
-            text={isMac ? '\u2318P' : 'Ctrl+P'}
-            title="Quick Open (files) · type > for commands, or press \u2318K"
-            onClick={() => props.onOpenPalette?.()}
-          />
-        </ControlGroup>
       </view>
       {/* hiddenInset window: the flexible middle of the header is the drag
           region (-x-app-region: drag) — controls live outside it, so the
@@ -151,6 +140,20 @@ export function Commands(props: CommandsProps) {
           disabled={gallery}
           onClick={props.onPublishGist}
         />
+        {/* Search lives on the right, the way it does in the editors this bar is
+            modelled on — and it is what brings the two clusters to within a
+            few pixels of each other, which is what lets the title be centred
+            without spending its own width on the correction. The accelerator
+            is the label: a palette nobody knows the key for is a palette
+            nobody opens. */}
+        <ControlGroup className="commands-palette">
+          <Button
+            icon="search"
+            text={isMac ? '\u2318P' : 'Ctrl+P'}
+            title="Quick Open (files) · type > for commands, or press \u2318K"
+            onClick={() => props.onOpenPalette?.()}
+          />
+        </ControlGroup>
         {/* App-scoped, like the overflow beside it — and moving it off the left
             evens the two clusters, which is what lets the centred title sit
             near the real centre of the window rather than the centre of

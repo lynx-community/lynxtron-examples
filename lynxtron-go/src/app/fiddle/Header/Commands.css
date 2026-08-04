@@ -91,9 +91,11 @@
    filled shape in the bar, and it wears the brand. */
 .commands .bp3-button.bp3-intent-primary {
   background-color: var(--brand);
+  background-image: linear-gradient(to bottom, var(--brand-hi), var(--brand));
 }
 .commands .bp3-button.bp3-intent-primary:hover {
   background-color: var(--brand-hover);
+  background-image: linear-gradient(to bottom, var(--brand), var(--brand-hover));
 }
 /* Icons carry the verb, not the emphasis — a step lighter than the label so
    the row reads as text with marks beside it rather than a wall of glyphs. */
@@ -137,7 +139,11 @@
 /* Half of the traffic-light lane, spent as a right margin: a centred item with
    margin M sits M/2 to the left of where it would be. 80px of lane, 80px of
    margin, 40px of shift — which is the offset the lane creates. */
-.commands-title--offset { margin-right: 90px; }
+/* Only the residue. With search moved to the right cluster the two sides are
+   nearly equal, so all that is left to correct is a fraction of the lane —
+   and every pixel of this margin comes straight off the title's own width,
+   which is what was ellipsising it. */
+.commands-title--offset { margin-right: 24px; }
 /* ONE width, always. Upstream animates the address bar between two widths
    (empty 300px / filled 420px), which means the field grows out from under the
    caret the instant you type the first character — the text you are entering
@@ -149,9 +155,14 @@
   flex-direction: row;
   align-items: center;
   flex-grow: 0;
+  /* 200, not 280. Fixed either way — a field that resizes while you type is a
+     field you cannot aim at — but 280 made it the largest single consumer in
+     the bar, and the title was ellipsising at 153px while this sat half empty.
+     Making it merely shrinkable did nothing: the drag region only ever gets
+     the leftover, so nothing was ever pressing on it. */
   flex-shrink: 0;
-  flex-basis: 280px;
-  width: 280px;
+  flex-basis: 200px;
+  width: 200px;
 }
 
 /* ── Palette entry ────────────────────────────────────────────────────────
@@ -159,10 +170,14 @@
    a hairline, the same treatment every accelerator gets (see .KeyHint in
    bp.css). Small and quiet — it teaches the shortcut once and then stops
    asking for attention; hover brings it up to full contrast. */
-.commands-palette .bp3-button-text {
+.commands .commands-palette .bp3-button .bp3-button-text {
+  /* Beats `.commands .bp3-button .bp3-button-text` on specificity — that rule
+     is three classes to this one's two, so the badge lost its size and its
+     26px-tall leading to it however the file was ordered. */
   font-family: 'SF Mono', Menlo, monospace;
   font-size: 10px;
   line-height: 14px;
+  height: 16px;
   letter-spacing: 0.02em;
   color: var(--bp-text-muted);
   background-color: var(--overlay-soft);
@@ -171,7 +186,7 @@
   margin-left: 1px;
   opacity: 0.75;
 }
-.commands-palette .bp3-button:hover .bp3-button-text {
+.commands .commands-palette .bp3-button:hover .bp3-button-text {
   color: var(--bp-text);
   background-color: var(--overlay-strong);
   opacity: 1;
