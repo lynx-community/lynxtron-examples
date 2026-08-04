@@ -13,8 +13,11 @@ transport development testable without an agent account.
   reasoning updates, plans, tools, usage, cancellation, config options, and
   permission decisions;
 - persisted task metadata and replayable host events;
-- workspace selection, task sidebar, conversation composer, live status,
-  permission bar, and changed-file review summary;
+- workspace selection, task sidebar, conversation composer, live status, and
+  permission bar;
+- repository-backed Review with changed-file counts, line-level diffs, and a
+  multi-tab preview workspace whose typed slots can also host files, terminals,
+  browsers, images, or custom preview providers;
 - native desktop text selection and clipboard copy for user, assistant,
   reasoning, plan, tool-output, and error text in the conversation stream;
 - a Mock backend using the same normalized event contract as OpenCode.

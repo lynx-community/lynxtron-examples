@@ -7,12 +7,15 @@ import type {
   EventSnapshot,
   PermissionRequest,
   PlanEntry,
+  FileDiff,
+  ReviewSnapshot,
   StartTaskInput,
   TaskStatus,
   ToolItem,
 } from '../../../shared/agent';
 import { AcpClient, type AcpServerRequest } from './acp-client';
 import { probeOpenCode } from './opencode-discovery';
+import { ReviewService } from './review-service';
 import { TaskStore } from './task-store';
 
 type Emit = (event: AgentEvent) => void;
@@ -55,10 +58,12 @@ export class AgentRuntime {
   private readonly tasks = new Map<string, AgentTask>();
   private readonly sessionToTask = new Map<string, string>();
   private readonly permissions = new Map<string, PendingPermission>();
+  private readonly lastUserMessageByTask = new Map<string, string>();
   private readonly eventBuffer: AgentEvent[] = [];
   private cursor = 0;
   private openCodeClient: AcpClient | null = null;
   private openCodeInfo: BackendInfo | null = null;
+  private readonly reviewService = new ReviewService();
 
   constructor(
     private readonly store: TaskStore,
@@ -97,6 +102,15 @@ export class AgentRuntime {
     };
   }
 
+  reviewSnapshot(taskId: string): ReviewSnapshot {
+    const task = this.requireTask(taskId);
+    return this.reviewService.snapshot(task.cwd, task.lastTurnChangedFiles ?? []);
+  }
+
+  fileDiff(taskId: string, path: string): FileDiff {
+    return this.reviewService.fileDiff(this.requireTask(taskId).cwd, path);
+  }
+
   async startTask(input: StartTaskInput): Promise<AgentTask> {
     if (!input.cwd || !input.cwd.startsWith('/')) throw new Error('Choose an absolute workspace path.');
     if (input.backendId === 'mock') return this.startMockTask(input.cwd);
@@ -128,6 +142,8 @@ export class AgentRuntime {
     if (task.backendId === 'mock') return task;
     const client = await this.ensureOpenCode(task.cwd);
     this.sessionToTask.set(task.sessionId, task.id);
+    task.lastTurnChangedFiles = [];
+    this.lastUserMessageByTask.delete(task.id);
     const response = asRecord(await client.loadSession(task.sessionId, task.cwd));
     if (Array.isArray(response.configOptions)) task.configOptions = response.configOptions as ConfigOption[];
     task.status = 'idle';
@@ -143,6 +159,8 @@ export class AgentRuntime {
     const task = this.requireTask(taskId);
     if (task.status === 'running' || task.status === 'waiting') throw new Error('This task is already running.');
 
+    task.lastTurnChangedFiles = [];
+    this.persist();
     this.setTaskStatus(task, 'running');
     this.push({
       type: 'user-message',
@@ -285,6 +303,29 @@ export class AgentRuntime {
     const update = asRecord(params.update);
     const taskId = this.sessionToTask.get(String(params.sessionId));
     if (!taskId) return;
+
+    if (update.sessionUpdate === 'user_message_chunk' && update.messageId !== undefined) {
+      const messageId = String(update.messageId);
+      if (this.lastUserMessageByTask.get(taskId) !== messageId) {
+        this.lastUserMessageByTask.set(taskId, messageId);
+        const task = this.tasks.get(taskId);
+        if (task) {
+          task.lastTurnChangedFiles = [];
+          this.persist();
+        }
+      }
+    }
+    if (update.sessionUpdate === 'tool_call' || update.sessionUpdate === 'tool_call_update') {
+      const task = this.tasks.get(taskId);
+      if (task && Array.isArray(update.locations)) {
+        const current = new Set(task.lastTurnChangedFiles ?? []);
+        for (const location of update.locations) {
+          if (location?.path) current.add(String(location.path));
+        }
+        task.lastTurnChangedFiles = [...current];
+        this.persist();
+      }
+    }
 
     const base = { taskId, raw: update };
     switch (update.sessionUpdate) {

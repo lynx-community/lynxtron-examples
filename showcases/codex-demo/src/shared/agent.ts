@@ -37,6 +37,7 @@ export interface AgentTask {
   updatedAt: number;
   status: TaskStatus;
   configOptions: ConfigOption[];
+  lastTurnChangedFiles?: string[];
 }
 
 export interface PermissionOption {
@@ -114,6 +115,66 @@ export interface StartTaskInput {
 export interface EventSnapshot {
   cursor: number;
   events: AgentEvent[];
+}
+
+export type ChangedFileStatus =
+  | 'added'
+  | 'modified'
+  | 'deleted'
+  | 'renamed'
+  | 'conflicted';
+
+export interface ChangedFile {
+  path: string;
+  status: ChangedFileStatus;
+  additions: number;
+  deletions: number;
+  staged: boolean;
+  unstaged: boolean;
+}
+
+export interface ReviewSnapshot {
+  root: string;
+  files: ChangedFile[];
+  additions: number;
+  deletions: number;
+}
+
+export type DiffLineKind = 'context' | 'addition' | 'deletion' | 'hunk' | 'meta';
+
+export interface DiffLine {
+  kind: DiffLineKind;
+  text: string;
+  oldLine?: number;
+  newLine?: number;
+}
+
+export interface FileDiff {
+  root: string;
+  path: string;
+  status: ChangedFileStatus;
+  additions: number;
+  deletions: number;
+  binary: boolean;
+  truncated: boolean;
+  lines: DiffLine[];
+}
+
+export type PreviewKind =
+  | 'review'
+  | 'diff'
+  | 'file'
+  | 'terminal'
+  | 'browser'
+  | 'image'
+  | 'custom';
+
+export interface PreviewTab {
+  id: string;
+  kind: PreviewKind;
+  title: string;
+  resource?: string;
+  closable: boolean;
 }
 
 export interface BridgeResult<T> {

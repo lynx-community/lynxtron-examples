@@ -5,9 +5,14 @@ import type {
   AgentTask,
   BackendInfo,
   BridgeResult,
+  ChangedFile,
+  DiffLine,
   EventSnapshot,
+  FileDiff,
   PermissionRequest,
   PlanEntry,
+  PreviewTab,
+  ReviewSnapshot,
   ToolItem,
 } from '../shared/agent';
 import './App.css';
@@ -22,7 +27,29 @@ interface TimelineItem {
   plan?: PlanEntry[];
 }
 
-const inputValueProp = (value: string) => ({ value }) as any;
+const AGENTS_TAB: PreviewTab = {
+  id: 'agents',
+  kind: 'custom',
+  title: 'Agents',
+  closable: false,
+};
+
+const REVIEW_TAB: PreviewTab = {
+  id: 'review',
+  kind: 'review',
+  title: 'Review',
+  closable: true,
+};
+
+const INITIAL_PREVIEW_TABS = [AGENTS_TAB, REVIEW_TAB];
+
+const EMPTY_REVIEW: ReviewSnapshot = {
+  root: '',
+  files: [],
+  additions: 0,
+  deletions: 0,
+};
+
 const readInputValue = (event: any): string => event?.detail?.value ?? event?.value ?? '';
 
 function callBridge<T>(method: string, data: unknown = {}): Promise<T> {
@@ -52,6 +79,63 @@ function relativeTime(timestamp: number): string {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h`;
   return `${Math.floor(hours / 24)}d`;
+}
+
+function fileName(path: string): string {
+  return path.split('/').filter(Boolean).pop() ?? path;
+}
+
+function statusBadge(file: ChangedFile): string {
+  if (file.status === 'added') return 'A';
+  if (file.status === 'deleted') return 'D';
+  if (file.status === 'renamed') return 'R';
+  if (file.status === 'conflicted') return '!';
+  return 'M';
+}
+
+function extensionBadge(path: string): string {
+  const name = fileName(path);
+  const extension = name.includes('.') ? name.split('.').pop() ?? '' : '';
+  return (extension || 'TXT').slice(0, 4).toUpperCase();
+}
+
+function DiffRow({ line }: { line: DiffLine }) {
+  const displayLine = line.kind === 'deletion' ? line.oldLine : (line.newLine ?? line.oldLine);
+  return (
+    <view className={`diff-line diff-line--${line.kind}`}>
+      <text className="diff-line-number">{displayLine === undefined ? '' : String(displayLine)}</text>
+      <text className="diff-line-marker">{line.kind === 'addition' ? '+' : line.kind === 'deletion' ? '−' : ' '}</text>
+      <text className="diff-line-code selectable-text" text-selection={true} flatten={false}>{line.text || ' '}</text>
+    </view>
+  );
+}
+
+function ReviewFileSection({ file, diff }: { file: ChangedFile; diff?: FileDiff }) {
+  return (
+    <view className="review-file-section">
+      <view className="review-file-heading">
+        <view className={`review-file-type review-file-type--${file.status}`}>
+          <text className="review-file-type-text">{extensionBadge(file.path)}</text>
+        </view>
+        <text className="review-file-path selectable-text" text-maxline="1" text-selection={true} flatten={false}>{file.path}</text>
+        <view className="review-file-counts">
+          <text className="review-file-add">+{diff?.additions ?? file.additions}</text>
+          <text className="review-file-delete">−{diff?.deletions ?? file.deletions}</text>
+        </view>
+      </view>
+      {!diff ? <text className="review-file-loading">Loading file changes…</text> : null}
+      {diff?.binary ? (
+        <view className="review-file-empty"><text className="review-file-empty-text">Binary file changed</text></view>
+      ) : null}
+      {diff && !diff.binary && diff.lines.length === 0 ? (
+        <view className="review-file-empty"><text className="review-file-empty-text">No text diff available</text></view>
+      ) : null}
+      {(diff?.lines ?? []).map((line, index) => <DiffRow key={`${file.path}-${index}-${line.kind}`} line={line} />)}
+      {diff?.truncated ? (
+        <view className="diff-truncated"><text className="diff-truncated-text">Diff truncated after 4,000 lines.</text></view>
+      ) : null}
+    </view>
+  );
 }
 
 function mergeText(items: TimelineItem[], event: AgentEvent, kind: TimelineKind): TimelineItem[] {
@@ -126,11 +210,20 @@ export function App() {
   const [workspace, setWorkspace] = useState('');
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [prompt, setPrompt] = useState('');
+  const [composerInputKey, setComposerInputKey] = useState(0);
   const [permission, setPermission] = useState<PermissionRequest | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  const [review, setReview] = useState<ReviewSnapshot>(EMPTY_REVIEW);
+  const [reviewError, setReviewError] = useState('');
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [previewTabs, setPreviewTabs] = useState<PreviewTab[]>(INITIAL_PREVIEW_TABS);
+  const [activePreviewTabId, setActivePreviewTabId] = useState(REVIEW_TAB.id);
+  const [diffs, setDiffs] = useState<Record<string, FileDiff>>({});
   const seenCursors = useRef(new Set<number>());
   const selectedTaskIdRef = useRef('');
+  const reviewSignatureRef = useRef('');
 
   const selectedTask = useMemo(
     () => tasks.find((task) => task.id === selectedTaskId) ?? null,
@@ -142,15 +235,17 @@ export function App() {
     [backends, selectedTask, backendId],
   );
 
-  const changedFiles = useMemo(() => {
-    const paths: string[] = [];
-    for (const item of items) {
-      for (const location of item.tool?.locations ?? []) {
-        if (location.path && !paths.includes(location.path)) paths.push(location.path);
-      }
-    }
-    return paths;
-  }, [items]);
+  const configuredBackend = useMemo(
+    () => backends.find((backend) => backend.id === backendId) ?? backends.find((backend) => backend.status === 'ready') ?? null,
+    [backends, backendId],
+  );
+
+  const workspaceName = useMemo(() => fileName(workspace || selectedTask?.cwd || 'Workspace'), [workspace, selectedTask]);
+
+  const activePreviewTab = useMemo(
+    () => previewTabs.find((tab) => tab.id === activePreviewTabId) ?? previewTabs[0] ?? AGENTS_TAB,
+    [previewTabs, activePreviewTabId],
+  );
 
   const modelLabel = useMemo(() => {
     const model = selectedTask?.configOptions.find((option) => option.category === 'model' || option.id === 'model');
@@ -218,6 +313,66 @@ export function App() {
     snapshot.events.forEach(applyEvent);
   }, [applyEvent]);
 
+  const resetPreviews = useCallback(() => {
+    setPreviewTabs(INITIAL_PREVIEW_TABS);
+    setActivePreviewTabId(REVIEW_TAB.id);
+    setDiffs({});
+    setReview(EMPTY_REVIEW);
+    setReviewError('');
+    reviewSignatureRef.current = '';
+  }, []);
+
+  const refreshReview = useCallback(async () => {
+    const taskId = selectedTaskIdRef.current;
+    if (!taskId) {
+      setReview(EMPTY_REVIEW);
+      return;
+    }
+    setReviewLoading(true);
+    try {
+      const snapshot = await callBridge<ReviewSnapshot>('review:snapshot', { taskId });
+      if (selectedTaskIdRef.current !== taskId) return;
+      setReview(snapshot);
+      setReviewError('');
+      const signature = snapshot.files
+        .map((file) => `${file.path}:${file.status}:${file.additions}:${file.deletions}`)
+        .join('|');
+      if (signature !== reviewSignatureRef.current) {
+        reviewSignatureRef.current = signature;
+        const results = await Promise.all(snapshot.files.map(async (file) => {
+          try {
+            return await callBridge<FileDiff>('review:fileDiff', { taskId, path: file.path });
+          } catch {
+            return null;
+          }
+        }));
+        if (selectedTaskIdRef.current !== taskId) return;
+        const nextDiffs: Record<string, FileDiff> = {};
+        for (const diff of results) {
+          if (diff) nextDiffs[diff.path] = diff;
+        }
+        setDiffs(nextDiffs);
+      }
+    } catch (caught) {
+      if (selectedTaskIdRef.current !== taskId) return;
+      setReview(EMPTY_REVIEW);
+      setReviewError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      if (selectedTaskIdRef.current === taskId) setReviewLoading(false);
+    }
+  }, []);
+
+  const openReview = useCallback(() => {
+    setPreviewTabs((current) => current.some((tab) => tab.id === REVIEW_TAB.id) ? current : [...current, REVIEW_TAB]);
+    setActivePreviewTabId(REVIEW_TAB.id);
+  }, []);
+
+  const closePreviewTab = useCallback((tab: PreviewTab) => {
+    if (!tab.closable) return;
+    setPreviewTabs((current) => current.filter((candidate) => candidate.id !== tab.id));
+    if (activePreviewTabId === tab.id) setActivePreviewTabId(AGENTS_TAB.id);
+  }, [activePreviewTabId]);
+
   const initialize = useCallback(async () => {
     try {
       const [backendList, taskList, defaultWorkspace] = await Promise.all([
@@ -240,6 +395,8 @@ export function App() {
       await refreshSnapshot();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setInitialized(true);
     }
   }, [refreshSnapshot]);
 
@@ -263,12 +420,13 @@ export function App() {
       setSelectedTaskId(task.id);
       setItems([]);
       setPermission(null);
+      resetPreviews();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
       setBusy(false);
     }
-  }, [workspace, backendId, busy]);
+  }, [workspace, backendId, busy, resetPreviews]);
 
   const selectTask = useCallback(async (task: AgentTask) => {
     if (task.id === selectedTaskId) return;
@@ -278,6 +436,7 @@ export function App() {
     setItems([]);
     setPermission(null);
     setError('');
+    resetPreviews();
     if (task.backendId === 'opencode') {
       try {
         await callBridge<AgentTask>('agent:loadTask', { taskId: task.id });
@@ -287,17 +446,17 @@ export function App() {
     }
     seenCursors.current.clear();
     await refreshSnapshot();
-  }, [selectedTaskId, refreshSnapshot]);
+  }, [selectedTaskId, refreshSnapshot, resetPreviews]);
 
   const submit = useCallback(async () => {
     const text = prompt.trim();
     if (!selectedTask || !text || selectedTask.status === 'running' || selectedTask.status === 'waiting') return;
-    setPrompt('');
     setError('');
     try {
       await callBridge('agent:prompt', { taskId: selectedTask.id, text });
+      setPrompt('');
+      setComposerInputKey((value) => value + 1);
     } catch (caught) {
-      setPrompt(text);
       setError(caught instanceof Error ? caught.message : String(caught));
     }
   }, [prompt, selectedTask]);
@@ -321,6 +480,13 @@ export function App() {
     }
   }, [permission]);
 
+  const cycleBackend = useCallback(() => {
+    const available = backends.filter((backend) => backend.status === 'ready');
+    if (available.length < 2) return;
+    const index = available.findIndex((backend) => backend.id === backendId);
+    setBackendId(available[(index + 1 + available.length) % available.length].id);
+  }, [backends, backendId]);
+
   useEffect(() => {
     const emitter = lynx.getJSModule('GlobalEventEmitter');
     const handler = (...args: unknown[]) => applyEvent(args[0] as AgentEvent);
@@ -329,92 +495,127 @@ export function App() {
     return () => emitter.removeListener('agent:event', handler);
   }, [applyEvent, initialize]);
 
+  useEffect(() => {
+    if (!selectedTaskId) return;
+    refreshReview();
+    if (selectedTask?.status !== 'running' && selectedTask?.status !== 'waiting') return;
+    const timer = setInterval(refreshReview, 1_500);
+    return () => clearInterval(timer);
+  }, [selectedTaskId, selectedTask?.status, selectedTask?.updatedAt, refreshReview]);
+
   return (
     <view className="app-shell">
       <view className="titlebar">
-        <text className="titlebar-name">Codex Demo</text>
-        <view className="titlebar-center">
-          <text className="titlebar-task" text-maxline="1">{selectedTask?.title ?? 'Agent-neutral workspace'}</text>
+        <view className="titlebar-sidebar">
+          <view className="titlebar-tool-button titlebar-sidebar-toggle">
+            <view className="sidebar-toggle-outline"><view className="sidebar-toggle-divider" /></view>
+          </view>
+          <view className="titlebar-tool-button"><view className="titlebar-chevron titlebar-chevron--back" /></view>
+          <view className="titlebar-tool-button"><view className="titlebar-chevron titlebar-chevron--forward" /></view>
         </view>
-        <view className="titlebar-spacer" />
+        <view className="titlebar-thread">
+          <view className="titlebar-folder"><view className="folder-glyph"><view className="folder-glyph-tab" /></view></view>
+          <text className="titlebar-thread-title" text-maxline="1">{selectedTask?.title ?? 'New task'}</text>
+          <text className="titlebar-more">•••</text>
+          <view className="titlebar-thread-spacer" />
+          <view className="titlebar-location" bindtap={chooseWorkspace}>
+            <text className="titlebar-location-icon">▣</text>
+            <text className="titlebar-location-text">Open</text>
+            <text className="titlebar-location-chevron">⌄</text>
+          </view>
+          <view className="titlebar-controls"><text className="titlebar-controls-text">☷</text></view>
+        </view>
+        <view className="titlebar-preview">
+          <scroll-view scroll-x className="preview-tab-scroll">
+            <view className="preview-tab-list">
+              {previewTabs.map((tab) => (
+                <view key={tab.id} className={`preview-tab preview-tab--${tab.kind} ${activePreviewTab.id === tab.id ? 'preview-tab--active' : ''}`}>
+                  <view className="preview-tab-target" bindtap={() => setActivePreviewTabId(tab.id)}>
+                    <text className="preview-tab-icon">{tab.kind === 'review' ? '▣' : tab.id === 'agents' ? '♙' : '◇'}</text>
+                    <text className="preview-tab-title" text-maxline="1">{tab.title}</text>
+                  </view>
+                  {tab.closable ? (
+                    <view className="preview-tab-close" bindtap={() => closePreviewTab(tab)}><text className="preview-tab-close-text">×</text></view>
+                  ) : null}
+                </view>
+              ))}
+            </view>
+          </scroll-view>
+          <view className="preview-new-tab"><text className="preview-new-tab-text">＋</text></view>
+          <view className="preview-layout"><text className="preview-layout-text">◧</text></view>
+        </view>
       </view>
 
       <view className="workspace-shell">
         <view className="sidebar">
-          <view className="sidebar-top">
-            <view className="product-row">
-              <view className="product-mark"><text className="product-mark-text">C</text></view>
-              <text className="product-name">Codex</text>
-            </view>
-            <view className="new-task-button" bindtap={createTask}>
-              <text className="new-task-plus">＋</text>
-              <text className="new-task-text">New task</text>
-            </view>
-            <view className="workspace-button" bindtap={chooseWorkspace}>
-              <text className="workspace-icon">⌁</text>
-              <view className="workspace-copy">
-                <text className="workspace-label">WORKSPACE</text>
-                <text className="workspace-path" text-maxline="1">{shortPath(workspace)}</text>
-              </view>
+          <view className="sidebar-product-row">
+            <view className="sidebar-product-title"><text className="sidebar-product-name">Codex</text><text className="sidebar-product-chevron">⌄</text></view>
+            <view className="sidebar-product-actions">
+              <view className="sidebar-action-button sidebar-search-icon"><view className="search-icon-ring" /><view className="search-icon-handle" /></view>
+              <view className="sidebar-action-button sidebar-bell-icon"><view className="bell-icon-body" /><view className="bell-icon-dot" /></view>
             </view>
           </view>
 
-          <view className="backend-section">
-            <text className="section-label">AGENT BACKEND</text>
-            {backends.map((backend) => (
-              <view
-                key={backend.id}
-                className={`backend-option ${backendId === backend.id ? 'backend-option--active' : ''} ${backend.status !== 'ready' ? 'backend-option--disabled' : ''}`}
-                bindtap={() => backend.status === 'ready' && setBackendId(backend.id)}
-              >
-                <view className={`backend-dot backend-dot--${backend.status}`} />
-                <view className="backend-copy">
-                  <text className="backend-name">{backend.label}</text>
-                  <text className="backend-version">{backend.status === 'ready' ? `v${backend.version}` : backend.status}</text>
-                </view>
-              </view>
-            ))}
+          <view className="sidebar-new-task" bindtap={createTask}>
+            <view className="sidebar-new-task-icon"><view className="new-task-icon-box" /><view className="new-task-icon-pencil" /></view>
+            <text className="sidebar-new-task-text">New task</text>
           </view>
 
-          <text className="section-label tasks-label">TASKS</text>
-          <scroll-view scroll-y className="task-list">
+          {tasks[0] ? (
+            <view className="sidebar-pinned">
+              <text className="sidebar-section-title">PINNED</text>
+              <view className={`sidebar-link ${selectedTaskId === tasks[0].id ? 'sidebar-link--active' : ''}`} bindtap={() => selectTask(tasks[0])}>
+                <text className="sidebar-link-title" text-maxline="1">{tasks[0].title}</text>
+              </view>
+            </view>
+          ) : null}
+
+          <text className="sidebar-section-title sidebar-projects-title">PROJECTS</text>
+          <scroll-view scroll-y className="sidebar-project-scroll">
+            <view className="sidebar-project-heading" bindtap={chooseWorkspace}>
+              <view className="sidebar-project-icon"><view className="folder-glyph"><view className="folder-glyph-tab" /></view></view>
+              <text className="sidebar-project-name" text-maxline="1">{workspaceName}</text>
+              <text className="sidebar-project-menu">•••</text>
+            </view>
             {tasks.length === 0 ? <text className="empty-tasks">No tasks yet</text> : null}
             {tasks.map((task) => (
               <view
                 key={task.id}
-                className={`task-row ${selectedTaskId === task.id ? 'task-row--active' : ''}`}
+                className={`sidebar-task-link ${selectedTaskId === task.id ? 'sidebar-task-link--active' : ''}`}
                 bindtap={() => selectTask(task)}
               >
-                <view className="task-heading">
-                  <text className="task-title" text-maxline="2">{task.title}</text>
-                  <text className="task-time">{relativeTime(task.updatedAt)}</text>
+                <view className="sidebar-task-title-row">
+                  <text className="sidebar-task-link-title" text-maxline="2">{task.title}</text>
+                  <text className="sidebar-task-time">{relativeTime(task.updatedAt)}</text>
                 </view>
-                <view className="task-meta">
+                <view className="sidebar-task-detail-row">
                   <view className={`task-state task-state--${task.status}`} />
-                  <text className="task-backend">{task.backendId}</text>
+                  <text className="sidebar-task-backend">{task.backendId}</text>
                 </view>
               </view>
             ))}
           </scroll-view>
 
-          <view className="sidebar-footer">
-            <view className={`connection-dot connection-dot--${selectedBackend?.status ?? 'missing'}`} />
-            <text className="connection-text">{selectedBackend?.status === 'ready' ? `${selectedBackend.label} connected` : 'Backend unavailable'}</text>
+          <view className="sidebar-status-card">
+            <view className={`connection-dot connection-dot--${configuredBackend?.status ?? 'missing'}`} />
+            <view className="sidebar-status-copy">
+              <text className="sidebar-status-title">{configuredBackend?.status === 'ready' ? `${configuredBackend.label} ready` : 'Backend unavailable'}</text>
+              <text className="sidebar-status-detail">Agent connection</text>
+            </view>
+            <text className="sidebar-status-count">{backends.filter((backend) => backend.status === 'ready').length}/{backends.length}</text>
+          </view>
+
+          <view className="sidebar-backend-picker" bindtap={cycleBackend}>
+            <view className="sidebar-avatar"><text className="sidebar-avatar-text">AI</text></view>
+            <view className="sidebar-backend-picker-copy">
+              <text className="sidebar-backend-picker-name">{configuredBackend?.label ?? 'Agent backend'}</text>
+              <text className="sidebar-backend-picker-detail">{configuredBackend?.version ? `v${configuredBackend.version}` : configuredBackend?.status ?? 'missing'}</text>
+            </view>
+            <text className="sidebar-backend-chevron">⌃</text>
           </view>
         </view>
 
         <view className="conversation">
-          <view className="conversation-header">
-            <view className="conversation-title-wrap">
-              <text className="conversation-title" text-maxline="1">{selectedTask?.title ?? 'Start a new task'}</text>
-              <text className="conversation-path" text-maxline="1">{selectedTask?.cwd ?? workspace}</text>
-            </view>
-            <view className="header-pills">
-              <view className="header-pill"><text className="header-pill-text">{modelLabel}</text></view>
-              {selectedTask ? <view className={`status-pill status-pill--${selectedTask.status}`}><text className="status-pill-text">{selectedTask.status}</text></view> : null}
-            </view>
-          </view>
-
           <scroll-view scroll-y className="transcript">
             {!selectedTask ? (
               <view className="welcome">
@@ -435,6 +636,38 @@ export function App() {
               </view>
             ) : null}
             {items.map((item) => <MessageCard key={item.id} item={item} />)}
+            {selectedTask && review.files.length > 0 ? (
+              <view className="change-card">
+                <view className="change-card-header">
+                  <view className="change-card-icon"><text className="change-card-icon-text">＋</text></view>
+                  <view className="change-card-title-wrap">
+                    <text className="change-card-title">Edited {review.files.length} {review.files.length === 1 ? 'file' : 'files'}</text>
+                    <view className="change-card-totals">
+                      <text className="change-card-add">+{review.additions}</text>
+                      <text className="change-card-delete">−{review.deletions}</text>
+                    </view>
+                  </view>
+                  <view className="change-card-actions">
+                    <view className="change-card-undo"><text className="change-card-undo-text">Undo</text><text className="change-card-undo-icon">↶</text></view>
+                    <view className="change-card-review" bindtap={openReview}><text className="change-card-review-text">Review</text></view>
+                  </view>
+                </view>
+                <view className="change-card-files">
+                  {review.files.slice(0, 3).map((file) => (
+                    <view className="change-card-file" key={file.path} bindtap={openReview}>
+                      <text className="change-card-file-path" text-maxline="1">{shortPath(file.path)}</text>
+                      <view className="change-card-file-totals">
+                        <text className="change-card-file-add">+{file.additions}</text>
+                        <text className="change-card-file-delete">−{file.deletions}</text>
+                      </view>
+                    </view>
+                  ))}
+                  {review.files.length > 3 ? (
+                    <view className="change-card-more" bindtap={openReview}><text className="change-card-more-text">{review.files.length - 3} more changed files</text></view>
+                  ) : null}
+                </view>
+              </view>
+            ) : null}
             {error ? <view className="inline-error"><text className="inline-error-text selectable-text" text-selection={true} flatten={false}>{error}</text></view> : null}
           </scroll-view>
 
@@ -460,53 +693,78 @@ export function App() {
           ) : null}
 
           <view className="composer-wrap">
-            <view className={`composer ${selectedTask?.status === 'running' || selectedTask?.status === 'waiting' ? 'composer--running' : ''}`}>
+            {initialized ? <view className={`composer ${selectedTask?.status === 'running' || selectedTask?.status === 'waiting' ? 'composer--running' : ''}`}>
               <input
+                key={`composer-${composerInputKey}`}
                 className="composer-input"
                 placeholder={selectedTask ? `Message ${selectedBackend?.label ?? 'agent'}` : 'Create a task to begin'}
-                {...inputValueProp(prompt)}
                 bindinput={(event: any) => setPrompt(readInputValue(event))}
                 bindconfirm={submit}
               />
-              {selectedTask?.status === 'running' || selectedTask?.status === 'waiting' ? (
-                <view className="send-button send-button--stop" bindtap={cancel}><view className="stop-square" /></view>
-              ) : (
-                <view className={`send-button ${prompt.trim() && selectedTask ? 'send-button--ready' : ''}`} bindtap={submit}><text className="send-arrow">↑</text></view>
-              )}
-            </view>
-            <text className="composer-note">Agent actions run inside the selected workspace and follow backend permissions.</text>
+              <view className="composer-toolbar">
+                <view className="composer-tool"><text className="composer-tool-text">＋</text></view>
+                <view className="composer-access"><text className="composer-access-icon">◉</text><text className="composer-access-text">Full access</text></view>
+                <view className="composer-toolbar-spacer" />
+                <view className="composer-model" bindtap={cycleBackend}>
+                  <text className="composer-model-bolt">ϟ</text>
+                  <text className="composer-model-text" text-maxline="1">{modelLabel}</text>
+                  <text className="composer-model-chevron">⌄</text>
+                </view>
+                <view className="composer-mic"><text className="composer-mic-text">♩</text></view>
+                {selectedTask?.status === 'running' || selectedTask?.status === 'waiting' ? (
+                  <view className="send-button send-button--stop" bindtap={cancel}><view className="stop-square" /></view>
+                ) : (
+                  <view className={`send-button ${prompt.trim() && selectedTask ? 'send-button--ready' : ''}`} bindtap={submit}><text className="send-arrow">↑</text></view>
+                )}
+              </view>
+            </view> : <view className="composer-loading-space" />}
           </view>
         </view>
 
-        <view className="review-panel">
-          <view className="review-header">
-            <text className="review-title">Review</text>
-            <view className="review-count"><text className="review-count-text">{changedFiles.length}</text></view>
-          </view>
-          <view className="review-summary">
-            <text className="review-kicker">CHANGED FILES</text>
-            <text className="review-copy">Files surfaced by the current agent task appear here.</text>
-          </view>
-          <scroll-view scroll-y className="file-list">
-            {changedFiles.length === 0 ? (
-              <view className="review-empty">
-                <view className="review-empty-icon"><text className="review-empty-icon-text">±</text></view>
-                <text className="review-empty-title">No changes yet</text>
-                <text className="review-empty-copy">Tool calls and file locations will be collected as the agent works.</text>
+        <view className="preview-panel">
+          {activePreviewTab.kind === 'review' ? (
+            <view className="review-workbench">
+              <view className="review-toolbar">
+                <view className="review-turn-selector">
+                  <text className="review-turn-text">Last turn</text>
+                  <text className="review-turn-chevron">⌄</text>
+                </view>
+                <view className="review-toolbar-totals">
+                  <text className="review-toolbar-add">+{review.additions}</text>
+                  <text className="review-toolbar-delete">−{review.deletions}</text>
+                </view>
+                <view className="review-toolbar-spacer" />
+                <view className="review-tool-button"><text className="review-tool-icon">•••</text></view>
+                <view className="review-tool-button"><text className="review-tool-icon">↕</text></view>
+                <view className="review-tool-button"><text className="review-tool-icon">⌕</text></view>
+                <view className="review-tool-button"><text className="review-tool-icon">◫</text></view>
+                <view className="review-tool-button" bindtap={refreshReview}><text className="review-tool-icon">↻</text></view>
               </view>
-            ) : null}
-            {changedFiles.map((file) => (
-              <view className="file-row" key={file}>
-                <view className="file-badge"><text className="file-badge-text">M</text></view>
-                <text className="file-path" text-maxline="2">{file}</text>
-              </view>
-            ))}
-          </scroll-view>
-          <view className="review-footer">
-            <text className="review-footer-label">BACKEND</text>
-            <text className="review-footer-value">{selectedBackend?.label ?? '—'}</text>
-            <text className="review-footer-detail">{selectedBackend?.transport ?? ''}</text>
-          </view>
+              <scroll-view scroll-y className="review-diff-scroll">
+                {reviewLoading && review.files.length === 0 ? <text className="review-loading">Reading Git changes…</text> : null}
+                {!reviewLoading && review.files.length === 0 ? (
+                  <view className="review-empty">
+                    <view className="review-empty-icon"><text className="review-empty-icon-text">±</text></view>
+                    <text className="review-empty-title">No changes yet</text>
+                    <text className="review-empty-copy">Changes in the selected task repository will appear here automatically.</text>
+                  </view>
+                ) : null}
+                {review.files.map((file) => (
+                  <ReviewFileSection key={file.path} file={file} diff={diffs[file.path]} />
+                ))}
+              </scroll-view>
+              {reviewError ? <view className="preview-error"><text className="preview-error-text selectable-text" text-selection={true} flatten={false}>{reviewError}</text></view> : null}
+            </view>
+          ) : null}
+
+          {activePreviewTab.kind !== 'review' ? (
+            <view className="preview-placeholder">
+              <view className="preview-placeholder-icon"><text className="preview-placeholder-icon-text">♙</text></view>
+              <text className="preview-placeholder-title">{activePreviewTab.title}</text>
+              <text className="preview-placeholder-copy">Agent previews and other tools can open alongside Review without changing the conversation.</text>
+              {review.files.length ? <view className="preview-placeholder-action" bindtap={openReview}><text className="preview-placeholder-action-text">Open Review</text></view> : null}
+            </view>
+          ) : null}
         </view>
       </view>
     </view>
