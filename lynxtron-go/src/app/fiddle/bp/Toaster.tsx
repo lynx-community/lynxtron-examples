@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from '@lynx-js/react';
 import { Icon, type IconName } from './Icon';
 import type { Intent as IntentType } from './constants';
 import './bp.css';
+import { PlatformOverlay } from '../../components/shared/PlatformOverlay';
 
 export interface Toast {
   id: string;
@@ -52,20 +53,23 @@ export function ToasterHost() {
     return () => { listeners.delete(l); };
   }, []);
   const dismiss = useCallback((id: string) => AppToaster.dismiss(id), []);
+  if (toasts.length === 0) return null;
   return (
-    <view className="bp3-toast-container">
-      {toasts.map(t => {
-        const cls = 'bp3-toast' + (t.intent && t.intent !== 'none' ? ' bp3-intent-' + t.intent : '');
-        return (
-          <view key={t.id} className={cls}>
-            {t.icon ? <Icon icon={t.icon} className="bp3-toast-icon" /> : null}
-            <text className="bp3-toast-message">{t.message}</text>
-            <view className="bp3-toast-close" bindtap={() => dismiss(t.id)}>
-              <text className="bp3-toast-close-text">✕</text>
+    <PlatformOverlay priority={200}>
+      <view className="bp3-toast-container">
+        {toasts.map(t => {
+          const cls = 'bp3-toast' + (t.intent && t.intent !== 'none' ? ' bp3-intent-' + t.intent : '');
+          return (
+            <view key={t.id} className={cls}>
+              {t.icon ? <Icon icon={t.icon} className="bp3-toast-icon" /> : null}
+              <text className="bp3-toast-message">{t.message}</text>
+              <view className="bp3-toast-close" bindtap={() => dismiss(t.id)}>
+                <text className="bp3-toast-close-text">✕</text>
+              </view>
             </view>
-          </view>
-        );
-      })}
-    </view>
+          );
+        })}
+      </view>
+    </PlatformOverlay>
   );
 }

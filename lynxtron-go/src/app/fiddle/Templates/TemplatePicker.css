@@ -6,6 +6,7 @@
   align-items: center;
   justify-content: center;
   z-index: 100;
+  pointer-events: auto;
 }
 /* Same chrome as the bp3 dialogs (Settings etc.) — one dialog language. */
 .TemplatePicker {

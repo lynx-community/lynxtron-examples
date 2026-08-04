@@ -235,6 +235,7 @@
   align-items: center;
   justify-content: center;
   z-index: 100;
+  pointer-events: auto;
 }
 .bp3-dialog {
   width: 500px;
@@ -525,11 +526,8 @@
 }
 
 /* ── Toaster ──────────────────────────────────────────────────────────── */
-/* Bottom-right, not top-right: native Scintilla editors float above ALL Lynx
-   UI, so a toast over the editor mosaic is painted over no matter its
-   z-index. The bottom strip is the console — regular Lynx UI — which is the
-   one place a Lynx toast is reliably visible. (Caveat: with the console
-   collapsed the editors reach the bottom edge and can cover it again.) */
+/* The shared cover-view gives the toast host a platform overlay slice, so notifications
+   stay visible over native Scintilla as well as regular Lynx content. */
 .bp3-toast-container {
   position: absolute;
   bottom: 20px;

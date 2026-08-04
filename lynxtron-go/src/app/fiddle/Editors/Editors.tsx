@@ -12,8 +12,6 @@ export interface EditorsProps {
   onHideEditor: (id: EditorId) => void;
   onResetLayout: () => void;
   pushContent: (id: EditorId) => void;
-  /** A dialog/overlay is open — newly created panes must not attach above it. */
-  suppressed?: boolean;
 }
 
 // ── Upstream editor-mosaic.ts createMosaic():
@@ -235,7 +233,6 @@ export function Editors(props: EditorsProps) {
               style={{ left: px(p.rect.left), top: px(p.rect.top), width: px(p.rect.width), height: px(p.rect.height) }}
             >
               <EditorPane
-                suppressed={props.suppressed}
                 file={file}
                 active={p.id === props.activeEditorId}
                 onHide={handleHide}

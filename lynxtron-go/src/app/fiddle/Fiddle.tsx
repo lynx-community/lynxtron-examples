@@ -26,6 +26,7 @@ import './Fiddle.css';
 import './settings/Settings.css';
 import './versions/VersionChooser.css';
 import './tour/WelcomeTour.css';
+import { PlatformOverlay } from '../components/shared/PlatformOverlay';
 
 export interface FiddleProps {
   rootPath: string | null;
@@ -41,7 +42,7 @@ export interface FiddleProps {
   onFiddleOpenConsumed?: () => void;
   /** Build + launch the single fiddle currently loaded. */
   onRunFiddleSource?: (fiddleId: string) => void;
-  /** A full-page overlay (gallery) covers the Fiddle — detach native editors. */
+  /** An App-level platform overlay is active; close any competing Fiddle dialog. */
   overlayActive?: boolean;
   /** Gallery page rendered INSIDE the shell (covers the sidebar+editors
       region only — the commands bar and console stay live around it). */
@@ -76,6 +77,13 @@ export function Fiddle(props: FiddleProps) {
   const [tourOpen, setTourOpen] = useState(devBoot?.openSurface === 'tour');
   const [historyOpen, setHistoryOpen] = useState(devBoot?.openSurface === 'history');
   const [currentShowcase, setCurrentShowcase] = useState<ShowcaseEntry | null>(null);
+  const [mainRegionHeight, setMainRegionHeight] = useState(0);
+
+  const handleMainRegionLayout = useCallback((e: any) => {
+    const height = e?.detail?.height;
+    if (typeof height !== 'number' || height <= 0) return;
+    setMainRegionHeight(current => current === height ? current : height);
+  }, []);
   // Real runtime version from the foundation bridge (engine report or the
   // bundled package manifest); prop override kept for tests/self-host.
   const currentVersion = props.lynxtronVersion
@@ -109,21 +117,10 @@ export function Fiddle(props: FiddleProps) {
     if (!seen && showTour) setTourOpen(true);
   }, []);
 
-  // Native Scintilla views float above all Lynx-rendered UI. While any
-  // dialog/overlay is open, every visible pane carries suppressed=true
-  // (via Editors → EditorPane) and the native side keeps it detached so the
-  // dialog isn't hidden behind it.
-  // Sash drags deliberately do NOT suppress: mousedown lands on a Lynx node,
-  // so the whole drag sequence stays in the Lynx event pipeline — native
-  // editors never see it. Detaching mid-drag blanked the panes and the
-  // reattach+push churn was the main source of drag jank and lost highlights.
-  // Sidebar add/rename are inline rows (no modal, no overlay) — they never
-  // suppress the editors and stay out of this expression on purpose.
-  const anyDialogOpen =
-    templatePickerOpen || settingsOpen || versionsOpen || tourOpen || historyOpen
-    || !!props.overlayActive;
-  // Close our dialogs when the gallery overlay takes the page — they sit at a
-  // higher z-index than the overlay and would otherwise float above it.
+  // Dialogs, the gallery, the command palette, loading states, and toasts use
+  // one shared cover-view host. Clay composites their children into one platform overlay slice,
+  // so they can cover Scintilla without detaching its native view. Close local
+  // dialogs when an App-level surface opens to keep overlay-slice order simple.
   useEffect(() => {
     if (!props.overlayActive) return;
     setTemplatePickerOpen(false);
@@ -132,31 +129,12 @@ export function Fiddle(props: FiddleProps) {
     setHistoryOpen(false);
     setTourOpen(false);
   }, [props.overlayActive]);
-  // Detach/attach itself is fully owned by the native `suppressed` attribute
-  // on each pane (EditorPane): true detaches, false reattaches + restores the
-  // frame. No imperative detach sweep, no reattach timer — the attribute
-  // flows through the same render that shows/hides the dialog. JS keeps two
-  // responsibilities: flush live text into state while the editors are
-  // hidden, and (on close) re-push content — native setText is IDEMPOTENT
-  // (identical content = strict no-op), so this heals drift without ever
-  // clearing the style bytes.
-  useEffect(() => {
-    if (anyDialogOpen) {
-      fiddle.flushAll();
-    } else {
-      for (const f of fiddle.snap.files.values()) {
-        if (f.visible) fiddle.pushContent(f.id);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anyDialogOpen]);
 
   const handleToggleGallery = useCallback(() => {
     if (props.galleryOpen) {
       props.onCloseGallery?.();
       return;
     }
-    // No flush here: the anyDialogOpen effect flushes before detaching.
     props.onOpenGallery();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.galleryOpen, props.onOpenGallery, props.onCloseGallery]);
@@ -590,7 +568,7 @@ export function Fiddle(props: FiddleProps) {
           collapsed={!isConsoleShowing}
           collapseTarget="second"
         >
-          <view className="FiddleMain">
+          <view className="FiddleMain" bindlayoutchange={handleMainRegionLayout}>
             <SplitContainer
               direction="horizontal"
               initialRatio={0.18}
@@ -615,12 +593,8 @@ export function Fiddle(props: FiddleProps) {
                 onHideEditor={fiddle.hideEditor}
                 onResetLayout={fiddle.resetLayout}
                 pushContent={fiddle.pushContent}
-                suppressed={anyDialogOpen}
               />
             </SplitContainer>
-            {props.galleryOpen && props.gallery ? (
-              <view className="FiddleGalleryLayer">{props.gallery}</view>
-            ) : null}
           </view>
           <Outputs
             runningPid={runner.pid}
@@ -631,6 +605,18 @@ export function Fiddle(props: FiddleProps) {
           />
         </SplitContainer>
       </view>
+      {props.galleryOpen && props.gallery ? (
+        <PlatformOverlay priority={50}>
+          <view
+            className="FiddleGalleryLayer"
+            style={mainRegionHeight > 0
+              ? { top: '51px', height: `${mainRegionHeight}px` }
+              : undefined}
+          >
+            {props.gallery}
+          </view>
+        </PlatformOverlay>
+      ) : null}
       {templatePickerOpen && (
         <TemplatePicker
           onPickBlank={() => { fiddle.loadTemplate('blank'); setCurrentShowcase(null); setTemplatePickerOpen(false); }}

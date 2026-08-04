@@ -2,6 +2,7 @@ import { Button } from './Button';
 import { Icon, type IconName } from './Icon';
 import type { Intent as IntentType } from './constants';
 import './bp.css';
+import { PlatformOverlay } from '../../components/shared/PlatformOverlay';
 
 export interface AlertProps {
   isOpen: boolean;
@@ -18,8 +19,9 @@ export function Alert(props: AlertProps) {
   if (!props.isOpen) return null;
   const showCancel = typeof props.onCancel === 'function';
   return (
-    <view className="bp3-dialog-overlay">
-      <view className="bp3-alert">
+    <PlatformOverlay priority={100}>
+      <view className="bp3-dialog-overlay">
+        <view className="bp3-alert">
         {props.icon ? (
           <view className="bp3-alert-icon">
             <Icon icon={props.icon} size={40} />
@@ -40,7 +42,8 @@ export function Alert(props: AlertProps) {
             onClick={props.onConfirm}
           />
         </view>
+        </view>
       </view>
-    </view>
+    </PlatformOverlay>
   );
 }

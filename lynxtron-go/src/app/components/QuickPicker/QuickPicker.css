@@ -15,11 +15,11 @@
   flex-direction: column;
   align-items: center;
   background-color: rgba(11, 18, 32, 0.55);
+  pointer-events: auto;
   /* Above the gallery overlay (300) and the Fiddle's dialogs (100/200): the
-     palette is opened from any of them and must never appear behind one.
-     Note z-index alone is not enough against the native Scintilla editors,
-     which paint above all Lynx UI — App.tsx passes `overlayActive` so the
-     Fiddle detaches them while this is open. */
+     palette is opened from any of them and must never appear behind one. The
+     shared cover-view host also gives this subtree a platform overlay slice, so it
+     stays above native Scintilla without detaching the editor. */
   z-index: 400;
 }
 

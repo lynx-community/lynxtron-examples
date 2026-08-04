@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from '@lynx-js/react';
 import './QuickPicker.css';
+import { PlatformOverlay } from '../shared/PlatformOverlay';
 import { fileIcon, type TreeNode, type ShowcaseEntry, SHOWCASE_REGISTRY } from '../../store';
 import { filterCommands } from '../../commands/registry';
 
@@ -129,8 +130,9 @@ export function QuickPicker({
     `PickerItem${extra ? ' ' + extra : ''}${key === activeRowKey ? ' PickerItem--active' : ''}`;
 
   return (
-    <view className="PickerOverlay" bindtap={onClose} global-bindkeydown={handleKeyDown}>
-      <view className="PickerModal" catchtap={() => {}}>
+    <PlatformOverlay priority={400}>
+      <view className="PickerOverlay" bindtap={onClose} global-bindkeydown={handleKeyDown}>
+        <view className="PickerModal" catchtap={() => {}}>
         <input
           className="PickerInput"
           value={query}
@@ -245,7 +247,8 @@ export function QuickPicker({
             <text className="PickerFooterKey">Esc</text> to close
           </text>
         </view>
+        </view>
       </view>
-    </view>
+    </PlatformOverlay>
   );
 }
