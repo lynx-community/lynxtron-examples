@@ -46,23 +46,23 @@
 
 /* ── Query ──────────────────────────────────────────────────────────────── */
 
+/* The query is the one rounded object in the panel: an inset field with its own
+   edge. The rows are flush and square underneath it.
+   The previous arrangement had these exactly backwards — a full-bleed query
+   with no chrome above rows that each carried a radius and a 6px inset — so the
+   only rounded things in the panel were the rows, and they lined up with
+   nothing. One rounded object, or none; not a list of them. */
 .PickerInput {
-  width: 100%;
-  height: 46px;
-  padding: 0 16px;
+  height: 38px;
+  margin: 8px 8px 6px 8px;
+  padding: 0 12px;
   font-size: 14px;
   color: var(--bp-text);
-  /* No ground and no rule of its own. The query is the top of the panel, not a
-     field dropped into it — a filled box with a border under it made the
-     palette read as a form with a list attached. */
-  background-color: transparent;
-}
-/* One hairline, on the results rather than the input, so the divider belongs to
-   the list it opens. */
-.PickerResults {
-  border-top-width: 1px;
-  border-top-style: solid;
-  border-top-color: var(--hairline);
+  background-color: var(--overlay-soft);
+  border-radius: 8px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
 }
 
 /* ── Results ────────────────────────────────────────────────────────────── */
@@ -77,9 +77,11 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 9px 12px;
-  margin: 2px 6px;
-  border-radius: 6px;
+  /* Full bleed and square. A result row is not an object you pick up, it is a
+     band you land on — the radius fought the field above it and the inset left
+     the highlight floating in the middle of the panel. */
+  padding: 0 16px;
+  height: 34px;
 }
 
 .PickerItem:hover {
@@ -114,15 +116,21 @@
   flex-grow: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  /* One line: name, then its path beside it. Stacked, every row was two lines
+     tall and the list showed four results where it now shows eight — and for a
+     Fiddle the "path" is the file id, so the second line was repeating the
+     first verbatim. */
+  flex-direction: row;
+  align-items: baseline;
+  column-gap: 8px;
 }
 
 .PickerFileName {
   font-size: 13px;
   line-height: 18px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--bp-text);
+  flex-shrink: 0;
 }
 
 /* Paths are data. */
@@ -131,7 +139,10 @@
   font-size: 11px;
   line-height: 16px;
   color: var(--bp-text-muted);
-  margin-top: 2px;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* A showcase's description is prose, not data — it must not inherit the
@@ -168,6 +179,21 @@
   color: #f5a623;
 }
 
+.PickerShowcase .PickerItemInfo,
+.PickerShowcase {
+  /* Showcases carry a description and tags, so their rows stay stacked and
+     size to content — the fixed single-line height above is for file and
+     command rows. */
+  flex-direction: column;
+  align-items: flex-start;
+  height: auto;
+}
+.PickerShowcase {
+  flex-direction: row;
+  align-items: center;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
 .PickerShowcaseHeader {
   display: flex;
   flex-direction: row;
