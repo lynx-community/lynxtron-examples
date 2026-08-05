@@ -13,6 +13,7 @@ export default defineConfig({
   entry: {
     main: './src/main/desktop/main.ts',
     preload: './src/main/desktop/preload.ts',
+    'service-host': './src/service/host.ts',
   },
   output: {
     path: path.resolve(__dirname, 'dist/desktop/'),

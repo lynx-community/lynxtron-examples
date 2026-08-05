@@ -3,6 +3,8 @@
 状态：Accepted  
 适用范围：`showcases/codex-demo` 桌面端
 
+当前进度：第一阶段进程边界已落地。Agent、Task、Timeline、Workspace、Review 和持久化运行在独立 Service Host；主进程保留 bootstrap、RPC 路由、系统能力和服务生命周期；流式文本聚合已迁入 preload 暴露的 Lynx BTS 缓冲区。
+
 ## 目标
 
 Codex Demo 采用“薄主进程、功能服务化、交互下沉到 Lynx BTS”的架构：

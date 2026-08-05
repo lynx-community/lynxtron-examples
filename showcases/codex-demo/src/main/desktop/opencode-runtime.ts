@@ -19,6 +19,11 @@ interface OpenCodeManifest {
   sha256: string;
 }
 
+export interface InstalledOpenCodeRuntime {
+  bin: string;
+  version: string;
+}
+
 function verify(bin: string, expectedVersion: string): void {
   accessSync(bin, constants.X_OK);
   const version = execFileSync(bin, ['--version'], { encoding: 'utf8', timeout: 10_000 }).trim();
@@ -27,7 +32,7 @@ function verify(bin: string, expectedVersion: string): void {
   }
 }
 
-export function installOpenCodeRuntime(resourceDir: string, installRoot: string): string {
+export function installOpenCodeRuntime(resourceDir: string, installRoot: string): InstalledOpenCodeRuntime {
   const manifestPath = path.join(resourceDir, 'manifest.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as OpenCodeManifest;
   if (manifest.schemaVersion !== 1 || !manifest.version || !manifest.sha256) {
@@ -35,22 +40,22 @@ export function installOpenCodeRuntime(resourceDir: string, installRoot: string)
   }
 
   const archive = path.join(resourceDir, manifest.archive);
-  const actualHash = createHash('sha256').update(readFileSync(archive)).digest('hex');
-  if (actualHash !== manifest.sha256) {
-    throw new Error(`OpenCode archive checksum mismatch: expected ${manifest.sha256}, got ${actualHash}`);
-  }
-
   const releaseDir = path.join(installRoot, `${manifest.version}-${manifest.sha256.slice(0, 12)}`);
   const installedBin = path.join(releaseDir, manifest.executable);
   try {
     verify(installedBin, manifest.version);
-    return installedBin;
+    return { bin: installedBin, version: manifest.version };
   } catch {
     try {
       renameSync(releaseDir, `${releaseDir}.invalid-${Date.now()}`);
     } catch {
       // Not installed yet.
     }
+  }
+
+  const actualHash = createHash('sha256').update(readFileSync(archive)).digest('hex');
+  if (actualHash !== manifest.sha256) {
+    throw new Error(`OpenCode archive checksum mismatch: expected ${manifest.sha256}, got ${actualHash}`);
   }
 
   mkdirSync(installRoot, { recursive: true });
@@ -64,5 +69,5 @@ export function installOpenCodeRuntime(resourceDir: string, installRoot: string)
     const detail = error instanceof Error ? error.message : String(error);
     throw new Error(`OpenCode runtime installation failed: ${detail}`);
   }
-  return installedBin;
+  return { bin: installedBin, version: manifest.version };
 }

@@ -83,7 +83,9 @@ export class AgentRuntime {
     private readonly emitToWindow: Emit,
     private readonly openCodeConfigDir = path.join(__dirname, 'opencode'),
     private readonly computerUseBin = '',
+    initialOpenCodeInfo?: BackendInfo,
   ) {
+    this.openCodeInfo = initialOpenCodeInfo ?? null;
     for (const stored of store.load()) {
       const task = { ...stored, status: 'idle' as TaskStatus };
       this.tasks.set(task.id, task);
@@ -91,7 +93,7 @@ export class AgentRuntime {
   }
 
   listBackends(): BackendInfo[] {
-    const openCode = probeOpenCode();
+    const openCode = this.openCodeInfo?.status === 'ready' ? this.openCodeInfo : probeOpenCode();
     this.openCodeInfo = openCode;
     return [
       {

@@ -52,11 +52,6 @@ export function installComputerUseRuntime(resourceDir: string, installRoot: stri
   }
 
   const archivePath = path.join(resourceDir, manifest.archive);
-  const actualHash = sha256(archivePath);
-  if (actualHash !== manifest.sha256) {
-    throw new Error(`Computer Use archive checksum mismatch: expected ${manifest.sha256}, got ${actualHash}`);
-  }
-
   // ZIP metadata may change between builds even when the signed executable and
   // its TCC identity are unchanged. Key installations by runtime content.
   const releaseName = `${manifest.version}-${(manifest.runtimeId ?? manifest.sha256).slice(0, 12)}`;
@@ -73,6 +68,11 @@ export function installComputerUseRuntime(resourceDir: string, installRoot: stri
     } catch {
       // The version has not been installed yet.
     }
+  }
+
+  const actualHash = sha256(archivePath);
+  if (actualHash !== manifest.sha256) {
+    throw new Error(`Computer Use archive checksum mismatch: expected ${manifest.sha256}, got ${actualHash}`);
   }
 
   mkdirSync(installRoot, { recursive: true });

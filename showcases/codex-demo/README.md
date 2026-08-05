@@ -105,11 +105,14 @@ The process boundary and migration rules are documented in
 
 ```text
 Lynx UI
-  -> callback-only Lynx bridge
-    -> AgentRuntime + TaskStore
-      -> Mock backend
-      -> AcpClient (one stdout reader)
-        -> opencode acp --pure
+  -> Lynx BTS conversation buffer exposed by preload
+    -> callback-only Lynx bridge
+      -> main-process RPC transport + service lifecycle
+        -> Codex Service Host
+          -> AgentRuntime + TaskStore + Workspace/Review services
+            -> Mock backend
+            -> AcpClient (one stdout reader)
+              -> opencode acp --pure
 ```
 
 New ACP-capable agents can reuse `AcpClient` and the normalized event contract.

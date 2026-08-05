@@ -33,6 +33,12 @@ interface PendingTextDelta {
   text: string;
 }
 
+interface BtsConversationApi {
+  enqueueDelta?: (delta: PendingTextDelta) => number;
+  drainDeltas?: () => PendingTextDelta[];
+  clearDeltas?: () => void;
+}
+
 interface TaskTimelineCache {
   historyItems: TimelineEntry[];
   liveItems: TimelineEntry[];
@@ -78,6 +84,10 @@ const EMPTY_WORKSPACE: WorkspaceSnapshot = {
 };
 
 const readInputValue = (event: any): string => event?.detail?.value ?? event?.value ?? '';
+
+function btsConversationApi(): BtsConversationApi | undefined {
+  return (NativeModules as any).nodejs?.exposed?.conversation as BtsConversationApi | undefined;
+}
 
 function callBridge<T>(method: string, data: unknown = {}): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -575,8 +585,10 @@ export function App() {
       clearTimeout(pendingTextTimerRef.current);
       pendingTextTimerRef.current = null;
     }
-    if (pendingTextRef.current.size === 0) return;
-    const pending = [...pendingTextRef.current.values()];
+    let pending: PendingTextDelta[] = [];
+    try { pending = btsConversationApi()?.drainDeltas?.() ?? []; } catch {}
+    if (pendingTextRef.current.size > 0) pending.push(...pendingTextRef.current.values());
+    if (pending.length === 0) return;
     pendingTextRef.current.clear();
     setLiveItems((current) => pending.reduce(
       (next, entry) => mergeText(next, { ...entry.event, text: entry.text }, entry.kind),
@@ -590,16 +602,25 @@ export function App() {
       pendingTextTimerRef.current = null;
     }
     pendingTextRef.current.clear();
+    try { btsConversationApi()?.clearDeltas?.(); } catch {}
   }, []);
 
   const queueTextDelta = useCallback((event: AgentEvent, kind: TimelineKind) => {
     const id = `${kind}:${event.messageId ?? event.cursor}`;
-    const existing = pendingTextRef.current.get(id);
-    pendingTextRef.current.set(id, {
-      event,
-      kind,
-      text: `${existing?.text ?? ''}${event.text ?? ''}`,
-    });
+    let bufferedInBts = false;
+    try {
+      const { raw: _raw, ...serializableEvent } = event;
+      btsConversationApi()?.enqueueDelta?.({ event: serializableEvent, kind, text: event.text ?? '' });
+      bufferedInBts = Boolean(btsConversationApi()?.enqueueDelta);
+    } catch {}
+    if (!bufferedInBts) {
+      const existing = pendingTextRef.current.get(id);
+      pendingTextRef.current.set(id, {
+        event,
+        kind,
+        text: `${existing?.text ?? ''}${event.text ?? ''}`,
+      });
+    }
     if (pendingTextTimerRef.current === null) {
       pendingTextTimerRef.current = setTimeout(flushPendingText, STREAM_FLUSH_INTERVAL_MS);
     }
@@ -948,6 +969,21 @@ export function App() {
     }
   }, [loadLatestTimeline, refreshSnapshot]);
 
+  const recoverServiceState = useCallback(async () => {
+    const taskId = selectedTaskIdRef.current;
+    try {
+      const taskList = await callBridge<AgentTask[]>('agent:listTasks');
+      setTasks(taskList);
+      const currentTask = taskList.find((task) => task.id === taskId);
+      if (currentTask?.backendId === 'opencode') await callBridge<AgentTask>('agent:loadTask', { taskId });
+      if (currentTask) await loadLatestTimeline(taskId);
+      await refreshSnapshot();
+      setError('');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    }
+  }, [loadLatestTimeline, refreshSnapshot]);
+
   const chooseWorkspace = useCallback(async () => {
     try {
       const result = await callBridge<{ path: string }>('agent:chooseWorkspace');
@@ -1105,6 +1141,17 @@ export function App() {
       clearPendingText();
     };
   }, [applyEvent, initialize, clearPendingText]);
+
+  useEffect(() => {
+    const emitter = lynx.getJSModule('GlobalEventEmitter');
+    const serviceHandler = (...args: unknown[]) => {
+      const state = args[0] as { state?: string; detail?: string };
+      if (state?.state === 'recovering') setError('Background service interrupted. Reconnecting…');
+      if (state?.state === 'ready' && initialized) void recoverServiceState();
+    };
+    emitter.addListener('service:state', serviceHandler);
+    return () => emitter.removeListener('service:state', serviceHandler);
+  }, [initialized, recoverServiceState]);
 
   useEffect(() => {
     if (!selectedTaskId || !previewOpen) return;

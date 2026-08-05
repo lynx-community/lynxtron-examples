@@ -2,11 +2,10 @@ import { app, devtool, dialog, LynxWindow, Menu, shell } from '@lynx-js/lynxtron
 import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
 import { cpSync, mkdirSync } from 'fs';
 import path from 'path';
-import type { BridgeResult, StartTaskInput } from '../../shared/agent';
-import { AgentRuntime } from './agents/runtime';
-import { TaskStore } from './agents/task-store';
+import type { BridgeResult } from '../../shared/agent';
 import { installComputerUseRuntime } from './computer-use-runtime';
 import { installOpenCodeRuntime } from './opencode-runtime';
+import { ServiceClient } from './transport/service-client';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 
 function asRecord(value: unknown): Record<string, any> {
@@ -21,25 +20,31 @@ function fail(error: unknown): BridgeResult<never> {
   return { ok: false, error: error instanceof Error ? error.message : String(error) };
 }
 
-function prepareOpenCodeConfig(): { configDir: string; computerUseBin: string; openCodeBin: string } {
+function prepareOpenCodeConfig(): { configDir: string; computerUseBin: string; openCodeBin: string; openCodeVersion: string } {
+  const bootstrapStartedAt = performance.now();
   const source = path.join(__dirname, 'opencode');
   const target = path.join(app.getPath('userData'), 'codex-demo', 'opencode');
   mkdirSync(target, { recursive: true });
   cpSync(path.join(source, 'opencode.json'), path.join(target, 'opencode.json'), { force: true });
   cpSync(path.join(source, 'skills'), path.join(target, 'skills'), { recursive: true, force: true });
 
+  const computerUseStartedAt = performance.now();
   const computerUseBin = installComputerUseRuntime(
     path.join(source, 'runtime'),
     path.join(app.getPath('userData'), 'codex-demo', 'runtime'),
   );
-  const openCodeBin = installOpenCodeRuntime(
+  console.info('[Codex Demo][bootstrap] computer-use', Math.round(performance.now() - computerUseStartedAt), 'ms');
+  const openCodeStartedAt = performance.now();
+  const openCode = installOpenCodeRuntime(
     path.join(source, 'agent-runtime'),
     path.join(app.getPath('userData'), 'codex-demo', 'opencode-runtime'),
   );
-  return { configDir: target, computerUseBin, openCodeBin };
+  console.info('[Codex Demo][bootstrap] opencode', Math.round(performance.now() - openCodeStartedAt), 'ms');
+  console.info('[Codex Demo][bootstrap] total', Math.round(performance.now() - bootstrapStartedAt), 'ms');
+  return { configDir: target, computerUseBin, openCodeBin: openCode.bin, openCodeVersion: openCode.version };
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   if (process.env.CODEX_DEMO_DEVTOOLS === '1') devtool.setDevToolEnabled(true);
   const w = new LynxWindow({
     width: 1280,
@@ -60,14 +65,28 @@ app.whenReady().then(() => {
 
   const prepared = prepareOpenCodeConfig();
   process.env.OPENCODE_BIN = prepared.openCodeBin;
-  const store = new TaskStore(path.join(app.getPath('userData'), 'codex-demo', 'tasks.json'));
-  const runtime = new AgentRuntime(store, (event) => {
-    try {
-      w.sendGlobalEvent('agent:event', event);
-    } catch (error) {
-      console.error('[Codex Demo] Failed to push agent event:', error);
-    }
-  }, prepared.configDir, prepared.computerUseBin);
+  const service = new ServiceClient({
+    env: Object.fromEntries(Object.entries({
+      ...process.env,
+      CODEX_DEMO_TASKS_FILE: path.join(app.getPath('userData'), 'codex-demo', 'tasks.json'),
+      OPENCODE_CONFIG_DIR: prepared.configDir,
+      CODEX_DEMO_COMPUTER_USE_BIN: prepared.computerUseBin,
+      OPENCODE_BIN: prepared.openCodeBin,
+      CODEX_DEMO_OPENCODE_VERSION: prepared.openCodeVersion,
+    }).filter((entry): entry is [string, string] => typeof entry[1] === 'string')),
+    onAgentEvent: (event) => {
+      try {
+        w.sendGlobalEvent('agent:event', event);
+      } catch (error) {
+        console.error('[Codex Demo] Failed to push agent event:', error);
+      }
+    },
+    onStateChange: (state, detail) => {
+      console.info('[Codex Demo][service]', state, detail ?? '');
+      try { w.sendGlobalEvent('service:state', { state, detail }); } catch {}
+    },
+  });
+  await service.start();
 
   const menuTemplate: any[] = [];
   if (process.platform === 'darwin') menuTemplate.push({ role: 'appMenu' });
@@ -89,52 +108,42 @@ app.whenReady().then(() => {
     try {
       switch (name) {
         case 'agent:listBackends':
-          callback.sendReply(ok(runtime.listBackends()));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'agent:listTasks':
-          callback.sendReply(ok(runtime.listTasks()));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'agent:eventsSince':
-          callback.sendReply(ok(runtime.eventsSince(Number(params.cursor ?? 0))));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'agent:timelinePage':
-          callback.sendReply(ok(runtime.timelinePage(
-            String(params.taskId ?? ''),
-            params.before === undefined ? undefined : Number(params.before),
-            Number(params.limit ?? 50),
-          )));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'debug:historyLoad':
           console.info('[Codex Demo][history-load]', params);
           callback.sendReply(ok(true));
           break;
         case 'review:snapshot':
-          callback.sendReply(ok(await runtime.reviewSnapshot(String(params.taskId ?? ''))));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'review:fileDiff':
-          callback.sendReply(ok(await runtime.fileDiff(
-            String(params.taskId ?? ''),
-            String(params.path ?? ''),
-          )));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'workspace:snapshot':
-          callback.sendReply(ok(runtime.workspaceSnapshot(String(params.taskId ?? ''))));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'workspace:file':
-          callback.sendReply(ok(runtime.workspaceFile(
-            String(params.taskId ?? ''),
-            String(params.path ?? ''),
-          )));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'workspace:open': {
-          const filePath = runtime.workspaceFilePath(String(params.taskId ?? ''), String(params.path ?? ''));
+          const filePath = await service.request<string>('workspace:filePath', params);
           const error = await shell.openPath(filePath);
           if (error) throw new Error(error);
           callback.sendReply(ok({ opened: true }));
           break;
         }
         case 'workspace:reveal': {
-          const filePath = runtime.workspaceFilePath(String(params.taskId ?? ''), String(params.path ?? ''));
+          const filePath = await service.request<string>('workspace:filePath', params);
           shell.showItemInFolder(filePath);
           callback.sendReply(ok({ revealed: true }));
           break;
@@ -148,29 +157,22 @@ app.whenReady().then(() => {
           break;
         }
         case 'agent:startTask':
-          callback.sendReply(ok(await runtime.startTask(params as StartTaskInput)));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'agent:loadTask':
-          callback.sendReply(ok(await runtime.loadTask(String(params.taskId ?? ''))));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'agent:prompt':
-          runtime.startPrompt(String(params.taskId ?? ''), String(params.text ?? ''));
-          callback.sendReply(ok({ accepted: true }));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'agent:cancel':
-          runtime.cancel(String(params.taskId ?? ''));
-          callback.sendReply(ok({ cancelled: true }));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'agent:permission':
-          runtime.respondPermission(String(params.requestId ?? ''), params.optionId ? String(params.optionId) : undefined);
-          callback.sendReply(ok({ resolved: true }));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'agent:setConfigOption':
-          callback.sendReply(ok(await runtime.setConfigOption(
-            String(params.taskId ?? ''),
-            String(params.configId ?? ''),
-            typeof params.value === 'boolean' ? params.value : String(params.value ?? ''),
-          )));
+          callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'agent:chooseWorkspace': {
           const result = await dialog.showOpenDialog({ properties: ['openDirectory'] });
@@ -189,7 +191,7 @@ app.whenReady().then(() => {
     }
   });
 
-  w.on('closed', () => runtime.dispose());
+  w.on('closed', () => { void service.dispose(); });
   w.loadFile(LYNX_BUNDLE_PATH);
   w.show();
   nudgeFramedWindowViewport(w as any, { width: 1280, height: 720 });
