@@ -1,4 +1,4 @@
-import { app, dialog, LynxWindow, Menu } from '@lynx-js/lynxtron';
+import { app, devtool, dialog, LynxWindow, Menu, shell } from '@lynx-js/lynxtron';
 import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
 import { cpSync, mkdirSync } from 'fs';
 import path from 'path';
@@ -40,9 +40,10 @@ function prepareOpenCodeConfig(): { configDir: string; computerUseBin: string; o
 }
 
 app.whenReady().then(() => {
+  if (process.env.CODEX_DEMO_DEVTOOLS === '1') devtool.setDevToolEnabled(true);
   const w = new LynxWindow({
     width: 1280,
-    height: 820,
+    height: 720,
     minWidth: 940,
     minHeight: 620,
     title: 'Codex Demo',
@@ -103,15 +104,49 @@ app.whenReady().then(() => {
             Number(params.limit ?? 50),
           )));
           break;
+        case 'debug:historyLoad':
+          console.info('[Codex Demo][history-load]', params);
+          callback.sendReply(ok(true));
+          break;
         case 'review:snapshot':
-          callback.sendReply(ok(runtime.reviewSnapshot(String(params.taskId ?? ''))));
+          callback.sendReply(ok(await runtime.reviewSnapshot(String(params.taskId ?? ''))));
           break;
         case 'review:fileDiff':
-          callback.sendReply(ok(runtime.fileDiff(
+          callback.sendReply(ok(await runtime.fileDiff(
             String(params.taskId ?? ''),
             String(params.path ?? ''),
           )));
           break;
+        case 'workspace:snapshot':
+          callback.sendReply(ok(runtime.workspaceSnapshot(String(params.taskId ?? ''))));
+          break;
+        case 'workspace:file':
+          callback.sendReply(ok(runtime.workspaceFile(
+            String(params.taskId ?? ''),
+            String(params.path ?? ''),
+          )));
+          break;
+        case 'workspace:open': {
+          const filePath = runtime.workspaceFilePath(String(params.taskId ?? ''), String(params.path ?? ''));
+          const error = await shell.openPath(filePath);
+          if (error) throw new Error(error);
+          callback.sendReply(ok({ opened: true }));
+          break;
+        }
+        case 'workspace:reveal': {
+          const filePath = runtime.workspaceFilePath(String(params.taskId ?? ''), String(params.path ?? ''));
+          shell.showItemInFolder(filePath);
+          callback.sendReply(ok({ revealed: true }));
+          break;
+        }
+        case 'shell:openExternal': {
+          const href = String(params.href ?? '');
+          const url = new URL(href);
+          if (!['http:', 'https:', 'mailto:'].includes(url.protocol)) throw new Error('Unsupported link protocol.');
+          await shell.openExternal(url.toString());
+          callback.sendReply(ok({ opened: true }));
+          break;
+        }
         case 'agent:startTask':
           callback.sendReply(ok(await runtime.startTask(params as StartTaskInput)));
           break;
@@ -157,5 +192,5 @@ app.whenReady().then(() => {
   w.on('closed', () => runtime.dispose());
   w.loadFile(LYNX_BUNDLE_PATH);
   w.show();
-  nudgeFramedWindowViewport(w as any, { width: 1280, height: 820 });
+  nudgeFramedWindowViewport(w as any, { width: 1280, height: 720 });
 });

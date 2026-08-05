@@ -30,17 +30,20 @@
   },
   "dependencies": {
     "@lynx-js/lynxtron": "catalog:",
-    "open-computer-use": "0.3.1"
+    "markdown-it": "14.3.0",
+    "open-computer-use": "0.3.1",
+    "prismjs": "1.30.0"
   },
   "devDependencies": {
-    "@lynxtron-examples/config": "workspace:*",
+    "@lynx-js/lynxtron-dev-plugins": "catalog:",
     "@lynx-js/react": "catalog:",
     "@lynx-js/rspeedy": "catalog:",
     "@lynx-js/types": "catalog:",
+    "@lynxtron-examples/config": "workspace:*",
     "@rspack/cli": "catalog:",
     "@rspack/core": "catalog:",
-    "@lynx-js/lynxtron-dev-plugins": "catalog:",
     "@types/node": "^22.0.0",
+    "@types/prismjs": "1.26.6",
     "concurrently": "catalog:",
     "cross-env": "catalog:",
     "typescript": "catalog:",

@@ -16,11 +16,14 @@ import type {
   TimelineKind,
   TimelinePage,
   ToolItem,
+  WorkspaceFilePreview,
+  WorkspaceSnapshot,
 } from '../../../shared/agent';
 import { AcpClient, type AcpServerRequest } from './acp-client';
 import { probeOpenCode } from './opencode-discovery';
 import { ReviewService } from './review-service';
 import { TaskStore } from './task-store';
+import { WorkspaceService } from './workspace-service';
 
 type Emit = (event: AgentEvent) => void;
 
@@ -66,11 +69,14 @@ export class AgentRuntime {
   private readonly eventBuffer: AgentEvent[] = [];
   private readonly timelineByTask = new Map<string, TimelineEntry[]>();
   private readonly suppressReplayForTasks = new Set<string>();
+  private readonly loadedSessions = new Set<string>();
+  private readonly reviewSnapshots = new Map<string, ReviewSnapshot>();
   private cursor = 0;
   private timelineSequence = 0;
   private openCodeClient: AcpClient | null = null;
   private openCodeInfo: BackendInfo | null = null;
   private readonly reviewService = new ReviewService();
+  private readonly workspaceService = new WorkspaceService();
 
   constructor(
     private readonly store: TaskStore,
@@ -128,13 +134,29 @@ export class AgentRuntime {
     };
   }
 
-  reviewSnapshot(taskId: string): ReviewSnapshot {
-    const task = this.requireTask(taskId);
-    return this.reviewService.snapshot(task.cwd, task.lastTurnChangedFiles ?? []);
+  workspaceSnapshot(taskId: string): WorkspaceSnapshot {
+    return this.workspaceService.snapshot(this.requireTask(taskId).cwd);
   }
 
-  fileDiff(taskId: string, path: string): FileDiff {
-    return this.reviewService.fileDiff(this.requireTask(taskId).cwd, path);
+  workspaceFile(taskId: string, requestedPath: string): WorkspaceFilePreview {
+    return this.workspaceService.readFile(this.requireTask(taskId).cwd, requestedPath);
+  }
+
+  workspaceFilePath(taskId: string, requestedPath: string): string {
+    return this.workspaceService.filePath(this.requireTask(taskId).cwd, requestedPath);
+  }
+
+  async reviewSnapshot(taskId: string): Promise<ReviewSnapshot> {
+    const task = this.requireTask(taskId);
+    const snapshot = await this.reviewService.snapshot(task.cwd, task.lastTurnChangedFiles ?? []);
+    this.reviewSnapshots.set(taskId, snapshot);
+    return snapshot;
+  }
+
+  async fileDiff(taskId: string, path: string): Promise<FileDiff> {
+    const task = this.requireTask(taskId);
+    const file = this.reviewSnapshots.get(taskId)?.files.find((candidate) => candidate.path === path);
+    return this.reviewService.fileDiff(task.cwd, path, file);
   }
 
   async startTask(input: StartTaskInput): Promise<AgentTask> {
@@ -158,6 +180,7 @@ export class AgentRuntime {
     };
     this.tasks.set(task.id, task);
     this.sessionToTask.set(task.sessionId, task.id);
+    this.loadedSessions.add(task.sessionId);
     this.persist();
     this.push({ type: 'task', taskId: task.id, task: { ...task } });
     return task;
@@ -166,6 +189,7 @@ export class AgentRuntime {
   async loadTask(taskId: string): Promise<AgentTask> {
     const task = this.requireTask(taskId);
     if (task.backendId === 'mock') return task;
+    if (this.loadedSessions.has(task.sessionId)) return task;
     const client = await this.ensureOpenCode(task.cwd);
     this.sessionToTask.set(task.sessionId, task.id);
     task.lastTurnChangedFiles = [];
@@ -179,6 +203,7 @@ export class AgentRuntime {
       this.suppressReplayForTasks.delete(task.id);
     }
     if (Array.isArray(response.configOptions)) task.configOptions = response.configOptions as ConfigOption[];
+    this.loadedSessions.add(task.sessionId);
     task.status = 'idle';
     task.updatedAt = Date.now();
     this.persist();
@@ -192,6 +217,14 @@ export class AgentRuntime {
     const task = this.requireTask(taskId);
     if (task.status === 'running' || task.status === 'waiting') throw new Error('This task is already running.');
 
+    if (task.title === 'New OpenCode task' || task.title === 'New task' || (
+      task.backendId === 'mock' && (this.timelineByTask.get(task.id)?.length ?? 0) === 0
+    )) {
+      task.title = prompt.split('\n')[0].slice(0, 56);
+      task.updatedAt = Date.now();
+      this.persist();
+      this.push({ type: 'task', taskId, task: { ...task } });
+    }
     task.lastTurnChangedFiles = [];
     this.persist();
     this.setTaskStatus(task, 'running');
@@ -327,6 +360,7 @@ export class AgentRuntime {
     client.on('request', (request: AcpServerRequest) => this.handleServerRequest(client, request));
     client.on('fatal', (error: Error) => {
       if (this.openCodeClient === client) this.openCodeClient = null;
+      this.loadedSessions.clear();
       for (const task of this.tasks.values()) {
         if (task.backendId !== 'opencode' || task.status !== 'running') continue;
         this.push({ type: 'error', taskId: task.id, error: error.message });

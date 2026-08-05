@@ -1,0 +1,19 @@
+import { app, LynxWindow } from '@lynx-js/lynxtron';
+import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
+import { LYNX_BUNDLE_PATH } from './vendorPaths';
+import path from 'path';
+
+app.whenReady().then(() => {
+  const w = new LynxWindow({
+    width: 400,
+    height: 300,
+    title: 'Hello World Showcase',
+    lynxPreference: {
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  });
+
+  w.show();
+  w.loadFile(LYNX_BUNDLE_PATH);
+  nudgeFramedWindowViewport(w, { width: 400, height: 300 });
+});

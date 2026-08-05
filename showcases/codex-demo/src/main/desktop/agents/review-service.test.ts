@@ -30,14 +30,14 @@ afterEach(() => {
 });
 
 describe('ReviewService', () => {
-  it('summarizes Git changes and returns a structured line diff', () => {
+  it('summarizes Git changes and returns a structured line diff', async () => {
     const directory = repository();
     writeFileSync(join(directory, 'modified.ts'), 'const value = 2;\nexport { value };\n');
     writeFileSync(join(directory, 'new.ts'), 'export const added = true;\n');
     unlinkSync(join(directory, 'deleted.ts'));
 
     const service = new ReviewService();
-    const snapshot = service.snapshot(directory);
+    const snapshot = await service.snapshot(directory);
 
     expect(snapshot.files.map((file) => [file.path, file.status])).toEqual([
       ['deleted.ts', 'deleted'],
@@ -47,20 +47,20 @@ describe('ReviewService', () => {
     expect(snapshot.additions).toBeGreaterThanOrEqual(3);
     expect(snapshot.deletions).toBeGreaterThanOrEqual(2);
 
-    const lastTurn = service.snapshot(directory, ['modified.ts']);
+    const lastTurn = await service.snapshot(directory, ['modified.ts']);
     expect(lastTurn.files.map((file) => file.path)).toEqual(['modified.ts']);
 
-    const diff = service.fileDiff(directory, 'modified.ts');
+    const diff = await service.fileDiff(directory, 'modified.ts');
     expect(diff.lines.some((line) => line.kind === 'deletion' && line.text.includes('value = 1'))).toBe(true);
     expect(diff.lines.some((line) => line.kind === 'addition' && line.text.includes('value = 2'))).toBe(true);
 
-    const untracked = service.fileDiff(directory, 'new.ts');
+    const untracked = await service.fileDiff(directory, 'new.ts');
     expect(untracked.lines.some((line) => line.kind === 'addition' && line.text.includes('added = true'))).toBe(true);
   });
 
-  it('rejects previews outside the repository', () => {
+  it('rejects previews outside the repository', async () => {
     const directory = repository();
     const service = new ReviewService();
-    expect(() => service.fileDiff(directory, '../outside.ts')).toThrow('outside the task repository');
+    await expect(service.fileDiff(directory, '../outside.ts')).rejects.toThrow('outside the task repository');
   });
 });

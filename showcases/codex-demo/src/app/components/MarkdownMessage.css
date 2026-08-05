@@ -1,0 +1,187 @@
+.markdown-blocks {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.markdown-inline {
+  display: block;
+  color: #2f333a;
+  font-size: 14px;
+  line-height: 22px;
+  white-space: pre-wrap;
+  cursor: text;
+}
+
+.markdown-inline--strong {
+  font-weight: 700;
+}
+
+.markdown-inline--emphasis {
+  font-style: italic;
+}
+
+.markdown-inline--strike {
+  text-decoration: line-through;
+}
+
+.markdown-inline--code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background-color: #f0f1f2;
+  color: #24272c;
+  font-family: Menlo, Monaco, monospace;
+  font-size: 12px;
+}
+
+.markdown-inline--link {
+  color: #246fca;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.markdown-heading {
+  color: #202329;
+  font-weight: 700;
+}
+
+.markdown-heading--1 { font-size: 22px; line-height: 30px; }
+.markdown-heading--2 { font-size: 19px; line-height: 27px; }
+.markdown-heading--3 { font-size: 17px; line-height: 25px; }
+.markdown-heading--4,
+.markdown-heading--5,
+.markdown-heading--6 { font-size: 15px; line-height: 23px; }
+
+.markdown-code-block {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #dfe1e4;
+  border-radius: 10px;
+  background-color: #f7f7f8;
+}
+
+.markdown-code-language {
+  display: block;
+  padding: 7px 12px;
+  border-bottom: 1px solid #e5e6e8;
+  color: #777c84;
+  font-family: Menlo, Monaco, monospace;
+  font-size: 10px;
+}
+
+.markdown-code-scroll {
+  width: 100%;
+}
+
+.markdown-code-lines {
+  min-width: 100%;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.markdown-code-line {
+  display: block;
+  min-height: 19px;
+  color: #343840;
+  font-family: Menlo, Monaco, monospace;
+  font-size: 11px;
+  line-height: 19px;
+  white-space: pre;
+}
+
+.markdown-code-truncated {
+  display: block;
+  padding: 7px 12px;
+  border-top: 1px solid #e5e6e8;
+  color: #8a8e95;
+  font-size: 10px;
+}
+
+.markdown-quote {
+  width: 100%;
+  padding-left: 12px;
+  border-left: 3px solid #d2d5d9;
+}
+
+.markdown-quote .markdown-inline {
+  color: #666b73;
+}
+
+.markdown-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.markdown-list-item {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.markdown-list-marker {
+  width: 20px;
+  flex-shrink: 0;
+  color: #555a62;
+  font-size: 14px;
+  line-height: 22px;
+  text-align: right;
+}
+
+.markdown-list-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.markdown-list-content .markdown-blocks {
+  gap: 5px;
+}
+
+.markdown-rule {
+  width: 100%;
+  height: 1px;
+  margin: 4px 0;
+  background-color: #dedfe2;
+}
+
+.markdown-table-scroll {
+  width: 100%;
+}
+
+.markdown-table {
+  min-width: 100%;
+  overflow: hidden;
+  border: 1px solid #dfe1e4;
+  border-radius: 8px;
+}
+
+.markdown-table-row {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid #e5e6e8;
+}
+
+.markdown-table-row--header {
+  background-color: #f3f4f5;
+}
+
+.markdown-table-row--header .markdown-inline {
+  font-weight: 700;
+}
+
+.markdown-table-cell {
+  min-width: 140px;
+  flex: 1;
+  padding: 7px 10px;
+  border-right: 1px solid #e5e6e8;
+}
+
+.markdown-table-cell .markdown-inline {
+  font-size: 12px;
+  line-height: 18px;
+}

@@ -100,6 +100,9 @@ ID artifact.
 
 ## Architecture
 
+The process boundary and migration rules are documented in
+[ARCHITECTURE.md](./ARCHITECTURE.md).
+
 ```text
 Lynx UI
   -> callback-only Lynx bridge

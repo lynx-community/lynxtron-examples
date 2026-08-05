@@ -22,6 +22,7 @@ describe('AgentRuntime', () => {
       expect(events.filter((event) => event.type === 'message-delta').map((event) => event.text).join(''))
         .toContain('verify the adapter');
       expect(runtime.listTasks()[0].status).toBe('complete');
+      expect(runtime.listTasks()[0].title).toBe('verify the adapter');
       expect(runtime.eventsSince(0).cursor).toBeGreaterThan(0);
 
       const latest = runtime.timelinePage(task.id, undefined, 2);

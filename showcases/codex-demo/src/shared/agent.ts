@@ -178,6 +178,22 @@ export interface FileDiff {
   lines: DiffLine[];
 }
 
+export interface WorkspaceSnapshot {
+  root: string;
+  files: string[];
+  truncated: boolean;
+}
+
+export interface WorkspaceFilePreview {
+  root: string;
+  path: string;
+  content: string;
+  language: string;
+  size: number;
+  binary: boolean;
+  truncated: boolean;
+}
+
 export type PreviewKind =
   | 'review'
   | 'diff'
