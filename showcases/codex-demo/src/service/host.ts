@@ -49,8 +49,8 @@ async function dispatch(method: string, params: Record<string, unknown>): Promis
       params.before === undefined ? undefined : Number(params.before),
       Number(params.limit ?? 50),
     );
-    case 'review:snapshot': return runtime.reviewSnapshot(stringValue(params.taskId));
-    case 'review:fileDiff': return runtime.fileDiff(stringValue(params.taskId), stringValue(params.path));
+    case 'review:snapshot': return runtime.reviewSnapshot(stringValue(params.taskId), stringValue(params.traceId) || undefined);
+    case 'review:fileDiff': return runtime.fileDiff(stringValue(params.taskId), stringValue(params.path), stringValue(params.traceId) || undefined);
     case 'workspace:snapshot': return runtime.workspaceSnapshot(stringValue(params.taskId));
     case 'workspace:file': return runtime.workspaceFile(stringValue(params.taskId), stringValue(params.path));
     case 'workspace:filePath': return runtime.workspaceFilePath(stringValue(params.taskId), stringValue(params.path));

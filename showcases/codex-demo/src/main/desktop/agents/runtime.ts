@@ -148,17 +148,17 @@ export class AgentRuntime {
     return this.workspaceService.filePath(this.requireTask(taskId).cwd, requestedPath);
   }
 
-  async reviewSnapshot(taskId: string): Promise<ReviewSnapshot> {
+  async reviewSnapshot(taskId: string, traceId?: string): Promise<ReviewSnapshot> {
     const task = this.requireTask(taskId);
-    const snapshot = await this.reviewService.snapshot(task.cwd, task.lastTurnChangedFiles ?? []);
+    const snapshot = await this.reviewService.snapshot(task.cwd, task.lastTurnChangedFiles ?? [], traceId);
     this.reviewSnapshots.set(taskId, snapshot);
     return snapshot;
   }
 
-  async fileDiff(taskId: string, path: string): Promise<FileDiff> {
+  async fileDiff(taskId: string, path: string, traceId?: string): Promise<FileDiff> {
     const task = this.requireTask(taskId);
     const file = this.reviewSnapshots.get(taskId)?.files.find((candidate) => candidate.path === path);
-    return this.reviewService.fileDiff(task.cwd, path, file);
+    return this.reviewService.fileDiff(task.cwd, path, file, traceId);
   }
 
   async startTask(input: StartTaskInput): Promise<AgentTask> {

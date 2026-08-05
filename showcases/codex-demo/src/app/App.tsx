@@ -53,6 +53,7 @@ interface TaskReviewCache {
 }
 
 const STREAM_FLUSH_INTERVAL_MS = 40;
+let diffPerformanceSequence = 0;
 
 const AGENTS_TAB: PreviewTab = {
   id: 'agents',
@@ -264,14 +265,18 @@ type ReviewListRow =
   | { id: string; kind: 'diff'; line: DiffLine; tokens: SyntaxSegment[] }
   | { id: string; kind: 'spacer' };
 
-function ReviewDiffList({ files, diffs, loading, onOpenFile, onLoadDiff }: {
+function ReviewDiffList({ files, diffs, loading, onOpenFile, onLoadDiff, onPerformance }: {
   files: ChangedFile[];
   diffs: Record<string, FileDiff>;
   loading: boolean;
   onOpenFile: (path: string) => void;
   onLoadDiff: (file: ChangedFile) => void;
+  onPerformance: (metrics: Record<string, unknown>) => void;
 }) {
-  const rows = useMemo(() => {
+  const build = useMemo(() => {
+    const buildStartedAt = Date.now();
+    let highlightMs = 0;
+    let lineCount = 0;
     const next: ReviewListRow[] = [];
     for (const file of files) {
       const diff = diffs[file.path];
@@ -283,7 +288,10 @@ function ReviewDiffList({ files, diffs, loading, onOpenFile, onLoadDiff }: {
       } else if (diff.lines.length === 0) {
         next.push({ id: `${file.path}:empty`, kind: 'message', text: 'No text diff available' });
       } else {
+        const highlightStartedAt = Date.now();
         const highlighted = prismDiffLines(diff.lines, languageForPath(file.path));
+        highlightMs += Date.now() - highlightStartedAt;
+        lineCount += diff.lines.length;
         diff.lines.forEach((line, index) => next.push({
           id: `${file.path}:${index}:${line.kind}`,
           kind: 'diff',
@@ -296,8 +304,43 @@ function ReviewDiffList({ files, diffs, loading, onOpenFile, onLoadDiff }: {
       }
       next.push({ id: `${file.path}:spacer`, kind: 'spacer' });
     }
-    return next;
+    return {
+      rows: next,
+      completedAt: Date.now(),
+      signature: files.map((file) => `${file.path}:${diffs[file.path]?.lines.length ?? -1}`).join('|'),
+      metrics: {
+        layer: 'frontend',
+        operation: 'build-review-rows',
+        totalMs: Date.now() - buildStartedAt,
+        highlightMs,
+        fileCount: files.length,
+        loadedDiffCount: files.filter((file) => Boolean(diffs[file.path])).length,
+        lineCount,
+        rowCount: next.length,
+      },
+    };
   }, [files, diffs]);
+  const reportedBuildRef = useRef('');
+  const reportedLayoutRef = useRef('');
+
+  useEffect(() => {
+    if (!build.signature || reportedBuildRef.current === build.signature) return;
+    reportedBuildRef.current = build.signature;
+    onPerformance(build.metrics);
+  }, [build, onPerformance]);
+
+  const handleLayoutComplete = useCallback(() => {
+    if (!build.signature || reportedLayoutRef.current === build.signature) return;
+    reportedLayoutRef.current = build.signature;
+    onPerformance({
+      layer: 'frontend',
+      operation: 'review-list-layout',
+      durationAfterBuildMs: Date.now() - build.completedAt,
+      rowCount: build.rows.length,
+    });
+  }, [build, onPerformance]);
+
+  const rows = build.rows;
 
   if (loading && files.length === 0) return <text className="review-loading">Reading Git changes…</text>;
   if (!loading && files.length === 0) {
@@ -311,7 +354,16 @@ function ReviewDiffList({ files, diffs, loading, onOpenFile, onLoadDiff }: {
   }
 
   return (
-    <list className="review-diff-list" scroll-orientation="vertical" list-type="single" enable-scroll={true} preload-buffer-count={24}>
+    <list
+      className="review-diff-list"
+      scroll-orientation="vertical"
+      list-type="single"
+      enable-scroll={true}
+      preload-buffer-count={24}
+      need-layout-complete-info={true}
+      layout-id={rows.length}
+      bindlayoutcomplete={handleLayoutComplete}
+    >
       {rows.map((row) => {
         if (row.kind === 'heading') {
           return (
@@ -493,7 +545,12 @@ export function App() {
   const pendingTextRef = useRef(new Map<string, PendingTextDelta>());
   const pendingTextTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timelineRef = useRef<VirtualTimelineHandle | null>(null);
-  const historyLoadMetricRef = useRef<{ startedAt: number; bridgeMs: number } | null>(null);
+  const historyLoadMetricRef = useRef<{ traceId: string; startedAt: number; bridgeMs: number } | null>(null);
+  const historyRevealLogRef = useRef(new Map<string, {
+    timer: ReturnType<typeof setTimeout>;
+    stages: Record<string, unknown>[];
+  }>());
+  const diffPerformanceTraceRef = useRef('');
 
   const items = useMemo(() => {
     const merged = [...historyItems];
@@ -713,11 +770,12 @@ export function App() {
     });
   }, []);
 
-  const loadEarlierTimeline = useCallback(async () => {
+  const loadEarlierTimeline = useCallback(async (revealTraceId?: string) => {
     const taskId = selectedTaskIdRef.current;
     if (!taskId || !historyHasMore || historyLoading || historyBefore === undefined) return;
     const startedAt = Date.now();
-    historyLoadMetricRef.current = { startedAt, bridgeMs: 0 };
+    const traceId = revealTraceId ?? `timeline-page-${startedAt}`;
+    historyLoadMetricRef.current = { traceId, startedAt, bridgeMs: 0 };
     setHistoryLoading(true);
     try {
       const page = await callBridge<TimelinePage>('agent:timelinePage', {
@@ -726,8 +784,9 @@ export function App() {
         limit: 50,
       });
       const bridgeMs = Date.now() - startedAt;
-      historyLoadMetricRef.current = { startedAt, bridgeMs };
+      historyLoadMetricRef.current = { traceId, startedAt, bridgeMs };
       void callBridge('debug:historyLoad', {
+        traceId,
         phase: 'bridge',
         taskId,
         durationMs: bridgeMs,
@@ -752,11 +811,24 @@ export function App() {
     if (!metric) return;
     historyLoadMetricRef.current = null;
     void callBridge('debug:historyLoad', {
+      traceId: metric.traceId,
       phase: 'layout-settled',
       taskId: selectedTaskIdRef.current,
       bridgeMs: metric.bridgeMs,
       durationMs: Date.now() - metric.startedAt,
     });
+  }, []);
+
+  const reportTimelineRevealPerformance = useCallback((metrics: Record<string, unknown>) => {
+    const traceId = typeof metrics.traceId === 'string' ? metrics.traceId : 'timeline-reveal-unattributed';
+    const current = historyRevealLogRef.current.get(traceId);
+    if (current) clearTimeout(current.timer);
+    const stages = [...(current?.stages ?? []), metrics];
+    const timer = setTimeout(() => {
+      historyRevealLogRef.current.delete(traceId);
+      void callBridge('debug:historyLoad', { traceId, phase: 'trace-batch', stages });
+    }, 250);
+    historyRevealLogRef.current.set(traceId, { timer, stages });
   }, []);
 
   const jumpToRandomTimelinePosition = useCallback(() => {
@@ -788,10 +860,21 @@ export function App() {
       return;
     }
     const cachedBeforeRefresh = reviewCacheRef.current.get(taskId);
+    const traceId = `diff-${Date.now()}-${++diffPerformanceSequence}`;
+    const totalStartedAt = Date.now();
+    diffPerformanceTraceRef.current = traceId;
     const showInitialLoading = !cachedBeforeRefresh;
     if (showInitialLoading) setReviewLoading(true);
     try {
-      const snapshot = await callBridge<ReviewSnapshot>('review:snapshot', { taskId });
+      const snapshotStartedAt = Date.now();
+      const snapshot = await callBridge<ReviewSnapshot>('review:snapshot', { taskId, traceId });
+      void callBridge('debug:diffPerformance', {
+        traceId,
+        layer: 'frontend',
+        operation: 'snapshot-bridge',
+        totalMs: Date.now() - snapshotStartedAt,
+        fileCount: snapshot.files.length,
+      });
       if (selectedTaskIdRef.current !== taskId) return;
       setReviewError('');
       const signature = snapshot.files
@@ -805,7 +888,16 @@ export function App() {
       const firstFile = includeDiffs ? snapshot.files[0] : undefined;
       if (firstFile && !retainedDiffs[firstFile.path]) {
         try {
-          const firstDiff = await callBridge<FileDiff>('review:fileDiff', { taskId, path: firstFile.path });
+          const diffStartedAt = Date.now();
+          const firstDiff = await callBridge<FileDiff>('review:fileDiff', { taskId, path: firstFile.path, traceId });
+          void callBridge('debug:diffPerformance', {
+            traceId,
+            layer: 'frontend',
+            operation: 'file-diff-bridge',
+            path: firstFile.path,
+            totalMs: Date.now() - diffStartedAt,
+            lineCount: firstDiff.lines.length,
+          });
           if (selectedTaskIdRef.current !== taskId) return;
           nextDiffs = { ...retainedDiffs, [firstDiff.path]: firstDiff };
         } catch {}
@@ -813,6 +905,12 @@ export function App() {
       if (!cached || signatureChanged) setReview(snapshot);
       if (nextDiffs !== cached?.diffs) setDiffs(nextDiffs);
       reviewCacheRef.current.set(taskId, { snapshot, diffs: nextDiffs, signature });
+      void callBridge('debug:diffPerformance', {
+        traceId,
+        layer: 'frontend',
+        operation: 'review-state-ready',
+        totalMs: Date.now() - totalStartedAt,
+      });
     } catch (caught) {
       if (selectedTaskIdRef.current !== taskId) return;
       setReview(EMPTY_REVIEW);
@@ -825,8 +923,19 @@ export function App() {
   const loadReviewDiff = useCallback(async (file: ChangedFile) => {
     const taskId = selectedTaskIdRef.current;
     if (!taskId || reviewCacheRef.current.get(taskId)?.diffs[file.path]) return;
+    const traceId = `diff-${Date.now()}-${++diffPerformanceSequence}`;
+    const startedAt = Date.now();
+    diffPerformanceTraceRef.current = traceId;
     try {
-      const diff = await callBridge<FileDiff>('review:fileDiff', { taskId, path: file.path });
+      const diff = await callBridge<FileDiff>('review:fileDiff', { taskId, path: file.path, traceId });
+      void callBridge('debug:diffPerformance', {
+        traceId,
+        layer: 'frontend',
+        operation: 'file-diff-bridge',
+        path: file.path,
+        totalMs: Date.now() - startedAt,
+        lineCount: diff.lines.length,
+      });
       if (selectedTaskIdRef.current !== taskId) return;
       setDiffs((current) => {
         const next = { ...current, [diff.path]: diff };
@@ -841,6 +950,13 @@ export function App() {
     } catch (caught) {
       if (selectedTaskIdRef.current === taskId) setReviewError(caught instanceof Error ? caught.message : String(caught));
     }
+  }, []);
+
+  const reportReviewPerformance = useCallback((metrics: Record<string, unknown>) => {
+    void callBridge('debug:diffPerformance', {
+      traceId: diffPerformanceTraceRef.current || 'diff-unattributed',
+      ...metrics,
+    });
   }, []);
 
   const openReview = useCallback(() => {
@@ -1358,6 +1474,7 @@ export function App() {
               loadingEarlier={historyLoading}
               onReachStart={loadEarlierTimeline}
               onEarlierLayoutSettled={handleEarlierLayoutSettled}
+              onRevealPerformance={reportTimelineRevealPerformance}
               footer={(
                 <view className="timeline-footer-content">
                   {selectedTask?.status === 'running' || selectedTask?.status === 'waiting' ? (
@@ -1536,6 +1653,7 @@ export function App() {
                   loading={reviewLoading}
                   onOpenFile={openFilePreview}
                   onLoadDiff={loadReviewDiff}
+                  onPerformance={reportReviewPerformance}
                 />
               </view>
               {reviewError ? <view className="preview-error"><text className="preview-error-text selectable-text" text-selection={true} flatten={false}>{reviewError}</text></view> : null}

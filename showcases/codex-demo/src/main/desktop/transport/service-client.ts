@@ -9,6 +9,9 @@ import {
 } from '../../../shared/service-protocol';
 
 interface PendingRequest {
+  method: string;
+  traceId?: string;
+  startedAt: number;
   resolve: (value: unknown) => void;
   reject: (error: Error) => void;
   timer: ReturnType<typeof setTimeout>;
@@ -86,6 +89,9 @@ export class ServiceClient {
         reject(new Error(`${method} timed out after ${timeoutMs}ms.`));
       }, timeoutMs);
       this.pending.set(requestId, {
+        method,
+        traceId: typeof payload.traceId === 'string' ? payload.traceId : undefined,
+        startedAt: performance.now(),
         resolve: (value) => resolve(value as T),
         reject,
         timer,
@@ -142,6 +148,14 @@ export class ServiceClient {
     if (!pending) return;
     clearTimeout(pending.timer);
     this.pending.delete(message.requestId);
+    if (pending.traceId && pending.method.startsWith('review:')) {
+      console.info('[Codex Demo][diff-perf]', JSON.stringify({
+        traceId: pending.traceId,
+        layer: 'main-rpc',
+        operation: pending.method,
+        totalMs: Math.round((performance.now() - pending.startedAt) * 10) / 10,
+      }));
+    }
     if (message.ok) pending.resolve(message.value);
     else pending.reject(new Error(message.error?.message ?? 'Service request failed.'));
   }

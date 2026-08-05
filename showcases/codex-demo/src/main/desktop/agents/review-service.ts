@@ -84,11 +84,18 @@ function parsePatch(patch: string): { lines: DiffLine[]; additions: number; dele
 export class ReviewService {
   constructor(private readonly gitCommand = process.env.GIT_BIN ?? 'git') {}
 
-  async snapshot(cwd: string, requestedPaths?: string[]): Promise<ReviewSnapshot> {
+  async snapshot(cwd: string, requestedPaths?: string[], traceId?: string): Promise<ReviewSnapshot> {
+    const totalStartedAt = performance.now();
+    const rootStartedAt = performance.now();
     const root = await this.gitRoot(cwd);
+    const rootMs = performance.now() - rootStartedAt;
+    const statusStartedAt = performance.now();
     const result = await this.run(root, ['status', '--porcelain=v1', '-z', '--untracked-files=all', '--no-renames']);
+    const statusMs = performance.now() - statusStartedAt;
     const entries = result.stdout.split('\0').filter(Boolean);
+    const numstatStartedAt = performance.now();
     const counts = await this.numstat(root);
+    const numstatMs = performance.now() - numstatStartedAt;
     const allowedPaths = requestedPaths
       ? new Set(requestedPaths.flatMap((path) => {
         try {
@@ -98,6 +105,7 @@ export class ReviewService {
         }
       }))
       : null;
+    const mapStartedAt = performance.now();
     const files = entries.map((entry): ChangedFile => {
       const code = entry.slice(0, 2);
       const path = entry.slice(3);
@@ -120,30 +128,64 @@ export class ReviewService {
     }).filter((file) => !allowedPaths || allowedPaths.has(file.path))
       .sort((left, right) => left.path.localeCompare(right.path));
 
-    return {
+    const snapshot = {
       root,
       files,
       additions: files.reduce((total, file) => total + file.additions, 0),
       deletions: files.reduce((total, file) => total + file.deletions, 0),
     };
+    this.logPerformance(traceId, 'snapshot', {
+      totalMs: performance.now() - totalStartedAt,
+      rootMs,
+      statusMs,
+      numstatMs,
+      mapAndUntrackedReadMs: performance.now() - mapStartedAt,
+      statusFileCount: entries.length,
+      returnedFileCount: files.length,
+      requestedPathCount: requestedPaths?.length ?? 0,
+    });
+    return snapshot;
   }
 
-  async fileDiff(cwd: string, requestedPath: string, knownFile?: ChangedFile): Promise<FileDiff> {
+  async fileDiff(cwd: string, requestedPath: string, knownFile?: ChangedFile, traceId?: string): Promise<FileDiff> {
+    const totalStartedAt = performance.now();
+    const rootStartedAt = performance.now();
     const root = await this.gitRoot(cwd);
+    const rootMs = performance.now() - rootStartedAt;
     const path = this.safeRelativePath(root, requestedPath);
-    const file = knownFile ?? (await this.snapshot(root, [path])).files.find((candidate) => candidate.path === path);
+    const metadataStartedAt = performance.now();
+    const file = knownFile ?? (await this.snapshot(root, [path], traceId)).files.find((candidate) => candidate.path === path);
+    const metadataMs = performance.now() - metadataStartedAt;
     if (!file) throw new Error(`File is not changed: ${path}`);
 
     if (file.status === 'added' && !file.staged) {
-      return this.untrackedDiff(root, file);
+      const readStartedAt = performance.now();
+      const diff = this.untrackedDiff(root, file);
+      this.logPerformance(traceId, 'file-diff', {
+        path,
+        source: 'untracked-file',
+        totalMs: performance.now() - totalStartedAt,
+        rootMs,
+        metadataMs,
+        readAndParseMs: performance.now() - readStartedAt,
+        lineCount: diff.lines.length,
+      });
+      return diff;
     }
 
+    const headStartedAt = performance.now();
     const hasHead = (await this.run(root, ['rev-parse', '--verify', 'HEAD'], [0, 128])).status === 0;
+    const headMs = performance.now() - headStartedAt;
     const args = hasHead
       ? ['diff', '--no-ext-diff', '--no-color', '--unified=6', 'HEAD', '--', path]
       : ['diff', '--no-ext-diff', '--no-color', '--unified=6', '--cached', '--', path];
-    const parsed = parsePatch((await this.run(root, args, [0, 1])).stdout);
-    return {
+    const gitDiffStartedAt = performance.now();
+    const patch = (await this.run(root, args, [0, 1])).stdout;
+    const gitDiffMs = performance.now() - gitDiffStartedAt;
+    const parseStartedAt = performance.now();
+    const parsed = parsePatch(patch);
+    const parseMs = performance.now() - parseStartedAt;
+    const diff = {
       root,
       path,
       status: file.status,
@@ -153,6 +195,28 @@ export class ReviewService {
       truncated: parsed.truncated,
       lines: parsed.lines,
     };
+    this.logPerformance(traceId, 'file-diff', {
+      path,
+      source: 'git-diff',
+      totalMs: performance.now() - totalStartedAt,
+      rootMs,
+      metadataMs,
+      headMs,
+      gitDiffMs,
+      parseMs,
+      patchBytes: Buffer.byteLength(patch),
+      lineCount: parsed.lines.length,
+    });
+    return diff;
+  }
+
+  private logPerformance(traceId: string | undefined, operation: string, metrics: Record<string, unknown>): void {
+    if (!traceId) return;
+    const rounded = Object.fromEntries(Object.entries(metrics).map(([key, value]) => [
+      key,
+      typeof value === 'number' && key.endsWith('Ms') ? Math.round(value * 10) / 10 : value,
+    ]));
+    console.info('[Codex Demo][diff-perf]', JSON.stringify({ traceId, layer: 'service', operation, ...rounded }));
   }
 
   private async gitRoot(cwd: string): Promise<string> {

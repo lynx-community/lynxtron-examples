@@ -120,7 +120,11 @@ app.whenReady().then(async () => {
           callback.sendReply(ok(await service.request(name, params)));
           break;
         case 'debug:historyLoad':
-          console.info('[Codex Demo][history-load]', params);
+          console.info('[Codex Demo][history-load]', JSON.stringify(params));
+          callback.sendReply(ok(true));
+          break;
+        case 'debug:diffPerformance':
+          console.info('[Codex Demo][diff-perf]', JSON.stringify(params));
           callback.sendReply(ok(true));
           break;
         case 'review:snapshot':

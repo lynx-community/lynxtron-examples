@@ -24,15 +24,44 @@ interface VirtualTimelineProps {
   footer?: any;
   hasEarlier?: boolean;
   loadingEarlier?: boolean;
-  onReachStart?: () => void;
+  onReachStart?: (traceId?: string) => void;
   onEarlierLayoutSettled?: () => void;
+  onRevealPerformance?: (metrics: Record<string, unknown>) => void;
 }
 
 const INITIAL_ITEM_COUNT = 3;
 const REVEAL_BATCH_SIZE = 3;
+const PREFETCH_BUFFER_ITEMS = 6;
+const PREFETCH_REFILL_ITEMS = 9;
+const PREFETCH_COOLDOWN_MS = 250;
 const LIST_VERTICAL_PADDING = 56;
 const ITEM_BOTTOM_PADDING = 20;
 const MIN_UPWARD_SCROLL_RANGE = 200;
+let revealTraceSequence = 0;
+
+interface RevealTrace {
+  traceId: string;
+  startedAt: number;
+  mode: 'local-batch' | 'remote-page';
+  previousFirstId?: string;
+  previousVisibleIds: Set<string>;
+  firstItemLayoutReported: boolean;
+  elementOnScreenReported: boolean;
+  anchorScrollSucceeded: boolean;
+}
+
+function visibleAnchor(detail: any, visibleItems: TimelineEntry[]): { itemKey: string; index: number } | null {
+  if (!Array.isArray(detail?.attachedCells)) return null;
+  const indices = new Map(visibleItems.map((item, index) => [item.id, index]));
+  let anchor: { itemKey: string; index: number } | null = null;
+  for (const cell of detail.attachedCells) {
+    const itemKey = cell?.itemKey ?? cell?.['item-key'];
+    const index = typeof itemKey === 'string' ? indices.get(itemKey) : undefined;
+    if (index === undefined || (anchor && anchor.index <= index)) continue;
+    anchor = { itemKey, index };
+  }
+  return anchor;
+}
 
 function estimatedHeight(item: TimelineEntry): number {
   if (item.kind === 'tool') return item.tool?.text ? 150 : 88;
@@ -89,6 +118,7 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
   loadingEarlier = false,
   onReachStart,
   onEarlierLayoutSettled,
+  onRevealPerformance,
 }, ref) {
   const initialPositioningComplete = useRef(false);
   const topTriggerLatched = useRef(false);
@@ -98,6 +128,9 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
   });
   const pendingScroll = useRef<{ itemKey: string; position?: number; alignTo: string; smooth: boolean } | null>(null);
   const awaitingEarlierLayout = useRef(false);
+  const pendingEarlierRevealCount = useRef(REVEAL_BATCH_SIZE);
+  const lastRevealAt = useRef(0);
+  const revealTrace = useRef<RevealTrace | null>(null);
   const [visibleCount, setVisibleCount] = useState(() => Math.min(INITIAL_ITEM_COUNT, items.length));
   const [revealingEarlier, setRevealingEarlier] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(0);
@@ -185,36 +218,95 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
     });
   }, [invokeListMethod, visibleItems.length]);
 
-  const revealEarlier = useCallback(() => {
-    if (!initialPositioningComplete.current || topTriggerLatched.current) return;
+  const reportRevealPhase = useCallback((phase: string, extra: Record<string, unknown> = {}) => {
+    const trace = revealTrace.current;
+    if (!trace) return;
+    onRevealPerformance?.({
+      traceId: trace.traceId,
+      phase,
+      mode: trace.mode,
+      elapsedMs: Date.now() - trace.startedAt,
+      ...extra,
+    });
+  }, [onRevealPerformance]);
+
+  const revealEarlier = useCallback((anchorItemKey?: string, availableAbove = 0) => {
+    const now = Date.now();
+    if (!initialPositioningComplete.current
+      || topTriggerLatched.current
+      || now - lastRevealAt.current < PREFETCH_COOLDOWN_MS) return;
+    lastRevealAt.current = now;
     topTriggerLatched.current = true;
+    const desiredAddedCount = Math.max(
+      PREFETCH_REFILL_ITEMS,
+      PREFETCH_BUFFER_ITEMS - availableAbove + PREFETCH_REFILL_ITEMS,
+    );
     if (visibleCount < items.length) {
-      const addedCount = Math.min(REVEAL_BATCH_SIZE, items.length - visibleCount);
-      const anchorItem = visibleItems[0];
+      const addedCount = Math.min(desiredAddedCount, items.length - visibleCount);
+      const anchorIndex = Math.max(0, visibleItems.findIndex((item) => item.id === anchorItemKey));
+      const anchorItem = visibleItems[anchorIndex] ?? visibleItems[0];
+      revealTrace.current = {
+        traceId: `timeline-reveal-${Date.now()}-${++revealTraceSequence}`,
+        startedAt: Date.now(),
+        mode: 'local-batch',
+        previousFirstId: anchorItem?.id,
+        previousVisibleIds: new Set(visibleItems.map((item) => item.id)),
+        firstItemLayoutReported: false,
+        elementOnScreenReported: false,
+        anchorScrollSucceeded: false,
+      };
+      reportRevealPhase('buffer-trigger', {
+        visibleCount,
+        totalItemCount: items.length,
+        availableAbove,
+        bufferTarget: PREFETCH_BUFFER_ITEMS,
+        addedCount,
+      });
       setRevealingEarlier(true);
       if (anchorItem) {
         pendingScroll.current = {
           itemKey: anchorItem.id,
-          position: addedCount,
+          position: anchorIndex + addedCount,
           alignTo: 'top',
           smooth: false,
         };
       }
       setVisibleCount((current) => Math.min(items.length, current + addedCount));
+      reportRevealPhase('state-update-scheduled');
       return;
     }
-    const anchorItem = visibleItems[0];
+    const anchorIndex = Math.max(0, visibleItems.findIndex((item) => item.id === anchorItemKey));
+    const anchorItem = visibleItems[anchorIndex] ?? visibleItems[0];
     if (hasEarlier && anchorItem) {
+      revealTrace.current = {
+        traceId: `timeline-reveal-${Date.now()}-${++revealTraceSequence}`,
+        startedAt: Date.now(),
+        mode: 'remote-page',
+        previousFirstId: anchorItem.id,
+        previousVisibleIds: new Set(visibleItems.map((item) => item.id)),
+        firstItemLayoutReported: false,
+        elementOnScreenReported: false,
+        anchorScrollSucceeded: false,
+      };
+      reportRevealPhase('buffer-trigger', {
+        visibleCount,
+        totalItemCount: items.length,
+        availableAbove,
+        bufferTarget: PREFETCH_BUFFER_ITEMS,
+        requestedCount: desiredAddedCount,
+      });
       pendingScroll.current = {
         itemKey: anchorItem.id,
-        position: REVEAL_BATCH_SIZE,
+        position: anchorIndex + desiredAddedCount,
         alignTo: 'top',
         smooth: false,
       };
+      pendingEarlierRevealCount.current = desiredAddedCount;
       awaitingEarlierLayout.current = true;
+      reportRevealPhase('history-request-dispatched');
     }
-    onReachStart?.();
-  }, [hasEarlier, items.length, onReachStart, visibleCount, visibleItems]);
+    onReachStart?.(revealTrace.current?.traceId);
+  }, [hasEarlier, items.length, onReachStart, reportRevealPhase, visibleCount, visibleItems]);
 
   const handleLayoutChange = useCallback((event: any) => {
     const detail = event?.detail ?? {};
@@ -225,10 +317,15 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
   }, []);
 
   const handleItemMeasured = useCallback((itemKey: string, height: number) => {
+    const trace = revealTrace.current;
+    if (trace && !trace.firstItemLayoutReported && !trace.previousVisibleIds.has(itemKey)) {
+      trace.firstItemLayoutReported = true;
+      reportRevealPhase('first-prepended-item-layout', { itemKey, height });
+    }
     setMeasuredItemHeights((current) => current[itemKey] === height
       ? current
       : { ...current, [itemKey]: height });
-  }, []);
+  }, [reportRevealPhase]);
 
   const handleFooterLayoutChange = useCallback((event: any) => {
     const detail = event?.detail ?? {};
@@ -238,22 +335,46 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
     }
   }, []);
 
+  const reportNewVisibleCell = useCallback((cells: any[] | undefined, source: string) => {
+    const trace = revealTrace.current;
+    if (!trace || trace.elementOnScreenReported || !Array.isArray(cells)) return;
+    const cell = cells.find((candidate) => {
+      const itemKey = candidate?.itemKey ?? candidate?.['item-key'];
+      return typeof itemKey === 'string'
+        && !itemKey.startsWith('__timeline-')
+        && !trace.previousVisibleIds.has(itemKey);
+    });
+    if (!cell) return;
+    trace.elementOnScreenReported = true;
+    reportRevealPhase('element-on-screen', {
+      source,
+      itemKey: cell.itemKey ?? cell['item-key'],
+      top: cell.top ?? cell.originY,
+      bottom: cell.bottom,
+    });
+    if (trace.anchorScrollSucceeded) revealTrace.current = null;
+  }, [reportRevealPhase]);
+
   const handleScroll = useCallback((event: any) => {
     const detail = event?.detail ?? {};
+    reportNewVisibleCell(detail.attachedCells, 'scroll-attached-cells');
+    const anchor = visibleAnchor(detail, visibleItems);
+    if (detail.eventSource === 2 && anchor && anchor.index <= PREFETCH_BUFFER_ITEMS) {
+      revealEarlier(anchor.itemKey, anchor.index);
+      return;
+    }
     if (shouldRevealEarlierFromScroll(detail)) {
       revealEarlier();
       return;
     }
-    if (typeof detail.scrollTop === 'number' && detail.scrollTop > 16) {
-      topTriggerLatched.current = false;
-    }
-  }, [revealEarlier]);
+  }, [reportNewVisibleCell, revealEarlier, visibleItems]);
 
   const handleReachStart = useCallback((event: any) => {
     const detail = event?.detail ?? {};
-    if (!shouldRevealEarlierFromScroll(detail)) return;
-    revealEarlier();
-  }, [revealEarlier]);
+    if (detail.eventSource !== 2 && !shouldRevealEarlierFromScroll(detail)) return;
+    const anchor = visibleAnchor(detail, visibleItems);
+    revealEarlier(anchor?.itemKey, anchor?.index ?? 0);
+  }, [revealEarlier, visibleItems]);
 
   useImperativeHandle(ref, () => ({ scrollToIndex, scrollToItem, scrollToTail }), [
     scrollToIndex,
@@ -275,30 +396,56 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
     }
     if (items.length > previous.length && visibleCount >= previous.length) {
       const addedCount = items.length - previous.length;
-      setVisibleCount((current) => Math.min(items.length, current + Math.min(REVEAL_BATCH_SIZE, addedCount)));
+      const revealCount = Math.min(pendingEarlierRevealCount.current, addedCount);
+      pendingEarlierRevealCount.current = REVEAL_BATCH_SIZE;
+      setVisibleCount((current) => Math.min(items.length, current + revealCount));
     }
   }, [items.length, visibleCount]);
 
-  const handleLayoutComplete = useCallback(() => {
+  const handleLayoutComplete = useCallback((event: any) => {
+    const detail = event?.detail ?? {};
+    reportNewVisibleCell(detail.visibleCellsAfterUpdate, 'layout-complete-visible-cells');
     const request = pendingScroll.current;
     if (!request) return;
     if (!visibleItems.some((item) => item.id === request.itemKey)) return;
+    reportRevealPhase('list-layout-complete', {
+      visibleCount: visibleItems.length,
+      firstVisibleItemId: visibleItems[0]?.id,
+    });
     pendingScroll.current = null;
+    reportRevealPhase('anchor-scroll-invoked');
     setTimeout(
       () => invokeScroll(
         { position: request.position ?? 0, ...request },
         () => {
-          topTriggerLatched.current = false;
+          setTimeout(() => {
+            topTriggerLatched.current = false;
+          }, PREFETCH_COOLDOWN_MS);
           setRevealingEarlier(false);
           if (awaitingEarlierLayout.current) {
             awaitingEarlierLayout.current = false;
             onEarlierLayoutSettled?.();
           }
+          const trace = revealTrace.current;
+          if (trace) {
+            trace.anchorScrollSucceeded = true;
+            reportRevealPhase('anchor-scroll-success', { itemKey: request.itemKey });
+            if (trace.elementOnScreenReported) revealTrace.current = null;
+          }
         },
       ),
       0,
     );
-  }, [invokeScroll, onEarlierLayoutSettled, visibleItems]);
+  }, [invokeScroll, onEarlierLayoutSettled, reportNewVisibleCell, reportRevealPhase, visibleItems]);
+
+  useEffect(() => {
+    const trace = revealTrace.current;
+    if (!trace || visibleItems[0]?.id === trace.previousFirstId) return;
+    reportRevealPhase('react-visible-items-committed', {
+      visibleCount: visibleItems.length,
+      firstVisibleItemId: visibleItems[0]?.id,
+    });
+  }, [reportRevealPhase, visibleItems]);
 
   useEffect(() => {
     if (
@@ -349,8 +496,9 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
       enable-scroll={true}
       initial-scroll-index={visibleItems.length}
       need-layout-complete-info={true}
+      need-visible-item-info={true}
       layout-id={visibleItems.length}
-      upper-threshold-item-count={1}
+      upper-threshold-item-count={PREFETCH_BUFFER_ITEMS}
       preload-buffer-count={4}
       experimental-search-ref-anchor-strategy={1}
       bindscrolltoupper={handleReachStart}
