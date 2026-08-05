@@ -30,25 +30,39 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 6px;
-  background-color: var(--background-3);
+  /* The site's chrome: a near-black panel, a hairline, a small radius, and a
+     shadow doing the lifting instead of a heavier border. */
+  border-radius: 10px;
+  /* CHROME, not RAISED. The raised tier is two steps off the content the
+     palette opens over, which made the panel read as a different material
+     rather than as the same window lifted — the shadow and the hairline are
+     what say "above", and they say it without moving the tone. */
+  background-color: var(--surface-chrome);
   border-width: 1px;
   border-style: solid;
   border-color: var(--hairline);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
 }
 
 /* ── Query ──────────────────────────────────────────────────────────────── */
 
 .PickerInput {
   width: 100%;
-  height: 44px;
-  padding: 0 14px;
+  height: 46px;
+  padding: 0 16px;
   font-size: 14px;
   color: var(--bp-text);
-  background-color: var(--background-4);
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: var(--hairline);
+  /* No ground and no rule of its own. The query is the top of the panel, not a
+     field dropped into it — a filled box with a border under it made the
+     palette read as a form with a list attached. */
+  background-color: transparent;
+}
+/* One hairline, on the results rather than the input, so the divider belongs to
+   the list it opens. */
+.PickerResults {
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--hairline);
 }
 
 /* ── Results ────────────────────────────────────────────────────────────── */
@@ -63,24 +77,30 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 9px 14px;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: var(--hairline);
+  padding: 9px 12px;
+  margin: 2px 6px;
+  border-radius: 6px;
 }
 
 .PickerItem:hover {
-  background-color: var(--background-4);
+  /* A wash over whatever the panel's ground is, not a fixed tone: the row
+     states have to follow the panel if its tier ever changes again, and
+     --background-4 is DARKER than chrome, so hover was digging a hole. */
+  background-color: var(--overlay-soft);
 }
 
 /* The row Enter would activate. Arrows move it, hover moves it, and it starts
    on the first result — so there is always exactly one, and it is visible. */
 .PickerItem--active {
-  background-color: var(--bp-selected-bg);
+  /* Neutral. Selection is a SURFACE, and surfaces in this app do not carry the
+     brand — the green belongs to marks and to the one filled action, not to
+     the ground under a row. It was a stock VS Code blue before, which was the
+     real problem: a colour that means nothing here. */
+  background-color: var(--overlay-strong);
 }
 
 .PickerItem--active:hover {
-  background-color: var(--bp-selected-bg);
+  background-color: var(--overlay-strong);
 }
 
 .PickerIcon {
@@ -128,8 +148,8 @@
   flex-shrink: 0;
   margin-left: 10px;
   padding: 1px 6px;
-  border-radius: 3px;
-  background-color: var(--background-4);
+  border-radius: 4px;
+  background-color: var(--overlay-soft);
   font-family: 'SF Mono', Menlo, monospace;
   font-size: 10px;
   line-height: 15px;
@@ -137,7 +157,11 @@
 }
 
 .PickerCommand .PickerIcon {
-  color: #48aff0;
+  color: var(--brand);
+  opacity: 0.85;
+}
+.PickerItem--active .PickerIcon {
+  opacity: 1;
 }
 
 .PickerShowcase .PickerIcon {
@@ -196,11 +220,10 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 7px 14px;
+  padding: 8px 16px;
   border-top-width: 1px;
   border-top-style: solid;
   border-top-color: var(--hairline);
-  background-color: var(--background-4);
 }
 
 .PickerFooterText {

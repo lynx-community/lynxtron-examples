@@ -134,6 +134,7 @@ export function QuickPicker({
       <view className="PickerOverlay" bindtap={onClose} global-bindkeydown={handleKeyDown}>
         <view className="PickerModal" catchtap={() => {}}>
         <input
+          id="picker-query"
           className="PickerInput"
           value={query}
           bindinput={(e: any) => onQueryChange(e.detail.value)}

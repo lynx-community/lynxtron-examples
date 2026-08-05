@@ -271,16 +271,21 @@
   font-weight: 600;
 }
 
+/* Open is the primary act on a card, so it wears the brand — in the TEXT. The
+   ground stays neutral like every other surface in this app; tinting it green
+   made a row of cards read as a row of green chips, which is the opposite of
+   an accent. It was a stock Blueprint blue before, a colour that means nothing
+   here. */
 .GalleryCardAction--primary {
-  background-color: rgba(19, 124, 189, 0.16);
+  background-color: var(--overlay-soft);
 }
 
 .GalleryCardAction--primary:hover {
-  background-color: rgba(19, 124, 189, 0.3);
+  background-color: var(--overlay-strong);
 }
 
 .GalleryCardActionText--primary {
-  color: #48aff0;
+  color: var(--brand);
 }
 
 .GalleryCardAction--web:hover {
