@@ -24,12 +24,21 @@
 }
 .FiddleSidebar-Section--modules {
   border-bottom: none;
-  /* Editors and Modules ARE two panels — the seam between them is the frame,
-     the same tone as every other seam in the window rather than a near-black
-     line of its own. */
-  border-top: 3px solid var(--surface-chrome);
+  /* No border and no `margin-top: auto`: the seam is a real 4px sash now, the
+     same one every other division in the window uses, and the split decides
+     where this panel starts rather than its own content doing it. */
   padding-bottom: 8px;
-  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+/* The upper half of the split: section header + the file list under it. */
+.FiddleSidebar-Pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
 }
 /* border-color-2 is #1e2527 in BOTH themes (upstream token) — right for dark,
    a harsh black line in light. Light gets the mosaic-toolbar hairline. */
@@ -72,14 +81,26 @@
 .FiddleSidebar-List {
   flex: 1;
   min-height: 0;
-  padding: 4px 0;
+  padding: 2px 0 6px 0;
 }
+/* ── File rows ────────────────────────────────────────────────────────────
+   A file tree is a LIST you scan, not a stack of controls you press, so the
+   rhythm comes from the row height rather than from padding between items.
+   24px rows at 12px text: dense enough to hold a project without scrolling,
+   loose enough that the names do not touch. The name shrank a step (13 → 12)
+   because it sits beside 11px code in the panes next door and was the larger
+   of the two — chrome outranking content.
+   The icon sits closer to its name (10 → 8) and the row starts further in, so
+   the column reads as one left edge rather than as icons floating in a gutter. */
 .FiddleSidebar-Item {
   display: flex;
   flex-direction: row;
   align-items: center;
-  column-gap: 10px;
-  padding: 6px 12px;
+  column-gap: 8px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 5px;
+  margin: 0 4px;
   cursor: pointer;
 }
 .FiddleSidebar-Item:hover { background-color: var(--background-3); }  /* background-3 */
@@ -87,7 +108,17 @@
    thing you are working in. A saturated block would now be the only one in the
    window, competing with the syntax colours it sits beside. */
 .FiddleSidebar-Item--active { background-color: var(--surface-chrome); border-left: 3px solid var(--foreground-1); padding-left: 9px; }
-.FiddleSidebar-ItemIcon { color: var(--foreground-3); flex-shrink: 0; }  /* foreground-3 */
+/* Tinted by file type, the way every modern explorer is. One monochrome glyph
+   for eight kinds of file made the column a grey ladder you had to read
+   word by word; the hue tells you what a row is before the name does.
+   Not emoji — this project spends colour on meaning, and a row of pictograms
+   in a dense list reads as decoration. Same glyph, different ink. */
+.FiddleSidebar-ItemIcon { color: var(--foreground-3); flex-shrink: 0; opacity: 0.9; }
+.FiddleSidebar-ItemIcon--ts { color: #4a9eff; }
+.FiddleSidebar-ItemIcon--tsx { color: #35c7d6; }
+.FiddleSidebar-ItemIcon--css { color: #c678dd; }
+.FiddleSidebar-ItemIcon--json { color: #d6a24a; }
+.FiddleSidebar-ItemIcon--md { color: #8a9ba8; }
 .FiddleSidebar-Item--active .FiddleSidebar-ItemIcon { color: var(--foreground-1); }  /* foreground-1 */
 .FiddleSidebar-ItemLabel {
   display: flex;
@@ -97,7 +128,7 @@
   row-gap: 2px;
 }
 .FiddleSidebar-ItemName {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-color-1);              /* text-color-1 */
   font-weight: 500;
   lines: 1;
@@ -163,7 +194,25 @@
 }
 .FiddleSidebar-ModuleName { font-size: 12px; color: var(--text-color-1); flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .FiddleSidebar-ModuleVersion { font-size: 11px; color: var(--foreground-3); flex-shrink: 0; }
-.FiddleSidebar-ModuleSearch { padding: 8px 12px; }
+.FiddleSidebar-ModuleSearch { padding: 6px 10px 8px 10px; }
+/* Same field as the gist URL in the commands bar: a recessed ground, no
+   border, and the edge only appears on hover. Two inputs in one window should
+   not be two different objects — this one still carried the stock Blueprint
+   box, so it read as a form control dropped into a panel. */
+.FiddleSidebar-ModuleSearch .bp3-input {
+  height: 26px;
+  min-height: 26px;
+  font-size: 11px;
+  border-radius: 6px;
+  border-width: 0;
+  box-shadow: none;
+  background-color: var(--overlay-soft);
+}
+.FiddleSidebar-ModuleSearch .bp3-input:hover,
+.FiddleSidebar-ModuleSearch .bp3-input:focus {
+  background-color: var(--overlay-strong);
+}
+.FiddleSidebar-ModuleSearch .bp3-icon { opacity: 0.5; font-size: 12px; }
 .FiddleSidebar-EmptyState { padding: 4px 12px 8px 12px; }
 .FiddleSidebar-EmptyStateText { color: var(--bp-text-muted); font-size: 11px; }
 

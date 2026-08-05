@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from '@lynx-js/react';
-import { Button } from '../bp';
+import { Button, Icon } from '../bp';
 import { scintillaApi } from '../../store';
 import { getEditorTitle } from '../types';
 import { scintillaIdFor } from '../state/useFiddle';
@@ -21,6 +21,8 @@ export interface EditorPaneProps {
    * need a platform overlay, and a plain Lynx view cannot cover a native one.
    */
   suppressed?: boolean;
+  /** This pane is the expanded one. The control that did it says so. */
+  maximized?: boolean;
 }
 
 /**
@@ -90,16 +92,33 @@ export function EditorPane(props: EditorPaneProps) {
               Lit while the pane IS zoomed: otherwise the only clue is that the
               text looks unlike its neighbours', and the button reads as a
               control with no state. */}
+          {/* iconNode, not `icon`: <Icon> writes font-size as an INLINE style,
+              which no stylesheet rule can override — the 9px declared for these
+              controls in Editors.css had been dead the whole time and the
+              glyphs rendered at the 14px default. Size travels with the icon. */}
           <Button
-            icon="refresh"
+            iconNode={<Icon icon="refresh" size={11} className="bp3-button-icon" />}
             small
             minimal
             active={zoomed}
             title={zoomed ? 'Zoomed — reset to the configured font size' : 'Reset zoom'}
             onClick={() => { resetEditorZoom(file.id); setZoomed(false); }}
           />
-          <Button icon="maximize" small minimal title="Maximize" onClick={() => props.onMaximize(file.id)} />
-          <Button icon="cross" small minimal title="Hide" onClick={() => props.onHide(file.id)} />
+          <Button
+            iconNode={<Icon icon={props.maximized ? 'minimize' : 'maximize'} size={11} className="bp3-button-icon" />}
+            small
+            minimal
+            active={!!props.maximized}
+            title={props.maximized ? 'Restore this pane' : 'Maximize'}
+            onClick={() => props.onMaximize(file.id)}
+          />
+          <Button
+            iconNode={<Icon icon="cross" size={11} className="bp3-button-icon" />}
+            small
+            minimal
+            title="Hide"
+            onClick={() => props.onHide(file.id)}
+          />
         </view>
       </view>
       <view className="MosaicBody" bindlayoutchange={onBodyLayout}>

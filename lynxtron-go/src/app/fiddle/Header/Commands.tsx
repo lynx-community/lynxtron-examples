@@ -97,6 +97,11 @@ export function Commands(props: CommandsProps) {
             it the way placeholder text would. On the left because that is
             where you look for it — it was on the right only to balance the
             title, which is the wrong reason to place a control. */}
+        {/* One group: three identical square glyphs. Search used to sit
+            outside it, so the eye saw three of the same shape with the
+            first one 10px further away than the other two — measured at
+            22pt of air against 14pt. Same shape, same rhythm. */}
+        <view className="commands-views">
         {/* Icon only, like every other secondary. The accelerator was printed on
             the face to teach it, which cost bar width permanently to say
             something once — the tooltip says it on demand instead. */}
@@ -108,7 +113,6 @@ export function Commands(props: CommandsProps) {
             onClick={() => props.onOpenPalette?.()}
           />
         </Tooltip>
-        <view className="commands-views">
           <Tooltip content={props.isConsoleShowing ? 'Hide console' : 'Show console'}>
             <Button
               icon="console"
@@ -152,6 +156,11 @@ export function Commands(props: CommandsProps) {
         {props.isEdited ? <view className="commands-dirty" /> : null}
       </view>
       <view className="commands-right">
+        {/* The field and both verbs that act on it are ONE group. Load lived
+            inside the address group and Publish outside it, so two buttons
+            doing opposite halves of the same job sat 8pt and 19.5pt from their
+            neighbours. */}
+        <view className="commands-docs">
         <view className="commands-address">
           {/* One gating mechanism (disabled), and one validator: onLoadGist's
               parseGistId decides what's loadable, for Enter and click alike. */}
@@ -185,6 +194,7 @@ export function Commands(props: CommandsProps) {
         >
           <Button icon="upload" minimal disabled={gallery} onClick={props.onPublishGist} />
         </Tooltip>
+        </view>
         {/* The line falls where the SCOPE changes: Load and Publish act on this
             Fiddle's documents, Settings and the overflow act on the app. */}
         <view className="commands-divider" />

@@ -242,6 +242,7 @@ export function Editors(props: EditorsProps) {
                 onFocus={props.onSelectEditor}
                 pushContent={props.pushContent}
                 suppressed={props.suppressed}
+                maximized={p.id === expandedId}
               />
             </view>
           );
