@@ -192,6 +192,10 @@
   font-size: 14px;
   line-height: 20px;
   font-weight: 600;
+  /* The name wins. Both the title and the tag row could shrink, but only the
+     title was allowed to — so a card with three tags showed "@lynxtron-" and
+     nothing else, and the one piece of information you actually navigate by
+     was the first thing spent. Tags are metadata; they yield. */
   flex-shrink: 1;
   min-width: 0;
   margin-right: 8px;
@@ -215,6 +219,8 @@
 }
 
 .GalleryTag {
+  flex-shrink: 0;
+  white-space: nowrap;
   margin-left: 4px;
   padding: 1px 5px;
   border-radius: 3px;

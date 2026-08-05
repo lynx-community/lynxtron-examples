@@ -27,6 +27,8 @@ export interface CommandsProps {
       it has to suppress the native editors to be visible at all. */
   overflowOpen?: boolean;
   onToggleOverflow?: () => void;
+  /** Unsaved changes. Rendered as its own dot, not glued to the title. */
+  isEdited?: boolean;
   currentVersion: string;
   gistId: string | null;
   isRunning: boolean;
@@ -140,6 +142,12 @@ export function Commands(props: CommandsProps) {
           className={'commands-title' + (isMac && !props.fullScreen ? ' commands-title--offset' : '')}
           text-maxline="1"
         >{props.title}</text>
+        {/* A status dot, not a full stop. It was concatenated onto the title
+            string as " •", which put a bullet in the middle of a sentence-shaped
+            line and read as stray punctuation — and it could not be styled,
+            spaced or dimmed, because it was a character inside someone else's
+            text node. */}
+        {props.isEdited ? <view className="commands-dirty" /> : null}
       </view>
       <view className="commands-right">
         <view className="commands-address">
@@ -169,18 +177,16 @@ export function Commands(props: CommandsProps) {
             />
           </Tooltip>
         </view>
+        <Tooltip
+          content={props.gistId ? 'Update the gist this Fiddle came from' : 'Publish these files as a GitHub gist'}
+          align="end"
+        >
+          <Button icon="upload" minimal disabled={gallery} onClick={props.onPublishGist} />
+        </Tooltip>
+        {/* The line falls where the SCOPE changes: Load and Publish act on this
+            Fiddle's documents, Settings and the overflow act on the app. */}
         <view className="commands-divider" />
-        {/* The trailing icon rail. Everything here is app scope rather than
-            document scope, and none of it is what you came to the bar to do —
-            so it is a row of quiet glyphs, and the words live in the tooltips
-            that name them. */}
         <view className="commands-rail">
-          <Tooltip
-            content={props.gistId ? 'Update the gist this Fiddle came from' : 'Publish these files as a GitHub gist'}
-            align="end"
-          >
-            <Button icon="upload" minimal disabled={gallery} onClick={props.onPublishGist} />
-          </Tooltip>
           <Tooltip content="Settings" align="end">
             <Button icon="cog" minimal onClick={props.onOpenSettings} />
           </Tooltip>

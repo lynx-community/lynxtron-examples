@@ -298,7 +298,12 @@ export function GalleryHome({
                 <view className="GalleryCardTitleRow">
                   <text className="GalleryCardTitle" text-maxline="1">{entry.name}</text>
                   <view className="GalleryTagRow">
-                    {entry.tags.slice(0, 3).map(tag => (
+                    {/* ONE tag. Three of them squeezed the name down to "@lynxtron-" — and
+                        the name is the only thing on this card you navigate by, while
+                        the tags are metadata you never search on. Capping the row
+                        instead just moved the failure: the chips wrapped mid-word
+                        ("benchma / rk"), which reads as broken rather than as trimmed. */}
+                    {entry.tags.slice(0, 1).map(tag => (
                       <view key={`${entry.name}-${tag}`} className={`GalleryTag GalleryTag--${tagTint(tag)}`}>
                         <text className={`GalleryTagText GalleryTagText--${tagTint(tag)}`}>{tag}</text>
                       </view>

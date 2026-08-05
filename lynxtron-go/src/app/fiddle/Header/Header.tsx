@@ -50,7 +50,8 @@ export function Header(props: HeaderProps) {
         currentVersion={props.currentVersion}
         gistId={props.gistId}
         isRunning={props.isRunning}
-        title={props.galleryOpen ? 'Gallery' : props.title + (props.isEdited ? ' •' : '')}
+        title={props.galleryOpen ? 'Gallery' : props.title}
+        isEdited={!props.galleryOpen && props.isEdited}
       />
     </view>
   );

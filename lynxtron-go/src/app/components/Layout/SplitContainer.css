@@ -48,14 +48,18 @@
   background-color: #007fd4;
 }
 
+/* 6px, matching the mosaic's seam between panes. They were 3 and 6, so the
+   line between the sidebar and the editors was visibly thinner than the ones
+   between editors — two different divisions in one window, for no reason
+   anyone could see. */
 .SashH {
-  width: 3px;
+  width: 6px;
   height: 100%;
   cursor: col-resize;
 }
 
 .SashV {
-  height: 3px;
+  height: 6px;
   width: 100%;
   cursor: row-resize;
 }
