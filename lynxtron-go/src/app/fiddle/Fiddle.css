@@ -23,7 +23,7 @@
      the window edge and to each other, 6px of corner was invisible and the
      window still read as one carved slab. This is the difference between
      "regions of a window" and "panels on a surface". */
-  padding: 0 7px 7px 7px;
+  padding: 0 6px 6px 6px;
   /* Also unpainted, for the same reason. The sash strips between console,
      sidebar and editors now show `.IDE` — which is the chrome tone, so they
      read as the same seam as the ones inside the mosaic instead of the older

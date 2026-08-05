@@ -36,6 +36,10 @@
   flex: 1;
   min-width: 0;
   height: 100%;
+  /* 16px, not the 10px between groups: the title is a different kind of thing
+     from the controls, and it needs to read as the centre rather than as the
+     next item in a row. */
+  margin: 0 6px;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -43,26 +47,40 @@
   cursor: default;
 }
 
+/* ── Spacing scale ────────────────────────────────────────────────────────
+   Three values, and nothing else in this file may invent a fourth:
+
+     2px   INSIDE a group — square icon buttons tiling next to each other.
+           Their own boxes already carry the optical air; anything more and
+           they stop reading as one set.
+     10px  BETWEEN groups — enough that the eye segments the bar without a
+           rule drawn to help it.
+     16px  from a cluster to the drag region, so the centred title is not
+           crowded by whatever the cluster ends with.
+
+   The bar had six different gaps before this: 6px between siblings, 4px
+   inside control groups, 2px in the address group, 1px in the icon rows,
+   plus per-button padding that varied with whether the control had a label.
+   Frameless buttons make that worse, not better — with no box drawn, the
+   visual edge is the glyph, so equal BOX gaps read as unequal AIR. */
 .commands-left,
 .commands-right {
   display: flex;
   flex-direction: row;
   align-items: center;
   flex-shrink: 0;
-  /* One rhythm for the whole bar. Groups used to carry their own margins,
-     which is how the left cluster ended up with three different gaps in it. */
-  column-gap: 6px;
+  column-gap: 10px;
 }
-/* Grouped, not fused. 1px read as one smudged control with no way to tell
-   where one target ended and the next began; 4px is close enough to group
-   them and far enough to count them. */
+/* Grouped, not fused. Square boxes at 2px read as one set and still separate
+   under the pointer, because each box is wider than its glyph. */
 .commands-views,
-.commands-rail {
+.commands-rail,
+.commands-docs {
   display: flex;
   flex-direction: row;
   align-items: center;
   flex-shrink: 0;
-  column-gap: 4px;
+  column-gap: 2px;
 }
 /* The rail is app scope, one step quieter than document scope beside it. */
 .commands-rail .bp3-icon { opacity: 0.55; }
@@ -80,12 +98,22 @@
    bar at ~26px with 12px labels and spend the difference on the title, which
    is the only thing in the bar that says what you are looking at. */
 .commands .bp3-button {
-  height: 24px;
-  min-height: 24px;
-  min-width: 24px;
-  padding: 0 7px;
+  height: 26px;
+  min-height: 26px;
+  min-width: 26px;
+  padding: 0 8px;
   font-size: 12px;
   border-radius: 6px;
+}
+/* Icon-only controls are SQUARES. Horizontal padding on a button with one
+   glyph in it makes a box wider than it is tall, so a row of them tiles
+   unevenly and no gap value can rescue it — the boxes themselves were the
+   problem. Every minimal control in this bar is icon-only except the version
+   chooser, which opts back out below. */
+.commands .bp3-button.bp3-minimal {
+  width: 26px;
+  padding: 0;
+  justify-content: center;
 }
 /* Frameless secondaries, in BOTH themes. Whether a control is a box or a label
    is a structural decision about hierarchy, not a colour one — scoping it to
@@ -193,6 +221,7 @@
   flex-basis: 176px;
   width: 176px;
   column-gap: 2px;
+  margin-right: 2px;
 }
 /* A divider, not a gap — and it falls where the SCOPE changes, not where the
    markup happened to break. Load and Publish both act on this Fiddle's
@@ -203,7 +232,9 @@
   width: 1px;
   height: 16px;
   flex-shrink: 0;
-  margin: 0 6px;
+  /* The divider replaces a group gap rather than adding to one: 10px of air,
+     a line, 10px of air would be 20px of hole. */
+  margin: 0 4px;
   background-color: var(--hairline);
 }
 /* Document scope: the gist round trip. One group, so the field and the two
@@ -338,10 +369,15 @@
    chevron, at the weight of a label rather than a control, and it carries no
    mark. It used to wear the Lynxtron logo, which put two marks in one glance
    and made the quietest control in the bar compete with the loudest. */
-.commands .commands-version {
-  padding-left: 4px;
-  padding-right: 4px;
-  column-gap: 3px;
+.commands .bp3-button.commands-version {
+  /* Not a square: it has a label. Auto width, and less padding than a boxed
+     control because a frameless label's edge is its text.
+     Written at three classes to match `.commands .bp3-button.bp3-minimal` —
+     at two it lost on specificity however the file was ordered, and the
+     version chooser was squeezed to a 26px box reading "Ly...". */
+  width: auto;
+  padding: 0 6px 0 4px;
+  column-gap: 4px;
   color: var(--bp-text-muted);
 }
 .commands .commands-version .bp3-button-text {
@@ -381,8 +417,8 @@
    interaction it does not have, and it took bar width to make the promise.
    Icon, accelerator, and the same frameless treatment as its neighbours. */
 .commands .commands-search {
-  padding: 0 7px;
-  column-gap: 5px;
+  /* Nothing of its own left to say — it is a square with a glyph, same as the
+     toggles beside it. */
 }
 .commands .commands-search .bp3-icon { opacity: 0.68; font-size: 13px; }
 

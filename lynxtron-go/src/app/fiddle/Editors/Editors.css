@@ -49,7 +49,7 @@
      sidebar and the console — frame around the frame. Negative margin absorbs
      exactly that outer half, so the only divisions left are the ones between
      two things. */
-  margin: -3px;
+  margin: -2px;
 }
 .MosaicCell {
   position: absolute;
@@ -95,10 +95,9 @@
   flex: 1;
   min-height: 0;
   min-width: 0;
-  /* 3px a side — a 6px seam between neighbours, half of it from each. Widened
-     with the radius: a 3px gap cannot show a 6px corner, so the panes read as
-     one grid with hairlines rather than as separate surfaces. */
-  margin: 3px;
+  /* 2px a side — a 4px seam between neighbours, half of it from each, matching
+     the split sashes everywhere else in the window. */
+  margin: 2px;
   overflow: hidden;
   /* Same 6px as the sidebar and the console, so every panel in the window is
      the same object. NOTE: Lynx `overflow: hidden` does not clip a native

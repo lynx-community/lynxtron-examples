@@ -97,11 +97,13 @@ export function Commands(props: CommandsProps) {
             it the way placeholder text would. On the left because that is
             where you look for it — it was on the right only to balance the
             title, which is the wrong reason to place a control. */}
-        <Tooltip content="Quick Open — type > for commands" hotkey={isMac ? '⌘K' : 'Ctrl+K'}>
+        {/* Icon only, like every other secondary. The accelerator was printed on
+            the face to teach it, which cost bar width permanently to say
+            something once — the tooltip says it on demand instead. */}
+        <Tooltip content="Quick Open — type > for commands" hotkey={isMac ? '⌘P' : 'Ctrl+P'}>
           <Button
             className="commands-search"
             icon="search"
-            text={isMac ? '⌘P' : 'Ctrl+P'}
             minimal
             onClick={() => props.onOpenPalette?.()}
           />
