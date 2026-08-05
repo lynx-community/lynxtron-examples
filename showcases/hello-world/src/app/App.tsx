@@ -4,6 +4,7 @@ import './App.css';
 
 export function App() {
   const [greeting, setGreeting] = useState('Hello, World!');
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
     const bridge = globalThis as unknown as { hello?: { greet: (name: string) => string } };
@@ -17,6 +18,9 @@ export function App() {
     <view className="container">
       <text className="title">hello world</text>
       <text className="greeting">{greeting}</text>
+      <view className="button" bindtap={() => setCount((c) => c + 1)}>
+        <text className="button-label">tapped {count} times</text>
+      </view>
     </view>
   );
 }

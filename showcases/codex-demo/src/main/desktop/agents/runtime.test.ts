@@ -3,10 +3,17 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { AgentEvent } from '../../../shared/agent';
-import { AgentRuntime } from './runtime';
+import { AgentRuntime, isFileMutationUpdate } from './runtime';
 import { TaskStore } from './task-store';
 
 describe('AgentRuntime', () => {
+  it('records mutation tools without treating reads as file changes', () => {
+    expect(isFileMutationUpdate({ kind: 'edit', title: 'Edit ignored.txt' })).toBe(true);
+    expect(isFileMutationUpdate({ kind: 'other', title: 'Apply patch to ignored.txt' })).toBe(true);
+    expect(isFileMutationUpdate({ kind: 'read', title: 'Read ignored.txt' })).toBe(false);
+    expect(isFileMutationUpdate({ kind: 'execute', title: 'List workspace' })).toBe(false);
+  });
+
   it('normalizes mock agent turns into the same event stream as real agents', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'codex-demo-runtime-'));
     const events: AgentEvent[] = [];

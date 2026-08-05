@@ -1,6 +1,6 @@
 import { useMemo } from '@lynx-js/react';
 import MarkdownIt from 'markdown-it';
-import { prismSyntaxLines } from '../syntax-highlight';
+import { prismSyntaxLines } from '../../syntax-highlight';
 import './MarkdownMessage.css';
 
 interface MarkdownToken {

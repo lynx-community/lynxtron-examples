@@ -1,3 +1,4 @@
+/* Conversation tool-result card surface. */
 .tool-card {
   width: 100%;
   max-width: 100%;
@@ -9,6 +10,10 @@
   border: 1px solid #e1e3e6;
   border-radius: 10px;
   background-color: #fafafa;
+}
+
+.tool-card.ui-button--disabled {
+  opacity: 1;
 }
 
 .tool-card--interactive:active {

@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -34,6 +34,8 @@ describe('ReviewService', () => {
     const directory = repository();
     writeFileSync(join(directory, 'modified.ts'), 'const value = 2;\nexport { value };\n');
     writeFileSync(join(directory, 'new.ts'), 'export const added = true;\n');
+    mkdirSync(join(directory, 'hello-world'));
+    writeFileSync(join(directory, 'hello-world', 'hello.js'), 'console.log("Hello, world!");\n');
     unlinkSync(join(directory, 'deleted.ts'));
 
     const service = new ReviewService();
@@ -41,6 +43,7 @@ describe('ReviewService', () => {
 
     expect(snapshot.files.map((file) => [file.path, file.status])).toEqual([
       ['deleted.ts', 'deleted'],
+      ['hello-world/hello.js', 'added'],
       ['modified.ts', 'modified'],
       ['new.ts', 'added'],
     ]);
@@ -49,6 +52,9 @@ describe('ReviewService', () => {
 
     const lastTurn = await service.snapshot(directory, ['modified.ts']);
     expect(lastTurn.files.map((file) => file.path)).toEqual(['modified.ts']);
+
+    const changedDirectory = await service.snapshot(directory, ['hello-world']);
+    expect(changedDirectory.files.map((file) => file.path)).toEqual(['hello-world/hello.js']);
 
     const diff = await service.fileDiff(directory, 'modified.ts');
     expect(diff.lines.some((line) => line.kind === 'deletion' && line.text.includes('value = 1'))).toBe(true);
@@ -62,5 +68,27 @@ describe('ReviewService', () => {
     const directory = repository();
     const service = new ReviewService();
     await expect(service.fileDiff(directory, '../outside.ts')).rejects.toThrow('outside the task repository');
+  });
+
+  it('includes files changed by the agent even when Git ignores them', async () => {
+    const directory = repository();
+    writeFileSync(join(directory, '.git', 'info', 'exclude'), 'agent-only/\n');
+    mkdirSync(join(directory, 'agent-only'));
+    writeFileSync(join(directory, 'agent-only', 'ignored.txt'), 'hello\n');
+
+    const service = new ReviewService();
+    const gitOnly = await service.snapshot(directory);
+    expect(gitOnly.files.some((file) => file.path === 'agent-only/ignored.txt')).toBe(false);
+
+    const turn = await service.snapshot(directory, ['agent-only/ignored.txt']);
+    expect(turn.files).toEqual([expect.objectContaining({
+      path: 'agent-only/ignored.txt',
+      status: 'added',
+      source: 'agent',
+      additions: 1,
+    })]);
+
+    const diff = await service.fileDiff(directory, 'agent-only/ignored.txt', turn.files[0]);
+    expect(diff.lines.some((line) => line.kind === 'addition' && line.text === 'hello')).toBe(true);
   });
 });

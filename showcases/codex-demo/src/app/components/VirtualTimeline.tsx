@@ -8,7 +8,8 @@ import {
   useState,
 } from '@lynx-js/react';
 import type { TimelineEntry } from '../../shared/agent';
-import { shouldRevealEarlierFromScroll } from '../timeline-scroll';
+import { isTimelineAtTail, shouldRevealEarlierFromScroll } from '../timeline-scroll';
+import { Button, LoadingSpinner } from './ui';
 import './VirtualTimeline.css';
 
 export interface VirtualTimelineHandle {
@@ -34,6 +35,7 @@ const REVEAL_BATCH_SIZE = 3;
 const PREFETCH_BUFFER_ITEMS = 6;
 const PREFETCH_REFILL_ITEMS = 9;
 const PREFETCH_COOLDOWN_MS = 250;
+const HISTORY_LOADER_MIN_VISIBLE_MS = 420;
 const LIST_VERTICAL_PADDING = 56;
 const ITEM_BOTTOM_PADDING = 20;
 const MIN_UPWARD_SCROLL_RANGE = 200;
@@ -70,6 +72,21 @@ function estimatedHeight(item: TimelineEntry): number {
   const textHeight = Math.ceil(textLength / 66) * 22;
   if (item.kind === 'user') return Math.min(560, Math.max(62, textHeight + 36));
   return Math.min(900, Math.max(54, textHeight + 30));
+}
+
+function tailContentVersion(items: TimelineEntry[]): string {
+  const item = items[items.length - 1];
+  if (!item) return '';
+  return [
+    item.id,
+    item.sequence,
+    item.kind,
+    item.text?.length ?? 0,
+    item.tool?.status ?? '',
+    item.tool?.text?.length ?? 0,
+    item.plan?.length ?? 0,
+    item.plan?.map((entry) => `${entry.status ?? ''}:${entry.content.length}`).join(',') ?? '',
+  ].join('|');
 }
 
 function TimelineListItem({
@@ -130,12 +147,20 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
   const awaitingEarlierLayout = useRef(false);
   const pendingEarlierRevealCount = useRef(REVEAL_BATCH_SIZE);
   const lastRevealAt = useRef(0);
+  const followingTail = useRef(true);
+  const tailScrollInProgressUntil = useRef(0);
+  const previousTailContentVersion = useRef(tailContentVersion(items));
+  const previousFooterHeight = useRef(0);
   const revealTrace = useRef<RevealTrace | null>(null);
+  const historyLoaderShownAt = useRef(0);
+  const historyLoaderHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [visibleCount, setVisibleCount] = useState(() => Math.min(INITIAL_ITEM_COUNT, items.length));
   const [revealingEarlier, setRevealingEarlier] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(0);
   const [measuredItemHeights, setMeasuredItemHeights] = useState<Record<string, number>>({});
   const [footerHeight, setFooterHeight] = useState(0);
+  const [newerContentAvailable, setNewerContentAvailable] = useState(false);
+  const [historyLoaderVisible, setHistoryLoaderVisible] = useState(false);
 
   const visibleItems = useMemo(
     () => items.slice(Math.max(0, items.length - visibleCount)),
@@ -211,6 +236,9 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
 
   const scrollToTail = useCallback((smooth = false) => {
     if (visibleItems.length === 0) return;
+    followingTail.current = true;
+    tailScrollInProgressUntil.current = Date.now() + 350;
+    setNewerContentAvailable(false);
     invokeListMethod('autoScroll', {
       rate: smooth ? '2400px' : '100000px',
       start: true,
@@ -358,6 +386,11 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
   const handleScroll = useCallback((event: any) => {
     const detail = event?.detail ?? {};
     reportNewVisibleCell(detail.attachedCells, 'scroll-attached-cells');
+    if (detail.eventSource === 2 && Date.now() >= tailScrollInProgressUntil.current) {
+      const atTail = isTimelineAtTail(detail);
+      followingTail.current = atTail;
+      if (atTail) setNewerContentAvailable(false);
+    }
     const anchor = visibleAnchor(detail, visibleItems);
     if (detail.eventSource === 2 && anchor && anchor.index <= PREFETCH_BUFFER_ITEMS) {
       revealEarlier(anchor.itemKey, anchor.index);
@@ -381,6 +414,40 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
     scrollToItem,
     scrollToTail,
   ]);
+
+  useEffect(() => {
+    const loaderActive = loadingEarlier || revealingEarlier;
+    if (loaderActive) {
+      if (historyLoaderHideTimer.current) {
+        clearTimeout(historyLoaderHideTimer.current);
+        historyLoaderHideTimer.current = null;
+      }
+      if (!historyLoaderVisible) {
+        historyLoaderShownAt.current = Date.now();
+        setHistoryLoaderVisible(true);
+      }
+      return;
+    }
+    if (!historyLoaderVisible) return;
+    const remainingMs = Math.max(
+      0,
+      HISTORY_LOADER_MIN_VISIBLE_MS - (Date.now() - historyLoaderShownAt.current),
+    );
+    historyLoaderHideTimer.current = setTimeout(() => {
+      historyLoaderHideTimer.current = null;
+      setHistoryLoaderVisible(false);
+    }, remainingMs);
+    return () => {
+      if (historyLoaderHideTimer.current) {
+        clearTimeout(historyLoaderHideTimer.current);
+        historyLoaderHideTimer.current = null;
+      }
+    };
+  }, [historyLoaderVisible, loadingEarlier, revealingEarlier]);
+
+  useEffect(() => () => {
+    if (historyLoaderHideTimer.current) clearTimeout(historyLoaderHideTimer.current);
+  }, []);
 
   useEffect(() => {
     const previous = previousItems.current;
@@ -447,6 +514,39 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
     });
   }, [reportRevealPhase, visibleItems]);
 
+  const latestContentVersion = tailContentVersion(items);
+  useEffect(() => {
+    const previousVersion = previousTailContentVersion.current;
+    previousTailContentVersion.current = latestContentVersion;
+    if (!previousVersion || previousVersion === latestContentVersion || !initialPositioningComplete.current) return;
+    if (!followingTail.current) {
+      setNewerContentAvailable(true);
+      return;
+    }
+    const firstPass = setTimeout(() => scrollToTail(false), 16);
+    const layoutPass = setTimeout(() => scrollToTail(false), 96);
+    return () => {
+      clearTimeout(firstPass);
+      clearTimeout(layoutPass);
+    };
+  }, [latestContentVersion, scrollToTail]);
+
+  useEffect(() => {
+    const previousHeight = previousFooterHeight.current;
+    previousFooterHeight.current = footerHeight;
+    if (previousHeight === footerHeight || !initialPositioningComplete.current) return;
+    if (!followingTail.current) {
+      setNewerContentAvailable(true);
+      return;
+    }
+    const firstPass = setTimeout(() => scrollToTail(false), 16);
+    const layoutPass = setTimeout(() => scrollToTail(false), 96);
+    return () => {
+      clearTimeout(firstPass);
+      clearTimeout(layoutPass);
+    };
+  }, [footerHeight, scrollToTail]);
+
   useEffect(() => {
     if (
       viewportHeight <= 0
@@ -485,7 +585,8 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
   ]);
 
   return (
-    <list
+    <view className="virtual-timeline-shell">
+      <list
       id={id}
       className="virtual-timeline"
       bindlayoutchange={handleLayoutChange}
@@ -494,6 +595,7 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
       scroll-orientation="vertical"
       list-type="single"
       enable-scroll={true}
+      bounces={true}
       initial-scroll-index={visibleItems.length}
       need-layout-complete-info={true}
       need-visible-item-info={true}
@@ -502,20 +604,7 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
       preload-buffer-count={4}
       experimental-search-ref-anchor-strategy={1}
       bindscrolltoupper={handleReachStart}
-    >
-      {loadingEarlier || revealingEarlier ? (
-        <list-item
-          item-key="__timeline-history-loader"
-          className="virtual-timeline-loader"
-          estimated-main-axis-size-px={42}
-          recyclable={false}
-        >
-          <view className="virtual-timeline-loader-content">
-            <view className="virtual-timeline-loader-ring" />
-            <text className="virtual-timeline-loader-text">Loading earlier messages…</text>
-          </view>
-        </list-item>
-      ) : null}
+      >
       {topSpacerHeight > 0 ? (
         <list-item
           item-key="__timeline-top-spacer"
@@ -541,6 +630,20 @@ export const VirtualTimeline = forwardRef<VirtualTimelineHandle, VirtualTimeline
           </view>
         </list-item>
       ) : null}
-    </list>
+      </list>
+      <view
+        className={`virtual-timeline-loader ${historyLoaderVisible ? 'virtual-timeline-loader--visible' : ''}`}
+        pointer-events="none"
+      >
+        <LoadingSpinner size="small" label="Loading earlier messages…" />
+      </view>
+      {newerContentAvailable ? (
+        <Button className="virtual-timeline-newer" variant="ghost" onTap={() => scrollToTail(false)}>
+          <view className="virtual-timeline-newer-dot virtual-timeline-newer-dot--1" />
+          <view className="virtual-timeline-newer-dot virtual-timeline-newer-dot--2" />
+          <view className="virtual-timeline-newer-dot virtual-timeline-newer-dot--3" />
+        </Button>
+      ) : null}
+    </view>
   );
 });

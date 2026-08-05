@@ -61,6 +61,17 @@ function normalizeTool(update: Record<string, any>): ToolItem {
   };
 }
 
+const FILE_MUTATION_KINDS = new Set([
+  'edit', 'write', 'create', 'delete', 'remove', 'move', 'rename', 'patch', 'apply_patch', 'file_change',
+]);
+
+export function isFileMutationUpdate(update: Record<string, any>): boolean {
+  const kind = String(update.kind ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+  if (FILE_MUTATION_KINDS.has(kind)) return true;
+  const title = String(update.title ?? '').trim();
+  return /^(edit|write|create|delete|remove|rename|move|patch|update|apply patch)\b/i.test(title);
+}
+
 export class AgentRuntime {
   private readonly tasks = new Map<string, AgentTask>();
   private readonly sessionToTask = new Map<string, string>();
@@ -392,7 +403,7 @@ export class AgentRuntime {
         }
       }
     }
-    if (update.sessionUpdate === 'tool_call' || update.sessionUpdate === 'tool_call_update') {
+    if ((update.sessionUpdate === 'tool_call' || update.sessionUpdate === 'tool_call_update') && isFileMutationUpdate(update)) {
       const task = this.tasks.get(taskId);
       if (task && Array.isArray(update.locations)) {
         const current = new Set(task.lastTurnChangedFiles ?? []);

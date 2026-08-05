@@ -1,0 +1,26 @@
+/* Shared button interaction states. */
+.ui-button {
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  cursor: pointer;
+  -x-app-region: no-drag;
+}
+
+.ui-button--borderless,
+.ui-button--borderless:hover,
+.ui-button--borderless:active,
+.ui-button--borderless:focus,
+.ui-button--borderless.ui-button--selected {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.ui-button--disabled,
+.ui-button--disabled:hover,
+.ui-button--disabled:active {
+  cursor: default;
+  opacity: 0.45;
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+}

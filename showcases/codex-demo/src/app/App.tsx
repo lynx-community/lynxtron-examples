@@ -21,8 +21,12 @@ import type {
   WorkspaceSnapshot,
 } from '../shared/agent';
 import './App.css';
-import { ToolCard } from './components/ToolCard';
-import { MarkdownMessage } from './components/MarkdownMessage';
+import {
+  ChangeSummaryCard,
+  ConversationMessageCard,
+  prepareConversationItems,
+} from './components/conversation';
+import { Button, LoadingSpinner, Popover } from './components/ui';
 import { VirtualTimeline, type VirtualTimelineHandle } from './components/VirtualTimeline';
 import { usePreviewRouter } from './components/preview-router';
 import { languageForPath, prismDiffLines, prismSyntaxLines, type SyntaxSegment } from './syntax-highlight';
@@ -83,6 +87,13 @@ const EMPTY_WORKSPACE: WorkspaceSnapshot = {
   files: [],
   truncated: false,
 };
+
+function previewTabWidth(tab: PreviewTab): number {
+  if (tab.kind === 'custom') return 108;
+  if (tab.kind === 'review') return 116;
+  if (tab.kind === 'file') return 138;
+  return 132;
+}
 
 const readInputValue = (event: any): string => event?.detail?.value ?? event?.value ?? '';
 
@@ -203,7 +214,7 @@ function CodeFileView({ preview, selectedLine, onSelectLine }: {
     () => prismSyntaxLines(preview?.content ?? '', preview?.language ?? 'text').slice(0, 10_000),
     [preview?.content, preview?.language],
   );
-  if (!preview) return <view className="code-preview-loading"><text className="code-preview-loading-text">Loading file…</text></view>;
+  if (!preview) return <view className="code-preview-loading"><LoadingSpinner label="Loading file…" /></view>;
   if (preview.binary) return <view className="code-preview-loading"><text className="code-preview-loading-text">Binary file preview is unavailable.</text></view>;
   return (
     <list
@@ -342,7 +353,7 @@ function ReviewDiffList({ files, diffs, loading, onOpenFile, onLoadDiff, onPerfo
 
   const rows = build.rows;
 
-  if (loading && files.length === 0) return <text className="review-loading">Reading Git changes…</text>;
+  if (loading && files.length === 0) return <LoadingSpinner className="review-loading" label="Reading Git changes…" />;
   if (!loading && files.length === 0) {
     return (
       <view className="review-empty">
@@ -407,86 +418,6 @@ function mergeTimelineEntries(history: TimelineEntry[], additions: TimelineEntry
     else next[index] = addition;
   }
   return next;
-}
-
-function looksLikeFilePath(path: string): boolean {
-  const name = path.split('/').filter(Boolean).pop() ?? '';
-  return name.includes('.') && !name.endsWith('.');
-}
-
-function MessageCard({ item, onOpenFile, onOpenTool, onOpenLink }: {
-  item: TimelineEntry;
-  onOpenFile: (path: string, line?: number) => void;
-  onOpenTool: () => void;
-  onOpenLink: (href: string) => void;
-}) {
-  const [reasoningExpanded, setReasoningExpanded] = useState(false);
-  if (item.kind === 'user') {
-    return (
-      <view className="message-row message-row--user">
-        <view className="user-bubble"><text className="user-text selectable-text" text-selection={true} flatten={false}>{item.text}</text></view>
-      </view>
-    );
-  }
-  if (item.kind === 'reasoning') {
-    return (
-      <view className="reasoning-card">
-        <view className="reasoning-header" bindtap={() => setReasoningExpanded((expanded) => !expanded)}>
-          <view className="reasoning-dot" />
-          <text className="reasoning-label">Worked</text>
-          <text className={`reasoning-chevron ${reasoningExpanded ? 'reasoning-chevron--expanded' : ''}`}>›</text>
-        </view>
-        {reasoningExpanded ? <text className="reasoning-text selectable-text" text-selection={true} flatten={false}>{item.text}</text> : null}
-      </view>
-    );
-  }
-  if (item.kind === 'tool' && item.tool) {
-    const locations = (item.tool.locations ?? []).flatMap((location) => location.path
-      ? [{ path: location.path, line: location.line }]
-      : []);
-    const primaryLocation = locations.find((location) => location.line || looksLikeFilePath(location.path));
-    const titlePath = item.tool.title.trim();
-    const inferredTitlePath = !titlePath.includes(' ') && looksLikeFilePath(titlePath)
-      ? titlePath
-      : undefined;
-    const openToolPreview = primaryLocation
-      ? () => onOpenFile(primaryLocation.path, primaryLocation.line)
-      : inferredTitlePath
-        ? () => onOpenFile(inferredTitlePath)
-        : onOpenTool;
-    return (
-      <ToolCard
-        title={item.tool.title}
-        status={item.tool.status}
-        output={item.tool.text}
-        locations={locations}
-        onOpen={openToolPreview}
-        onOpenLocation={(location) => onOpenFile(location.path, location.line)}
-      />
-    );
-  }
-  if (item.kind === 'plan') {
-    return (
-      <view className="plan-card">
-        <text className="plan-label">PLAN</text>
-        {(item.plan ?? []).map((entry, index) => (
-          <view className="plan-row" key={`${index}-${entry.content}`}>
-            <view className={`plan-marker plan-marker--${entry.status ?? 'pending'}`} />
-            <text className="plan-text selectable-text" text-selection={true} flatten={false}>{entry.content}</text>
-          </view>
-        ))}
-      </view>
-    );
-  }
-  if (item.kind === 'error') {
-    return <view className="error-card"><text className="error-text selectable-text" text-selection={true} flatten={false}>{item.text}</text></view>;
-  }
-  return (
-    <view className="assistant-message">
-      <view className="assistant-mark"><text className="assistant-mark-text">A</text></view>
-      <MarkdownMessage source={item.text ?? ''} onOpenLink={onOpenLink} />
-    </view>
-  );
 }
 
 export function App() {
@@ -562,6 +493,11 @@ export function App() {
     return merged;
   }, [historyItems, liveItems]);
 
+  const conversationItems = useMemo(
+    () => prepareConversationItems(items, review.files),
+    [items, review.files],
+  );
+
   const selectedTask = useMemo(
     () => tasks.find((task) => task.id === selectedTaskId) ?? null,
     [tasks, selectedTaskId],
@@ -597,12 +533,10 @@ export function App() {
     [previewTabs, activePreviewTabId],
   );
 
-  const previewTabStripWidth = useMemo(() => previewTabs.reduce((width, tab) => {
-    if (tab.kind === 'custom') return width + 108;
-    if (tab.kind === 'review') return width + 116;
-    if (tab.kind === 'file') return width + 138;
-    return width + 132;
-  }, Math.max(0, previewTabs.length - 1) * 3), [previewTabs]);
+  const previewTabStripWidth = useMemo(() => previewTabs.reduce(
+    (width, tab) => width + previewTabWidth(tab),
+    14 + Math.max(0, previewTabs.length - 1) * 3,
+  ), [previewTabs]);
 
   const activeFilePreview = activePreviewTab.kind === 'file' && activePreviewTab.resource
     ? filePreviews[activePreviewTab.resource]
@@ -1270,71 +1204,98 @@ export function App() {
   }, [initialized, recoverServiceState]);
 
   useEffect(() => {
-    if (!selectedTaskId || !previewOpen) return;
-    const reviewVisible = activePreviewTab.kind === 'review';
-    const agentsVisible = activePreviewTab.id === AGENTS_TAB.id;
-    if (!reviewVisible && !agentsVisible) return;
-    void refreshReview(reviewVisible);
+    if (!selectedTaskId) return;
+    void refreshReview(false);
     if (selectedTask?.status !== 'running' && selectedTask?.status !== 'waiting') return;
-    const timer = setInterval(() => void refreshReview(reviewVisible), 3_000);
+    const timer = setInterval(() => void refreshReview(false), 2_000);
     return () => clearInterval(timer);
-  }, [selectedTaskId, selectedTask?.status, selectedTask?.updatedAt, previewOpen, activePreviewTab.id, activePreviewTab.kind, refreshReview]);
+  }, [selectedTaskId, selectedTask?.status, refreshReview]);
+
+  useEffect(() => {
+    if (!selectedTaskId || !previewOpen || activePreviewTab.kind !== 'review') return;
+    void refreshReview(true);
+    if (selectedTask?.status !== 'running' && selectedTask?.status !== 'waiting') return;
+    const timer = setInterval(() => void refreshReview(true), 3_000);
+    return () => clearInterval(timer);
+  }, [selectedTaskId, selectedTask?.status, previewOpen, activePreviewTab.kind, refreshReview]);
 
   return (
     <view className={`app-shell ${previewOpen ? 'app-shell--preview-open' : ''}`}>
       <view className="titlebar">
         <view className="titlebar-sidebar">
-          <view
+          <Button
             className={`titlebar-tool-button titlebar-sidebar-toggle ${previewOpen ? 'titlebar-tool-button--active' : ''}`}
-            bindtap={() => {
+            onTap={() => {
               togglePreview();
               setAccessMenuOpen(false);
               setModelMenuOpen(false);
             }}
           >
             <view className="sidebar-toggle-outline"><view className="sidebar-toggle-divider" /></view>
-          </view>
-          <view className="titlebar-tool-button"><view className="titlebar-chevron titlebar-chevron--back" /></view>
-          <view className="titlebar-tool-button"><view className="titlebar-chevron titlebar-chevron--forward" /></view>
+          </Button>
+          <Button className="titlebar-tool-button" disabled><view className="titlebar-chevron titlebar-chevron--back" /></Button>
+          <Button className="titlebar-tool-button" disabled><view className="titlebar-chevron titlebar-chevron--forward" /></Button>
         </view>
         <view className="titlebar-thread">
           <view className="titlebar-folder"><view className="folder-glyph"><view className="folder-glyph-tab" /></view></view>
           <text className="titlebar-thread-title" text-maxline="1">{selectedTask?.title ?? 'New task'}</text>
-          <text className="titlebar-more" bindtap={jumpToRandomTimelinePosition}>•••</text>
+          <Button className="titlebar-more" variant="ghost" onTap={jumpToRandomTimelinePosition}><text>•••</text></Button>
           <view className="titlebar-thread-spacer" />
-          <view className="titlebar-location" bindtap={chooseWorkspace}>
+          <Button className="titlebar-location" border borderColor="#e2e4e7" onTap={chooseWorkspace}>
             <text className="titlebar-location-icon">▣</text>
             <text className="titlebar-location-text">Open</text>
             <text className="titlebar-location-chevron">⌄</text>
-          </view>
-          <view className="titlebar-controls" bindtap={() => {
+          </Button>
+          <Button className="titlebar-controls" variant="ghost" onTap={() => {
             togglePreview();
             setAccessMenuOpen(false);
             setModelMenuOpen(false);
-          }}><text className="titlebar-controls-text">◧</text></view>
+          }}><text className="titlebar-controls-text">◧</text></Button>
         </view>
         {previewOpen ? <view className="titlebar-preview">
           <scroll-view scroll-x className="preview-tab-scroll">
             <view className="preview-tab-list" style={{ width: `${previewTabStripWidth}px` }}>
               {previewTabs.map((tab) => (
-                <view key={tab.id} className={`preview-tab preview-tab--${tab.kind} ${activePreviewTab.id === tab.id ? 'preview-tab--active' : ''}`}>
-                  <view className="preview-tab-target" bindtap={() => {
+                <view
+                  key={tab.id}
+                  className={`preview-tab preview-tab--${tab.kind} ${activePreviewTab.id === tab.id ? 'preview-tab--active' : ''}`}
+                  style={{
+                    width: `${previewTabWidth(tab)}px`,
+                    minWidth: `${previewTabWidth(tab)}px`,
+                    maxWidth: `${previewTabWidth(tab)}px`,
+                    flexBasis: `${previewTabWidth(tab)}px`,
+                  }}
+                >
+                  <Button className="preview-tab-target" variant="ghost" onTap={() => {
                     activatePreviewRoute(tab.id);
                     setPreviewAddMenuOpen(false);
                     setCodeOpenMenuOpen(false);
                   }}>
                     <text className={`preview-tab-icon preview-tab-icon--${tab.kind}`}>{tab.kind === 'review' ? '▣' : tab.id === 'agents' ? '♙' : tab.kind === 'file' ? '◆' : '◇'}</text>
                     <text className="preview-tab-title" text-maxline="1">{tab.title}</text>
-                  </view>
+                  </Button>
                   {tab.closable ? (
-                    <view className="preview-tab-close" bindtap={() => closePreviewTab(tab)}><text className="preview-tab-close-text">×</text></view>
+                    <Button className="preview-tab-close" variant="ghost" onTap={() => closePreviewTab(tab)}><text className="preview-tab-close-text">×</text></Button>
                   ) : null}
                 </view>
               ))}
             </view>
           </scroll-view>
-          <view className="preview-new-tab" bindtap={() => setPreviewAddMenuOpen((open) => !open)}><text className="preview-new-tab-text">＋</text></view>
-          <view className="preview-layout" bindtap={closePreview}><text className="preview-layout-text">◧</text></view>
+          <view className="preview-new-tab-anchor">
+            <Button className="preview-new-tab" variant="ghost" selected={previewAddMenuOpen} onTap={() => setPreviewAddMenuOpen((open) => !open)}><text className="preview-new-tab-text">＋</text></Button>
+            <Popover
+              open={previewAddMenuOpen}
+              placement="bottom-end"
+              onRequestClose={() => setPreviewAddMenuOpen(false)}
+              className="preview-add-menu"
+            >
+              <text className="preview-add-menu-title">Open panel</text>
+              <Button className="preview-add-menu-item" variant="ghost" border={false} onTap={openAgents}><text className="preview-add-menu-icon">♙</text><text className="preview-add-menu-text">Agents</text></Button>
+              <Button className="preview-add-menu-item" variant="ghost" border={false} onTap={openReview}><text className="preview-add-menu-icon">▣</text><text className="preview-add-menu-text">Review changes</text></Button>
+              <Button className="preview-add-menu-item" variant="ghost" border={false} onTap={browseCode}><text className="preview-add-menu-icon">◆</text><text className="preview-add-menu-text">Browse code</text></Button>
+            </Popover>
+          </view>
+          <Button className="preview-layout" variant="ghost" onTap={closePreview}><text className="preview-layout-text">◧</text></Button>
         </view> : null}
       </view>
 
@@ -1343,47 +1304,54 @@ export function App() {
           <view className="sidebar-product-row">
             <view className="sidebar-product-title"><text className="sidebar-product-name">Codex</text><text className="sidebar-product-chevron">⌄</text></view>
             <view className="sidebar-product-actions">
-              <view
+              <Button
                 className={`sidebar-action-button sidebar-search-icon ${sidebarSearchOpen ? 'sidebar-action-button--active' : ''}`}
-                bindtap={() => {
+                selected={sidebarSearchOpen}
+                onTap={() => {
                   setSidebarSearchOpen(true);
                   setSidebarSearchQuery('');
                   setAccessMenuOpen(false);
                   setModelMenuOpen(false);
                 }}
-              ><view className="search-icon-ring" /><view className="search-icon-handle" /></view>
-              <view
+              ><view className="search-icon-ring" /><view className="search-icon-handle" /></Button>
+              <Button
                 className={`sidebar-action-button sidebar-bell-icon ${priorityOnly ? 'sidebar-action-button--active' : ''}`}
-                bindtap={() => setPriorityOnly((active) => !active)}
-              ><view className="bell-icon-body" /><view className="bell-icon-dot" /></view>
+                selected={priorityOnly}
+                onTap={() => setPriorityOnly((active) => !active)}
+              ><view className="bell-icon-body" /><view className="bell-icon-dot" /></Button>
             </view>
           </view>
 
-          <view className="sidebar-new-task" bindtap={createTask}>
+          <Button className="sidebar-new-task" variant="ghost" onTap={createTask}>
             <view className="sidebar-new-task-icon"><view className="new-task-icon-box" /><view className="new-task-icon-pencil" /></view>
             <text className="sidebar-new-task-text">New task</text>
-          </view>
+          </Button>
 
           <scroll-view scroll-y className="sidebar-project-scroll">
-            <view className="sidebar-project-heading" bindtap={chooseWorkspace}>
+            <Button className="sidebar-project-heading" variant="ghost" onTap={chooseWorkspace}>
               <view className="sidebar-project-icon"><view className="folder-glyph"><view className="folder-glyph-tab" /></view></view>
               <text className="sidebar-project-name" text-maxline="1">{workspaceName}</text>
               <text className="sidebar-project-menu">•••</text>
-            </view>
+            </Button>
             {sidebarTasks.length === 0 ? <text className="empty-tasks">{priorityOnly ? 'No priority tasks' : 'No tasks yet'}</text> : null}
             {sidebarTasks.map((task) => (
-              <view
+              <Button
                 key={task.id}
                 className={`sidebar-task-link ${selectedTaskId === task.id ? 'sidebar-task-link--active' : ''}`}
-                bindtap={() => selectTask(task)}
+                selected={selectedTaskId === task.id}
+                variant="ghost"
+                border={false}
+                hoverBackgroundColor="rgba(224, 228, 234, 0.64)"
+                activeBackgroundColor="rgba(205, 211, 219, 0.82)"
+                onTap={() => selectTask(task)}
               >
                 <view className="sidebar-task-title-row">
-                  <text className="sidebar-task-link-title" text-maxline="2">{task.title}</text>
+                  <text className="sidebar-task-link-title" text-maxline="1">{task.title}</text>
                   {task.status === 'running' || task.status === 'waiting'
                     ? <view className={`task-state task-state--${task.status}`} />
                     : null}
                 </view>
-              </view>
+              </Button>
             ))}
           </scroll-view>
 
@@ -1396,14 +1364,14 @@ export function App() {
             <text className="sidebar-status-count">{backends.filter((backend) => backend.status === 'ready').length}/{backends.length}</text>
           </view>
 
-          <view className="sidebar-backend-picker" bindtap={cycleBackend}>
+          <Button className="sidebar-backend-picker" variant="ghost" onTap={cycleBackend}>
             <view className="sidebar-avatar"><text className="sidebar-avatar-text">AI</text></view>
             <view className="sidebar-backend-picker-copy">
               <text className="sidebar-backend-picker-name">{configuredBackend?.label ?? 'Agent backend'}</text>
               <text className="sidebar-backend-picker-detail">{configuredBackend?.version ? `v${configuredBackend.version}` : configuredBackend?.status ?? 'missing'}</text>
             </view>
             <text className="sidebar-backend-chevron">⌃</text>
-          </view>
+          </Button>
         </view>
 
         <view className="conversation">
@@ -1415,8 +1383,8 @@ export function App() {
                 <text className="welcome-title">Build with any coding agent</text>
                 <text className="welcome-copy">Choose an available backend, select a workspace, and start a task. OpenCode is connected through the same ACP adapter used by other compatible agents.</text>
                 <view className="welcome-actions">
-                  <view className="welcome-action" bindtap={createTask}><text className="welcome-action-text">Create task</text></view>
-                  <view className="welcome-action welcome-action--secondary" bindtap={chooseWorkspace}><text className="welcome-action-secondary-text">Choose workspace</text></view>
+                  <Button className="welcome-action" onTap={createTask}><text className="welcome-action-text">Create task</text></Button>
+                  <Button className="welcome-action welcome-action--secondary" variant="ghost" onTap={chooseWorkspace}><text className="welcome-action-secondary-text">Choose workspace</text></Button>
                 </view>
               </view>
               ) : null}
@@ -1430,22 +1398,22 @@ export function App() {
                 <text className="task-empty-title">What should we build in <text className="task-empty-workspace">{workspaceName}</text>?</text>
                 {!prompt.trim() ? (
                   <view className="task-starters">
-                    <view className="task-starter" bindtap={() => setPrompt('Explore this codebase and explain how it works')}>
+                    <Button className="task-starter" variant="ghost" border borderColor="#e5e5e5" onTap={() => setPrompt('Explore this codebase and explain how it works')}>
                       <text className="task-starter-icon task-starter-icon--blue">⌕</text>
                       <text className="task-starter-text">Explore and understand code</text>
-                    </view>
-                    <view className="task-starter" bindtap={() => setPrompt('Build a new feature, app, or tool')}>
+                    </Button>
+                    <Button className="task-starter" variant="ghost" border borderColor="#e5e5e5" onTap={() => setPrompt('Build a new feature, app, or tool')}>
                       <text className="task-starter-icon task-starter-icon--purple">⌁</text>
                       <text className="task-starter-text">Build a feature, app, or tool</text>
-                    </view>
-                    <view className="task-starter" bindtap={() => setPrompt('Review the code and suggest improvements')}>
+                    </Button>
+                    <Button className="task-starter" variant="ghost" border borderColor="#e5e5e5" onTap={() => setPrompt('Review the code and suggest improvements')}>
                       <text className="task-starter-icon task-starter-icon--green">⟳</text>
                       <text className="task-starter-text">Review code and suggest changes</text>
-                    </view>
-                    <view className="task-starter" bindtap={() => setPrompt('Find and fix a bug or failing test')}>
+                    </Button>
+                    <Button className="task-starter" variant="ghost" border borderColor="#e5e5e5" onTap={() => setPrompt('Find and fix a bug or failing test')}>
                       <text className="task-starter-icon task-starter-icon--orange">♨</text>
                       <text className="task-starter-text">Fix a bug or failure</text>
-                    </view>
+                    </Button>
                   </view>
                 ) : null}
                 <view className="task-workspace-chip">
@@ -1461,9 +1429,9 @@ export function App() {
               key={selectedTaskId}
               ref={timelineRef}
               id="conversation-timeline"
-              items={items}
+              items={conversationItems}
               renderItem={(item) => (
-                <MessageCard
+                <ConversationMessageCard
                   item={item}
                   onOpenFile={openFilePreview}
                   onOpenTool={openAgents}
@@ -1481,36 +1449,12 @@ export function App() {
                     <view className="timeline-thinking"><text className="timeline-thinking-text">Thinking</text></view>
                   ) : null}
                   {selectedTask && review.files.length > 0 ? (
-                    <view className="change-card">
-                      <view className="change-card-header">
-                        <view className="change-card-icon"><text className="change-card-icon-text">＋</text></view>
-                        <view className="change-card-title-wrap">
-                          <text className="change-card-title">Edited {review.files.length} {review.files.length === 1 ? 'file' : 'files'}</text>
-                          <view className="change-card-totals">
-                            <text className="change-card-add">+{review.additions}</text>
-                            <text className="change-card-delete">−{review.deletions}</text>
-                          </view>
-                        </view>
-                        <view className="change-card-actions">
-                          <view className="change-card-undo"><text className="change-card-undo-text">Undo</text><text className="change-card-undo-icon">↶</text></view>
-                          <view className="change-card-review" bindtap={openReview}><text className="change-card-review-text">Review</text></view>
-                        </view>
-                      </view>
-                      <view className="change-card-files">
-                        {review.files.slice(0, 3).map((file) => (
-                          <view className="change-card-file" key={file.path} bindtap={openReview}>
-                            <text className="change-card-file-path" text-maxline="1">{shortPath(file.path)}</text>
-                            <view className="change-card-file-totals">
-                              <text className="change-card-file-add">+{file.additions}</text>
-                              <text className="change-card-file-delete">−{file.deletions}</text>
-                            </view>
-                          </view>
-                        ))}
-                        {review.files.length > 3 ? (
-                          <view className="change-card-more" bindtap={openReview}><text className="change-card-more-text">{review.files.length - 3} more changed files</text></view>
-                        ) : null}
-                      </view>
-                    </view>
+                    <ChangeSummaryCard
+                      review={review}
+                      formatPath={shortPath}
+                      onReview={openReview}
+                      onOpenFile={openFilePreview}
+                    />
                   ) : null}
                   {error ? <view className="inline-error"><text className="inline-error-text selectable-text" text-selection={true} flatten={false}>{error}</text></view> : null}
                 </view>
@@ -1526,65 +1470,21 @@ export function App() {
               </view>
               <view className="permission-actions">
                 {permission.options.map((option) => (
-                  <view
+                  <Button
                     key={option.optionId}
                     className={`permission-button ${option.kind?.startsWith('allow') ? 'permission-button--allow' : ''}`}
-                    bindtap={() => answerPermission(option.optionId)}
+                    onTap={() => answerPermission(option.optionId)}
                   >
                     <text className="permission-button-text">{option.name}</text>
-                  </view>
+                  </Button>
                 ))}
-                <view className="permission-button" bindtap={() => answerPermission()}><text className="permission-button-text">Cancel</text></view>
+                <Button className="permission-button" variant="ghost" onTap={() => answerPermission()}><text className="permission-button-text">Cancel</text></Button>
               </view>
             </view>
           ) : null}
 
           {!permission ? <view className="composer-wrap">
             {initialized ? <view className={`composer ${selectedTask?.status === 'running' || selectedTask?.status === 'waiting' ? 'composer--running' : ''}`}>
-              {accessMenuOpen ? (
-                <view className="composer-popover composer-popover--access">
-                  <text className="composer-popover-title">Access</text>
-                  {(modeOption?.options ?? []).map((option) => (
-                    <view
-                      key={option.value}
-                      className={`composer-popover-option ${modeOption?.currentValue === option.value ? 'composer-popover-option--selected' : ''}`}
-                      bindtap={() => {
-                        setTaskConfigOption(modeOption!.id, option.value);
-                        setAccessMenuOpen(false);
-                      }}
-                    >
-                      <view className="composer-popover-option-copy">
-                        <text className="composer-popover-option-name">{option.value === 'build' ? 'Full access' : option.value === 'plan' ? 'Plan mode' : option.name}</text>
-                        {option.description ? <text className="composer-popover-option-detail" text-maxline="2">{option.description}</text> : null}
-                      </view>
-                      {modeOption?.currentValue === option.value ? <text className="composer-popover-check">✓</text> : null}
-                    </view>
-                  ))}
-                </view>
-              ) : null}
-              {modelMenuOpen ? (
-                <view className="composer-popover composer-popover--model">
-                  <text className="composer-popover-title">Model</text>
-                  <scroll-view scroll-y className="composer-popover-list">
-                    {(selectedTask?.configOptions.find((option) => option.category === 'model' || option.id === 'model')?.options ?? []).map((option) => {
-                      const model = selectedTask?.configOptions.find((item) => item.category === 'model' || item.id === 'model');
-                      return (
-                        <view
-                          key={option.value}
-                          className={`composer-popover-option ${model?.currentValue === option.value ? 'composer-popover-option--selected' : ''}`}
-                          bindtap={() => {
-                            if (model) setTaskConfigOption(model.id, option.value);
-                            setModelMenuOpen(false);
-                          }}
-                        >
-                          <text className="composer-popover-option-name" text-maxline="1">{option.name}</text>
-                          {model?.currentValue === option.value ? <text className="composer-popover-check">✓</text> : null}
-                        </view>
-                      );
-                    })}
-                  </scroll-view>
-                </view>
-              ) : null}
               <input
                 key={`composer-${composerInputKey}`}
                 {...({ value: prompt } as any)}
@@ -1594,25 +1494,85 @@ export function App() {
                 bindconfirm={submit}
               />
               <view className="composer-toolbar">
-                <view className="composer-tool"><text className="composer-tool-text">＋</text></view>
-                <view className="composer-access" bindtap={() => {
-                  setAccessMenuOpen((open) => !open);
-                  setModelMenuOpen(false);
-                }}><text className="composer-access-icon">◉</text><text className="composer-access-text">{accessLabel}</text></view>
-                <view className="composer-toolbar-spacer" />
-                <view className="composer-model" bindtap={() => {
-                  setModelMenuOpen((open) => !open);
-                  setAccessMenuOpen(false);
-                }}>
-                  <text className="composer-model-bolt">ϟ</text>
-                  <text className="composer-model-text" text-maxline="1">{modelLabel}</text>
-                  <text className="composer-model-chevron">⌄</text>
+                <Button className="composer-tool" variant="ghost" disabled><text className="composer-tool-text">＋</text></Button>
+                <view className="composer-access-anchor">
+                  <Button className="composer-access" variant="ghost" selected={accessMenuOpen} onTap={() => {
+                    setAccessMenuOpen((open) => !open);
+                    setModelMenuOpen(false);
+                  }}><text className="composer-access-icon">◉</text><text className="composer-access-text">{accessLabel}</text></Button>
+                  <Popover
+                    open={accessMenuOpen}
+                    placement="top-start"
+                    onRequestClose={() => setAccessMenuOpen(false)}
+                    className="composer-popover composer-popover--access"
+                  >
+                    <text className="composer-popover-title">Access</text>
+                    {(modeOption?.options ?? []).map((option) => (
+                      <Button
+                        key={option.value}
+                        className={`composer-popover-option ${modeOption?.currentValue === option.value ? 'composer-popover-option--selected' : ''}`}
+                        variant="ghost"
+                        border={false}
+                        selected={modeOption?.currentValue === option.value}
+                        onTap={() => {
+                          setTaskConfigOption(modeOption!.id, option.value);
+                          setAccessMenuOpen(false);
+                        }}
+                      >
+                        <view className="composer-popover-option-copy">
+                          <text className="composer-popover-option-name">{option.value === 'build' ? 'Full access' : option.value === 'plan' ? 'Plan mode' : option.name}</text>
+                          {option.description ? <text className="composer-popover-option-detail" text-maxline="2">{option.description}</text> : null}
+                        </view>
+                        {modeOption?.currentValue === option.value ? <text className="composer-popover-check">✓</text> : null}
+                      </Button>
+                    ))}
+                  </Popover>
                 </view>
-                <view className="composer-mic"><text className="composer-mic-text">♩</text></view>
+                <view className="composer-toolbar-spacer" />
+                <view className="composer-model-anchor">
+                  <Button className="composer-model" variant="ghost" selected={modelMenuOpen} onTap={() => {
+                    setModelMenuOpen((open) => !open);
+                    setAccessMenuOpen(false);
+                  }}>
+                    <text className="composer-model-bolt">ϟ</text>
+                    <text className="composer-model-text" text-maxline="1">{modelLabel}</text>
+                    <text className="composer-model-chevron">⌄</text>
+                  </Button>
+                  <Popover
+                    open={modelMenuOpen}
+                    placement="top-end"
+                    onRequestClose={() => setModelMenuOpen(false)}
+                    className="composer-popover composer-popover--model"
+                  >
+                    <text className="composer-popover-title">Model</text>
+                    <scroll-view scroll-y className="composer-popover-list">
+                      {(selectedTask?.configOptions.find((option) => option.category === 'model' || option.id === 'model')?.options ?? []).map((option) => {
+                        const model = selectedTask?.configOptions.find((item) => item.category === 'model' || item.id === 'model');
+                        return (
+                          <Button
+                            key={option.value}
+                            className={`composer-popover-option ${model?.currentValue === option.value ? 'composer-popover-option--selected' : ''}`}
+                            variant="ghost"
+                            border={false}
+                            selected={model?.currentValue === option.value}
+                            onTap={() => {
+                              if (model) setTaskConfigOption(model.id, option.value);
+                              setModelMenuOpen(false);
+                            }}
+                          >
+                            <text className="composer-popover-option-name" text-maxline="1">{option.name}</text>
+                            {model?.currentValue === option.value ? <text className="composer-popover-check">✓</text> : null}
+                          </Button>
+                        );
+                      })}
+                    </scroll-view>
+                  </Popover>
+                </view>
+                <Button className="composer-mic" variant="ghost" disabled><text className="composer-mic-text">♩</text></Button>
                 {selectedTask?.status === 'running' || selectedTask?.status === 'waiting' ? (
-                  <view className="send-button send-button--stop" bindtap={cancel}><view className="stop-square" /></view>
+                  <Button className="send-button send-button--stop" variant="danger" onTap={cancel}><view className="stop-square" /></Button>
                 ) : (
-                  <view className={`send-button ${prompt.trim() && selectedTask ? 'send-button--ready' : ''}`} bindtap={submit}><text className="send-arrow">↑</text></view>
+                  <Button className={`send-button ${prompt.trim() && selectedTask ? 'send-button--ready' : ''}`} disabled={!prompt.trim() || !selectedTask} onTap={submit}><text className="send-arrow">↑</text></Button>
                 )}
               </view>
             </view> : <view className="composer-loading-space" />}
@@ -1620,31 +1580,23 @@ export function App() {
         </view>
 
         {previewOpen ? <view className="preview-panel">
-          {previewAddMenuOpen ? (
-            <view className="preview-add-menu">
-              <text className="preview-add-menu-title">Open panel</text>
-              <view className="preview-add-menu-item" bindtap={openAgents}><text className="preview-add-menu-icon">♙</text><text className="preview-add-menu-text">Agents</text></view>
-              <view className="preview-add-menu-item" bindtap={openReview}><text className="preview-add-menu-icon">▣</text><text className="preview-add-menu-text">Review changes</text></view>
-              <view className="preview-add-menu-item" bindtap={browseCode}><text className="preview-add-menu-icon">◆</text><text className="preview-add-menu-text">Browse code</text></view>
-            </view>
-          ) : null}
           {activePreviewTab.kind === 'review' ? (
             <view className="review-workbench">
               <view className="review-toolbar">
-                <view className="review-turn-selector">
+                <Button className="review-turn-selector" variant="ghost" disabled>
                   <text className="review-turn-text">Last turn</text>
                   <text className="review-turn-chevron">⌄</text>
-                </view>
+                </Button>
                 <view className="review-toolbar-totals">
                   <text className="review-toolbar-add">+{review.additions}</text>
                   <text className="review-toolbar-delete">−{review.deletions}</text>
                 </view>
                 <view className="review-toolbar-spacer" />
-                <view className="review-tool-button"><text className="review-tool-icon">•••</text></view>
-                <view className="review-tool-button"><text className="review-tool-icon">↕</text></view>
-                <view className="review-tool-button"><text className="review-tool-icon">⌕</text></view>
-                <view className="review-tool-button"><text className="review-tool-icon">◫</text></view>
-                <view className="review-tool-button" bindtap={() => void refreshReview(true)}><text className="review-tool-icon">↻</text></view>
+                <Button className="review-tool-button" variant="ghost" disabled><text className="review-tool-icon">•••</text></Button>
+                <Button className="review-tool-button" variant="ghost" disabled><text className="review-tool-icon">↕</text></Button>
+                <Button className="review-tool-button" variant="ghost" disabled><text className="review-tool-icon">⌕</text></Button>
+                <Button className="review-tool-button" variant="ghost" disabled><text className="review-tool-icon">◫</text></Button>
+                <Button className="review-tool-button" variant="ghost" onTap={() => void refreshReview(true)}><text className="review-tool-icon">↻</text></Button>
               </view>
               <view className="review-diff-scroll">
                 <ReviewDiffList
@@ -1665,8 +1617,8 @@ export function App() {
               <view className="agents-toolbar">
                 <text className="agents-toolbar-title">Agents</text>
                 <view className="agents-toolbar-spacer" />
-                <view className="agents-toolbar-action" bindtap={browseCode}><text className="agents-toolbar-action-text">◆</text></view>
-                <view className="agents-toolbar-action" bindtap={() => void refreshReview(false)}><text className="agents-toolbar-action-text">↻</text></view>
+                <Button className="agents-toolbar-action" variant="ghost" onTap={browseCode}><text className="agents-toolbar-action-text">◆</text></Button>
+                <Button className="agents-toolbar-action" variant="ghost" onTap={() => void refreshReview(false)}><text className="agents-toolbar-action-text">↻</text></Button>
               </view>
               <scroll-view scroll-y className="agents-scroll">
                 {selectedTask ? (
@@ -1683,9 +1635,9 @@ export function App() {
                     <view className="agent-meta-row"><text className="agent-meta-label">Workspace</text><text className="agent-meta-value" text-maxline="1">{workspaceName}</text></view>
                     <view className="agent-meta-row"><text className="agent-meta-label">Session</text><text className="agent-meta-value" text-maxline="1">{selectedTask.sessionId}</text></view>
                     <view className="agent-card-actions">
-                      {selectedTask.status === 'running' || selectedTask.status === 'waiting' ? <view className="agent-card-button agent-card-button--stop" bindtap={cancel}><text className="agent-card-button-text agent-card-button-text--stop">Stop</text></view> : null}
-                      <view className="agent-card-button" bindtap={openReview}><text className="agent-card-button-text">Review</text></view>
-                      <view className="agent-card-button" bindtap={browseCode}><text className="agent-card-button-text">Open code</text></view>
+                      {selectedTask.status === 'running' || selectedTask.status === 'waiting' ? <Button className="agent-card-button agent-card-button--stop" variant="danger" onTap={cancel}><text className="agent-card-button-text agent-card-button-text--stop">Stop</text></Button> : null}
+                      <Button className="agent-card-button" onTap={openReview}><text className="agent-card-button-text">Review</text></Button>
+                      <Button className="agent-card-button" onTap={browseCode}><text className="agent-card-button-text">Open code</text></Button>
                     </view>
                   </view>
                 ) : <text className="agents-empty">Create a task to start an agent.</text>}
@@ -1706,11 +1658,11 @@ export function App() {
                 <view className="agents-section">
                   <view className="agents-section-heading"><text className="agents-section-title">CHANGED FILES</text><text className="agents-section-count">{review.files.length}</text></view>
                   {review.files.slice(0, 8).map((file) => (
-                    <view className="agent-file-row" key={file.path} bindtap={() => openFilePreview(file.path)}>
+                    <Button className="agent-file-row" variant="ghost" key={file.path} onTap={() => openFilePreview(file.path)}>
                       <text className={`agent-file-status agent-file-status--${file.status}`}>{statusBadge(file)}</text>
                       <text className="agent-file-path" text-maxline="1">{file.path}</text>
                       <text className="agent-file-add">+{file.additions}</text><text className="agent-file-delete">−{file.deletions}</text>
-                    </view>
+                    </Button>
                   ))}
                   {!review.files.length ? <text className="agents-section-empty">No workspace changes.</text> : null}
                 </view>
@@ -1718,11 +1670,11 @@ export function App() {
                 <view className="agents-section agents-section--sessions">
                   <text className="agents-section-title">RECENT SESSIONS</text>
                   {workspaceTasks.map((task) => (
-                    <view className={`agent-session-row ${task.id === selectedTaskId ? 'agent-session-row--selected' : ''}`} key={task.id} bindtap={() => selectTask(task)}>
+                    <Button className={`agent-session-row ${task.id === selectedTaskId ? 'agent-session-row--selected' : ''}`} variant="ghost" selected={task.id === selectedTaskId} key={task.id} onTap={() => selectTask(task)}>
                       <view className={`agent-session-dot agent-session-dot--${task.status}`} />
                       <text className="agent-session-title" text-maxline="1">{task.title}</text>
                       <text className="agent-session-time">{relativeTime(task.updatedAt)}</text>
-                    </view>
+                    </Button>
                   ))}
                 </view>
               </scroll-view>
@@ -1731,12 +1683,6 @@ export function App() {
 
           {activePreviewTab.kind === 'file' && activePreviewTab.resource ? (
             <view className="code-workbench">
-              {codeOpenMenuOpen ? (
-                <view className="code-open-menu">
-                  <view className="code-open-menu-item" bindtap={() => openActiveFileExternally('open')}><text className="code-open-menu-icon">↗</text><text className="code-open-menu-text">Open in default app</text></view>
-                  <view className="code-open-menu-item" bindtap={() => openActiveFileExternally('reveal')}><text className="code-open-menu-icon">◇</text><text className="code-open-menu-text">Reveal in Finder</text></view>
-                </view>
-              ) : null}
               <view className="code-toolbar">
                 <scroll-view scroll-x className="code-breadcrumb-scroll">
                   <view className="code-breadcrumbs">
@@ -1749,12 +1695,23 @@ export function App() {
                     ))}
                   </view>
                 </scroll-view>
-                <view className={`code-tool-button ${fileTreeOpen ? 'code-tool-button--active' : ''}`} bindtap={() => {
+                <Button className={`code-tool-button ${fileTreeOpen ? 'code-tool-button--active' : ''}`} variant="ghost" selected={fileTreeOpen} onTap={() => {
                   setFileTreeOpen((open) => !open);
                   if (!workspaceSnapshot.files.length) void loadWorkspaceSnapshot();
-                }}><text className="code-tool-button-text">▱</text></view>
-                <view className="code-open-button" bindtap={() => openActiveFileExternally('open')}><text className="code-open-icon">▣</text><text className="code-open-text">Open</text></view>
-                <view className={`code-tool-button ${codeOpenMenuOpen ? 'code-tool-button--active' : ''}`} bindtap={() => setCodeOpenMenuOpen((open) => !open)}><text className="code-open-chevron">⌄</text></view>
+                }}><text className="code-tool-button-text">▱</text></Button>
+                <Button className="code-open-button" onTap={() => openActiveFileExternally('open')}><text className="code-open-icon">▣</text><text className="code-open-text">Open</text></Button>
+                <view className="code-open-menu-anchor">
+                  <Button className={`code-tool-button ${codeOpenMenuOpen ? 'code-tool-button--active' : ''}`} variant="ghost" selected={codeOpenMenuOpen} onTap={() => setCodeOpenMenuOpen((open) => !open)}><text className="code-open-chevron">⌄</text></Button>
+                  <Popover
+                    open={codeOpenMenuOpen}
+                    placement="bottom-end"
+                    onRequestClose={() => setCodeOpenMenuOpen(false)}
+                    className="code-open-menu"
+                  >
+                    <Button className="code-open-menu-item" variant="ghost" border={false} onTap={() => openActiveFileExternally('open')}><text className="code-open-menu-icon">↗</text><text className="code-open-menu-text">Open in default app</text></Button>
+                    <Button className="code-open-menu-item" variant="ghost" border={false} onTap={() => openActiveFileExternally('reveal')}><text className="code-open-menu-icon">◇</text><text className="code-open-menu-text">Reveal in Finder</text></Button>
+                  </Popover>
+                </view>
               </view>
               <view className="code-body">
                 <view className="code-editor">
@@ -1779,14 +1736,14 @@ export function App() {
                     <list className="code-tree-list" scroll-orientation="vertical" list-type="single" enable-scroll={true} preload-buffer-count={12}>
                       {workspaceRows.map((row) => (
                         <list-item key={row.path} item-key={row.path} className={`code-tree-row ${activePreviewTab.resource === row.path ? 'code-tree-row--active' : ''}`} estimated-main-axis-size-px={24}>
-                          <view className="code-tree-row-inner" style={{ paddingLeft: `${8 + row.depth * 15}px` }} bindtap={() => {
+                          <Button className="code-tree-row-inner" variant="ghost" style={{ paddingLeft: `${8 + row.depth * 15}px` }} onTap={() => {
                             if (row.kind === 'directory') setExpandedDirectories((current) => ({ ...current, [row.path]: !current[row.path] }));
                             else void openFilePreview(row.path);
                           }}>
                             <text className="code-tree-disclosure">{row.kind === 'directory' ? expandedDirectories[row.path] || fileTreeFilter ? '⌄' : '›' : ''}</text>
                             <text className={`code-tree-icon code-tree-icon--${row.kind}`}>{row.kind === 'directory' ? '◇' : '◆'}</text>
                             <text className="code-tree-name" text-maxline="1">{row.name}</text>
-                          </view>
+                          </Button>
                         </list-item>
                       ))}
                     </list>
@@ -1811,12 +1768,12 @@ export function App() {
                 placeholder="Search tasks"
                 bindinput={(event: any) => setSidebarSearchQuery(readInputValue(event))}
               />
-              <view className="sidebar-search-close" bindtap={() => setSidebarSearchOpen(false)}><text className="sidebar-search-close-text">×</text></view>
+              <Button className="sidebar-search-close" variant="ghost" onTap={() => setSidebarSearchOpen(false)}><text className="sidebar-search-close-text">×</text></Button>
             </view>
             <text className="sidebar-search-label">TASKS</text>
             <scroll-view scroll-y className="sidebar-search-results">
               {sidebarSearchResults.map((task) => (
-                <view className="sidebar-search-result" key={task.id} bindtap={() => {
+                <Button className="sidebar-search-result" variant="ghost" key={task.id} onTap={() => {
                   setSidebarSearchOpen(false);
                   void selectTask(task);
                 }}>
@@ -1825,7 +1782,7 @@ export function App() {
                     <text className="sidebar-search-result-title" text-maxline="1">{task.title}</text>
                     <text className="sidebar-search-result-path" text-maxline="1">{shortPath(task.cwd)}</text>
                   </view>
-                </view>
+                </Button>
               ))}
               {!sidebarSearchResults.length ? <text className="sidebar-search-empty">No matching tasks</text> : null}
             </scroll-view>

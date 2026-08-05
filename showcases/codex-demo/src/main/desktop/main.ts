@@ -63,6 +63,10 @@ app.whenReady().then(async () => {
     },
   });
 
+  w.on('blur', () => {
+    try { w.sendGlobalEvent('window:blur', { at: Date.now() }); } catch {}
+  });
+
   const prepared = prepareOpenCodeConfig();
   process.env.OPENCODE_BIN = prepared.openCodeBin;
   const service = new ServiceClient({

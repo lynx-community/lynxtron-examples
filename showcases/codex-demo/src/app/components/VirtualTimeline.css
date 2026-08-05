@@ -1,7 +1,51 @@
+.virtual-timeline-shell {
+  min-height: 0;
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
 .virtual-timeline {
   min-height: 0;
   flex: 1;
   padding: 26px 0 30px;
+}
+
+.virtual-timeline-newer {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 38px;
+  height: 28px;
+  margin-left: -19px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid #e3e4e7;
+  border-radius: 14px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(24, 28, 36, 0.1);
+  z-index: 20;
+  cursor: pointer;
+}
+
+.virtual-timeline-newer-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #6e737b;
+  animation: virtual-timeline-dot-bounce 900ms ease-in-out infinite;
+}
+
+.virtual-timeline-newer-dot--2 { animation-delay: 120ms; }
+.virtual-timeline-newer-dot--3 { animation-delay: 240ms; }
+
+@keyframes virtual-timeline-dot-bounce {
+  0%, 55%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-4px); }
 }
 
 .virtual-timeline-item,
@@ -16,37 +60,28 @@
 }
 
 .virtual-timeline-loader {
-  width: 100%;
-  height: 42px;
-}
-
-.virtual-timeline-loader-content {
-  width: 100%;
-  height: 42px;
+  position: absolute;
+  z-index: 24;
+  top: 8px;
+  left: 50%;
+  width: 190px;
+  height: 34px;
+  margin-left: -95px;
   display: flex;
-  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  border: 1px solid rgba(218, 221, 226, 0.92);
+  border-radius: 17px;
+  background-color: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 3px 12px rgba(26, 31, 39, 0.12);
+  opacity: 0;
+  transform: translateY(-18px);
+  transition: opacity 160ms ease-out, transform 160ms ease-out;
 }
 
-.virtual-timeline-loader-ring {
-  width: 14px;
-  height: 14px;
-  border: 2px solid #d8dadd;
-  border-top-color: #62666d;
-  border-radius: 50%;
-  animation: virtual-timeline-spin 700ms linear infinite;
-}
-
-.virtual-timeline-loader-text {
-  color: #8b8f96;
-  font-size: 12px;
-}
-
-@keyframes virtual-timeline-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.virtual-timeline-loader--visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .virtual-timeline-item-content {

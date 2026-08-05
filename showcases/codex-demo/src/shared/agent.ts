@@ -149,6 +149,8 @@ export interface ChangedFile {
   deletions: number;
   staged: boolean;
   unstaged: boolean;
+  /** Git-backed changes use `git`; agent-only changes include ignored files. */
+  source?: 'git' | 'agent';
 }
 
 export interface ReviewSnapshot {

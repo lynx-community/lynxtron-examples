@@ -17,6 +17,13 @@ interface GitResult {
   status: number;
 }
 
+function textLines(content: string): string[] {
+  if (!content) return [];
+  const lines = content.split('\n');
+  if (lines[lines.length - 1] === '') lines.pop();
+  return lines;
+}
+
 function changedFileStatus(code: string): ChangedFileStatus {
   if (code.includes('U') || code === 'AA' || code === 'DD') return 'conflicted';
   if (code.includes('R')) return 'renamed';
@@ -106,7 +113,7 @@ export class ReviewService {
       }))
       : null;
     const mapStartedAt = performance.now();
-    const files = entries.map((entry): ChangedFile => {
+    const gitFiles = entries.map((entry): ChangedFile => {
       const code = entry.slice(0, 2);
       const path = entry.slice(3);
       const count = counts.get(path);
@@ -124,9 +131,20 @@ export class ReviewService {
         deletions,
         staged: code[0] !== ' ' && code[0] !== '?',
         unstaged: code[1] !== ' ',
+        source: 'git',
       };
-    }).filter((file) => !allowedPaths || allowedPaths.has(file.path))
-      .sort((left, right) => left.path.localeCompare(right.path));
+    }).filter((file) => !allowedPaths || [...allowedPaths].some((allowedPath) => (
+      file.path === allowedPath || file.path.startsWith(`${allowedPath.replace(/\/$/, '')}/`)
+    )));
+    const filesByPath = new Map(gitFiles.map((file) => [file.path, file]));
+    if (allowedPaths) {
+      for (const path of allowedPaths) {
+        if (filesByPath.has(path)) continue;
+        const synthetic = this.agentOnlyFile(root, path);
+        if (synthetic) filesByPath.set(path, synthetic);
+      }
+    }
+    const files = [...filesByPath.values()].sort((left, right) => left.path.localeCompare(right.path));
 
     const snapshot = {
       root,
@@ -158,7 +176,10 @@ export class ReviewService {
     const metadataMs = performance.now() - metadataStartedAt;
     if (!file) throw new Error(`File is not changed: ${path}`);
 
-    if (file.status === 'added' && !file.staged) {
+    if (file.source === 'agent' || (file.status === 'added' && !file.staged)) {
+      if (file.status === 'deleted') {
+        return { root, path, status: 'deleted', additions: 0, deletions: file.deletions, binary: false, truncated: false, lines: [] };
+      }
       const readStartedAt = performance.now();
       const diff = this.untrackedDiff(root, file);
       this.logPerformance(traceId, 'file-diff', {
@@ -260,9 +281,36 @@ export class ReviewService {
       if (!stat.isFile() || stat.size > MAX_TEXT_FILE_BYTES) return { additions: 0 };
       const content = readFileSync(target);
       if (content.includes(0)) return { additions: 0 };
-      return { additions: content.toString('utf8').split('\n').length };
+      return { additions: textLines(content.toString('utf8')).length };
     } catch {
       return { additions: 0 };
+    }
+  }
+
+  private agentOnlyFile(root: string, path: string): ChangedFile | null {
+    const target = resolve(root, path);
+    try {
+      const stat = statSync(target);
+      if (!stat.isFile()) return null;
+      return {
+        path,
+        status: 'added',
+        additions: this.untrackedCounts(root, path).additions,
+        deletions: 0,
+        staged: false,
+        unstaged: false,
+        source: 'agent',
+      };
+    } catch {
+      return {
+        path,
+        status: 'deleted',
+        additions: 0,
+        deletions: 0,
+        staged: false,
+        unstaged: false,
+        source: 'agent',
+      };
     }
   }
 
@@ -276,7 +324,7 @@ export class ReviewService {
     if (content.includes(0)) {
       return { root, path: file.path, status: file.status, additions: 0, deletions: 0, binary: true, truncated: false, lines: [] };
     }
-    const sourceLines = content.toString('utf8').split('\n');
+    const sourceLines = textLines(content.toString('utf8'));
     const visible = sourceLines.slice(0, MAX_DIFF_LINES);
     return {
       root,

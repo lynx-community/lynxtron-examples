@@ -1,5 +1,7 @@
 import './ToolCard.css';
+import { Button } from '../ui/Button';
 
+/** Shared presentation for tool invocations and file locations. */
 export interface ToolCardLocation {
   path: string;
   line?: number;
@@ -38,7 +40,7 @@ export function ToolCard({
   onOpenLocation,
 }: ToolCardProps) {
   return (
-    <view className={`tool-card ${onOpen ? 'tool-card--interactive' : ''}`} bindtap={onOpen}>
+    <Button className={`tool-card ${onOpen ? 'tool-card--interactive' : ''}`} disabled={!onOpen} onTap={onOpen}>
       <view className={`tool-icon tool-icon--${status}`}>
         <text className="tool-icon-text">{icon}</text>
       </view>
@@ -50,14 +52,16 @@ export function ToolCard({
         {locations.length > 0 ? (
           <view className="tool-locations">
             {locations.slice(0, 4).map((location, index) => (
-              <view
+              <Button
                 className="tool-location"
+                variant="ghost"
+                disabled={!onOpenLocation}
                 key={`${location.path}:${location.line ?? index}`}
-                bindtap={() => onOpenLocation?.(location)}
+                onTap={() => onOpenLocation?.(location)}
               >
                 <text className="tool-location-icon">▧</text>
                 <text className="tool-location-text" text-maxline="1">{formatLocation(location)}</text>
-              </view>
+              </Button>
             ))}
           </view>
         ) : null}
@@ -67,6 +71,6 @@ export function ToolCard({
           </text>
         ) : null}
       </view>
-    </view>
+    </Button>
   );
 }

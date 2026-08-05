@@ -1692,6 +1692,7 @@ text {
   min-width: 0;
   flex: 1;
   height: 100%;
+  overflow: hidden;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -1708,6 +1709,9 @@ text {
 
 .preview-tab-title {
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: #6c717c;
   font-size: 10px;
   font-weight: 600;
@@ -2197,19 +2201,7 @@ text {
 }
 
 .preview-add-menu {
-  position: absolute;
-  top: 6px;
-  right: 36px;
   width: 186px;
-  padding: 7px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border: 1px solid #dedfe2;
-  border-radius: 11px;
-  background-color: #ffffff;
-  box-shadow: 0 10px 28px rgba(20, 24, 31, 0.16);
-  z-index: 80;
 }
 
 .preview-add-menu-title {
@@ -2697,19 +2689,7 @@ text {
 }
 
 .code-open-menu {
-  position: absolute;
-  top: 33px;
-  right: 6px;
   width: 174px;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border: 1px solid #dedfe2;
-  border-radius: 10px;
-  background-color: #ffffff;
-  box-shadow: 0 9px 24px rgba(20, 24, 31, 0.15);
-  z-index: 70;
 }
 
 .code-open-menu-item {
@@ -3458,151 +3438,6 @@ text {
   .transcript {
     max-width: calc(100% - 32px);
   }
-}
-
-/* Codex-style change artifact in the conversation */
-.change-card {
-  margin-top: 18px;
-  margin-bottom: 18px;
-  border: 1px solid #e1e3e7;
-  border-radius: 12px;
-  background-color: #ffffff;
-  overflow: hidden;
-}
-
-.change-card-header {
-  min-height: 70px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-}
-
-.change-card-icon {
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #dfe2e6;
-  border-radius: 9px;
-  background-color: #f8f9fa;
-}
-
-.change-card-icon-text {
-  color: #777c85;
-  font-size: 18px;
-}
-
-.change-card-title-wrap {
-  min-width: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.change-card-title {
-  color: #30333a;
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.change-card-totals,
-.change-card-actions,
-.change-card-file-totals {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.change-card-totals {
-  gap: 6px;
-}
-
-.change-card-add,
-.change-card-file-add {
-  color: #149252;
-  font-size: 11px;
-  font-weight: 650;
-}
-
-.change-card-delete,
-.change-card-file-delete {
-  color: #d14a4a;
-  font-size: 11px;
-  font-weight: 650;
-}
-
-.change-card-actions {
-  flex-shrink: 0;
-  gap: 8px;
-}
-
-.change-card-undo,
-.change-card-review {
-  height: 32px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 0 10px;
-  border-radius: 9px;
-}
-
-.change-card-review {
-  border: 1px solid #dfe1e5;
-  background-color: #fafafa;
-}
-
-.change-card-undo-text,
-.change-card-review-text,
-.change-card-undo-icon {
-  color: #4e525a;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.change-card-files {
-  border-top: 1px solid #eceef1;
-}
-
-.change-card-file {
-  min-height: 45px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  padding: 0 14px;
-  border-bottom: 1px solid #f0f1f3;
-}
-
-.change-card-file-path {
-  min-width: 0;
-  flex: 1;
-  color: #555a63;
-  font-family: "SFMono-Regular", Menlo, monospace;
-  font-size: 11px;
-}
-
-.change-card-file-totals {
-  flex-shrink: 0;
-  gap: 5px;
-}
-
-.change-card-more {
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-}
-
-.change-card-more-text {
-  color: #858a93;
-  font-size: 9px;
 }
 
 /* Codex-style preview workbench and Review tab */
@@ -4781,14 +4616,6 @@ text {
   border-radius: 16px;
 }
 
-.change-card {
-  border-radius: 13px;
-}
-
-.change-card-title {
-  font-size: 13px;
-}
-
 .preview-panel {
   width: 43.6vw;
   border-left: 1px solid #dfe2e6;
@@ -4905,9 +4732,14 @@ text {
 .sidebar-task-title-row {
   height: 18px;
   min-height: 18px;
+  overflow: hidden;
 }
 
 .sidebar-task-link-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 12px;
   line-height: 18px;
 }
@@ -4989,30 +4821,14 @@ text {
 }
 
 .composer-popover {
-  position: absolute;
-  bottom: 42px;
-  z-index: 80;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 7px;
-  border: 1px solid #dedfe2;
-  border-radius: 12px;
-  background-color: #ffffff;
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.13);
+  max-height: 280px;
 }
 
 .composer-popover--access {
-  left: 42px;
-  top: -132px;
-  bottom: auto;
   width: 260px;
 }
 
 .composer-popover--model {
-  right: 42px;
-  top: -252px;
-  bottom: auto;
   width: 300px;
 }
 
@@ -5243,6 +5059,62 @@ text {
   text-overflow: ellipsis;
 }
 
+/* Shared popover anchors. Placement, surface and motion live in Popover.css. */
+.preview-new-tab-anchor,
+.composer-access-anchor,
+.composer-model-anchor,
+.code-open-menu-anchor {
+  position: relative;
+  overflow: visible;
+}
+
+.preview-new-tab-anchor,
+.code-open-menu-anchor {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.preview-new-tab-anchor {
+  width: 40px;
+  height: 47px;
+}
+
+.preview-new-tab-anchor .preview-new-tab {
+  width: 100%;
+  height: 100%;
+}
+
+.composer-access-anchor {
+  width: auto;
+  height: 29px;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.composer-model-anchor {
+  min-width: 0;
+  height: 29px;
+  display: flex;
+  flex: 1;
+}
+
+.composer .composer-model-anchor .composer-model {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  flex: 1;
+}
+
+.code-open-menu-anchor {
+  width: 28px;
+  height: 28px;
+}
+
+.code-open-menu-anchor .code-tool-button {
+  width: 100%;
+  height: 100%;
+}
+
 /* Sidebar interaction states and task search. */
 .sidebar .sidebar-product-actions {
   gap: 2px;
@@ -5302,7 +5174,6 @@ text {
 
 .sidebar .sidebar-new-task:hover,
 .sidebar .sidebar-project-heading:hover,
-.sidebar .sidebar-task-link:hover,
 .sidebar .sidebar-backend-picker:hover {
   background-color: rgba(224, 228, 234, 0.64);
 }

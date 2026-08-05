@@ -22,3 +22,15 @@
   font-weight: 600;
   color: var(--text);
 }
+
+.button {
+  margin-top: 24px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background-color: var(--accent);
+}
+
+.button-label {
+  font-size: 14px;
+  color: #ffffff;
+}

@@ -1,0 +1,22 @@
+.conversation-tool-activity {
+  min-height: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.conversation-tool-activity-icon {
+  width: 12px;
+  height: 10px;
+  flex-shrink: 0;
+  border: 1px solid #9ca2ab;
+  border-radius: 2px;
+}
+
+.conversation-tool-activity-text {
+  min-width: 0;
+  color: #969ba4;
+  font-size: 11px;
+}
