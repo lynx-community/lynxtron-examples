@@ -107,7 +107,12 @@
 /* Selection speaks the same language as the pane titles: chrome marks the one
    thing you are working in. A saturated block would now be the only one in the
    window, competing with the syntax colours it sits beside. */
-.FiddleSidebar-Item--active { background-color: var(--surface-chrome); border-left: 3px solid var(--foreground-1); padding-left: 9px; }
+/* Selection is the row, not a flag stuck to its edge. The 3px cyan rule was a
+   second thing saying what the fill already said, in the one saturated colour
+   in a window that spends colour on meaning — and it had to steal 3px of the
+   row's padding to fit, so the selected row's text sat a pixel off from every
+   other row's. */
+.FiddleSidebar-Item--active { background-color: var(--surface-chrome); }
 /* Tinted by file type, the way every modern explorer is. One monochrome glyph
    for eight kinds of file made the column a grey ladder you had to read
    word by word; the hue tells you what a row is before the name does.
@@ -119,7 +124,9 @@
 .FiddleSidebar-ItemIcon--css { color: #c678dd; }
 .FiddleSidebar-ItemIcon--json { color: #d6a24a; }
 .FiddleSidebar-ItemIcon--md { color: #8a9ba8; }
-.FiddleSidebar-Item--active .FiddleSidebar-ItemIcon { color: var(--foreground-1); }  /* foreground-1 */
+/* No colour override on selection: repainting the glyph cyan threw away the
+   type tint on exactly the row you are looking at. Full opacity is enough. */
+.FiddleSidebar-Item--active .FiddleSidebar-ItemIcon { opacity: 1; }
 .FiddleSidebar-ItemLabel {
   display: flex;
   flex-direction: column;
@@ -217,19 +224,43 @@
 .FiddleSidebar-EmptyStateText { color: var(--bp-text-muted); font-size: 11px; }
 
 /* ── Inline add-file row (upstream add-file-input: no modal, no overlay) ── */
+/* Editing a row replaces the row, so it has to be the same shape as one:
+   same height, same left edge, same type size. It was a taller box with its
+   own padding and the stock 14px Blueprint input inside, so renaming a file
+   made the list jump and the field looked like it came from another app. */
 .FiddleSidebar-AddRow {
   display: flex;
   flex-direction: column;
-  padding: 2px 8px 4px 8px;
+  padding: 0;
+  margin: 0 4px;
 }
 .FiddleSidebar-AddRowInput {
   display: flex;
   flex-direction: row;
   align-items: center;
-  column-gap: 4px;
+  column-gap: 8px;
+  height: 24px;
+  padding: 0 10px;
+}
+/* The same recessed field as the module search and the gist URL — one input in
+   this app, wherever it appears. */
+.FiddleSidebar-AddRowInput .bp3-input {
+  height: 20px;
+  min-height: 20px;
+  font-size: 12px;
+  padding: 0 6px;
+  border-radius: 4px;
+  border-width: 0;
+  box-shadow: none;
+  background-color: var(--overlay-soft);
+  color: var(--text-color-1);
+}
+.FiddleSidebar-AddRowInput .bp3-input:hover,
+.FiddleSidebar-AddRowInput .bp3-input:focus {
+  background-color: var(--overlay-strong);
 }
 .FiddleSidebar-AddRowError {
   font-size: 11px;
   color: #f5498b;
-  padding: 2px 0 0 22px;
+  padding: 2px 0 4px 31px;
 }

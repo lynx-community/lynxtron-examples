@@ -151,7 +151,7 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
             return (
               <view key={f.id} className="FiddleSidebar-AddRow">
                 <view className="FiddleSidebar-AddRowInput">
-                  <Icon icon="document" size={14} className="FiddleSidebar-ItemIcon" />
+                  <Icon icon="document" size={13} className="FiddleSidebar-ItemIcon" />
                   <InputGroup
                     fill
                     placeholder={f.id}
@@ -225,7 +225,7 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
         {addingName != null ? (
           <view className="FiddleSidebar-AddRow">
             <view className="FiddleSidebar-AddRowInput">
-              <Icon icon="document" size={14} className="FiddleSidebar-ItemIcon" />
+              <Icon icon="document" size={13} className="FiddleSidebar-ItemIcon" />
               <InputGroup
                 fill
                 placeholder="file.js"

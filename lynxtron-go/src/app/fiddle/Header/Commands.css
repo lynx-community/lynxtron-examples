@@ -23,6 +23,8 @@
   flex-wrap: nowrap;
   column-gap: 10px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Containing block for the centred title band below. */
+  position: relative;
   -x-app-region: drag;
 }
 /* no-drag IS supported (used by lynxtron's own browser-demo), just
@@ -36,15 +38,32 @@
   flex: 1;
   min-width: 0;
   height: 100%;
-  /* 16px, not the 10px between groups: the title is a different kind of thing
-     from the controls, and it needs to read as the centre rather than as the
-     next item in a row. */
-  margin: 0 6px;
+  cursor: default;
+}
+
+/* ── Title band ───────────────────────────────────────────────────────────
+   Absolutely positioned across the bar so its centre IS the window's centre.
+   Everything else in this file is a flex item; this one deliberately is not,
+   because a flex item can only ever be centred in whatever space its siblings
+   leave, and the two clusters are not the same width. That is what the old
+   `margin-right: 24px` was compensating for — a correction that had to be
+   re-tuned every time a control moved.
+   Capped at 40%: centred, that spans 30–70% of the bar, and both clusters end
+   well outside it. It sits before the clusters in source order, so if a very
+   narrow window ever did overlap, the controls paint over the title rather
+   than the other way round. */
+.commands-titlebar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  cursor: default;
+  column-gap: 7px;
+  pointer-events: none;
 }
 
 /* ── Spacing scale ────────────────────────────────────────────────────────
@@ -187,16 +206,13 @@
   color: var(--bp-text);
   overflow: hidden;
   text-overflow: ellipsis;
-  margin: 0 10px;
+  /* No margin: the band centres the title and its dot as one pair, and a
+     margin here would push the dot away from the name it belongs to — which
+     is exactly what it was doing. */
+  max-width: 40%;
 }
-/* Half of the traffic-light lane, spent as a right margin: a centred item with
-   margin M sits M/2 to the left of where it would be. 80px of lane, 80px of
-   margin, 40px of shift — which is the offset the lane creates. */
-/* Only the residue. With search moved to the right cluster the two sides are
-   nearly equal, so all that is left to correct is a fraction of the lane —
-   and every pixel of this margin comes straight off the title's own width,
-   which is what was ellipsising it. */
-.commands-title--offset { margin-right: 24px; }
+/* The traffic-light offset fudge is gone: geometric centring does not need
+   correcting for what sits beside it. */
 /* ONE width, always. Upstream animates the address bar between two widths
    (empty 300px / filled 420px), which means the field grows out from under the
    caret the instant you type the first character — the text you are entering
@@ -444,8 +460,6 @@
   height: 6px;
   border-radius: 3px;
   flex-shrink: 0;
-  /* The title already carries 10px of right margin; anything on top of that
-     detaches the dot from the name it belongs to. */
   margin-left: 0;
   background-color: var(--bp-text-muted);
   opacity: 0.65;

@@ -62,6 +62,13 @@ export function Commands(props: CommandsProps) {
           gap is a flex item the bar drops when the main process reports the
           window went fullscreen. */}
       {isMac && !props.fullScreen ? <view className="commands-trafficlights" /> : null}
+      {/* Centred on the WINDOW, not between the clusters: absolutely positioned
+          across the whole bar, so the midpoint is geometric and stays correct
+          whatever the clusters do. Capped at 40% so it can never reach them. */}
+      <view className="commands-titlebar">
+        <text className="commands-title" text-maxline="1">{props.title}</text>
+        {props.isEdited ? <view className="commands-dirty" /> : null}
+      </view>
       <view className="commands-left">
         {/* Text and a chevron, nothing else. A mark here competed with the one
             on Run for the same glance, and this control is a value you are
@@ -137,24 +144,12 @@ export function Commands(props: CommandsProps) {
       {/* hiddenInset window: the flexible middle of the header is the drag
           region (-x-app-region: drag) — controls live outside it, so the
           undocumented no-drag value is never needed. */}
-      <view className="commands-drag">
-        {/* The lane sits only on the left, so a title centred in the space
-            between the clusters lands right of the window's centre. A mirror
-            spacer on the right squares it but leaves the right cluster short
-            of the edge, which reads as bad alignment — so the correction lives
-            on the title instead: a centred flex item with a right margin
-            shifts left by half of it. */}
-        <text
-          className={'commands-title' + (isMac && !props.fullScreen ? ' commands-title--offset' : '')}
-          text-maxline="1"
-        >{props.title}</text>
-        {/* A status dot, not a full stop. It was concatenated onto the title
-            string as " •", which put a bullet in the middle of a sentence-shaped
-            line and read as stray punctuation — and it could not be styled,
-            spaced or dimmed, because it was a character inside someone else's
-            text node. */}
-        {props.isEdited ? <view className="commands-dirty" /> : null}
-      </view>
+      {/* An empty spacer. It pushes the two clusters apart and carries the
+          window-drag region; it no longer holds the title, because a title
+          centred in the LEFTOVER space is centred on nothing — the two clusters
+          are different widths, so it landed wherever they left it and had to be
+          dragged back with a hand-tuned margin. */}
+      <view className="commands-drag" />
       <view className="commands-right">
         {/* The field and both verbs that act on it are ONE group. Load lived
             inside the address group and Publish outside it, so two buttons
