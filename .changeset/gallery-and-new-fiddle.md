@@ -67,3 +67,18 @@ both through its reply callback and as a `folderOpened` broadcast, a fallback
 from when the reply was unreliable. Harmless while both did the same thing —
 but with the callback now spawning, honouring the broadcast too would have
 opened a new window *and* converted the old one.
+
+**⇧⌘O now exists.** `Open Folder in IDE…` lived only in the workspace submenu,
+so on the Fiddle surface — where you would actually reach for it — there was no
+menu item and no accelerator, while the palette displayed `Cmd+Shift+O` beside
+a command nothing had bound. A palette keybinding string is a label, not a
+registration; menu accelerators are the only keyboard path. The item is on both
+surfaces now, at ⇧⌘O on each.
+
+**The palette focuses itself, for real this time.** The previous change reported
+this as done and it never was: the edit that added the effect silently matched
+nothing and only the element id landed. Beyond that, the mechanism needed to be
+different — invoking `focus` on a field that is demonstrably not focused returns
+success anyway, as does `setFocus`, so the invoke's own callback cannot be
+trusted. It retries until the field's `bindfocus` fires, which is the only
+signal that focus actually arrived.

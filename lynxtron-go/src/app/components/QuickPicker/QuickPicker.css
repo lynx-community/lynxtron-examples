@@ -263,3 +263,10 @@
   font-size: 11px;
   color: var(--bp-text);
 }
+
+/* Focus is a real state here, not decoration: the retry loop in QuickPicker.tsx
+   stops when this class appears, because it is set by the field's own
+   bindfocus — the only signal that focus actually landed. */
+.PickerInput--focused {
+  border-color: var(--edge-strong);
+}

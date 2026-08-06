@@ -561,7 +561,12 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
           // Says where it goes. The IDE is always its own window now, so this
           // no longer replaces whatever you were working in.
           label: 'Open Folder in IDE…',
-          accelerator: 'CmdOrCtrl+O',
+          // ⇧⌘O on both surfaces. One command, one key, wherever you are — it
+          // used to be ⌘O and to exist ONLY in the workspace submenu, so on the
+          // Fiddle surface (where you actually reach for it) there was no menu
+          // item and no accelerator at all, while the palette advertised
+          // ⇧⌘O next to a command nothing had bound.
+          accelerator: 'CmdOrCtrl+Shift+O',
           registerAccelerator: true,
           // App.tsx runs the native dialog itself through the openFolder
           // bridge call. The Fiddle surface's Open… cannot stand in here: it
@@ -613,6 +618,16 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
               sendCmd('openFolder', { path: result.filePaths[0] });
             }
           },
+        },
+        {
+          // The Fiddle's route to the other product. App.tsx runs the dialog
+          // through the openFolder bridge call and spawns a window with the
+          // result, so this never converts the Fiddle you are in.
+          id: 'openFolderIde',
+          label: 'Open Folder in IDE…',
+          accelerator: 'CmdOrCtrl+Shift+O',
+          registerAccelerator: true,
+          click: () => sendIde('openFolder'),
         },
         ...paletteItems,
         { type: 'separator' },
