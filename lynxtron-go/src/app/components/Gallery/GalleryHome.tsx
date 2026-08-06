@@ -1,5 +1,6 @@
 import './GalleryHome.css';
 import { Button } from '../../fiddle/bp';
+import { Tooltip } from '../../fiddle/bp/Tooltip';
 import { isDevMode } from '../../fiddle/dev-preset';
 import {
   FIDDLE_CATALOG,
@@ -210,14 +211,25 @@ export function GalleryHome({
             <text className="GalleryTitle">Showcase gallery</text>
             {SHOWCASE_PREVIEW && <text className="GalleryBadge">PREVIEW</text>}
           </view>
+          {/* Same grammar as the commands bar: navigation, a divider, then
+              actions — all frameless. These were three treatments for three
+              controls (a text button with an arrow, a BOXED button, and bare
+              lowercase text), and the boxed one put the page's strongest
+              emphasis on its weakest action: opening an arbitrary folder is an
+              escape hatch, while the real actions on this page live on the
+              cards. */}
           <view className="GalleryTopBarActions">
-            {standalone ? <Button text="← Back" small minimal onClick={onBack} /> : null}
-            {/* Gallery-unique actions only: browsing lives on this page itself
-                (the old "Browse All" opened a picker that did exactly what the
-                cards' Open does), and the deep-link debug probe is dev-only. */}
-            <Button text="Open Folder…" small title="Open a folder as an IDE workspace" onClick={onOpenFolder} />
+            <Tooltip content="Back to the Fiddle" align="end">
+              <Button className="GalleryBack" icon="chevron-left" text="Back" small minimal onClick={onBack} />
+            </Tooltip>
+            <view className="GalleryActionDivider" />
+            <Button text="Open Folder…" small minimal onClick={onOpenFolder} />
+            {/* Dev-only, and it should look it: an icon in the dim rail rather
+                than a third label competing with the two real controls. */}
             {isDevMode() ? (
-              <Button text="debug route" small minimal title="Dev: probe the example deep-link route" onClick={onDebugExampleRoute} />
+              <Tooltip content="Dev: probe the example deep-link route" align="end">
+                <Button className="GalleryDevProbe" icon="lab-test" small minimal onClick={onDebugExampleRoute} />
+              </Tooltip>
             ) : null}
           </view>
         </view>

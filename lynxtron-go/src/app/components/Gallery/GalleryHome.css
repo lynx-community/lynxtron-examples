@@ -54,7 +54,9 @@
   color: var(--bp-text);
   font-size: 15px;
   line-height: 22px;
-  font-weight: 600;
+  /* Medium, not bold — the same reasoning as the commands bar: it is already
+     the largest thing on the page and the only one at full contrast. */
+  font-weight: 500;
 }
 
 .GalleryBadge {
@@ -72,10 +74,53 @@
 .GalleryTopBarActions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  column-gap: 6px;
+  column-gap: 2px;
 }
+/* The scope boundary, drawn the same way the commands bar draws it. */
+.GalleryActionDivider {
+  width: 1px;
+  height: 16px;
+  flex-shrink: 0;
+  margin: 0 8px;
+  background-color: var(--hairline);
+}
+.GalleryTopBarActions .bp3-button {
+  height: 24px;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  color: var(--bp-text-muted);
+}
+.GalleryTopBarActions .bp3-button:hover {
+  background-color: var(--overlay-soft);
+  color: var(--bp-text);
+}
+.GalleryTopBarActions .bp3-button .bp3-button-text {
+  font-size: 12px;
+  font-weight: 400;
+  color: inherit;
+}
+.GalleryTopBarActions .bp3-button .bp3-icon {
+  font-size: 12px;
+  opacity: 0.7;
+}
+.GalleryBack .bp3-button-icon { margin-right: 0; }
+/* Dev tooling recedes furthest: it is not part of the product.
+   Written at three classes to match `.GalleryTopBarActions .bp3-button
+   .bp3-icon` — at two it lost and the probe rendered at the same weight as the
+   real controls. Third time this file has been bitten by that; the rule is
+   that an override must be as specific as what it overrides. */
+.GalleryTopBarActions .bp3-button.GalleryDevProbe {
+  width: 24px;
+  padding: 0;
+  justify-content: center;
+}
+.GalleryTopBarActions .bp3-button.GalleryDevProbe .bp3-icon { opacity: 0.35; }
 
 /* ── Section rule: micro-label + hairline running to the edge ───────────── */
 .GallerySectionRule {
@@ -311,7 +356,6 @@
 .theme-light .GalleryTagText--orange { color: #c05f00; }
 .theme-light .GalleryTagText--violet { color: #6f4bd8; }
 .theme-light .GalleryTagText--teal   { color: #0d8079; }
-.theme-light .GalleryCardActionText--primary { color: #106ba3; }
 .theme-light .GalleryCardActionText--web { color: #0d8079; }
 .theme-light .GalleryThumbOverlay { background-color: rgba(255, 255, 255, 0.7); }
 .theme-light .GalleryThumbOverlayText { color: rgba(16, 22, 26, 0.7); }

@@ -25,3 +25,15 @@ Hello Lynxtron — and hands off to the gallery for the rest. A dialog should ho
 the choice you can make in a sentence; picking among eleven showcases and
 deciding whether to open, run or IDE one is a page, and there is already a page
 for it.
+
+**The gallery's top bar follows the commands bar's grammar.** It had three
+treatments for three controls — a text button with an arrow, a boxed button, and
+bare lowercase text — and the boxed one put the page's strongest emphasis on its
+weakest action: opening an arbitrary folder is an escape hatch, while the real
+actions on this page live on the cards. All frameless now, with a divider
+between navigation and actions, and the dev probe as a dim icon rather than a
+third label competing with the two real controls.
+
+Also removes a stale light-theme override that was repainting the cards' `Open`
+Blueprint blue — the brand token already adapts per theme, so the override was
+undoing the accent in exactly one of them.
