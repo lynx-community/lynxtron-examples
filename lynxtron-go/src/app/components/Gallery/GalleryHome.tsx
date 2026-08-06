@@ -1,7 +1,6 @@
 import './GalleryHome.css';
 import { Button } from '../../fiddle/bp';
 import { Tooltip } from '../../fiddle/bp/Tooltip';
-import { isDevMode } from '../../fiddle/dev-preset';
 import {
   FIDDLE_CATALOG,
   FIDDLE_SHOWCASE_NAME,
@@ -14,7 +13,6 @@ import {
 
 interface GalleryHomeProps {
   onBack: () => void;
-  onOpenFolder: () => void;
   onOpenShowcase: (entry: ShowcaseEntry) => void;
   /** Legacy route: open the workspace in the old IDE shell instead of the Fiddle. */
   onOpenShowcaseLegacy: (entry: ShowcaseEntry) => void;
@@ -24,7 +22,6 @@ interface GalleryHomeProps {
   /** Load ONE fiddle's own source into the Fiddle editors. */
   onOpenFiddle: (entry: ShowcaseEntry, fiddle: { id: string; title: string; upstream: string }) => void;
   onRunShowcaseOnWeb: (entry: ShowcaseEntry) => void;
-  onDebugExampleRoute: () => void;
   /** Full-screen fallback (legacy IDE) — no commands bar above, so the page
       must carry its own exit. In the Fiddle shell the bar's pressed Gallery
       toggle is the exit and this stays hidden. */
@@ -178,14 +175,12 @@ function ElectronFiddlesSection({
 
 export function GalleryHome({
   onBack,
-  onOpenFolder,
   onOpenShowcase,
   onOpenShowcaseLegacy,
   onRunShowcase,
   onRunFiddle,
   onOpenFiddle,
   onRunShowcaseOnWeb,
-  onDebugExampleRoute,
   standalone = false,
 }: GalleryHomeProps) {
   // The Electron-fiddles showcase gets its own section below, so it does not
@@ -211,26 +206,19 @@ export function GalleryHome({
             <text className="GalleryTitle">Showcase gallery</text>
             {SHOWCASE_PREVIEW && <text className="GalleryBadge">PREVIEW</text>}
           </view>
-          {/* Same grammar as the commands bar: navigation, a divider, then
-              actions — all frameless. These were three treatments for three
-              controls (a text button with an arrow, a BOXED button, and bare
-              lowercase text), and the boxed one put the page's strongest
-              emphasis on its weakest action: opening an arbitrary folder is an
-              escape hatch, while the real actions on this page live on the
-              cards. */}
+          {/* Back, and nothing else. Two controls left this bar:
+              — Open Folder… opened an arbitrary directory as an IDE workspace,
+                IN THIS WINDOW, silently replacing the gallery with a different
+                product. It is also already File ▸ Open Folder… (⌘O) and a
+                palette command (⇧⌘O), so this was a third entry point for a
+                command that belongs to the app, not to a page about showcases.
+              — "debug route" was a developer probe for the deep-link pipeline,
+                reachable from the palette as Open Example Artifact. Dev tooling
+                does not belong in the product's chrome. */}
           <view className="GalleryTopBarActions">
             <Tooltip content="Back to the Fiddle" align="end">
               <Button className="GalleryBack" icon="chevron-left" text="Back" small minimal onClick={onBack} />
             </Tooltip>
-            <view className="GalleryActionDivider" />
-            <Button text="Open Folder…" small minimal onClick={onOpenFolder} />
-            {/* Dev-only, and it should look it: an icon in the dim rail rather
-                than a third label competing with the two real controls. */}
-            {isDevMode() ? (
-              <Tooltip content="Dev: probe the example deep-link route" align="end">
-                <Button className="GalleryDevProbe" icon="lab-test" small minimal onClick={onDebugExampleRoute} />
-              </Tooltip>
-            ) : null}
           </view>
         </view>
 

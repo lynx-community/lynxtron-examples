@@ -2686,14 +2686,12 @@ export function App(props: { onRender?: () => void } = {}) {
   // legacy full overlay must never drift apart callback-by-callback.
   const galleryProps = {
     onBack: () => setGalleryOpen(false),
-    onOpenFolder: () => { setGalleryOpen(false); openFolderDialog(); },
     onOpenShowcase: openShowcaseInFiddle,
     onOpenShowcaseLegacy: openShowcaseInIdeWindow,
     onRunShowcase: runShowcaseEntry,
     onRunFiddle: runFiddleEntry,
     onOpenFiddle: openFiddleSource,
     onRunShowcaseOnWeb: runShowcaseEntryOnWeb,
-    onDebugExampleRoute: () => { setGalleryOpen(false); openExampleArtifactDirect('view'); },
   };
   /**
    * `standalone` on both paths, because the gallery always has to carry its own
