@@ -252,7 +252,7 @@ export function Fiddle(props: FiddleProps) {
         })();
         const why = built ? 'Source newer than build' : 'Not built';
         if (hasStart) {
-          appendOutput('info', `[Fiddle] ${why} — build & launch (npm start)…`);
+          appendOutput('info', `[Fiddle] ${why} — build & launch (pnpm start)…`);
           void runner.startBuildRun(workspaceRoot).then(pid => {
             if (pid) appendOutput('info', `[Fiddle] Build & launch: pid=${pid} ${workspaceRoot}`);
             else appendOutput('error', '[Fiddle] Build & launch failed to start.');

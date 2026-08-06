@@ -13,7 +13,7 @@ export interface ShowcaseInstallPlan {
   command: string;
   args: string[];
   cwd: string;
-  manager: 'npm' | 'pnpm';
+  manager: 'pnpm';
   requiredNodeModules: string[];
   userConfigPath?: string;
 }
@@ -299,7 +299,7 @@ function describeNodeVersionRange(range: string): string {
   return trimmed;
 }
 
-// npm runs with Lynxtron-as-node (not the system Node), so version errors
+// pnpm runs with Lynxtron-as-node (not the system Node), so version errors
 // must point at the runtime — telling users to `brew install node` fixes
 // nothing here.
 export function formatNodeVersionRequirementError(
@@ -316,7 +316,6 @@ export function formatNodeVersionRequirementError(
 
 export function getShowcaseInstallPlan(showcasePath: string): ShowcaseInstallPlan {
   const resolvedShowcasePath = path.resolve(showcasePath);
-  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
   const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
   const workspaceRoot = usesWorkspaceProtocol(resolvedShowcasePath)
     ? findNearestAncestorWithFile(resolvedShowcasePath, 'pnpm-workspace.yaml')
@@ -324,12 +323,16 @@ export function getShowcaseInstallPlan(showcasePath: string): ShowcaseInstallPla
   const userConfigRoot = findNearestAncestorWithFile(resolvedShowcasePath, '.npmrc');
   const userConfigPath = userConfigRoot ? path.join(userConfigRoot, '.npmrc') : undefined;
 
+  // Packaged Lynxtron installs bundle pnpm and shim `node`/`pnpm` onto PATH,
+  // but never `npm` — Finder-launched apps inherit no user PATH, so any
+  // `npm install` here fails with `spawn npm ENOENT`. Standalone showcases
+  // (no pnpm-workspace ancestor) therefore also install via pnpm.
   if (!workspaceRoot) {
     return {
-      command: npmCommand,
+      command: pnpmCommand,
       args: ['install'],
       cwd: resolvedShowcasePath,
-      manager: 'npm',
+      manager: 'pnpm',
       requiredNodeModules: [path.join(resolvedShowcasePath, 'node_modules')],
       ...(userConfigPath ? { userConfigPath } : {}),
     };
@@ -377,7 +380,7 @@ export function getShowcaseInstallFingerprint(showcasePath: string): string {
     npmShrinkwrap: hashFileIfExists(path.join(resolvedShowcasePath, 'npm-shrinkwrap.json')),
   };
 
-  if (installPlan.manager === 'pnpm') {
+  if (installPlan.cwd !== resolvedShowcasePath) {
     fingerprint.workspacePackageJson = hashFileIfExists(path.join(installPlan.cwd, 'package.json'));
     fingerprint.workspaceLock = hashFileIfExists(path.join(installPlan.cwd, 'pnpm-lock.yaml'));
     fingerprint.workspaceManifest = hashFileIfExists(path.join(installPlan.cwd, 'pnpm-workspace.yaml'));

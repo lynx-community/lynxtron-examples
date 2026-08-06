@@ -13,8 +13,8 @@
     "build:web": "cross-env TARGET_ENV=web rspeedy build && cross-env TARGET_ENV=web rspack build",
     "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
     "dev:web": "cross-env TARGET_ENV=web NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"rspack serve\"",
-    "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop",
-    "start:web": "npm run build:web && npx serve ./dist/web"
+    "start": "cross-env TARGET_ENV=desktop pnpm run build && lynxtron ./dist/desktop",
+    "start:web": "pnpm run build:web && pnpm dlx serve ./dist/web"
   },
   "showcase": {
     "description": "Single-screen desktop demo for mouse move, hover, and cursor states",

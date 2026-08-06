@@ -22,12 +22,12 @@
     "debug:detached": "node scripts/start_debug.js",
     "prepare:runtime-deps": "node scripts/prepare-runtime-deps.js",
     "prepare:builder-patches": "node scripts/ensure-builder-patches.js",
-    "build": "npm run build:cli && npm run build:scintilla-extension && rspeedy build && rspack build",
-    "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop",
+    "build": "pnpm run build:cli && pnpm run build:scintilla-extension && rspeedy build && rspack build",
+    "start": "cross-env TARGET_ENV=desktop pnpm run build && lynxtron ./dist/desktop",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p src/app/tsconfig.json && tsc --noEmit -p src/main/desktop/tsconfig.json",
-    "pack:win": "npm run build && npm run prepare:runtime-deps && npm run prepare:builder-patches && lynxtron-builder --win --x64 --publish never",
-    "pack": "npm run build && npm run prepare:runtime-deps && npm run prepare:builder-patches && lynxtron-builder --publish never"
+    "pack:win": "pnpm run build && pnpm run prepare:runtime-deps && pnpm run prepare:builder-patches && lynxtron-builder --win --x64 --publish never",
+    "pack": "pnpm run build && pnpm run prepare:runtime-deps && pnpm run prepare:builder-patches && lynxtron-builder --publish never"
   },
   "private": true,
   "showcase": {

@@ -28,7 +28,7 @@
     "build:native-texture": "node native-texture-extension/scripts/build.js",
     "build": "pnpm run build:native-texture && rspeedy build && rspack build",
     "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
-    "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop"
+    "start": "cross-env TARGET_ENV=desktop pnpm run build && lynxtron ./dist/desktop"
   },
   "showcase": {
     "description": "Native Texture Canvas extension showcase with Lynx controls and a native drawing surface",

@@ -629,10 +629,10 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       start: async (showcasePath: string): Promise<number> => {
         try {
           await ensureShowcaseDependencies(showcasePath, dbg, false, processOutputBuffer);
-          const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-          dbg(`showcase.start: cwd=${showcasePath} command=${npmCommand} start`);
-          emitCommandStart(processOutputBuffer, 'showcase.start', showcasePath, npmCommand, ['start']);
-          const child = spawn(npmCommand, ['start'], {
+          const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+          dbg(`showcase.start: cwd=${showcasePath} command=${pnpmCommand} start`);
+          emitCommandStart(processOutputBuffer, 'showcase.start', showcasePath, pnpmCommand, ['start']);
+          const child = spawn(pnpmCommand, ['start'], {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
             detached: true,
@@ -649,10 +649,10 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       dev: async (showcasePath: string): Promise<number> => {
         try {
           await ensureShowcaseDependencies(showcasePath, dbg, false, processOutputBuffer);
-          const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-          dbg(`showcase.dev: cwd=${showcasePath} command=${npmCommand} run dev`);
-          emitCommandStart(processOutputBuffer, 'showcase.dev', showcasePath, npmCommand, ['run', 'dev']);
-          const child = spawn(npmCommand, ['run', 'dev'], {
+          const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+          dbg(`showcase.dev: cwd=${showcasePath} command=${pnpmCommand} run dev`);
+          emitCommandStart(processOutputBuffer, 'showcase.dev', showcasePath, pnpmCommand, ['run', 'dev']);
+          const child = spawn(pnpmCommand, ['run', 'dev'], {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
             detached: true,
@@ -757,9 +757,9 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
             throw new Error('Showcase start:web script not found.');
           }
           await ensureShowcaseDependencies(showcasePath, dbg, false, processOutputBuffer);
-          const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-          emitCommandStart(processOutputBuffer, 'showcase.startWeb', showcasePath, npmCommand, ['run', 'start:web']);
-          const child = spawn(npmCommand, ['run', 'start:web'], {
+          const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+          emitCommandStart(processOutputBuffer, 'showcase.startWeb', showcasePath, pnpmCommand, ['run', 'start:web']);
+          const child = spawn(pnpmCommand, ['run', 'start:web'], {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
             detached: true,
@@ -781,9 +781,9 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
             throw new Error('Showcase dev:web script not found.');
           }
           await ensureShowcaseDependencies(showcasePath, dbg, false, processOutputBuffer);
-          const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-          emitCommandStart(processOutputBuffer, 'showcase.devWeb', showcasePath, npmCommand, ['run', 'dev:web']);
-          const child = spawn(npmCommand, ['run', 'dev:web'], {
+          const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+          emitCommandStart(processOutputBuffer, 'showcase.devWeb', showcasePath, pnpmCommand, ['run', 'dev:web']);
+          const child = spawn(pnpmCommand, ['run', 'dev:web'], {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
             detached: true,

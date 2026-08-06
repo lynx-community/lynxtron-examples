@@ -48,7 +48,7 @@ describe('showcase install helpers', () => {
     return dir;
   }
 
-  it('uses npm install for standalone showcases', () => {
+  it('uses pnpm install for standalone showcases', () => {
     const showcaseDir = makeTempDir('lynxtron-standalone-');
     writeJson(path.join(showcaseDir, 'package.json'), {
       name: 'counter',
@@ -59,7 +59,7 @@ describe('showcase install helpers', () => {
     });
 
     const plan = getShowcaseInstallPlan(showcaseDir);
-    expect(plan.manager).toBe('npm');
+    expect(plan.manager).toBe('pnpm');
     expect(plan.cwd).toBe(showcaseDir);
     expect(plan.args).toEqual(['install']);
     expect(plan.userConfigPath).toBeUndefined();
@@ -78,7 +78,7 @@ describe('showcase install helpers', () => {
     });
 
     const plan = getShowcaseInstallPlan(showcaseDir);
-    expect(plan.manager).toBe('npm');
+    expect(plan.manager).toBe('pnpm');
     expect(plan.cwd).toBe(showcaseDir);
     expect(plan.args).toEqual(['install']);
     expect(plan.userConfigPath).toBe(path.join(workspaceRoot, '.npmrc'));

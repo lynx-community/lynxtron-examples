@@ -7,9 +7,9 @@ export interface RunnerState {
   startMs: number | null;
   runCount: number;
   start: (workspace: string) => number | null;
-  /** Build then launch (installs deps + `npm start`) — always surfaces a window. */
+  /** Build then launch (installs deps + `pnpm start`) — always surfaces a window. */
   startBuildRun: (workspace: string) => Promise<number | null>;
-  /** Run via the showcase dev pipeline (installs deps + `npm run dev`). */
+  /** Run via the showcase dev pipeline (installs deps + `pnpm run dev`). */
   startDev: (workspace: string) => Promise<number | null>;
   stop: () => boolean;
 }

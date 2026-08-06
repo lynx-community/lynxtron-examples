@@ -14,7 +14,7 @@
     "postinstall": "lynxtron-rebuild",
     "build": "rspeedy build && rspack build",
     "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
-    "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop"
+    "start": "cross-env TARGET_ENV=desktop pnpm run build && lynxtron ./dist/desktop"
   },
   "showcase": {
     "description": "Todo list persisted with sqlite3, rebuilt against the Lynxtron runtime via node-gyp",

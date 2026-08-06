@@ -14,8 +14,8 @@
     "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
     "dev:web": "cross-env TARGET_ENV=web NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"rspack serve\"",
     "serve:web": "node ./scripts/serve-web.mjs ./dist/web",
-    "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop",
-    "start:web": "npm run build:web && npm run serve:web"
+    "start": "cross-env TARGET_ENV=desktop pnpm run build && lynxtron ./dist/desktop",
+    "start:web": "pnpm run build:web && pnpm run serve:web"
   },
   "showcase": {
     "description": "Cross-Platform Notes showcase scaffold with a shared Lynx UI for desktop and web",
