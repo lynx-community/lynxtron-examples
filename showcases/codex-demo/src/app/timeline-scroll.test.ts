@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { isTimelineAtTail, shouldRevealEarlierFromScroll } from './timeline-scroll';
+import {
+  isTimelineAtTail,
+  shouldRevealEarlierFromScroll,
+  timelineScrollDirection,
+} from './timeline-scroll';
+
+describe('timelineScrollDirection', () => {
+  it('distinguishes upward and downward user movement from absolute offsets', () => {
+    expect(timelineScrollDirection(100, 80)).toBe('up');
+    expect(timelineScrollDirection(80, 100)).toBe('down');
+    expect(timelineScrollDirection(80, 80.25)).toBe('stationary');
+    expect(timelineScrollDirection(null, 154)).toBe('stationary');
+  });
+});
 
 describe('shouldRevealEarlierFromScroll', () => {
   it('accepts the real macOS top event even when deltaY is positive', () => {

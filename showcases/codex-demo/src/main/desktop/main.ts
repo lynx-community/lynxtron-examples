@@ -127,6 +127,10 @@ app.whenReady().then(async () => {
           console.info('[Codex Demo][history-load]', JSON.stringify(params));
           callback.sendReply(ok(true));
           break;
+        case 'debug:chatList':
+          console.info('[Codex Demo][chat-list-debug]', JSON.stringify(params));
+          callback.sendReply(ok(true));
+          break;
         case 'debug:diffPerformance':
           console.info('[Codex Demo][diff-perf]', JSON.stringify(params));
           callback.sendReply(ok(true));

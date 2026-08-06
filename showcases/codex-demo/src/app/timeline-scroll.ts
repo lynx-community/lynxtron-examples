@@ -5,6 +5,15 @@ export interface TimelineScrollDetail {
   eventSource?: number;
 }
 
+export type TimelineScrollDirection = 'up' | 'down' | 'stationary';
+
+export function timelineScrollDirection(previousTop: number | null, currentTop: unknown): TimelineScrollDirection {
+  if (previousTop === null || typeof currentTop !== 'number') return 'stationary';
+  if (currentTop < previousTop - 0.5) return 'up';
+  if (currentTop > previousTop + 0.5) return 'down';
+  return 'stationary';
+}
+
 export function shouldRevealEarlierFromScroll(detail: TimelineScrollDetail): boolean {
   return typeof detail.scrollTop === 'number'
     && detail.scrollTop <= 8

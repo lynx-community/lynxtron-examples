@@ -26,10 +26,21 @@ import {
   ConversationMessageCard,
   prepareConversationItems,
 } from './components/conversation';
-import { Button, LoadingSpinner, Popover } from './components/ui';
-import { VirtualTimeline, type VirtualTimelineHandle } from './components/VirtualTimeline';
+import { Button, LoadingSpinner, LoadingText, Popover } from './components/ui';
+import { ChatList, type ChatListHandle } from './components/chat-list';
 import { usePreviewRouter } from './components/preview-router';
 import { languageForPath, prismDiffLines, prismSyntaxLines, type SyntaxSegment } from './syntax-highlight';
+import {
+  latestTimelineEntriesOfKinds,
+  mergeTimelineEntriesById,
+  overlayTimelineEntries,
+  prependUniqueTimelineEntries,
+} from './timeline-data';
+import {
+  isTerminalRevealPhase,
+  TIMELINE_INITIAL_PAGE_ITEMS,
+  TIMELINE_REMOTE_PAGE_ITEMS,
+} from './timeline-window';
 
 interface PendingTextDelta {
   event: AgentEvent;
@@ -410,16 +421,6 @@ function mergeText(items: TimelineEntry[], event: AgentEvent, kind: TimelineKind
   return next;
 }
 
-function mergeTimelineEntries(history: TimelineEntry[], additions: TimelineEntry[]): TimelineEntry[] {
-  const next = [...history];
-  for (const addition of additions) {
-    const index = next.findIndex((item) => item.id === addition.id);
-    if (index < 0) next.push(addition);
-    else next[index] = addition;
-  }
-  return next;
-}
-
 export function App() {
   const [backends, setBackends] = useState<BackendInfo[]>([]);
   const [backendId, setBackendId] = useState('opencode');
@@ -469,33 +470,33 @@ export function App() {
   const [priorityOnly, setPriorityOnly] = useState(false);
   const seenCursors = useRef(new Set<number>());
   const selectedTaskIdRef = useRef('');
+  const historyItemsRef = useRef<TimelineEntry[]>(historyItems);
   const reviewSignatureRef = useRef(new Map<string, string>());
   const timelineCacheRef = useRef(new Map<string, TaskTimelineCache>());
   const reviewCacheRef = useRef(new Map<string, TaskReviewCache>());
   const eventCursorRef = useRef(0);
   const pendingTextRef = useRef(new Map<string, PendingTextDelta>());
   const pendingTextTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const timelineRef = useRef<VirtualTimelineHandle | null>(null);
+  const timelineRef = useRef<ChatListHandle | null>(null);
   const historyLoadMetricRef = useRef<{ traceId: string; startedAt: number; bridgeMs: number } | null>(null);
   const historyRevealLogRef = useRef(new Map<string, {
     timer: ReturnType<typeof setTimeout>;
     stages: Record<string, unknown>[];
   }>());
   const diffPerformanceTraceRef = useRef('');
+  historyItemsRef.current = historyItems;
 
-  const items = useMemo(() => {
-    const merged = [...historyItems];
-    for (const liveItem of liveItems) {
-      const index = merged.findIndex((item) => item.id === liveItem.id);
-      if (index < 0) merged.push(liveItem);
-      else merged[index] = liveItem;
-    }
-    return merged;
-  }, [historyItems, liveItems]);
-
+  const historyConversationItems = useMemo(
+    () => prepareConversationItems(historyItems, review.files),
+    [historyItems, review.files],
+  );
+  const liveConversationItems = useMemo(
+    () => prepareConversationItems(liveItems, review.files),
+    [liveItems, review.files],
+  );
   const conversationItems = useMemo(
-    () => prepareConversationItems(items, review.files),
-    [items, review.files],
+    () => overlayTimelineEntries(historyConversationItems, liveConversationItems),
+    [historyConversationItems, liveConversationItems],
   );
 
   const selectedTask = useMemo(
@@ -553,8 +554,13 @@ export function App() {
   );
 
   const agentActivities = useMemo(
-    () => items.filter((item) => item.kind === 'tool' || item.kind === 'plan' || item.kind === 'reasoning').slice(-6).reverse(),
-    [items],
+    () => latestTimelineEntriesOfKinds(
+      historyItems,
+      liveItems,
+      new Set(['tool', 'plan', 'reasoning']),
+      6,
+    ),
+    [historyItems, liveItems],
   );
 
   const modelLabel = useMemo(() => {
@@ -672,7 +678,7 @@ export function App() {
       case 'turn-state':
         if (event.status && event.status !== 'running' && event.status !== 'waiting') {
           setLiveItems((current) => {
-            if (current.length > 0) setHistoryItems((history) => mergeTimelineEntries(history, current));
+            if (current.length > 0) setHistoryItems((history) => mergeTimelineEntriesById(history, current));
             return [];
           });
         }
@@ -690,9 +696,13 @@ export function App() {
   }, [applyEvent]);
 
   const loadLatestTimeline = useCallback(async (taskId: string) => {
-    const page = await callBridge<TimelinePage>('agent:timelinePage', { taskId, limit: 50 });
+    const page = await callBridge<TimelinePage>('agent:timelinePage', {
+      taskId,
+      limit: TIMELINE_INITIAL_PAGE_ITEMS,
+    });
     if (selectedTaskIdRef.current !== taskId) return;
     setHistoryItems(page.items);
+    historyItemsRef.current = page.items;
     setLiveItems([]);
     setHistoryBefore(page.before);
     setHistoryHasMore(page.hasMore);
@@ -704,9 +714,12 @@ export function App() {
     });
   }, []);
 
-  const loadEarlierTimeline = useCallback(async (revealTraceId?: string) => {
+  const loadEarlierTimeline = useCallback(async (
+    revealTraceId?: string,
+    requestedLimit = TIMELINE_REMOTE_PAGE_ITEMS,
+  ): Promise<number> => {
     const taskId = selectedTaskIdRef.current;
-    if (!taskId || !historyHasMore || historyLoading || historyBefore === undefined) return;
+    if (!taskId || !historyHasMore || historyLoading || historyBefore === undefined) return 0;
     const startedAt = Date.now();
     const traceId = revealTraceId ?? `timeline-page-${startedAt}`;
     historyLoadMetricRef.current = { traceId, startedAt, bridgeMs: 0 };
@@ -715,7 +728,7 @@ export function App() {
       const page = await callBridge<TimelinePage>('agent:timelinePage', {
         taskId,
         before: historyBefore,
-        limit: 50,
+        limit: requestedLimit,
       });
       const bridgeMs = Date.now() - startedAt;
       historyLoadMetricRef.current = { traceId, startedAt, bridgeMs };
@@ -726,19 +739,23 @@ export function App() {
         durationMs: bridgeMs,
         itemCount: page.items.length,
       });
-      if (selectedTaskIdRef.current !== taskId) return;
-      setHistoryItems((current) => {
-        const existing = new Set(current.map((item) => item.id));
-        return [...page.items.filter((item) => !existing.has(item.id)), ...current];
-      });
+      if (selectedTaskIdRef.current !== taskId) return 0;
+      const currentHistory = historyItemsRef.current;
+      const merged = prependUniqueTimelineEntries(currentHistory, page.items);
+      const previousProjectedCount = prepareConversationItems(currentHistory, review.files).length;
+      const nextProjectedCount = prepareConversationItems(merged.items, review.files).length;
+      historyItemsRef.current = merged.items;
+      if (merged.items !== currentHistory) setHistoryItems(merged.items);
       setHistoryBefore(page.before);
       setHistoryHasMore(page.hasMore);
+      return Math.max(0, nextProjectedCount - previousProjectedCount);
     } catch (caught) {
       if (selectedTaskIdRef.current === taskId) setError(caught instanceof Error ? caught.message : String(caught));
+      return 0;
     } finally {
       if (selectedTaskIdRef.current === taskId) setHistoryLoading(false);
     }
-  }, [historyBefore, historyHasMore, historyLoading]);
+  }, [historyBefore, historyHasMore, historyLoading, review.files]);
 
   const handleEarlierLayoutSettled = useCallback(() => {
     const metric = historyLoadMetricRef.current;
@@ -758,17 +775,26 @@ export function App() {
     const current = historyRevealLogRef.current.get(traceId);
     if (current) clearTimeout(current.timer);
     const stages = [...(current?.stages ?? []), metrics];
+    if (isTerminalRevealPhase(metrics.phase)) {
+      historyRevealLogRef.current.delete(traceId);
+      void callBridge('debug:historyLoad', { traceId, phase: 'trace-complete', stages });
+      return;
+    }
     const timer = setTimeout(() => {
       historyRevealLogRef.current.delete(traceId);
-      void callBridge('debug:historyLoad', { traceId, phase: 'trace-batch', stages });
-    }, 250);
+      void callBridge('debug:historyLoad', { traceId, phase: 'trace-timeout', stages });
+    }, 2_000);
     historyRevealLogRef.current.set(traceId, { timer, stages });
   }, []);
 
+  const reportChatListDiagnostic = useCallback((record: Record<string, unknown>) => {
+    void callBridge('debug:chatList', record);
+  }, []);
+
   const jumpToRandomTimelinePosition = useCallback(() => {
-    if (items.length === 0) return;
-    timelineRef.current?.scrollToIndex(Math.floor(Math.random() * items.length), true);
-  }, [items.length]);
+    if (conversationItems.length === 0) return;
+    timelineRef.current?.scrollToIndex(Math.floor(Math.random() * conversationItems.length), true);
+  }, [conversationItems.length]);
 
   const resetPreviews = useCallback(() => {
     resetPreviewRouter();
@@ -1126,7 +1152,7 @@ export function App() {
     setError('');
     try {
       await callBridge('agent:prompt', { taskId: selectedTask.id, text });
-      if (items.length === 0) {
+      if (historyItems.length + liveItems.length === 0) {
         const title = text.split('\n')[0].slice(0, 56);
         setTasks((current) => current.map((task) => task.id === selectedTask.id
           ? { ...task, title, status: 'running', updatedAt: Date.now() }
@@ -1137,7 +1163,7 @@ export function App() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     }
-  }, [prompt, selectedTask, items.length]);
+  }, [prompt, selectedTask, historyItems.length, liveItems.length]);
 
   const cancel = useCallback(async () => {
     if (!selectedTask) return;
@@ -1375,7 +1401,7 @@ export function App() {
         </view>
 
         <view className="conversation">
-          {items.length === 0 ? (
+          {conversationItems.length === 0 ? (
             <scroll-view scroll-y className="transcript">
               {!selectedTask ? (
               <view className="welcome">
@@ -1425,10 +1451,11 @@ export function App() {
               {error ? <view className="inline-error"><text className="inline-error-text selectable-text" text-selection={true} flatten={false}>{error}</text></view> : null}
             </scroll-view>
           ) : (
-            <VirtualTimeline
+            <ChatList
               key={selectedTaskId}
               ref={timelineRef}
               id="conversation-timeline"
+              bounces={false}
               items={conversationItems}
               renderItem={(item) => (
                 <ConversationMessageCard
@@ -1440,13 +1467,15 @@ export function App() {
               )}
               hasEarlier={historyHasMore}
               loadingEarlier={historyLoading}
+              agentResponding={selectedTask?.status === 'running' || selectedTask?.status === 'waiting'}
               onReachStart={loadEarlierTimeline}
               onEarlierLayoutSettled={handleEarlierLayoutSettled}
               onRevealPerformance={reportTimelineRevealPerformance}
+              onDiagnostic={reportChatListDiagnostic}
               footer={(
                 <view className="timeline-footer-content">
                   {selectedTask?.status === 'running' || selectedTask?.status === 'waiting' ? (
-                    <view className="timeline-thinking"><text className="timeline-thinking-text">Thinking</text></view>
+                    <view className="timeline-thinking"><LoadingText text="Thinking" /></view>
                   ) : null}
                   {selectedTask && review.files.length > 0 ? (
                     <ChangeSummaryCard
@@ -1464,21 +1493,34 @@ export function App() {
 
           {permission ? (
             <view className="permission-bar">
-              <view className="permission-copy">
-                <text className="permission-label">PERMISSION REQUIRED</text>
-                <text className="permission-title">{permission.title}</text>
+              <view className="permission-header">
+                <view className="permission-icon"><text className="permission-icon-text">!</text></view>
+                <view className="permission-copy">
+                  <text className="permission-label">Permission required</text>
+                  <view className="permission-command">
+                    <text className="permission-title selectable-text" text-selection={true} flatten={false}>{permission.title}</text>
+                  </view>
+                </view>
               </view>
               <view className="permission-actions">
-                {permission.options.map((option) => (
-                  <Button
-                    key={option.optionId}
-                    className={`permission-button ${option.kind?.startsWith('allow') ? 'permission-button--allow' : ''}`}
-                    onTap={() => answerPermission(option.optionId)}
-                  >
-                    <text className="permission-button-text">{option.name}</text>
-                  </Button>
-                ))}
-                <Button className="permission-button" variant="ghost" onTap={() => answerPermission()}><text className="permission-button-text">Cancel</text></Button>
+                {permission.options.map((option, index) => {
+                  const isAllow = option.kind?.startsWith('allow') ?? false;
+                  const firstAllowIndex = permission.options.findIndex((candidate) => candidate.kind?.startsWith('allow'));
+                  const isPrimary = isAllow && index === firstAllowIndex;
+                  return (
+                    <Button
+                      key={option.optionId}
+                      className={`permission-button ${isAllow ? 'permission-button--allow' : ''} ${isPrimary ? 'permission-button--primary' : isAllow ? 'permission-button--secondary' : ''}`}
+                      border={isAllow && !isPrimary}
+                      hoverBackgroundColor={isPrimary ? '#292c31' : undefined}
+                      activeBackgroundColor={isPrimary ? '#0f1013' : undefined}
+                      onTap={() => answerPermission(option.optionId)}
+                    >
+                      <text className="permission-button-text">{option.name}</text>
+                    </Button>
+                  );
+                })}
+                <Button className="permission-button permission-button--cancel" variant="ghost" onTap={() => answerPermission()}><text className="permission-button-text">Cancel</text></Button>
               </view>
             </view>
           ) : null}

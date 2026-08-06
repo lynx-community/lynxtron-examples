@@ -4933,60 +4933,132 @@ text {
 .permission-bar {
   width: 646px;
   max-width: calc(100% - 40px);
-  height: 106px;
-  min-height: 106px;
   margin: 0 auto 14px;
-  padding: 12px;
-  flex-direction: column;
-  align-items: stretch;
+  padding: 11px 13px;
+  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
   border: 1px solid #dedfe2;
-  border-radius: 15px;
+  border-radius: 14px;
   background-color: #ffffff;
+  box-shadow: 0 5px 18px rgba(20, 23, 28, 0.06);
+}
+
+.permission-header {
+  width: auto;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.permission-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background-color: #fff3dd;
+  color: #aa6b08;
+}
+
+.permission-icon-text {
+  color: #aa6b08;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .permission-copy {
-  gap: 3px;
+  width: auto;
+  flex: 1;
+  gap: 5px;
 }
 
 .permission-label {
-  color: #858991;
+  color: #737880;
   font-size: 9px;
-  letter-spacing: 0.4px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.permission-command {
+  width: 100%;
+  max-height: 36px;
+  overflow: hidden;
+  padding: 4px 7px;
+  border-radius: 7px;
+  background-color: #f6f7f8;
 }
 
 .permission-title {
   color: #2d3137;
-  font-size: 12px;
-  line-height: 17px;
+  font-family: Menlo, Monaco, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 14px;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .permission-actions {
+  width: auto;
+  flex-shrink: 0;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 7px;
 }
 
 .permission-button {
-  height: 27px;
-  padding: 0 11px;
-  border: 0;
+  height: 28px;
+  min-width: 58px;
+  padding: 0 12px;
+  border: 1px solid transparent;
   border-radius: 8px;
-  background-color: #f0f1f2;
+  background-color: #f1f2f3;
 }
 
-.permission-button--allow {
+.permission-button--primary {
   background-color: #17191e;
 }
 
 .permission-button-text {
-  color: #555a62;
+  color: #4d525a;
   font-size: 10px;
+  font-weight: 550;
+}
+
+.permission-button--secondary {
+  background-color: #ffffff;
+}
+
+.permission-button--secondary .permission-button-text {
+  color: #30343a;
+}
+
+.permission-button--primary .permission-button-text {
+  color: #ffffff;
+}
+
+.permission-button--cancel {
+  min-width: 50px;
+  padding: 0 8px;
+  background-color: transparent;
 }
 
 .app-shell--preview-open .composer,
 .app-shell--preview-open .composer-loading-space {
   max-width: calc(100% - 52px);
+}
+
+.app-shell--preview-open .permission-bar {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.app-shell--preview-open .permission-header,
+.app-shell--preview-open .permission-actions {
+  width: 100%;
 }
 
 .app-shell--preview-open .virtual-timeline-item-content {

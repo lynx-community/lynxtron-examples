@@ -1,0 +1,47 @@
+/* Shared indeterminate text loading state. Lynx supports gradients directly in color. */
+.loading-text {
+  color: linear-gradient(
+    90deg,
+    #999da5 0%,
+    #999da5 0%,
+    #f1f2f4 0%,
+    #999da5 15%,
+    #999da5 100%
+  );
+  font-weight: 400;
+  white-space: nowrap;
+  animation-name: loading-text-sweep;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.loading-text--small {
+  font-size: 10px;
+  line-height: 16px;
+}
+
+.loading-text--medium {
+  font-size: 11px;
+  line-height: 18px;
+}
+
+@keyframes loading-text-sweep {
+  0% {
+    color: linear-gradient(90deg, #999da5 0%, #999da5 0%, #f1f2f4 0%, #999da5 15%, #999da5 100%);
+  }
+  20% {
+    color: linear-gradient(90deg, #999da5 0%, #999da5 5%, #f1f2f4 20%, #999da5 35%, #999da5 100%);
+  }
+  40% {
+    color: linear-gradient(90deg, #999da5 0%, #999da5 25%, #f1f2f4 40%, #999da5 55%, #999da5 100%);
+  }
+  60% {
+    color: linear-gradient(90deg, #999da5 0%, #999da5 45%, #f1f2f4 60%, #999da5 75%, #999da5 100%);
+  }
+  80% {
+    color: linear-gradient(90deg, #999da5 0%, #999da5 65%, #f1f2f4 80%, #999da5 95%, #999da5 100%);
+  }
+  100% {
+    color: linear-gradient(90deg, #999da5 0%, #999da5 85%, #f1f2f4 100%, #999da5 100%, #999da5 100%);
+  }
+}

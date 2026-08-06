@@ -16,6 +16,7 @@
     "dev": "pnpm run prepare:computer-use && pnpm run prepare:opencode && cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
     "start": "cross-env TARGET_ENV=desktop pnpm run build && lynxtron ./dist/desktop",
     "test": "vitest run",
+    "test:chatlist": "vitest run src/app/timeline-scroll.test.ts src/app/timeline-window.test.ts src/app/timeline-data.test.ts src/app/timeline-reveal-machine.test.ts src/main/desktop/agents/runtime.test.ts",
     "typecheck": "tsc --noEmit -p src/app/tsconfig.json && tsc --noEmit -p src/main/desktop/tsconfig.json"
   },
   "showcase": {
