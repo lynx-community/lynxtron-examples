@@ -122,12 +122,16 @@
 }
 
 // ScintillaNotificationProtocol — fires on the main thread for every
-// Scintilla notification. We only care about content mutations and dwell events.
+// Scintilla notification. We care about content mutations, focus, and dwell.
 - (void)notification:(SCNotification*)n {
     if (!_owner) return;
     if (n->nmhdr.code == SCN_MODIFIED &&
         (n->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))) {
         _owner->OnContentModified();
+    } else if (n->nmhdr.code == SCN_ZOOM) {
+        _owner->ApplyLineSpacing();
+    } else if (n->nmhdr.code == SCN_FOCUSIN) {
+        _owner->OnFocusGained();
     } else if (n->nmhdr.code == SCN_DWELLSTART) {
         _owner->OnDwellStart(n->position, (int)n->x, (int)n->y);
     } else if (n->nmhdr.code == SCN_DWELLEND) {
@@ -658,13 +662,64 @@ void ScintillaView::AttachToWindow() {
 #endif
 }
 
+// Scintilla has no line-height: leading is bought with extra ascent and
+// descent, in absolute pixels. They must therefore be recomputed from the size
+// actually on screen — the configured size PLUS the zoom level — or a pinch
+// zoom grows the glyphs and leaves the leading behind. Split unevenly, more
+// above than below: descenders are rare in code and the eye tracks the top of
+// the line.
+void ScintillaView::ApplyLineSpacing() {
+#ifdef __APPLE__
+    if (!cocoa_view_) return;
+    ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
+    const int base = font_size_pt_ > 0 ? font_size_pt_ : 14;
+    auto doApply = ^{
+        if (!container.scintillaView) return;
+        const long zoom = (long)[container.scintillaView message:SCI_GETZOOM wParam:0 lParam:0];
+        long effective = (long)base + zoom;
+        if (effective < 4) effective = 4;
+        [container.scintillaView message:SCI_SETEXTRAASCENT wParam:(effective * 4) / 10 lParam:0];
+        [container.scintillaView message:SCI_SETEXTRADESCENT wParam:(effective * 3) / 10 lParam:0];
+    };
+    if ([NSThread isMainThread]) doApply(); else dispatch_async(dispatch_get_main_queue(), doApply);
+#endif
+}
+
+int ScintillaView::GetZoom() {
+#ifdef __APPLE__
+    if (!cocoa_view_) return 0;
+    ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
+    if (!container.scintillaView) return 0;
+    if (![NSThread isMainThread]) return 0;  // read on the UI thread only
+    return (int)[container.scintillaView message:SCI_GETZOOM wParam:0 lParam:0];
+#else
+    return 0;
+#endif
+}
+
+void ScintillaView::ResetZoom() {
+#ifdef __APPLE__
+    if (!cocoa_view_) return;
+    ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
+    auto doReset = ^{
+        if (!container.scintillaView) return;
+        [container.scintillaView message:SCI_SETZOOM wParam:0 lParam:0];
+    };
+    if ([NSThread isMainThread]) doReset(); else dispatch_async(dispatch_get_main_queue(), doReset);
+    ApplyLineSpacing();
+#endif
+}
+
 void ScintillaView::ApplyTheme(bool dark, int size_pt) {
 #ifdef __APPLE__
     if (!cocoa_view_) return;
     ScintillaViewContainer* container = (__bridge ScintillaViewContainer*)cocoa_view_;
     // BGR palettes. Dark = the compile-time Fiddle Dark constants; Light =
     // VS-Light token colors on Fiddle Light backgrounds.
-    const long bg      = dark ? 0x41322F : 0xFEFFFF;
+    // BGR. Dark #22252f -> 0x2f2522, matching --surface-content in App.css:
+    // the editor is the largest CONTENT surface, and chrome sits lighter
+    // around it. Change one and change the other.
+    const long bg      = dark ? 0x2f2522 : 0xFFFFFF;
     const long fg      = dark ? 0xD4D4D4 : 0x000000;
     const long kw      = dark ? 0xD69C56 : 0xFF0000;
     const long str     = dark ? 0x7891CE : 0x1515A3;
@@ -672,7 +727,7 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
     const long num     = dark ? 0xA8CEB5 : 0x588609;
     const long typ     = dark ? 0xB0C94E : 0x997F26;
     const long lnFore  = dark ? 0x858585 : 0x937823;
-    const long lnBack  = dark ? 0x41322F : 0xF5F5F5;
+    const long lnBack  = dark ? 0x2f2522 : 0xFFFFFF;  // one flat ground, both themes
     const long caret   = dark ? 0xADAFAE : 0x000000;
     const long selBack = dark ? 0xBB6A26 : 0xFFD6AD;
     const long ctBack  = dark ? 0x262525 : 0xF3F3F3;
@@ -680,6 +735,7 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
     const int  size    = size_pt > 0 ? size_pt : 14;
     theme_dark_ = dark;
     font_size_pt_ = size;
+    ApplyLineSpacing();
     auto doApply = ^{
         [container.scintillaView message:SCI_STYLESETBACK wParam:STYLE_DEFAULT lParam:bg];
         [container.scintillaView message:SCI_STYLESETFORE wParam:STYLE_DEFAULT lParam:fg];

@@ -134,6 +134,7 @@ export function QuickPicker({
       <view className="PickerOverlay" bindtap={onClose} global-bindkeydown={handleKeyDown}>
         <view className="PickerModal" catchtap={() => {}}>
         <input
+          id="picker-query"
           className="PickerInput"
           value={query}
           bindinput={(e: any) => onQueryChange(e.detail.value)}
@@ -215,9 +216,14 @@ export function QuickPicker({
                 <text className="PickerIcon">{fileIcon(f.name)}</text>
                 <view className="PickerItemInfo">
                   <text className="PickerFileName">{f.name}</text>
-                  <text className="PickerFilePath">
-                    {relativeTo(rootPath, f.fullPath)}
-                  </text>
+                  {/* Only when it says something the name does not. On the
+                      Fiddle surface a file's "path" IS its id, so this printed
+                      the name a second time on every row. */}
+                  {relativeTo(rootPath, f.fullPath) !== f.name ? (
+                    <text className="PickerFilePath" text-maxline="1">
+                      {relativeTo(rootPath, f.fullPath)}
+                    </text>
+                  ) : null}
                 </view>
               </view>
             ))

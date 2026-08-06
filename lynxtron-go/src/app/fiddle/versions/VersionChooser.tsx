@@ -99,6 +99,9 @@ export function VersionChooser(props: VersionChooserProps) {
     <>
       <Dialog isOpen={props.isOpen} title="Lynxtron Version" onClose={props.onClose} width={640}>
         <view className="Version-List">
+          <view className="Version-Section Version-Section--first">
+            <text className="Version-SectionLabel">BUNDLED</text>
+          </view>
           <view
             className={'Version-Item' + (props.selectedLocalName == null ? ' Version-Item--active' : '')}
             bindtap={() => props.onSelect(null)}
@@ -110,8 +113,8 @@ export function VersionChooser(props: VersionChooserProps) {
 
           {localVersions.length > 0 && (
             <>
-              <view style={{ padding: '8px 12px 4px 12px' } as any}>
-                <text className="bp-muted" style={{ fontSize: '11px', letterSpacing: '0.5px' } as any}>LOCAL</text>
+              <view className="Version-Section">
+                <text className="Version-SectionLabel">LOCAL</text>
               </view>
               {localVersions.map(v => (
                 <view
@@ -119,23 +122,23 @@ export function VersionChooser(props: VersionChooserProps) {
                   className={'Version-Item' + (props.selectedLocalName === v.name ? ' Version-Item--active' : '')}
                   bindtap={() => props.onSelect(v.name)}
                 >
-                  <view style={{ flex: 1, display: 'flex', flexDirection: 'column' } as any}>
+                  <view className="Version-ItemMain">
                     <text className="Version-ItemText">{v.name}</text>
-                    <text className="bp-muted" style={{ fontSize: '11px', fontFamily: 'monospace' } as any}>{v.folder}</text>
+                    <text className="Version-ItemMeta">{v.folder}</text>
                   </view>
                   {props.selectedLocalName === v.name ? <text className="Version-Check">✓</text> : null}
-                  <view bindtap={(e: any) => { e?.stopPropagation?.(); handleRemove(v.name); }} style={{ padding: '2px 8px', cursor: 'pointer' } as any}>
-                    <text style={{ color: '#ff7373', fontSize: '11px' } as any}>Remove</text>
+                  <view className="Version-ItemRemove" bindtap={(e: any) => { e?.stopPropagation?.(); handleRemove(v.name); }}>
+                    <text className="Version-ItemRemoveText">Remove</text>
                   </view>
                 </view>
               ))}
             </>
           )}
 
-          <view style={{ padding: '8px 12px 4px 12px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' } as any}>
-            <text className="bp-muted" style={{ fontSize: '11px', letterSpacing: '0.5px' } as any}>REMOTE CATALOG</text>
-            <view bindtap={() => setShowPrereleases(v => !v)} style={{ cursor: 'pointer', padding: '2px 6px' } as any}>
-              <text style={{ color: '#48aff0', fontSize: '11px' } as any}>
+          <view className="Version-Section">
+            <text className="Version-SectionLabel">REMOTE CATALOG</text>
+            <view bindtap={() => setShowPrereleases(v => !v)}>
+              <text className="Version-SectionAction">
                 {showPrereleases ? 'Hide prereleases' : 'Show prereleases'}
               </text>
             </view>
@@ -156,15 +159,13 @@ export function VersionChooser(props: VersionChooserProps) {
             <scroll-view className="Version-CatalogList" scroll-orientation="vertical">
               {filteredCatalog.slice(0, 40).map(v => (
                 <view key={v.version} className="Version-Item">
-                  <view style={{ flex: 1, display: 'flex', flexDirection: 'column' } as any}>
-                    <view style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', columnGap: '6px' } as any}>
+                  <view className="Version-ItemMain">
+                    <view className="Version-ItemHead">
                       <text className="Version-ItemText">{v.version}</text>
                       {v.isPrerelease ? <Tag intent="warning" minimal>prerelease</Tag> : null}
                     </view>
                     {v.publishedAt ? (
-                      <text className="bp-muted" style={{ fontSize: '11px', fontFamily: 'monospace' } as any}>
-                        {v.publishedAt.slice(0, 10)}
-                      </text>
+                      <text className="Version-ItemMeta">{v.publishedAt.slice(0, 10)}</text>
                     ) : null}
                   </view>
                   {installingVersion === v.version ? (

@@ -1,16 +1,15 @@
-/* hiddenInset titlebar: traffic lights float over the header's left edge
-   (main.ts trafficLightPosition x:20) — shift the commands row clear. */
-.commands.is-mac { padding-left: 74px; }
+/* The traffic-light inset is a laid-out flex item now (.commands-trafficlights
+   in Commands.css) rather than a padding, so it can be dropped in fullscreen
+   where macOS removes the lights. */
 
 .FiddleHeader {
   height: 51px;
   min-height: 51px;
   max-height: 51px;
-  background-color: var(--background-3);   /* background-3 — upstream header bg */
-  /* Upstream separates the header with its box-shadow ring rgba(16,22,26,.2)
-     (commands.less), not border-color-2 — #1e2527 solid reads as a harsh
-     black line in light mode. A border avoids sibling-stacking shadow loss. */
-  border-bottom: 1px solid rgba(16,22,26,0.2);
+  background-color: var(--surface-chrome);
+  /* No border. The header IS chrome and the content below it is not, so the
+     tone change already draws the line; a rule on top of it was the thin strip
+     of extra frame between the bar and the first pane. */
   display: flex;
   align-items: center;
   padding: 10px;

@@ -15,6 +15,10 @@ export interface HeaderProps {
   onOpenSettings: () => void;
   onOpenHelp: () => void;
   onOpenVersionChooser: () => void;
+  onOpenPalette?: () => void;
+  fullScreen?: boolean;
+  overflowOpen?: boolean;
+  onToggleOverflow?: () => void;
   currentVersion: string;
   gistId: string | null;
   title: string;
@@ -39,10 +43,15 @@ export function Header(props: HeaderProps) {
         onOpenSettings={props.onOpenSettings}
         onOpenHelp={props.onOpenHelp}
         onOpenVersionChooser={props.onOpenVersionChooser}
+        onOpenPalette={props.onOpenPalette}
+        fullScreen={props.fullScreen}
+        overflowOpen={props.overflowOpen}
+        onToggleOverflow={props.onToggleOverflow}
         currentVersion={props.currentVersion}
         gistId={props.gistId}
         isRunning={props.isRunning}
-        title={props.galleryOpen ? 'Gallery' : props.title + (props.isEdited ? ' •' : '')}
+        title={props.galleryOpen ? 'Gallery' : props.title}
+        isEdited={!props.galleryOpen && props.isEdited}
       />
     </view>
   );

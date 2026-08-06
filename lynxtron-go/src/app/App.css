@@ -5,7 +5,15 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #1e1e1e;
+  /* No background, and nothing above it may have one either. A native editor is
+     a platform subview of the renderer host, so every Lynx element Clay
+     promotes to its own sublayer paints OVER it — and `.IDE` is a `<view>`
+     inside `<page>`, not the render root, so it is one of them. Painting here
+     hid the panes on some launches and not others, which is what a layer-order
+     race looks like.
+     The ground therefore comes from the WINDOW (`setBackgroundColor` in
+     main.ts), which is the only surface strictly below both Lynx and the native
+     views. Every seam the mosaic shows is that colour. */
   position: relative;
   /* Upstream Fiddle theme tokens (themes-defaults.ts defaultDark.common). */
   --foreground-1: #9feafa;
@@ -30,6 +38,73 @@
   --bp-surface-deep: #1a1a1a;
   --bp-selected-bg: #094771;
   --hairline: rgba(255, 255, 255, 0.1);
+
+  /* ── Surface tiers ──────────────────────────────────────────────────────
+     Named by ROLE, because the --background-N names are ordinal and carry no
+     meaning — which is how the sidebar ended up wearing the editor's tone and
+     the console the gutter's.
+
+     The rule is the one a modern editor uses, and it is about AREA: the big
+     surfaces you read are the DARKEST, and the thin chrome wrapped around them
+     is LIGHTER. Seams share the chrome tone, because a gap between panels is
+     the frame showing through — not a third thing.
+
+       CONTENT  code editors, run output, the file tree. Large and dark.
+       CHROME   header, pane toolbars, tab strips, section headers, AND every
+                seam: gutters, sashes, the app ground.
+       RAISED   floats above chrome: dialogs, popovers, menus, hover.
+
+     --surface-content must stay in step with the native Scintilla background,
+     which ApplyTheme sets in scintilla_view.mm / scintilla_view_win.cc (BGR
+     there, not RGB). Change one and change the other. */
+  /* One hue for the whole neutral ramp. These used to disagree: #1d2427 had
+     its green channel ABOVE the red/blue midpoint (a teal cast) while
+     #2c2e3b and #383c4e sat below it (violet) — so the content surface and
+     the chrome around it were tinted toward different colours, which is what
+     made the window read as two products stacked rather than one. The
+     reference editors keep every neutral in one family; this ramp is that
+     family, on the violet-slate side the chrome was already on.
+
+     Luminance is set separately from hue, because conflating them is how this
+     ramp drifted: the pass that unified the hue also dropped content from 34.7
+     to 29.2 relative luminance, on top of the intended move off the original
+     50.4, and the window went muddy. Content sits at 37 now, with chrome and
+     raised a clear 12 and 14 above it. Change the hue OR the level, never both
+     in one edit. */
+  --surface-content: #22252f;
+  --surface-chrome: #2d313f;
+  --surface-raised: #3a3f50;
+
+  /* Overlays. A tint over whatever is beneath, for hover, pressed and lit
+     states. These MUST be tokens: a literal rgba(255,255,255,…) is invisible
+     on a light ground, and hardcoding one is how a state silently stops
+     existing when the theme flips. Direction is the only difference — light
+     over dark, dark over light. */
+  --overlay-soft: rgba(255, 255, 255, 0.06);
+  --overlay-strong: rgba(255, 255, 255, 0.12);
+  --edge-strong: rgba(255, 255, 255, 0.32);
+
+  /* Log intents. Tuned for their ground: the dark values are bright tints that
+     go muddy on white, so the light theme darkens them rather than reusing
+     them. Colour carries meaning here, which means it has to stay legible in
+     both themes, not just the one it was picked in. */
+  --log-error: #ff7373;
+  --log-info: #48aff0;
+
+  /* Brand. The green the launch window uses — a distinct ROLE from --ok, which
+     reports an outcome; --brand marks the action the app exists for.
+     The HUE is fixed across themes; the rendering is not, and saying otherwise
+     earlier was wrong. A colour reads differently against #22252f than against
+     white, so dark takes a more saturated green and light a paler one — same
+     brand, adapted to its ground, which is what every brand does. The label
+     stays near-black on both: the green is bright enough that dark ink wins.
+     The gradient is the launch window's, and gives the one filled shape in the
+     bar some depth to distinguish it from a flat swatch. */
+  --brand: #3ddd8c;
+  --brand-hi: #57e89f;
+  --brand-hover: #34cb7f;
+  --brand-active: #2ab470;
+  --brand-ink: #0b2417;
 }
 
 /* themes-defaults.ts defaultLight.common */
@@ -37,6 +112,25 @@
   --foreground-1: #9feafa;
   --foreground-2: #256e80;
   --foreground-3: #608291;
+  /* Same rule as dark, read for a light ground: content is the surface the
+     text sits on and chrome recedes from it. #eef1f4 was only ~4% off white,
+     so the two tiers were the same surface in practice — the frame has to be
+     far enough from the page to be seen as frame. */
+  --surface-content: #ffffff;
+  --surface-chrome: #eceef3;
+  --surface-raised: #ffffff;
+  --overlay-soft: rgba(16, 22, 26, 0.05);
+  --overlay-strong: rgba(16, 22, 26, 0.1);
+  --edge-strong: rgba(16, 22, 26, 0.28);
+  --log-error: #c23030;
+  --log-info: #106ba3;
+  /* Paler on a white ground — the dark theme's saturation reads as a shout
+     here, where nothing else is saturated at all. */
+  --brand: #62d99a;
+  --brand-hi: #86e6b3;
+  --brand-hover: #52cd8c;
+  --brand-active: #43bd7d;
+  --brand-ink: #0b2417;
   --background-4: #fbfbfb;
   --background-3: #fbfbfb;
   --background-2: #d6dde0;

@@ -12,6 +12,8 @@ export interface EditorsProps {
   onHideEditor: (id: EditorId) => void;
   onResetLayout: () => void;
   pushContent: (id: EditorId) => void;
+  /** Detach every native editor — a full-region surface is replacing them. */
+  suppressed?: boolean;
 }
 
 // ── Upstream editor-mosaic.ts createMosaic():
@@ -239,6 +241,8 @@ export function Editors(props: EditorsProps) {
                 onMaximize={handleMaximize}
                 onFocus={props.onSelectEditor}
                 pushContent={props.pushContent}
+                suppressed={props.suppressed}
+                maximized={p.id === expandedId}
               />
             </view>
           );

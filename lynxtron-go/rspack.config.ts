@@ -65,6 +65,11 @@ const desktopConfig = defineConfig({
         { from: './output/bundle/lynx/', to: '.' },
         // Gallery thumbnails, staged by lynx.config.ts (Lynx <image> cannot load https).
         { from: './thumbnails/', to: 'thumbnails/', noErrorOnMissing: true },
+        // The Lynxtron mark, shown in the commands bar, in both lockups. Same
+        // reason these are copied files rather than URLs: Lynx <image> loads
+        // file:// only.
+        { from: './resources/lynxtron.png', to: 'brand/lynxtron.png' },
+        { from: './src/assets/lynxtron-on-dark.png', to: 'brand/lynxtron-on-dark.png' },
         // Keep only the Scintilla extension runtime closure in dist/desktop.
         ...scintillaRuntimePatterns,
         // Keep appPackage dependencies physically present under dist/desktop/node_modules

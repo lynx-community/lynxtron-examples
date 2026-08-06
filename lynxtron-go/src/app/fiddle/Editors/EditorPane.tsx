@@ -1,9 +1,9 @@
-import { useEffect, useRef } from '@lynx-js/react';
-import { Button } from '../bp';
+import { useEffect, useRef, useState } from '@lynx-js/react';
+import { Button, Icon } from '../bp';
 import { scintillaApi } from '../../store';
 import { getEditorTitle } from '../types';
 import { scintillaIdFor } from '../state/useFiddle';
-import { applyEditorTheme, editorFontSize, isDarkTheme } from '../theme';
+import { applyEditorTheme, editorFontSize, editorZoomLevel, isDarkTheme, resetEditorZoom } from '../theme';
 import type { FiddleFile } from '../state/FiddleState';
 import './Editors.css';
 
@@ -15,6 +15,14 @@ export interface EditorPaneProps {
   onMaximize: (id: string) => void;
   onFocus: (id: string) => void;
   pushContent: (id: string) => void;
+  /**
+   * Detach the native view. #46 kept this channel open for exactly this: a
+   * surface that REPLACES the editors rather than floating over them does not
+   * need a platform overlay, and a plain Lynx view cannot cover a native one.
+   */
+  suppressed?: boolean;
+  /** This pane is the expanded one. The control that did it says so. */
+  maximized?: boolean;
 }
 
 /**
@@ -52,16 +60,65 @@ export function EditorPane(props: EditorPaneProps) {
     }, 150);
   };
 
+  // Polled rather than pushed: SCN_ZOOM fires on the native side and this
+  // module never calls into the Lynx JS thread from a notification. One read
+  // per second is far below what a pinch costs anyway.
+  const [zoomed, setZoomed] = useState(false);
+  useEffect(() => {
+    const tick = () => setZoomed(editorZoomLevel(file.id) !== 0);
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [file.id]);
+
   return (
-    <view className="MosaicWindow" bindtap={() => props.onFocus(file.id)}>
-      <view className="MosaicToolbar">
+    <view
+      className={'MosaicWindow' + (props.active ? ' MosaicWindow--active' : '')}
+      bindtap={() => props.onFocus(file.id)}
+    >
+      {/* The active class is set HERE rather than matched through the pane via
+          `.MosaicWindow--active .MosaicToolbar` — descendant selectors are not
+          something to bet a visible state on in Lynx's CSS subset. */}
+      <view className={'MosaicToolbar' + (props.active ? ' MosaicToolbar--active' : '')}>
         <text
           className={'MosaicToolbar-Title' + (props.active ? ' MosaicToolbar-Title--active' : '')}
           text-maxline="1"
         >{getEditorTitle(file.id)}</text>
         <view className="MosaicToolbar-Controls">
-          <Button icon="maximize" small minimal title="Maximize" onClick={() => props.onMaximize(file.id)} />
-          <Button icon="cross" small minimal title="Hide" onClick={() => props.onHide(file.id)} />
+          {/* Pinch zoom is per-pane and sticky; this is the only way back to
+              the configured size. `refresh` because the icon font carries only
+              maximize/minimize/refresh — anything else renders as a literal
+              '?', which is worse than an approximate glyph with a clear title.
+              Lit while the pane IS zoomed: otherwise the only clue is that the
+              text looks unlike its neighbours', and the button reads as a
+              control with no state. */}
+          {/* iconNode, not `icon`: <Icon> writes font-size as an INLINE style,
+              which no stylesheet rule can override — the 9px declared for these
+              controls in Editors.css had been dead the whole time and the
+              glyphs rendered at the 14px default. Size travels with the icon. */}
+          <Button
+            iconNode={<Icon icon="refresh" size={11} className="bp3-button-icon" />}
+            small
+            minimal
+            active={zoomed}
+            title={zoomed ? 'Zoomed — reset to the configured font size' : 'Reset zoom'}
+            onClick={() => { resetEditorZoom(file.id); setZoomed(false); }}
+          />
+          <Button
+            iconNode={<Icon icon={props.maximized ? 'minimize' : 'maximize'} size={11} className="bp3-button-icon" />}
+            small
+            minimal
+            active={!!props.maximized}
+            title={props.maximized ? 'Restore this pane' : 'Maximize'}
+            onClick={() => props.onMaximize(file.id)}
+          />
+          <Button
+            iconNode={<Icon icon="cross" size={11} className="bp3-button-icon" />}
+            small
+            minimal
+            title="Hide"
+            onClick={() => props.onHide(file.id)}
+          />
         </view>
       </view>
       <view className="MosaicBody" bindlayoutchange={onBodyLayout}>
@@ -70,6 +127,7 @@ export function EditorPane(props: EditorPaneProps) {
           editor-id={scintillaIdFor(file.id)}
           font-size={String(editorFontSize())}
           theme-dark={isDarkTheme() ? 'true' : 'false'}
+          suppressed={props.suppressed ? 'true' : 'false'}
         />
       </view>
     </view>

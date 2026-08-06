@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from '@lynx-js/react';
+import { SplitContainer } from '../../components/Layout/SplitContainer';
 import { Button, Icon, InputGroup, AppToaster } from '../bp';
 import { isSafeRelativePath } from '../state/FiddleState';
 import { searchNpm, parseDependencies, addDependency, removeDependency, type NpmSearchResult } from './npm-search';
@@ -9,6 +10,17 @@ import './FiddleSidebar.css';
 // Upstream sidebar-file-tree validation: supported editor extensions only,
 // package.json is reserved.
 const VALID_EXT = /\.(cjs|js|mjs|html|css|json|jsx|ts|tsx)$/;
+
+/** Ink for a file row's glyph. Hue is the type; the glyph stays the same. */
+function iconTint(name: string): string {
+  const ext = name.split('.').pop()?.toLowerCase() ?? '';
+  if (ext === 'tsx' || ext === 'jsx') return ' FiddleSidebar-ItemIcon--tsx';
+  if (ext === 'ts' || ext === 'js' || ext === 'mjs' || ext === 'cjs') return ' FiddleSidebar-ItemIcon--ts';
+  if (ext === 'css') return ' FiddleSidebar-ItemIcon--css';
+  if (ext === 'json') return ' FiddleSidebar-ItemIcon--json';
+  if (ext === 'md') return ' FiddleSidebar-ItemIcon--md';
+  return '';
+}
 
 export function validateNewFileName(name: string, existing: string[]): string | null {
   if (!isSafeRelativePath(name)) return 'Path must stay inside the fiddle';
@@ -109,6 +121,13 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
 
   return (
     <view className="FiddleSidebar">
+      {/* Editors and Modules are two panels sharing one column, and the line
+          between them was fixed: Modules took whatever its content needed and
+          the file list got the rest, so a long dependency list had nowhere to
+          go and a short one wasted the space. It is a sash now, like every
+          other division in this window. */}
+      <SplitContainer direction="vertical" initialRatio={0.62} minSizePx={72}>
+      <view className="FiddleSidebar-Pane">
       <view className="FiddleSidebar-Section">
         <view className="FiddleSidebar-SectionHeader">
           <view className="FiddleSidebar-SectionTitleRow">
@@ -132,7 +151,7 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
             return (
               <view key={f.id} className="FiddleSidebar-AddRow">
                 <view className="FiddleSidebar-AddRowInput">
-                  <Icon icon="document" size={14} className="FiddleSidebar-ItemIcon" />
+                  <Icon icon="document" size={13} className="FiddleSidebar-ItemIcon" />
                   <InputGroup
                     fill
                     placeholder={f.id}
@@ -159,7 +178,7 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
               className={cls}
               bindtap={() => props.onSelectEditor(f.id)}
             >
-              <Icon icon="document" size={14} className="FiddleSidebar-ItemIcon" />
+              <Icon icon="document" size={13} className={'FiddleSidebar-ItemIcon' + iconTint(f.id)} />
               <view className="FiddleSidebar-ItemLabel">
                 <text className="FiddleSidebar-ItemName" text-maxline="1">{f.id}</text>
               </view>
@@ -206,7 +225,7 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
         {addingName != null ? (
           <view className="FiddleSidebar-AddRow">
             <view className="FiddleSidebar-AddRowInput">
-              <Icon icon="document" size={14} className="FiddleSidebar-ItemIcon" />
+              <Icon icon="document" size={13} className="FiddleSidebar-ItemIcon" />
               <InputGroup
                 fill
                 placeholder="file.js"
@@ -227,16 +246,20 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
           </view>
         ) : null}
       </scroll-view>
+      </view>
       <view className="FiddleSidebar-Section FiddleSidebar-Section--modules">
         <view className="FiddleSidebar-SectionHeader">
           <text className="FiddleSidebar-SectionTitle">Modules</text>
           <text className="FiddleSidebar-Count">{String(installedNames.length)}</text>
         </view>
         <view className="FiddleSidebar-ModuleSearch">
+          {/* No leading icon, same as the gist field: InputGroup positions it
+              absolutely over the input rather than reserving space, so at this
+              width it sat on top of the placeholder. The placeholder is the
+              label. */}
           <InputGroup
             fill
             placeholder="Search npm modules"
-            leftIcon="search"
             value={moduleQuery}
             onChange={runSearch}
           />
@@ -276,6 +299,7 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
           </view>
         )}
       </view>
+      </SplitContainer>
     </view>
   );
 }

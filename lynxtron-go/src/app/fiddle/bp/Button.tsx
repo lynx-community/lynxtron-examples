@@ -5,6 +5,11 @@ import './bp.css';
 export interface ButtonProps {
   text?: string;
   icon?: IconName;
+  /**
+   * Leading visual that is not a glyph from the icon font — an image, a mark.
+   * Takes the icon's slot, so the two are alternatives rather than a stack.
+   */
+  iconNode?: any;
   rightIcon?: IconName;
   intent?: Intent;
   active?: boolean;
@@ -39,7 +44,7 @@ export function Button(props: ButtonProps) {
 
   return (
     <view className={cls} bindtap={handleTap}>
-      {props.icon ? <Icon icon={props.icon} className="bp3-button-icon" /> : null}
+      {props.iconNode ?? (props.icon ? <Icon icon={props.icon} className="bp3-button-icon" /> : null)}
       {props.text ? <text className="bp3-button-text">{props.text}</text> : null}
       {props.children}
       {props.rightIcon ? <Icon icon={props.rightIcon} className="bp3-button-icon" /> : null}

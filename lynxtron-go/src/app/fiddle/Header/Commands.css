@@ -2,15 +2,29 @@
    flex space-between, 30px content row inside the 50px header.
    Upstream: the WHOLE commands bar is the window drag region
    (-webkit-app-region: drag) with no-drag holes punched over controls. */
+/* The traffic lights as a flex item rather than a padding: 68px of lights plus
+   12px of air before the first control, dropped entirely in fullscreen where
+   macOS removes them. The old `.commands.is-mac { padding-left: 74px }` put the
+   first button 6px from the close button and kept the same dead width when the
+   lights were gone. */
+.commands-trafficlights {
+  width: 80px;
+  height: 100%;
+  flex-shrink: 0;
+}
+
 .commands {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 30px;
+  height: 28px;
   flex-wrap: nowrap;
+  column-gap: 10px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Containing block for the centred title band below. */
+  position: relative;
   -x-app-region: drag;
 }
 /* no-drag IS supported (used by lynxtron's own browser-demo), just
@@ -24,54 +38,436 @@
   flex: 1;
   min-width: 0;
   height: 100%;
+  cursor: default;
+}
+
+/* ── Title band ───────────────────────────────────────────────────────────
+   Absolutely positioned across the bar so its centre IS the window's centre.
+   Everything else in this file is a flex item; this one deliberately is not,
+   because a flex item can only ever be centred in whatever space its siblings
+   leave, and the two clusters are not the same width. That is what the old
+   `margin-right: 24px` was compensating for — a correction that had to be
+   re-tuned every time a control moved.
+   Capped at 40%: centred, that spans 30–70% of the bar, and both clusters end
+   well outside it. It sits before the clusters in source order, so if a very
+   narrow window ever did overlap, the controls paint over the title rather
+   than the other way round. */
+.commands-titlebar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  cursor: default;
+  column-gap: 7px;
+  pointer-events: none;
 }
 
+/* ── Spacing scale ────────────────────────────────────────────────────────
+   Three values, and nothing else in this file may invent a fourth:
+
+     2px   INSIDE a group — square icon buttons tiling next to each other.
+           Their own boxes already carry the optical air; anything more and
+           they stop reading as one set.
+     10px  BETWEEN groups — enough that the eye segments the bar without a
+           rule drawn to help it.
+     16px  from a cluster to the drag region, so the centred title is not
+           crowded by whatever the cluster ends with.
+
+   The bar had six different gaps before this: 6px between siblings, 4px
+   inside control groups, 2px in the address group, 1px in the icon rows,
+   plus per-button padding that varied with whether the control had a label.
+   Frameless buttons make that worse, not better — with no box drawn, the
+   visual edge is the glyph, so equal BOX gaps read as unequal AIR. */
 .commands-left,
 .commands-right {
   display: flex;
   flex-direction: row;
   align-items: center;
   flex-shrink: 0;
+  column-gap: 10px;
 }
+/* Grouped, not fused. Square boxes at 2px read as one set and still separate
+   under the pointer, because each box is wider than its glyph. */
+.commands-views,
+.commands-rail,
+.commands-docs {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  column-gap: 2px;
+}
+/* The rail is app scope, one step quieter than document scope beside it. */
+.commands-rail .bp3-icon { opacity: 0.55; }
+.commands-rail .bp3-button:hover .bp3-icon,
+.commands-rail .bp3-button.bp3-active .bp3-icon { opacity: 1; }
 /* upstream: .commands .bp3-control-group { margin-right: 0.5rem; } */
-.commands-left .bp3-control-group {
-  margin-right: 8px;
+/* Grouped controls used to touch, so a neighbour's hover wash ran straight
+   into Run's green edge and the two read as one smeared shape. */
+.commands .bp3-control-group {
+  column-gap: 4px;
 }
-.commands-right {
-  column-gap: 5px;
+
+/* ── Control scale ────────────────────────────────────────────────────────
+   A 30px/14px button row is a toolbar from 2015. Modern editors run their app
+   bar at ~26px with 12px labels and spend the difference on the title, which
+   is the only thing in the bar that says what you are looking at. */
+.commands .bp3-button {
+  height: 26px;
+  min-height: 26px;
+  min-width: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+/* Icon-only controls are SQUARES. Horizontal padding on a button with one
+   glyph in it makes a box wider than it is tall, so a row of them tiles
+   unevenly and no gap value can rescue it — the boxes themselves were the
+   problem. Every minimal control in this bar is icon-only except the version
+   chooser, which opts back out below. */
+.commands .bp3-button.bp3-minimal {
+  width: 26px;
+  padding: 0;
+  justify-content: center;
+}
+/* Frameless secondaries, in BOTH themes. Whether a control is a box or a label
+   is a structural decision about hierarchy, not a colour one — scoping it to
+   light was wrong, and it left the two themes with different bars. Every
+   control used to carry a filled box and a ring, so the row read as a strip of
+   chips and the one button that matters had to shout over the rest. Now only
+   the primary is a shape; the others are their label until you reach for them. */
+.commands .bp3-button {
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+.commands .bp3-button:hover {
+  background-color: var(--overlay-soft);
+}
+.commands .bp3-button.bp3-active {
+  background-color: var(--overlay-strong);
+  box-shadow: none;
+}
+/* The primary is the exception, and the exception is the point: it is the only
+   filled shape in the bar, and it wears the brand. */
+.commands .bp3-button.bp3-intent-primary {
+  background-color: var(--brand);
+  background-image: linear-gradient(to bottom, var(--brand-hi), var(--brand));
+}
+.commands .bp3-button.bp3-intent-primary:hover {
+  background-color: var(--brand-hover);
+  background-image: linear-gradient(to bottom, var(--brand), var(--brand-hover));
+}
+/* Icons carry the verb, not the emphasis — a step lighter than the label so
+   the row reads as text with marks beside it rather than a wall of glyphs. */
+.commands .bp3-button .bp3-icon {
+  opacity: 0.68;
+  font-size: 13px;
+}
+
+.commands .bp3-button:hover .bp3-icon,
+.commands .bp3-button.bp3-active .bp3-icon,
+.commands .bp3-button.bp3-intent-primary .bp3-icon {
+  opacity: 1;
+}
+/* line-height 1 and let align-items do the work. A 26px line box inside a 26px
+   button centres only if its half-leading divides evenly, and the icon beside
+   it renders at line-height 1 — so the label and its icon were sitting on
+   different centres. */
+.commands .bp3-button .bp3-button-text {
+  font-size: 12px;
+  line-height: 1;
+}
+.commands .bp3-button .bp3-icon {
+  line-height: 1;
+}
+
+.commands .bp3-input,
+.commands .bp3-input-group .bp3-input {
+  height: 26px;
+  min-height: 26px;
+  font-size: 12px;
+  border-radius: 5px;
 }
 /* upstream: .commands > .title — centered, ellipsized, max-width 20vw */
 .commands-title {
   flex-shrink: 1;
+  flex-grow: 0;
   min-width: 0;
   text-align: center;
+  /* The largest thing in the bar, now that the controls have come down to
+     12px: it is the only element that tells you which fiddle is open. */
   font-size: 13px;
-  color: var(--text-color-3); /* text-color-3 */
+  /* Regular. The title is already the largest thing in the bar and the only
+     one at full contrast — weight would be a third mechanism saying the same
+     rank, and three signals for one idea is how a chrome bar starts shouting.
+     Bold text in chrome also competes with the code underneath it, which is
+     the thing actually worth reading. */
+  font-weight: 400;
+  color: var(--bp-text);
   overflow: hidden;
   text-overflow: ellipsis;
-  margin: 0 10px;
+  /* No margin: the band centres the title and its dot as one pair, and a
+     margin here would push the dot away from the name it belongs to — which
+     is exactly what it was doing. */
+  max-width: 40%;
 }
-/* upstream: .address-bar width min(max(200px, 30vw), 420px); empty →
-   min(max(160px, 25vw), 300px). Lynx has no min()/max() CSS — approximate
-   with flex-basis clamps. */
+/* The traffic-light offset fudge is gone: geometric centring does not need
+   correcting for what sits beside it. */
+/* ONE width, always. Upstream animates the address bar between two widths
+   (empty 300px / filled 420px), which means the field grows out from under the
+   caret the instant you type the first character — the text you are entering
+   moves while you enter it. A field that changes size while focused is a field
+   you cannot aim at, so we spend the same width whether or not it holds a URL.
+   380px is chosen to show a full gist URL without truncation. */
 .commands-address {
   display: flex;
   flex-direction: row;
   align-items: center;
   flex-grow: 0;
-  flex-shrink: 1;
-  flex-basis: 380px;
-  min-width: 200px;
-  max-width: 420px;
-  transition: flex-basis 0.4s;
+  /* 200, not 280. Fixed either way — a field that resizes while you type is a
+     field you cannot aim at — but 280 made it the largest single consumer in
+     the bar, and the title was ellipsising at 153px while this sat half empty.
+     Making it merely shrinkable did nothing: the drag region only ever gets
+     the leftover, so nothing was ever pressing on it. */
+  flex-shrink: 0;
+  /* 176, not 262. The bar now has exactly one loud thing in it, and this was
+     quietly becoming the second: a field wide enough to hold a full gist URL is
+     a field sized for the rarest thing anyone does here. It holds enough to see
+     that a URL is there; the tooltip and the placeholder say what it is for. */
+  flex-basis: 176px;
+  width: 176px;
+  column-gap: 2px;
 }
-.commands-address.empty {
-  flex-basis: 280px;
-  min-width: 160px;
-  max-width: 300px;
+/* A divider, not a gap — and it falls where the SCOPE changes, not where the
+   markup happened to break. Load and Publish both act on this Fiddle's
+   documents; Settings and the overflow act on the app. The line sits between
+   those two ideas, so it reads as a boundary rather than a separator dropped
+   between two arbitrary buttons. */
+.commands-divider {
+  width: 1px;
+  height: 16px;
+  flex-shrink: 0;
+  /* No margin of its own: the parent's 10px group gap already sits on both
+     sides, and adding 4px more made a 28pt hole where the eye expected a
+     boundary. */
+  margin: 0;
+  background-color: var(--hairline);
+}
+/* Document scope: the gist round trip. One group, so the field and the two
+   verbs that act on it stay together. */
+.commands-docs {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  column-gap: 4px;
+}
+/* The field takes the row; Load sits next to it at its own size. */
+.commands-address .bp3-input-group {
+  flex-grow: 1;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+/* ── Palette entry ────────────────────────────────────────────────────────
+   The accelerator IS the label, set as a key cap: mono on a tinted ground with
+   a hairline, the same treatment every accelerator gets (see .KeyHint in
+   bp.css). Small and quiet — it teaches the shortcut once and then stops
+   asking for attention; hover brings it up to full contrast. */
+.commands .commands-search .bp3-button-text {
+  /* Beats `.commands .bp3-button .bp3-button-text` on specificity — that rule
+     is three classes to this one's two, so the badge lost its size and its
+     26px-tall leading to it however the file was ordered. */
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  line-height: 14px;
+  height: 16px;
+  letter-spacing: 0.02em;
+  color: var(--bp-text-muted);
+  background-color: var(--overlay-soft);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-left: 1px;
+  opacity: 0.75;
+}
+.commands .commands-search:hover .bp3-button-text {
+  color: var(--bp-text);
+  background-color: var(--overlay-strong);
+  opacity: 1;
+}
+
+/* ── Overflow ─────────────────────────────────────────────────────────────
+   Commands that already carry accelerators live here rather than spending bar
+   width. Anchored under the bar's right edge, above everything the Fiddle
+   paints — but note native editors paint above all Lynx UI regardless, which
+   is why the menu sits over the header strip rather than reaching into the
+   editor mosaic below it. */
+.commands-overflow-backdrop {
+  /* absolute, NOT fixed. Lynx promotes a `fixed` node directly under the root,
+     which lifts it straight OUT of the platform overlay it was rendered into —
+     so the dismiss surface ended up behind the overlay, where the overlay was
+     already swallowing every tap meant for it. The menu became unclosable, and
+     nothing about the CSS looked wrong. The overlay entry is itself a
+     full-window absolutely-positioned box, so absolute covers the same area
+     while staying inside it. */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Not transparent: Lynx skips fully transparent views in hit-testing, so a
+     clear backdrop would never receive the dismiss tap. */
+  background-color: rgba(0, 0, 0, 0.001);
+  pointer-events: auto;
+  z-index: 500;
+}
+/* Anchored to the shell, not the bar — Fiddle renders it into the platform
+   overlay host, so `top` clears the 51px header rather than the 30px command
+   row. The host is click-through by default; both layers opt back in. */
+.commands-overflow {
+  position: absolute;
+  top: 54px;
+  right: 12px;
+  pointer-events: auto;
+  z-index: 501;
+  /* Sized by its content, deliberately. Two stacked min-widths (210 here, 180
+     on .bp3-menu) reserved space the items never filled, and
+     `margin-left: auto` — which does not push in Lynx — left the accelerators
+     sitting against the text with all that reserved width dead to the right of
+     them. A panel that hugs its rows cannot have a gap to explain. */
+  border-radius: 6px;
+  background-color: var(--surface-raised);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+.theme-light .commands-overflow {
+  box-shadow: 0 6px 18px rgba(16, 22, 26, 0.18);
+}
+.commands-overflow .bp3-menu {
+  min-width: 0;
+  background-color: transparent;
+  box-shadow: none;
+  padding: 4px;
+}
+/* Fixed gap from the label, not flushed to an edge that isn't there. */
+.commands-overflow .bp3-menu-item {
+  padding: 5px 10px;
+  column-gap: 12px;
+}
+/* Same key cap as the bar's, so an accelerator looks identical wherever it is
+   shown. Right-aligned, so the keys read as a column down the trailing edge. */
+.commands-overflow .bp3-menu-item-label {
+  flex-shrink: 0;
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--bp-text-muted);
+  background-color: var(--overlay-soft);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-left: 0;
+  opacity: 0.75;
+}
+.commands-overflow .bp3-menu-item:hover .bp3-menu-item-label {
+  color: var(--bp-text);
+  background-color: var(--overlay-strong);
+  opacity: 1;
+}
+
+/* ── The three shapes in the bar ──────────────────────────────────────────
+   Everything else is a glyph on the ground. These are the exceptions, and the
+   hierarchy between them is the whole design: one thing you press, one thing
+   you type into, one thing you read. */
+
+/* READ. A version is a value, not a verb — so it is set as text with a
+   chevron, at the weight of a label rather than a control, and it carries no
+   mark. It used to wear the Lynxtron logo, which put two marks in one glance
+   and made the quietest control in the bar compete with the loudest. */
+.commands .bp3-button.commands-version {
+  /* Not a square: it has a label. Auto width, and less padding than a boxed
+     control because a frameless label's edge is its text.
+     Written at three classes to match `.commands .bp3-button.bp3-minimal` —
+     at two it lost on specificity however the file was ordered, and the
+     version chooser was squeezed to a 26px box reading "Ly...". */
+  width: auto;
+  padding: 0 6px 0 4px;
+  column-gap: 4px;
+  color: var(--bp-text-muted);
+}
+.commands .commands-version .bp3-button-text {
+  color: var(--bp-text-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.commands .commands-version:hover .bp3-button-text { color: var(--bp-text); }
+.commands .commands-version .bp3-icon { opacity: 0.45; font-size: 11px; }
+
+/* PRESS. The only filled shape in the window's chrome, and it wears the mark
+   of the thing it starts. A play triangle says "media"; this builds a project
+   and launches a Lynxtron process, and the mark is the shortest way to say
+   which runtime is about to appear. Stop keeps a square — the mark cannot mean
+   stop, and pretending otherwise would make the one honest glyph in the bar
+   lie about state. */
+.commands .commands-run {
+  padding: 0 11px 0 8px;
+  column-gap: 6px;
+  border-radius: 7px;
+}
+.commands .commands-run .bp3-button-text {
+  /* The one place weight is spent, and a step down from 600: it is already a
+     filled brand shape, so it does not need to be heavy as well. */
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+/* Always the dark-disc lockup: the ground here is brand green in BOTH themes,
+   so the reverse would be a light disc on a light fill. */
+.commands-run-mark {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Search is a BUTTON. Dressing it as a field was a lie about what happens when
+   you press it — nothing is typed here; a palette opens somewhere else. A
+   132px bar that never accepts a character is a control promising an
+   interaction it does not have, and it took bar width to make the promise.
+   Icon, accelerator, and the same frameless treatment as its neighbours. */
+.commands .commands-search {
+  /* Nothing of its own left to say — it is a square with a glyph, same as the
+     toggles beside it. */
+}
+.commands .commands-search .bp3-icon { opacity: 0.68; font-size: 13px; }
+
+/* The field recedes until it holds something. Empty, it is a placeholder on the
+   bar's own ground; the moment it has a URL it is a real input with a real
+   edge. Same reason the rail is dim: nothing in the trailing cluster is what
+   you came here to do. */
+.commands-address .bp3-input {
+  background-color: var(--overlay-soft);
+  border-width: 0;
+  box-shadow: none;
+  font-size: 11px;
+}
+.commands-address .bp3-input:hover,
+.commands-address .bp3-input:focus {
+  background-color: var(--overlay-strong);
+}
+
+/* Unsaved changes. The convention every editor uses: a small filled dot beside
+   the name, dim enough to be a state rather than a warning. */
+.commands-dirty {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-left: 0;
+  background-color: var(--bp-text-muted);
+  opacity: 0.65;
 }

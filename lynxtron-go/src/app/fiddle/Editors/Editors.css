@@ -1,7 +1,20 @@
 /* Mosaic editor grid — ported from fiddle's mosaic.less / editors.less.
    Visible gutters come from the 3px root inset + 3px tile margins showing
    the darker background through (upstream .mosaic-root inset 3px +
-   .mosaic-tile margin 3px over background-4). */
+   .mosaic-tile margin 3px over background-4).
+
+   ── NOTHING THAT COVERS A PANE MAY PAINT A BACKGROUND ────────────────────
+   The native editor is a platform subview of the Lynx renderer host. It draws
+   above the host's own layer — which is where the ROOT element's background
+   ends up — and below every descendant background, because Clay gives those
+   their own sublayers. So a background anywhere on the path down to a pane is
+   an opaque sheet over the editor, and the pane comes up blank.
+
+   That is a constraint, not a bug: it is the price of Scintilla living inside
+   the Lynx hierarchy, which is what lets overlays cover it at all. The seam
+   colour therefore comes from `.IDE` (App.css), the one element allowed to
+   paint under the panes. Backgrounds are spent on leaves that do not overlap a
+   pane — the header, the sidebar, the console, each pane's own toolbar. */
 .FiddleEditors {
   display: flex;
   flex-direction: column;
@@ -10,7 +23,6 @@
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-  background-color: var(--background-2); /* app background under the gutter wash */
 }
 /* Flat mosaic surface: every pane and sash is an absolutely-positioned child
    keyed by file id, so layout changes (expand / hide / sash drag) are pure
@@ -21,10 +33,23 @@
   min-width: 0;
   overflow: hidden;
   position: relative;
-  padding: 3px;
-  /* upstream .mosaic.mosaic-blueprint-theme { background: #bdbdbd15 } —
-     a light wash over the app background is the inter-pane gutter color */
-  background-color: rgba(189, 189, 189, 0.08);
+  /* One ground, seams darker than the panels — the relationship a modern
+     editor uses, rather than upstream's light wash sitting ON TOP of the app
+     background (three stacked separators: a 3px inset, the wash tinting it,
+     and a 3px pane margin). The seam is the darkest background showing between
+     panes, at the same 3px weight as the split sashes so every division in the
+     window reads as one system. */
+  /* A seam is the frame showing between panels, so it wears the chrome tone —
+     not a third colour, and not a wash laid over the app background. It is
+     painted by `.IDE` and shows through here; this element cannot paint it
+     itself without covering every pane (see the note at the top). */
+  padding: 0;
+  /* Pull the outer edge under its neighbours. Pane margins make the 3px seams
+     BETWEEN panes, but they also leave half a seam against the header, the
+     sidebar and the console — frame around the frame. Negative margin absorbs
+     exactly that outer half, so the only divisions left are the ones between
+     two things. */
+  margin: -2px;
 }
 .MosaicCell {
   position: absolute;
@@ -38,13 +63,13 @@
   z-index: 10;
 }
 .MosaicSashH {
-  width: 10px;
-  margin-left: -5px;
+  width: 11px;
+  margin-left: -4px;
   cursor: col-resize;
 }
 .MosaicSashV {
-  height: 10px;
-  margin-top: -5px;
+  height: 11px;
+  margin-top: -4px;
   cursor: row-resize;
 }
 .MosaicSashH:hover, .MosaicSashH:active { background-color: rgba(0, 127, 212, 0.35); }
@@ -59,53 +84,132 @@
   /* NOT transparent — see .MosaicSash */
   background-color: rgba(128, 128, 128, 0.02);
 }
-/* Every mosaic pane (leaf) — square, borderless; separation comes purely
-   from the 3px+3px gutter gaps (upstream tiles have no radius/shadow, and
-   rounded corners read as ragged seams at this gap size) */
+/* A pane carries no frame of its own. Its own toolbar already names it and the
+   1px of dark gutter around it already separates it; a border on top of both
+   was a third line saying the same thing. Focus lives entirely in the toolbar,
+   which is the part you are looking at anyway.
+   Square: a radius at a 1px gutter has nothing to sit in. */
 .MosaicWindow {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
   min-width: 0;
-  margin: 3px;
+  /* 2px a side — a 4px seam between neighbours, half of it from each, matching
+     the split sashes everywhere else in the window. */
+  margin: 2px;
   overflow: hidden;
-  background-color: var(--background-1); /* editor.background — matches native Scintilla theme */
+  /* Same 6px as the sidebar and the console, so every panel in the window is
+     the same object. NOTE: Lynx `overflow: hidden` does not clip a native
+     child, so the editor's own square corners sit inside this radius — the
+     toolbar rounds cleanly, the code area does not. Kept because at 6px the
+     effect reads as a soft edge rather than a mismatch; revisit if the radius
+     ever grows. */
+  border-radius: 6px;
+  /* No background: this box IS the pane, so anything painted here is painted
+     over the editor. The code's ground comes from the native side (ApplyTheme's
+     bg, kept in step with --surface-content), which is the only layer under the
+     text anyway. */
 }
-/* upstream .mosaic-window-toolbar: 30px, background-1, subtle inset shadow */
+/* Chrome, and it should read as chrome: one step darker than the code it sits
+   on, closed by a hairline underneath. Upstream draws a border ABOVE the
+   toolbar plus a drop shadow below — two separators for one edge, and the top
+   one duplicates the gutter that already separates the panes. One line, on the
+   side that actually divides label from content. */
+/* An idle pane has no chrome at all: its title sits in the pane's own ground,
+   above its own code. Chrome is spent on ONE thing — the pane you are working
+   in — so the two layers are legible at a glance instead of being a permanent
+   frame you stop seeing.
+   The border stays 1px at all times and only changes colour, so gaining focus
+   cannot nudge the code down a pixel. */
 .MosaicToolbar {
-  height: 30px;
-  min-height: 30px;
+  height: 26px;
+  min-height: 26px;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 0 5px 0 15px;
-  background-color: var(--background-1); /* background-1 */
-  border-top: 1px solid var(--hairline);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  padding: 0 8px 0 10px;
+  background-color: var(--surface-content);
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: transparent;
 }
+/* Focused: the one place chrome appears inside the mosaic. */
+.MosaicToolbar--active {
+  background-color: var(--surface-chrome);
+  border-bottom-color: var(--hairline);
+}
+/* A pane title is a file path — data, so mono, per the project's rule that
+   mono is never decoration. 12px: chrome should sit below the code it labels,
+   and 14px had the label competing with the source. */
 .MosaicToolbar-Title {
-  font-size: 14px;
-  color: var(--text-color-3); /* text-color-3 */
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 11px;
+  line-height: 15px;
+  letter-spacing: 0.01em;
+  color: var(--bp-text-muted);
+  opacity: 0.7;
   flex-shrink: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Focused file (sidebar selection): brighter title, subtle — upstream shows
-   no ring around the focused tile. */
 .MosaicToolbar-Title--active {
-  color: var(--foreground-1, #9feafa);
+  color: var(--bp-text, #f5f8fa);
+  opacity: 1;
 }
-/* upstream .mosaic-controls: transform scale(0.75), buttons spaced 8px */
+/* No transform: scale(). Scaling the control cluster shrinks its hit targets
+   and knocks the glyphs off the text baseline — the buttons are sized small
+   instead, which keeps them aligned and tappable. */
+/* Two square 18px targets on one baseline. Equal box, equal glyph size, no
+   padding asymmetry — the pair used to sit on a transform: scale(0.75), which
+   left them different apparent sizes and off the title's baseline. */
+/* Three targets that were crammed edge to edge at 1px apart, reading as one
+   smudge. Each gets room around its glyph and air between them. */
 .MosaicToolbar-Controls {
   display: flex;
   flex-direction: row;
   align-items: center;
-  column-gap: 8px;
-  transform: scale(0.75);
+  column-gap: 3px;
+  margin-left: 12px;
   flex-shrink: 0;
+}
+.MosaicToolbar-Controls .bp3-button {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: var(--bp-text-muted);
+  opacity: 0.55;
+  /* Reserved at rest so the lit state cannot shift its neighbours. */
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
+}
+/* The glyph size lives on the <Icon> in EditorPane, not here: Icon writes
+   font-size inline and inline wins, so this rule was dead for as long as it
+   existed. Only line-height is left, which no inline style sets. */
+.MosaicToolbar-Controls .bp3-button .bp3-icon {
+  line-height: 11px;
+}
+.MosaicToolbar-Controls .bp3-button:hover {
+  color: var(--bp-text);
+  opacity: 1;
+  background-color: var(--overlay-strong);
+}
+/* ON. The pane is zoomed, and stays zoomed until this is pressed — a state,
+   so it is drawn as one: lit ring, lit glyph, full opacity. */
+.MosaicToolbar-Controls .bp3-button.bp3-active {
+  opacity: 1;
+  color: var(--bp-text);
+  background-color: var(--overlay-strong);
+  border-color: var(--edge-strong);
 }
 /* The native editor's frame is set from this element's Lynx layout rect, and
    native views are NOT clipped by Lynx parents — this body must never be laid

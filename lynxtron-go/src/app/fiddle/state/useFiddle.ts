@@ -371,6 +371,16 @@ export function useFiddle(): UseFiddleResult {
         if (!f) continue;
         const editorId = scintillaIdFor(id);
 
+        // SCN_FOCUSIN, drained on the same tick as the content flag. This is
+        // the real answer to "clicking into a pane does not highlight it":
+        // native views consume their own input, so the click never reaches the
+        // Lynx pane's bindtap and only the extension can report it.
+        try {
+          if (api.consumeFocusGained?.(editorId) && snapRef.current.activeEditorId !== id) {
+            setSnap(prev => (prev.activeEditorId === id ? prev : { ...prev, activeEditorId: id }));
+          }
+        } catch (_) { /* older extension without the flag — typing still works */ }
+
         let changed = false;
         try { changed = !!api.hasContentChanged(editorId); } catch (_) { continue; }
         let text = liveText.current.get(id) ?? f.currentText;
@@ -380,6 +390,13 @@ export function useFiddle(): UseFiddleResult {
             if (typeof current !== 'string') continue;
             text = current;
           } catch (_) { continue; }
+
+          // Belt and braces behind the focus flag above: typing into a pane
+          // means it has focus, which keeps the highlight right even if the
+          // running extension predates consumeFocusGained.
+          if (snapRef.current.activeEditorId !== id) {
+            setSnap(prev => (prev.activeEditorId === id ? prev : { ...prev, activeEditorId: id }));
+          }
 
           // Ref-only update — React state is untouched unless dirty flips.
           liveText.current.set(id, text);

@@ -2695,9 +2695,19 @@ export function App(props: { onRender?: () => void } = {}) {
     onRunShowcaseOnWeb: runShowcaseEntryOnWeb,
     onDebugExampleRoute: () => { setGalleryOpen(false); openExampleArtifactDirect('view'); },
   };
-  const galleryNode = isGalleryOpen ? <GalleryHome {...galleryProps} /> : null;
-  // Legacy IDE has no Fiddle shell to host the gallery — full overlay fallback
-  // (standalone: the page carries its own Back since there is no commands bar).
+  /**
+   * `standalone` on both paths, because the gallery always has to carry its own
+   * exit now. It renders into the shared cover-view, and that platform overlay
+   * swallows input for the WHOLE window while it is up — measured: with the
+   * gallery open, a tap on the commands bar's Gallery toggle does nothing,
+   * while the identical tap works with no overlay. `pointer-events: none` on
+   * the host does not reach the platform layer.
+   *
+   * So the bar's pressed toggle, which used to be the way back, is unreachable
+   * from here, and a full-page surface with no exit inside itself is a trap.
+   */
+  const galleryNode = isGalleryOpen ? <GalleryHome {...galleryProps} standalone /> : null;
+  // Legacy IDE has no Fiddle shell to host the gallery — full overlay fallback.
   const galleryOverlay = showLegacyIde && isGalleryOpen ? (
     <PlatformOverlay priority={300}>
       <view className="GalleryOverlay">
@@ -2755,6 +2765,9 @@ export function App(props: { onRender?: () => void } = {}) {
       onStopExternalRun={stopGalleryRun}
       onThemeChange={() => setUiThemeDark(isDarkTheme())}
       onPaletteSourceChange={setFiddlePalette}
+      // The bar's ⌘P button and the menu accelerator open the same palette in
+      // the same state — a second, subtly different opener would drift.
+      onOpenPalette={() => { setPickerQuery(''); setPickerMode(undefined); setPickerOpen(true); }}
     />
   );
   // Tell the main process which surface is mounted so the menu can be rebuilt
@@ -2767,6 +2780,25 @@ export function App(props: { onRender?: () => void } = {}) {
       NativeModules.bridge.call('setSurface', { surface: showLegacyIde ? 'workspace' : 'fiddle' }, () => {});
     } catch (_) { /* older runtimes without the bridge keep the boot menu */ }
   }, [showLegacyIde]);
+
+  /**
+   * The app's ground is the WINDOW's background, not an element's — nothing in
+   * the Lynx tree may paint across a native editor without hiding it, and the
+   * root `<view>` is no exception. Only the UI knows which theme resolved, so
+   * it hands main the colour; main owns the window.
+   * Kept in step with --surface-chrome in App.css: this is the seam colour the
+   * mosaic, the sashes and the app edge all show.
+   */
+  useEffect(() => {
+    try {
+      // @ts-ignore
+      NativeModules.bridge.call(
+        'setWindowBackground',
+        { color: uiThemeDark ? '#2d313f' : '#eceef3' },
+        () => {},
+      );
+    } catch (_) { /* older runtimes keep whatever the window was created with */ }
+  }, [uiThemeDark]);
 
   const activeLoading = showcaseLoading ?? exampleArtifactLoading;
   const canGoBack = canNavigateRouteBack(routeNavigation);

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from '@lynx-js/react';
 import { SplitContainer } from '../components/Layout/SplitContainer';
 import { Header } from './Header/Header';
+import { Menu, MenuItem } from './bp/Menu';
 import { FiddleSidebar } from './Sidebar/FiddleSidebar';
 import { Editors } from './Editors/Editors';
 import { Outputs } from './Outputs/Outputs';
@@ -19,7 +20,7 @@ import { spawnRuntimeForWorkspace } from './runner/spawnRuntime';
 import { loadGistFiddle, parseGistId, publishGistFiddle } from './gist/gist-loader';
 import { loadLocalFiddle } from './runner/open';
 import { resolveShowcaseWorkspace, loadShowcaseFiddle, loadSingleFiddle, writeFiddleToWorkspace } from './runner/showcase-open';
-import { showcaseApi, appendFiddleOutput as appendOutput, type ShowcaseEntry, foundationApi } from '../store';
+import { showcaseApi, appendFiddleOutput as appendOutput, type ShowcaseEntry, foundationApi, getExposed } from '../store';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './dev-preset';
 import { applyEditorThemeAll, setThemeSetting } from './theme';
 import './Fiddle.css';
@@ -53,6 +54,8 @@ export interface FiddleProps {
   onStopExternalRun?: () => void;
   /** Theme setting changed — App re-reads config and swaps the UI class. */
   onThemeChange?: () => void;
+  /** Open the App-level palette. The commands bar is its only visible entry. */
+  onOpenPalette?: () => void;
   /** Publish this Fiddle's own files to the App-level palette (Cmd+P). The
       palette is App-level because it must float above both products, but the
       rows have to come from whichever one is mounted — the Fiddle's editors
@@ -121,6 +124,51 @@ export function Fiddle(props: FiddleProps) {
   // one shared cover-view host. Clay composites their children into one platform overlay slice,
   // so they can cover Scintilla without detaching its native view. Close local
   // dialogs when an App-level surface opens to keep overlay-slice order simple.
+  //
+  // The commands-bar overflow is owned here, not in Commands: the header has
+  // overflow:hidden, so a menu anchored inside the bar is clipped before it can
+  // open. That constraint is layout, not compositing — it outlived the
+  // Scintilla z-order problem that first forced the hoist.
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  // Reported by the main process on enter-/leave-full-screen: only it can see
+  // the traffic lights come and go.
+  const [fullScreen, setFullScreen] = useState(false);
+  useEffect(() => {
+    const handler = (data: any) => {
+      try {
+        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+        setFullScreen(!!parsed?.fullScreen);
+      } catch (_) { /* malformed payload — keep the last known state */ }
+    };
+    let emitter: any = null;
+    try {
+      // @ts-ignore
+      emitter = lynx.getJSModule('GlobalEventEmitter');
+      emitter?.addListener('ide:fullScreen', handler);
+    } catch (_) {}
+    return () => { try { emitter?.removeListener('ide:fullScreen', handler); } catch (_) {} };
+  }, []);
+  const isMacPlatform = (() => {
+    try { return getExposed()?.platform === 'darwin'; } catch (_) { return false; }
+  })();
+  /**
+   * Detaching is not free: live text lives in the native view, and a reattached
+   * pane does not repaint on its own. Flush before it goes and re-push after it
+   * comes back — setText is idempotent, so the re-push heals drift without ever
+   * clearing the style bytes. #46 removed this along with the dialog-detach it
+   * belonged to; the gallery still needs it.
+   */
+  useEffect(() => {
+    if (props.galleryOpen) {
+      fiddle.flushAll();
+    } else {
+      for (const f of fiddle.snap.files.values()) {
+        if (f.visible) fiddle.pushContent(f.id);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.galleryOpen]);
+
   useEffect(() => {
     if (!props.overlayActive) return;
     setTemplatePickerOpen(false);
@@ -128,6 +176,7 @@ export function Fiddle(props: FiddleProps) {
     setVersionsOpen(false);
     setHistoryOpen(false);
     setTourOpen(false);
+    setOverflowOpen(false);
   }, [props.overlayActive]);
 
   const handleToggleGallery = useCallback(() => {
@@ -471,6 +520,9 @@ export function Fiddle(props: FiddleProps) {
     'fiddle:run': () => handleRun(),
     'fiddle:stop': () => { if (runner.isRunning) runner.stop(); },
     'fiddle:toggleConsole': () => setConsoleShowing(v => !v),
+    // The gallery is the largest surface in the app and had no automation
+    // entry, so it could only ever be checked by hand.
+    'fiddle:toggleGallery': () => handleToggleGallery(),
     'fiddle:resetLayout': () => fiddle.resetLayout(),
     // Dev automation: drive sidebar interactions headlessly (eye toggle /
     // file select) — real mouse taps need Accessibility trust agents lack.
@@ -486,6 +538,14 @@ export function Fiddle(props: FiddleProps) {
       // its dead-man fallback.
       // @ts-ignore
       try { NativeModules.bridge.send('persistDone', {}); } catch (_) {}
+    },
+    // Same shape as the ide:fullScreen event the main process sends, so
+    // automation can exercise the layout response without the OS: the window
+    // chrome cannot be driven from here, but everything downstream of the flag
+    // can. Sits with setTheme because it is the same kind of thing — a piece of
+    // app state that only the host can normally change.
+    'fiddle:setFullScreen': (data: any) => {
+      setFullScreen(!!data?.fullScreen);
     },
     'fiddle:setTheme': (data: any) => {
       const t = data?.theme;
@@ -535,6 +595,46 @@ export function Fiddle(props: FiddleProps) {
 
   return (
     <view className="Fiddle bp3-dark">
+      {/* Routed through the platform overlay, not rendered inside the bar. Two
+          separate walls stand between a bar-anchored menu and the screen: the
+          header clips its own children, and the native editor still paints in a
+          platform layer that ordinary Lynx z-index cannot cross. The cover-view
+          host clears both — it is outside the header and it is a platform layer
+          of its own. */}
+      {overflowOpen ? (
+        <PlatformOverlay priority={120}>
+          <view className="commands-overflow-backdrop" bindtap={() => setOverflowOpen(false)} />
+          <view className="commands-overflow">
+            <Menu>
+              <MenuItem
+                icon="add"
+                text="New Fiddle"
+                label={isMacPlatform ? '\u2318N' : 'Ctrl+N'}
+                disabled={!!props.galleryOpen}
+                onClick={() => { setOverflowOpen(false); setTemplatePickerOpen(true); }}
+              />
+              <MenuItem
+                icon="floppy-disk"
+                text="Save Fiddle"
+                label={isMacPlatform ? '\u2318S' : 'Ctrl+S'}
+                disabled={!!props.galleryOpen}
+                onClick={() => { setOverflowOpen(false); void handleSave(); }}
+              />
+              <MenuItem
+                icon="history"
+                text="Gist History"
+                disabled={fiddle.snap.source.kind !== 'gist' || !!props.galleryOpen}
+                onClick={() => { setOverflowOpen(false); setHistoryOpen(true); }}
+              />
+              <MenuItem
+                icon="help"
+                text="Help"
+                onClick={() => { setOverflowOpen(false); handleOpenHelp(); }}
+              />
+            </Menu>
+          </view>
+        </PlatformOverlay>
+      ) : null}
       <Header
         onToggleConsole={() => setConsoleShowing(v => !v)}
         galleryOpen={props.galleryOpen}
@@ -548,6 +648,10 @@ export function Fiddle(props: FiddleProps) {
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenHelp={handleOpenHelp}
         onOpenVersionChooser={() => setVersionsOpen(true)}
+        onOpenPalette={props.onOpenPalette}
+        fullScreen={fullScreen}
+        overflowOpen={overflowOpen}
+        onToggleOverflow={() => setOverflowOpen(v => !v)}
         currentVersion={currentVersion}
         gistId={fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.ref ?? null : null}
         isConsoleShowing={isConsoleShowing}
@@ -593,8 +697,19 @@ export function Fiddle(props: FiddleProps) {
                 onHideEditor={fiddle.hideEditor}
                 onResetLayout={fiddle.resetLayout}
                 pushContent={fiddle.pushContent}
+                suppressed={!!props.galleryOpen}
               />
             </SplitContainer>
+            {/* In the tree, not in the platform overlay. The gallery REPLACES
+                the editors rather than floating over them, so the native views
+                detach and there is nothing left for a cover-view to cover — and
+                a plain view leaves the rest of the window live, which is the
+                whole point: the bar's pressed Gallery toggle is the way back.
+                A cover-view here made the entire window deaf to input, so the
+                only exit sat in the one place that could not be clicked. */}
+            {props.galleryOpen && props.gallery ? (
+              <view className="FiddleGalleryLayer">{props.gallery}</view>
+            ) : null}
           </view>
           <Outputs
             runningPid={runner.pid}
@@ -605,18 +720,6 @@ export function Fiddle(props: FiddleProps) {
           />
         </SplitContainer>
       </view>
-      {props.galleryOpen && props.gallery ? (
-        <PlatformOverlay priority={50}>
-          <view
-            className="FiddleGalleryLayer"
-            style={mainRegionHeight > 0
-              ? { top: '51px', height: `${mainRegionHeight}px` }
-              : undefined}
-          >
-            {props.gallery}
-          </view>
-        </PlatformOverlay>
-      ) : null}
       {templatePickerOpen && (
         <TemplatePicker
           onPickBlank={() => { fiddle.loadTemplate('blank'); setCurrentShowcase(null); setTemplatePickerOpen(false); }}

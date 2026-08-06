@@ -99,17 +99,28 @@
   color: #182026;
 }
 
+/* The primary action wears the brand. Run is the point of this app, and it was
+   Blueprint's stock blue — the same blue as every other Blueprint app, and the
+   same blue this app already spends on links and info logs. */
 .bp3-button.bp3-intent-primary {
-  background-color: #137cbd;
-  background-image: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0));
-  color: var(--text-color-1);
-  box-shadow:
-    inset 0 0 0 1px rgba(16,22,26,0.4),
-    inset 0 -1px 0 rgba(16,22,26,0.2);
+  background-color: var(--brand);
+  /* Top-lit, like the launch window's mark and Quick Start button: a flat fill
+     next to frameless neighbours reads as a swatch, a lit one reads as a
+     surface you can press. */
+  background-image: linear-gradient(to bottom, var(--brand-hi), var(--brand));
+  color: var(--brand-ink);
+  box-shadow: none;
 }
-.bp3-button.bp3-intent-primary:hover { background-color: #106ba3; }
+.bp3-button.bp3-intent-primary .bp3-button-text,
+.bp3-button.bp3-intent-primary .bp3-icon {
+  color: var(--brand-ink);
+}
+.bp3-button.bp3-intent-primary:hover {
+  background-color: var(--brand-hover);
+  background-image: linear-gradient(to bottom, var(--brand), var(--brand-hover));
+}
 .bp3-button.bp3-intent-primary:active,
-.bp3-button.bp3-intent-primary.bp3-active { background-color: #0e5a8a; }
+.bp3-button.bp3-intent-primary.bp3-active { background-color: var(--brand-active); }
 .bp3-button.bp3-intent-danger {
   background-color: #db3737;
   background-image: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0));
@@ -388,8 +399,9 @@
 }
 .bp3-menu-item {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 8px;
+  column-gap: 10px;
   padding: 5px 10px;
   border-radius: 3px;
   cursor: pointer;
@@ -400,9 +412,26 @@
 .bp3-menu-item.bp3-active { background-color: #137cbd; color: var(--text-color-1); }
 .bp3-menu-item.bp3-disabled { opacity: 0.5; cursor: not-allowed; }
 .bp3-menu-item.bp3-disabled:hover { background: none; }
-.bp3-menu-item-icon { flex-shrink: 0; }
-.bp3-menu-item-text { flex: 1; }
-.bp3-menu-item-label { color: var(--bp-text-muted); font-size: 11px; }
+.bp3-menu-item-icon { flex-shrink: 0; color: var(--bp-text-muted); font-size: 14px; }
+/* Lynx <text> does NOT inherit colour or size from its parent <view>, so a
+   menu item's label styling on .bp3-menu-item never reached this element —
+   the text rendered at the default colour, which on this surface is invisible.
+   The icon and the accelerator showed only because they set their own. */
+/* NOT `flex: 1` — that is flex-basis 0, and a <text> given a zero basis
+   collapses to zero width here, which is why menu items rendered as an icon
+   and an accelerator with nothing between them. Grow from the text's own
+   width instead, and let the label be pushed out by margin. */
+.bp3-menu-item-text {
+  flex-grow: 0;
+  flex-shrink: 1;
+  flex-basis: auto;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--bp-text);
+}
+.bp3-menu-item.bp3-disabled .bp3-menu-item-text,
+.bp3-menu-item.bp3-disabled .bp3-menu-item-icon { color: var(--bp-text-muted); }
+.bp3-menu-item-label { flex-shrink: 0; color: var(--bp-text-muted); font-size: 11px; }
 .bp3-menu-item.bp3-intent-danger { color: #db3737; }
 .bp3-menu-divider {
   height: 1px;
@@ -446,7 +475,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 4px;
+  column-gap: 4px;
   padding: 2px 8px;
   border-radius: 3px;
   background-color: #5c7080;
@@ -462,7 +491,23 @@
 .bp3-tag.bp3-intent-success { background-color: #0f9960; }
 .bp3-tag.bp3-intent-warning { background-color: #d9822b; }
 .bp3-tag.bp3-intent-danger { background-color: #db3737; }
-.bp3-tag-text { color: inherit; font-size: inherit; }
+/* `minimal` used to be dead the moment an intent was set: it is written above
+   the intent rules at equal specificity, so the solid fill won and every
+   minimal tag rendered as a block of saturated colour. Minimal means tinted
+   text on a tint of its own colour — the intent still reads, without a badge
+   shouting louder than the row it labels. */
+.bp3-tag.bp3-minimal.bp3-intent-primary { background-color: rgba(19,124,189,0.18); }
+.bp3-tag.bp3-minimal.bp3-intent-success { background-color: rgba(15,153,96,0.18); }
+.bp3-tag.bp3-minimal.bp3-intent-warning { background-color: rgba(217,130,43,0.18); }
+.bp3-tag.bp3-minimal.bp3-intent-danger  { background-color: rgba(219,55,55,0.18); }
+/* Lynx <text> does not inherit colour or size from its parent <view>, so
+   `inherit` here resolved to the default, not to the tag's. Stated per intent. */
+.bp3-tag-text { color: var(--bp-text); font-size: 11px; line-height: 15px; }
+.bp3-tag.bp3-minimal .bp3-tag-text { color: var(--bp-text-muted); }
+.bp3-tag.bp3-minimal.bp3-intent-primary .bp3-tag-text { color: #7cc2f0; }
+.bp3-tag.bp3-minimal.bp3-intent-success .bp3-tag-text { color: #3dd68c; }
+.bp3-tag.bp3-minimal.bp3-intent-warning .bp3-tag-text { color: #e0a26b; }
+.bp3-tag.bp3-minimal.bp3-intent-danger  .bp3-tag-text { color: #ff7373; }
 .bp3-tag-remove {
   cursor: pointer;
   padding: 0 2px;
@@ -617,4 +662,58 @@
     0 0 0 1px rgba(16,22,26,0.1),
     0 2px 4px rgba(16,22,26,0.2),
     0 8px 24px rgba(16,22,26,0.2);
+}
+
+/* ── Tooltip ──────────────────────────────────────────────────────────────
+   Lynx draws no tooltip of its own, so this is the whole mechanism. The anchor
+   only marks and measures the control; the bubble is rendered into the shared
+   platform overlay host, which is what lets it leave the clipped 51px header
+   and still land above the native editor.
+
+   The frame is the positioning element — an absolutely placed row whose own
+   geometry is computed from the anchor's measured rect (see Tooltip.tsx). The
+   bubble inside it never positions itself, so one bubble style serves both
+   alignments. */
+.bp3-tooltip-anchor {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.bp3-tooltip-frame {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  pointer-events: none;
+}
+.bp3-tooltip-frame--end {
+  justify-content: flex-end;
+}
+.bp3-tooltip {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 6px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background-color: var(--surface-raised);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+}
+.bp3-tooltip-text {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--bp-text);
+}
+/* Same key cap as the bar and the overflow — one treatment everywhere. */
+.bp3-tooltip-key {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--bp-text-muted);
+  background-color: var(--overlay-soft);
+  border-radius: 3px;
+  padding: 1px 4px;
 }

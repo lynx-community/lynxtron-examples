@@ -1,26 +1,41 @@
 .Outputs {
+  /* ── Panels as cards on the ground ──────────────────────────────────────
+     A small radius, not a decorative one. The window's background is the ground
+     now, and a 6px corner is what makes each panel read as a thing sitting on
+     it rather than a region carved out of it. Larger would be a widget; this is
+     just enough to stop the seams reading as cracks. */
+  border-radius: 6px;
+  overflow: hidden;
+
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
-  background-color: var(--background-2);   /* background-2 */
-  border-bottom: 1px solid var(--border-color-1); /* upstream @border */
+  /* CONTENT, same ground as the code. Run output is something you read, not
+     part of the frame — it wore --background-2, the SEAM tone, which is why
+     the console read as a hole in the window rather than a panel of it. */
+  background-color: var(--surface-content);
+  border-bottom-width: 0;
 }
 .Outputs-Header {
-  height: 28px;
+  height: 30px;
   padding: 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: var(--background-3);   /* background-3 */
-  border-bottom: 1px solid var(--border-color-1); /* upstream @border */
+  /* In the console's own ground, and with nothing drawn under it: a rule there
+     would re-cap the panel that removing the background just opened up. */
+  background-color: var(--surface-content);
+  border-bottom-width: 0;
   column-gap: 10px;
 }
 .Outputs-HeaderLeft { display: flex; align-items: center; gap: 10px; }
+/* Same panel title as the sidebar's sections — one kind of label, one size. */
 .Outputs-Title {
-  font-size: 11px;
-  color: var(--bp-text-muted);
-  letter-spacing: 0.5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color-1);
+  letter-spacing: 0.3px;
 }
 .Outputs-Status { display: flex; align-items: center; gap: 6px; }
 .Outputs-HeaderRight {
@@ -43,18 +58,20 @@
   font-family: monospace;
   overflow: hidden;
 }
-.Outputs-Empty { color: var(--bp-text-muted); font-size: 12px; }
+.Outputs-Empty { color: var(--bp-text-muted); font-size: 13px; }
 .Outputs-Line {
   display: flex;
   column-gap: 8px;
   padding: 1px 0;
   font-family: "SF Mono", Menlo, Consolas, monospace;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  /* Not bold: run output is a wall of monospace, and 600 across all of it left
+     nothing for the intent colours to stand out against. */
+  font-weight: 400;
   line-height: 1.5;
 }
-.Outputs-Line--stderr .Outputs-Message { color: #ff7373; }
-.Outputs-Line--command .Outputs-Message { color: #48aff0; }
+.Outputs-Line--stderr .Outputs-Message { color: var(--log-error); }
+.Outputs-Line--command .Outputs-Message { color: var(--log-info); }
 .Outputs-Timestamp {
   color: var(--bp-text-muted);
   font-family: monospace;

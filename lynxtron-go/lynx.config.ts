@@ -71,6 +71,25 @@ function resolveThumbnailUrl(thumbnail: string | null): string | null {
   return pathToFileURL(path.resolve(__dirname, 'dist', 'desktop', 'thumbnails', staged)).href;
 }
 
+/**
+ * The Lynxtron mark, as a URL the renderer can actually load.
+ *
+ * Same constraint as the thumbnails above — `<image>` reads the URL itself and
+ * will not take https — and the same shape of answer: rspack copies the files
+ * next to the bundle (see rspack.config.ts) and the app is handed file:// URLs
+ * of the copies. Baking them as defines rather than importing them keeps the
+ * app source free of paths that only resolve after a build.
+ *
+ * Two lockups, because the mark is a near-black disc: on the dark bar it is a
+ * hole, and no filter can rescue it — Lynx supports blur/grayscale/brightness/
+ * contrast/saturate but NOT invert, and brightness cannot lift black. So the
+ * reverse is a real second asset, checked in beside the original.
+ */
+const brandUrl = (file: string) =>
+  pathToFileURL(path.resolve(__dirname, 'dist', 'desktop', 'brand', file)).href;
+const BRAND_MARK_URL = brandUrl('lynxtron.png');
+const BRAND_MARK_ON_DARK_URL = brandUrl('lynxtron-on-dark.png');
+
 function buildShowcaseRegistry() {
   try {
     const registry = JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
@@ -204,6 +223,8 @@ export default defineConfig({
       __FIDDLE_CATALOG__: JSON.stringify(bakedFiddles),
       __SHOWCASE_PREVIEW__: JSON.stringify(isLocalSourceMode),
       __SHOWCASE_LOCAL_WORKSPACE__: JSON.stringify(isLocalWorkspace),
+      __BRAND_MARK_URL__: JSON.stringify(BRAND_MARK_URL),
+      __BRAND_MARK_ON_DARK_URL__: JSON.stringify(BRAND_MARK_ON_DARK_URL),
     },
   },
   plugins: [

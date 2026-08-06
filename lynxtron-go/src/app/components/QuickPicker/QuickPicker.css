@@ -14,7 +14,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: rgba(11, 18, 32, 0.55);
+  background-color: rgba(0, 0, 0, 0.1);
   pointer-events: auto;
   /* Above the gallery overlay (300) and the Fiddle's dialogs (100/200): the
      palette is opened from any of them and must never appear behind one. The
@@ -30,25 +30,39 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 6px;
-  background-color: var(--background-3);
+  /* The site's chrome: a near-black panel, a hairline, a small radius, and a
+     shadow doing the lifting instead of a heavier border. */
+  border-radius: 10px;
+  /* CHROME, not RAISED. The raised tier is two steps off the content the
+     palette opens over, which made the panel read as a different material
+     rather than as the same window lifted — the shadow and the hairline are
+     what say "above", and they say it without moving the tone. */
+  background-color: var(--surface-chrome);
   border-width: 1px;
   border-style: solid;
   border-color: var(--hairline);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
 }
 
 /* ── Query ──────────────────────────────────────────────────────────────── */
 
+/* The query is the one rounded object in the panel: an inset field with its own
+   edge. The rows are flush and square underneath it.
+   The previous arrangement had these exactly backwards — a full-bleed query
+   with no chrome above rows that each carried a radius and a 6px inset — so the
+   only rounded things in the panel were the rows, and they lined up with
+   nothing. One rounded object, or none; not a list of them. */
 .PickerInput {
-  width: 100%;
-  height: 44px;
-  padding: 0 14px;
+  height: 38px;
+  margin: 8px 8px 6px 8px;
+  padding: 0 12px;
   font-size: 14px;
   color: var(--bp-text);
-  background-color: var(--background-4);
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: var(--hairline);
+  background-color: var(--overlay-soft);
+  border-radius: 8px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
 }
 
 /* ── Results ────────────────────────────────────────────────────────────── */
@@ -63,24 +77,32 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 9px 14px;
-  border-bottom-width: 1px;
-  border-bottom-style: solid;
-  border-bottom-color: var(--hairline);
+  /* Full bleed and square. A result row is not an object you pick up, it is a
+     band you land on — the radius fought the field above it and the inset left
+     the highlight floating in the middle of the panel. */
+  padding: 0 16px;
+  height: 34px;
 }
 
 .PickerItem:hover {
-  background-color: var(--background-4);
+  /* A wash over whatever the panel's ground is, not a fixed tone: the row
+     states have to follow the panel if its tier ever changes again, and
+     --background-4 is DARKER than chrome, so hover was digging a hole. */
+  background-color: var(--overlay-soft);
 }
 
 /* The row Enter would activate. Arrows move it, hover moves it, and it starts
    on the first result — so there is always exactly one, and it is visible. */
 .PickerItem--active {
-  background-color: var(--bp-selected-bg);
+  /* Neutral. Selection is a SURFACE, and surfaces in this app do not carry the
+     brand — the green belongs to marks and to the one filled action, not to
+     the ground under a row. It was a stock VS Code blue before, which was the
+     real problem: a colour that means nothing here. */
+  background-color: var(--overlay-strong);
 }
 
 .PickerItem--active:hover {
-  background-color: var(--bp-selected-bg);
+  background-color: var(--overlay-strong);
 }
 
 .PickerIcon {
@@ -94,15 +116,21 @@
   flex-grow: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  /* One line: name, then its path beside it. Stacked, every row was two lines
+     tall and the list showed four results where it now shows eight — and for a
+     Fiddle the "path" is the file id, so the second line was repeating the
+     first verbatim. */
+  flex-direction: row;
+  align-items: baseline;
+  column-gap: 8px;
 }
 
 .PickerFileName {
   font-size: 13px;
   line-height: 18px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--bp-text);
+  flex-shrink: 0;
 }
 
 /* Paths are data. */
@@ -111,7 +139,10 @@
   font-size: 11px;
   line-height: 16px;
   color: var(--bp-text-muted);
-  margin-top: 2px;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* A showcase's description is prose, not data — it must not inherit the
@@ -128,8 +159,8 @@
   flex-shrink: 0;
   margin-left: 10px;
   padding: 1px 6px;
-  border-radius: 3px;
-  background-color: var(--background-4);
+  border-radius: 4px;
+  background-color: var(--overlay-soft);
   font-family: 'SF Mono', Menlo, monospace;
   font-size: 10px;
   line-height: 15px;
@@ -137,13 +168,32 @@
 }
 
 .PickerCommand .PickerIcon {
-  color: #48aff0;
+  color: var(--brand);
+  opacity: 0.85;
+}
+.PickerItem--active .PickerIcon {
+  opacity: 1;
 }
 
 .PickerShowcase .PickerIcon {
   color: #f5a623;
 }
 
+.PickerShowcase .PickerItemInfo,
+.PickerShowcase {
+  /* Showcases carry a description and tags, so their rows stay stacked and
+     size to content — the fixed single-line height above is for file and
+     command rows. */
+  flex-direction: column;
+  align-items: flex-start;
+  height: auto;
+}
+.PickerShowcase {
+  flex-direction: row;
+  align-items: center;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
 .PickerShowcaseHeader {
   display: flex;
   flex-direction: row;
@@ -196,11 +246,10 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 7px 14px;
+  padding: 8px 16px;
   border-top-width: 1px;
   border-top-style: solid;
   border-top-color: var(--hairline);
-  background-color: var(--background-4);
 }
 
 .PickerFooterText {

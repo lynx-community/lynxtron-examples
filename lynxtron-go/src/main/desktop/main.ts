@@ -444,6 +444,25 @@ function openPreviewWindow(title: string, fileRoots: string[]): LynxWindowInstan
  */
 type MenuSurface = 'fiddle' | 'workspace';
 
+/**
+ * Re-issue whichever load brought this window up. The same two branches as the
+ * initial load, deliberately: a dev window points at the rspeedy server and a
+ * packaged one at the bundle on disk, and a reload that swapped between them
+ * would be a different window, not the same one again.
+ */
+function reloadWindow(w: LynxWindowInstance) {
+  try {
+    if (isDev) {
+      w.loadURL('http://localhost:3000/main.lynx.bundle');
+    } else {
+      w.loadFile(LYNX_BUNDLE_PATH);
+    }
+    console.log('[PC_Host] menu: reload');
+  } catch (e: any) {
+    console.error('[PC_Host] reload failed:', e?.message ?? String(e));
+  }
+}
+
 function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
   const isWorkspace = surface === 'workspace';
   /** Fiddle surface only — Fiddle.tsx is unmounted on the workspace surface. */
@@ -681,7 +700,20 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
             click: () => sendCmd('resetLayout'),
           }]),
       { type: 'separator' },
-      { role: 'reload' },
+      /**
+       * Reload has to be spelled out. `{ role: 'reload' }` is an Electron role
+       * and Lynxtron has no web contents to reload — LynxWindow offers
+       * loadFile/loadURL/loadBundle and no reload() — so the item drew a label
+       * and did nothing. Its default accelerator also collided with ⌘R, which
+       * this app spends on Run; Run keeps it, and reloading takes ⇧⌘R.
+       */
+      {
+        id: 'reloadBundle',
+        label: 'Reload',
+        accelerator: 'CmdOrCtrl+Shift+R',
+        registerAccelerator: true,
+        click: () => reloadWindow(w),
+      },
       { type: 'separator' },
       { role: 'togglefullscreen' },
     ],
@@ -793,6 +825,11 @@ if (!hasSingleInstanceLock) {
     const w = new LynxWindow({
       width: 1200,
       height: 800,
+      // The ground under everything, including the native editors. Dark is the
+      // boot default; the UI corrects it via setWindowBackground once it knows
+      // which theme resolved. Without this the window comes up white and the
+      // seams flash before the first report.
+      backgroundColor: '#2d313f',
       ...devPosition,
       title: isIdeBootTarget ? 'Lynxtron IDE' : appTitle,
       // Upstream Fiddle: no visible titlebar — traffic lights float over the
@@ -827,6 +864,27 @@ if (!hasSingleInstanceLock) {
     // The app's own UI bundle fetches assets from its dist dir; materialized
     // fiddle workspaces live under tmpdir.
     installFileResourceFetcher(w, [__dirname, os.tmpdir()]);
+    // The traffic lights vanish in macOS fullscreen, and the space reserved for
+    // them becomes dead width at the left of the commands bar. Only the main
+    // process can see the transition, so it reports it and the UI lets the bar
+    // reclaim the gap.
+    try {
+      const reportFullScreen = () => {
+        try {
+          const fullScreen = w.isFullScreen();
+          console.log(`[PC_Host] full-screen: ${fullScreen}`);
+          w.sendGlobalEvent('ide:fullScreen', { fullScreen });
+        } catch (e) {
+          console.warn('[PC_Host] full-screen report failed:', e);
+        }
+      };
+      w.on('enter-full-screen', reportFullScreen);
+      w.on('leave-full-screen', reportFullScreen);
+      reportFullScreen();
+    } catch (e) {
+      console.warn('[PC_Host] full-screen reporting unavailable:', e);
+    }
+
     try {
       // A window spawned as a dedicated IDE boots straight into the workspace
       // surface, so start with that menu rather than flashing the Fiddle's.
@@ -925,6 +983,25 @@ if (!hasSingleInstanceLock) {
             }
           }
           callback.sendReply({ ok: true, surface: menuSurface });
+        } else if (name === 'setWindowBackground') {
+          /**
+           * The app's ground lives on the WINDOW, not on a Lynx element.
+           * A native editor is a platform subview of the renderer host, so any
+           * Lynx background above it paints over it — including the app root,
+           * which is a `<view>` inside `<page>` and gets its own sublayer. The
+           * window is the only surface strictly below both.
+           * The UI owns the theme, so it reports the colour rather than main
+           * re-deriving a palette it does not have.
+           */
+          const color = stringParam(params, 'color');
+          if (color && menuWindow) {
+            try {
+              menuWindow.setBackgroundColor(color);
+            } catch (e) {
+              console.error('[PC_Host] setBackgroundColor FAILED:', e);
+            }
+          }
+          callback.sendReply({ ok: true });
         } else if (name === 'getAppVersion') {
           callback.sendReply(app.getVersion());
         } else if (name === 'openFolder') {

@@ -36,3 +36,13 @@
   background-color: var(--bp-button-bg);
   border-radius: 0 0 6px 6px;
 }
+
+/* A numeric field is as wide as the number it holds, not as wide as the row.
+   It also has to be wide at all: .bp3-input is `flex: 1`, i.e. flex-basis 0,
+   so an input group with no width collapses the field to zero — the font size
+   control was a 0px box you could neither read nor type into. */
+.SettingsNumberInput {
+  width: 88px;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
