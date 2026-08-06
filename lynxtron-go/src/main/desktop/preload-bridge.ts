@@ -29,6 +29,13 @@ export function createPreloadBridge() {
     // (Gallery IDE action) — the UI hides Fiddle-centric chrome like the
     // route-back chevrons in that mode.
     bootTarget: process.env.LYNXTRON_BOOT_TARGET ?? null,
+    /**
+     * An absolute folder for an IDE window to open at startup. Passed by env
+     * rather than by deep link on purpose: the deep-link scheme is a public,
+     * user-facing contract, and "open this arbitrary local directory" is an
+     * internal handoff between a parent window and the child it spawned.
+     */
+    bootFolder: process.env.LYNXTRON_BOOT_FOLDER ?? null,
     ...createFoundationBridge(dbg),
     ls: extensionHost.bridge,
     pty: pty.bridge,

@@ -1,6 +1,6 @@
 import './GalleryHome.css';
 import { Button } from '../../fiddle/bp';
-import { isDevMode } from '../../fiddle/dev-preset';
+import { Tooltip } from '../../fiddle/bp/Tooltip';
 import {
   FIDDLE_CATALOG,
   FIDDLE_SHOWCASE_NAME,
@@ -13,7 +13,6 @@ import {
 
 interface GalleryHomeProps {
   onBack: () => void;
-  onOpenFolder: () => void;
   onOpenShowcase: (entry: ShowcaseEntry) => void;
   /** Legacy route: open the workspace in the old IDE shell instead of the Fiddle. */
   onOpenShowcaseLegacy: (entry: ShowcaseEntry) => void;
@@ -23,7 +22,6 @@ interface GalleryHomeProps {
   /** Load ONE fiddle's own source into the Fiddle editors. */
   onOpenFiddle: (entry: ShowcaseEntry, fiddle: { id: string; title: string; upstream: string }) => void;
   onRunShowcaseOnWeb: (entry: ShowcaseEntry) => void;
-  onDebugExampleRoute: () => void;
   /** Full-screen fallback (legacy IDE) — no commands bar above, so the page
       must carry its own exit. In the Fiddle shell the bar's pressed Gallery
       toggle is the exit and this stays hidden. */
@@ -177,14 +175,12 @@ function ElectronFiddlesSection({
 
 export function GalleryHome({
   onBack,
-  onOpenFolder,
   onOpenShowcase,
   onOpenShowcaseLegacy,
   onRunShowcase,
   onRunFiddle,
   onOpenFiddle,
   onRunShowcaseOnWeb,
-  onDebugExampleRoute,
   standalone = false,
 }: GalleryHomeProps) {
   // The Electron-fiddles showcase gets its own section below, so it does not
@@ -210,15 +206,19 @@ export function GalleryHome({
             <text className="GalleryTitle">Showcase gallery</text>
             {SHOWCASE_PREVIEW && <text className="GalleryBadge">PREVIEW</text>}
           </view>
+          {/* Back, and nothing else. Two controls left this bar:
+              — Open Folder… opened an arbitrary directory as an IDE workspace,
+                IN THIS WINDOW, silently replacing the gallery with a different
+                product. It is also already File ▸ Open Folder… (⌘O) and a
+                palette command (⇧⌘O), so this was a third entry point for a
+                command that belongs to the app, not to a page about showcases.
+              — "debug route" was a developer probe for the deep-link pipeline,
+                reachable from the palette as Open Example Artifact. Dev tooling
+                does not belong in the product's chrome. */}
           <view className="GalleryTopBarActions">
-            {standalone ? <Button text="← Back" small minimal onClick={onBack} /> : null}
-            {/* Gallery-unique actions only: browsing lives on this page itself
-                (the old "Browse All" opened a picker that did exactly what the
-                cards' Open does), and the deep-link debug probe is dev-only. */}
-            <Button text="Open Folder…" small title="Open a folder as an IDE workspace" onClick={onOpenFolder} />
-            {isDevMode() ? (
-              <Button text="debug route" small minimal title="Dev: probe the example deep-link route" onClick={onDebugExampleRoute} />
-            ) : null}
+            <Tooltip content="Back to the Fiddle" align="end">
+              <Button className="GalleryBack" icon="chevron-left" text="Back" small minimal onClick={onBack} />
+            </Tooltip>
           </view>
         </view>
 

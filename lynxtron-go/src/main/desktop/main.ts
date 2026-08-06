@@ -558,8 +558,15 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
     ? [
         {
           id: 'openFolder',
-          label: 'Open Folder…',
-          accelerator: 'CmdOrCtrl+O',
+          // Says where it goes. The IDE is always its own window now, so this
+          // no longer replaces whatever you were working in.
+          label: 'Open Folder in IDE…',
+          // ⇧⌘O on both surfaces. One command, one key, wherever you are — it
+          // used to be ⌘O and to exist ONLY in the workspace submenu, so on the
+          // Fiddle surface (where you actually reach for it) there was no menu
+          // item and no accelerator at all, while the palette advertised
+          // ⇧⌘O next to a command nothing had bound.
+          accelerator: 'CmdOrCtrl+Shift+O',
           registerAccelerator: true,
           // App.tsx runs the native dialog itself through the openFolder
           // bridge call. The Fiddle surface's Open… cannot stand in here: it
@@ -596,7 +603,11 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
         { type: 'separator' },
         {
           id: 'open',
-          label: 'Open...',
+          // Loads a folder's fiddle files into THIS Fiddle (fiddle:openFolder
+          // → loadLocalFiddle). Distinct from "Open Folder in IDE…" below,
+          // which opens a workspace in its own window — the two used to be
+          // "Open..." and "Open Folder…", which said nothing about either.
+          label: 'Open Fiddle Folder…',
           accelerator: 'CmdOrCtrl+O',
           registerAccelerator: true,
           click: async () => {
@@ -607,6 +618,16 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
               sendCmd('openFolder', { path: result.filePaths[0] });
             }
           },
+        },
+        {
+          // The Fiddle's route to the other product. App.tsx runs the dialog
+          // through the openFolder bridge call and spawns a window with the
+          // result, so this never converts the Fiddle you are in.
+          id: 'openFolderIde',
+          label: 'Open Folder in IDE…',
+          accelerator: 'CmdOrCtrl+Shift+O',
+          registerAccelerator: true,
+          click: () => sendIde('openFolder'),
         },
         ...paletteItems,
         { type: 'separator' },

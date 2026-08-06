@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from '@lynx-js/react';
+import { useCallback, useEffect, useRef, useState } from '@lynx-js/react';
 import './QuickPicker.css';
 import { PlatformOverlay } from '../shared/PlatformOverlay';
 import { fileIcon, type TreeNode, type ShowcaseEntry, SHOWCASE_REGISTRY } from '../../store';
@@ -126,6 +126,47 @@ export function QuickPicker({
     }
   }, [rows, activeKey]);
 
+  /**
+   * Focus the query the moment the palette opens.
+   *
+   * A palette you have to click into has not opened — every keystroke of the
+   * thing you came to type goes nowhere. Lynx has no autofocus attribute, so
+   * this is the element's `focus` method through the selector query.
+   *
+   * It retries, and it stops on `bindfocus` rather than on the invoke's own
+   * success callback, because that callback reports OK whether or not focus
+   * landed: invoking `focus` — and `setFocus` — on a palette that was
+   * demonstrably not focused returned success both times. The only honest
+   * signal that the field has focus is the field saying so.
+   */
+  const focusedRef = useRef(false);
+  const [focused, setFocused] = useState(false);
+  const onFieldFocus = useCallback(() => {
+    focusedRef.current = true;
+    setFocused(true);
+  }, []);
+
+  useEffect(() => {
+    let tries = 0;
+    let timer: any = null;
+    const attempt = () => {
+      if (focusedRef.current) return;
+      // ~1s of trying, then stop. The field stays clickable, and a retry loop
+      // with no end is worse than a palette you click once.
+      if (tries++ > 12) return;
+      try {
+        // @ts-ignore — SelectorQuery is a runtime global, not in the app types.
+        lynx.createSelectorQuery()
+          .select('#picker-query')
+          .invoke({ method: 'focus', params: {}, success: () => {}, fail: () => {} })
+          .exec();
+      } catch (_) { /* no query available — the field is still clickable */ }
+      timer = setTimeout(attempt, 80);
+    };
+    attempt();
+    return () => { if (timer) clearTimeout(timer); };
+  }, []);
+
   const rowClass = (key: string, extra?: string) =>
     `PickerItem${extra ? ' ' + extra : ''}${key === activeRowKey ? ' PickerItem--active' : ''}`;
 
@@ -135,8 +176,9 @@ export function QuickPicker({
         <view className="PickerModal" catchtap={() => {}}>
         <input
           id="picker-query"
-          className="PickerInput"
+          className={'PickerInput' + (focused ? ' PickerInput--focused' : '')}
           value={query}
+          bindfocus={onFieldFocus}
           bindinput={(e: any) => onQueryChange(e.detail.value)}
           bindconfirm={handleConfirm}
           placeholder={PLACEHOLDER[mode]}

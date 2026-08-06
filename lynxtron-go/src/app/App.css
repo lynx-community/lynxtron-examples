@@ -175,9 +175,10 @@
   display: flex;
   pointer-events: auto;
   flex-direction: column;
-  /* CSS-variable probe: if Lynx drops var(), the overlay goes transparent. */
-  --gallery-overlay-bg: #0b1220;
-  background-color: var(--gallery-overlay-bg);
+  /* The app's own ground, not a hardcoded blue-black. #0b1220 was a colour
+     from nowhere in this palette, and it is what made the legacy-IDE gallery
+     read as a different product than the one hosting it. */
+  background-color: var(--surface-chrome);
 }
 
 .IDEBody {

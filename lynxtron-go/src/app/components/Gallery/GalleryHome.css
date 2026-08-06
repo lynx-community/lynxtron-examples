@@ -12,7 +12,16 @@
   height: 100%;
   position: relative;
   overflow: hidden;
-  background-color: var(--background-2);
+  /* ── The gallery on the app's own surfaces ─────────────────────────────
+     This page was built on the ordinal --background-N tokens, which carry no
+     meaning and drifted out of step when the window moved to role-named
+     tiers: --background-2 is a near-black with a teal cast, so the gallery
+     read as a different application opening inside this one.
+     Same three roles as everywhere else: the page is CHROME (a ground with
+     objects on it), each card is CONTENT (the surface you read), and the
+     thumb well and footer are washes over the card rather than fourth and
+     fifth tones. */
+  background-color: var(--surface-chrome);
   color: var(--text-color-3);
 }
 
@@ -45,15 +54,17 @@
   color: var(--bp-text);
   font-size: 15px;
   line-height: 22px;
-  font-weight: 600;
+  /* Medium, not bold — the same reasoning as the commands bar: it is already
+     the largest thing on the page and the only one at full contrast. */
+  font-weight: 500;
 }
 
 .GalleryBadge {
   margin-left: 10px;
   padding: 1px 6px;
   border-radius: 3px;
-  background-color: rgba(19, 124, 189, 0.18);
-  color: #48aff0;
+  background-color: var(--overlay-strong);
+  color: var(--bp-text-muted);
   font-family: 'SF Mono', Menlo, monospace;
   font-size: 9px;
   font-weight: 600;
@@ -63,10 +74,53 @@
 .GalleryTopBarActions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  column-gap: 6px;
+  column-gap: 2px;
 }
+/* The scope boundary, drawn the same way the commands bar draws it. */
+.GalleryActionDivider {
+  width: 1px;
+  height: 16px;
+  flex-shrink: 0;
+  margin: 0 8px;
+  background-color: var(--hairline);
+}
+.GalleryTopBarActions .bp3-button {
+  height: 24px;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  color: var(--bp-text-muted);
+}
+.GalleryTopBarActions .bp3-button:hover {
+  background-color: var(--overlay-soft);
+  color: var(--bp-text);
+}
+.GalleryTopBarActions .bp3-button .bp3-button-text {
+  font-size: 12px;
+  font-weight: 400;
+  color: inherit;
+}
+.GalleryTopBarActions .bp3-button .bp3-icon {
+  font-size: 12px;
+  opacity: 0.7;
+}
+.GalleryBack .bp3-button-icon { margin-right: 0; }
+/* Dev tooling recedes furthest: it is not part of the product.
+   Written at three classes to match `.GalleryTopBarActions .bp3-button
+   .bp3-icon` — at two it lost and the probe rendered at the same weight as the
+   real controls. Third time this file has been bitten by that; the rule is
+   that an override must be as specific as what it overrides. */
+.GalleryTopBarActions .bp3-button.GalleryDevProbe {
+  width: 24px;
+  padding: 0;
+  justify-content: center;
+}
+.GalleryTopBarActions .bp3-button.GalleryDevProbe .bp3-icon { opacity: 0.35; }
 
 /* ── Section rule: micro-label + hairline running to the edge ───────────── */
 .GallerySectionRule {
@@ -105,17 +159,16 @@
   margin: 6px;
   display: flex;
   flex-direction: column;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
-  background-color: var(--background-3);
+  background-color: var(--surface-content);
   border-width: 1px;
   border-style: solid;
   border-color: var(--hairline);
 }
 
 .GalleryCard:hover {
-  border-color: var(--border-color-1);
-  background-color: var(--bp-surface);
+  border-color: var(--edge-strong);
 }
 
 .GalleryThumb {
@@ -124,7 +177,7 @@
   /* Thumbnails are authored 16:9 (1200x675) — the slot must match or
      aspectFill crops/stretches the art. */
   aspect-ratio: 1.7778;
-  background-color: var(--background-4);
+  background-color: var(--surface-chrome);
   border-bottom-width: 1px;
   border-bottom-style: solid;
   border-bottom-color: var(--hairline);
@@ -262,7 +315,7 @@
 }
 
 .GalleryCardAction:hover {
-  background-color: var(--background-4);
+  background-color: var(--overlay-soft);
 }
 
 .GalleryCardActionText {
@@ -297,13 +350,12 @@
 }
 
 /* ── Light theme: tinted text needs darker variants for contrast ────────── */
-.theme-light .GalleryBadge { color: #106ba3; }
+.theme-light .GalleryBadge { color: var(--bp-text-muted); }
 .theme-light .GalleryTagText--blue   { color: #1d63c9; }
 .theme-light .GalleryTagText--green  { color: #0f8a5f; }
 .theme-light .GalleryTagText--orange { color: #c05f00; }
 .theme-light .GalleryTagText--violet { color: #6f4bd8; }
 .theme-light .GalleryTagText--teal   { color: #0d8079; }
-.theme-light .GalleryCardActionText--primary { color: #106ba3; }
 .theme-light .GalleryCardActionText--web { color: #0d8079; }
 .theme-light .GalleryThumbOverlay { background-color: rgba(255, 255, 255, 0.7); }
 .theme-light .GalleryThumbOverlayText { color: rgba(16, 22, 26, 0.7); }

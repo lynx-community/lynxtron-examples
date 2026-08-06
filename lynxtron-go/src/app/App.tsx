@@ -708,25 +708,13 @@ export function App(props: { onRender?: () => void } = {}) {
     }
   }, [applyWorkspaceSession, createFolderWorkspaceSession, createShowcaseWorkspaceSession, log, rememberWorkspaceSession]);
 
-  // Listen for global event from main.ts after showOpenDialog resolves
-  useEffect(() => {
-    const handler = (data: any) => {
-      try {
-        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-        if (parsed?.path) openFolder(parsed.path);
-      } catch (_) { /* ignore */ }
-    };
-    try {
-      // @ts-ignore
-      lynx.getJSModule('GlobalEventEmitter').addListener('folderOpened', handler);
-    } catch (_) { /* ignore */ }
-    return () => {
-      try {
-        // @ts-ignore
-        lynx.getJSModule('GlobalEventEmitter').removeListener('folderOpened', handler);
-      } catch (_) {}
-    };
-  }, [openFolder]);
+  // The `folderOpened` broadcast is NOT handled here. main.ts answers the
+  // openFolder bridge call twice — once through the reply callback and once as
+  // a global event, added long ago as a fallback for runtimes where the reply
+  // was unreliable. Two deliveries of one dialog result were harmless while
+  // both did the same thing; now that picking a folder spawns an IDE WINDOW,
+  // honouring the broadcast as well would open the new window AND convert this
+  // one. The callback in openFolderDialog is the single handler.
 
 
   // Auto-restore last workspace on startup
@@ -1247,6 +1235,74 @@ export function App(props: { onRender?: () => void } = {}) {
   }, [log]);
 
   // ── Open folder dialog ────────────────────────────────────────────────────
+  /**
+   * Open an arbitrary folder as an IDE workspace — in a NEW WINDOW, never in
+   * this one.
+   *
+   * The IDE used to be reachable four ways, and three of them swapped the
+   * shell inside the running process: the Fiddle you were working in silently
+   * became a different product. That is not just jarring, it breaks the
+   * assumption the deliberate path was built around — see
+   * openShowcaseInIdeWindow above: the Scintilla registry, its keyWindow
+   * attach, and the config-store writer lease all assume ONE WINDOW PER
+   * PROCESS. One entry point honoured that; the rest went around it.
+   *
+   * So there is one rule now: the IDE is always its own window. `Open` always
+   * means "in this Fiddle", and going to the IDE is always a differently-named
+   * act.
+   *
+   * The folder travels by env rather than by deep link. The deep-link scheme
+   * is a public contract with a parser and tests; "open this local directory"
+   * is a private handoff from a parent window to the child it just spawned.
+   */
+  const openFolderInIdeWindow = useCallback((folderPath: string) => {
+    const rt = (foundationApi() as any)?.runtime;
+    const exec = (foundationApi() as any)?.exec;
+    if (!rt?.execPath || !rt?.appDir || !exec?.runAsync) {
+      showOutput('warn', '[IDE] spawn bridge unavailable — opening in this window instead');
+      openFolder(folderPath);
+      return;
+    }
+    const handle = exec.runAsync(rt.execPath, [rt.appDir], {
+      env: {
+        LYNXTRON_ALLOW_MULTI: '1',
+        LYNXTRON_WINDOW_CASCADE: '1',
+        LYNXTRON_BOOT_TARGET: 'ide',
+        LYNXTRON_BOOT_FOLDER: folderPath,
+        // Children must NOT inherit the dev automation channels — two pollers
+        // on the same /tmp command files steal each other's commands.
+        LYNXTRON_FIDDLE_DEV: '0',
+      },
+      onExit: (code: number | null) => {
+        showOutput('info', `[IDE] window for "${folderPath}" exited (code=${code})`);
+      },
+    });
+    if (handle?.pid) {
+      setGalleryOpen(false);
+      showOutput('info', `[IDE] opened "${folderPath}" in a new window (pid=${handle.pid})`);
+      setStatus(`Opened ${folderPath} in new IDE window`);
+    } else {
+      showOutput('warn', '[IDE] spawn failed — opening in this window instead');
+      openFolder(folderPath);
+    }
+  }, [openFolder, showOutput]);
+
+  /**
+   * A window spawned as a dedicated IDE opens the folder it was spawned for,
+   * once. The parent hands it over by env (see preload-bridge) because this is
+   * an internal handoff, not a public deep link.
+   */
+  const bootFolderOpenedRef = useRef(false);
+  useEffect(() => {
+    if (bootFolderOpenedRef.current) return;
+    let folder: string | null = null;
+    try { folder = (getExposed() as any)?.bootFolder ?? null; } catch (_) { folder = null; }
+    if (!folder) return;
+    bootFolderOpenedRef.current = true;
+    openFolder(folder);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const openFolderDialog = useCallback(() => {
     console.log('[IDE] openFolderDialog tapped');
     log('[IDE] openFolderDialog tapped');
@@ -1255,13 +1311,13 @@ export function App(props: { onRender?: () => void } = {}) {
       NativeModules.bridge.call('openFolder', {}, (result: any) => {
         console.log('[IDE] openFolder bridge callback:', JSON.stringify(result));
         log(`[IDE] openFolder callback: ${JSON.stringify(result)}`);
-        if (result?.path) openFolder(result.path);
+        if (result?.path) openFolderInIdeWindow(result.path);
       });
     } catch (e) {
       console.error('[IDE] openFolderDialog error:', e);
       log(`openFolderDialog error: ${e}`);
     }
-  }, [log, openFolder]);
+  }, [log, openFolderInIdeWindow]);
 
   const startShowcaseList = useCallback(() => {
     setPickerQuery('');
@@ -1695,9 +1751,14 @@ export function App(props: { onRender?: () => void } = {}) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /**
+   * Fetch a showcase by URL and open it. Its only caller is the palette's
+   * "Open Showcase from URL in IDE", and the destination is in that name now:
+   * a fetched workspace is the same kind of thing as a folder you picked, so
+   * it opens the same way — a new IDE window, never this one.
+   */
   const fetchShowcaseByUrl = useCallback(async (
     url: string,
-    source: 'folder' | 'showcase' = 'folder',
     options?: { showLoading?: boolean },
   ): Promise<string | null> => {
     const shouldShowLoading = options?.showLoading !== false;
@@ -1727,7 +1788,7 @@ export function App(props: { onRender?: () => void } = {}) {
         console.log('[IDE] fetchShowcaseByUrl success', { url, showcasePath });
         log(`[IDE] fetchShowcaseByUrl success url=${url} path=${showcasePath}`);
         showOutput('info', `Showcase fetched to: ${showcasePath}`);
-        openFolder(showcasePath, source);
+        openFolderInIdeWindow(showcasePath);
         setStatus(`Opened showcase: ${showcasePath.split('/').pop()}`);
         return showcasePath;
       }
@@ -1750,7 +1811,7 @@ export function App(props: { onRender?: () => void } = {}) {
       }
     }
     return null;
-  }, [clearShowcaseLoading, log, openFolder, showOutput, startShowcaseLoading]);
+  }, [clearShowcaseLoading, log, openFolderInIdeWindow, showOutput, startShowcaseLoading]);
 
   const resolveShowcaseEntryWorkspacePath = useCallback(async (entry: ShowcaseEntry): Promise<string | null> => {
     // Same policy the Fiddle uses — local source tree, then an already
@@ -2301,7 +2362,7 @@ export function App(props: { onRender?: () => void } = {}) {
     if (pickerMode === 'url') {
       setPickerOpen(false);
       setPickerMode(undefined);
-      void fetchShowcaseByUrl(value, 'showcase');
+      void fetchShowcaseByUrl(value);
       return;
     }
     if (pickerMode === 'bundleUrl') {
@@ -2686,14 +2747,12 @@ export function App(props: { onRender?: () => void } = {}) {
   // legacy full overlay must never drift apart callback-by-callback.
   const galleryProps = {
     onBack: () => setGalleryOpen(false),
-    onOpenFolder: () => { setGalleryOpen(false); openFolderDialog(); },
     onOpenShowcase: openShowcaseInFiddle,
     onOpenShowcaseLegacy: openShowcaseInIdeWindow,
     onRunShowcase: runShowcaseEntry,
     onRunFiddle: runFiddleEntry,
     onOpenFiddle: openFiddleSource,
     onRunShowcaseOnWeb: runShowcaseEntryOnWeb,
-    onDebugExampleRoute: () => { setGalleryOpen(false); openExampleArtifactDirect('view'); },
   };
   /**
    * `standalone` on both paths, because the gallery always has to carry its own
