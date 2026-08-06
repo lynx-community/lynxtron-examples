@@ -35,7 +35,7 @@ export function AddThemeDialog(props: AddThemeDialogProps) {
         Custom theme import is scaffolded — theme JSON schema validation and preview will follow.
       </Callout>
       <view style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', columnGap: '8px', marginTop: '16px' } as any}>
-        <Button text="Cancel" onClick={props.onClose} />
+        <Button text="Cancel" minimal onClick={props.onClose} />
         <Button
           text="Add"
           intent="primary"

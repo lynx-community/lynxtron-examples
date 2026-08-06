@@ -34,7 +34,7 @@ export function Alert(props: AlertProps) {
         </view>
         <view className="bp3-alert-footer">
           {showCancel ? (
-            <Button text={props.cancelButtonText ?? 'Cancel'} onClick={props.onCancel} />
+            <Button text={props.cancelButtonText ?? 'Cancel'} minimal onClick={props.onCancel} />
           ) : null}
           <Button
             text={props.confirmButtonText ?? 'OK'}

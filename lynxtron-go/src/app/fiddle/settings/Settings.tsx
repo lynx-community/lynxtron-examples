@@ -9,6 +9,13 @@ export interface SettingsProps {
   onClose: () => void;
   /** Theme / editor font size changed — host re-applies UI class + editor themes. */
   onAppearanceChange?: () => void;
+  /**
+   * Pane to land on. Dev automation only: three of the four panes are reachable
+   * solely by clicking the nav, so they could not be captured or regressed
+   * without a human at the keyboard — the same gap `fiddle:toggleGallery`
+   * exists to close.
+   */
+  initialPanel?: Panel;
 }
 
 type Panel = 'general' | 'appearance' | 'execution' | 'github';
@@ -42,7 +49,13 @@ function persist(next: SettingsState) {
 }
 
 export function Settings(props: SettingsProps) {
-  const [panel, setPanel] = useState<Panel>('general');
+  const [panel, setPanel] = useState<Panel>(props.initialPanel ?? 'general');
+  // Follows the prop on every open rather than only on first mount — a remount
+  // (`key=`) would land the pane too, but at the cost of throwing away the
+  // loaded settings and the cached GitHub user each time.
+  useEffect(() => {
+    if (props.isOpen && props.initialPanel) setPanel(props.initialPanel);
+  }, [props.isOpen, props.initialPanel]);
   const [state, setState] = useState<SettingsState>(DEFAULTS);
   const [addThemeOpen, setAddThemeOpen] = useState(false);
   /**
@@ -156,7 +169,12 @@ export function Settings(props: SettingsProps) {
                 />
               </FormGroup>
               <FormGroup label="Custom themes" helperText="Import your own theme JSON to skin the whole app.">
-                <Button icon="add" text="Add Theme…" minimal onClick={() => setAddThemeOpen(true)} />
+                {/* Framed, unlike the frameless controls in the commands bar. A
+                    button with no ground reads as pressable because its
+                    NEIGHBOURS do; this one is alone under a label, so with no
+                    edge it was indistinguishable from the helper text until
+                    the pointer happened to cross it. */}
+                <Button icon="add" text="Add Theme…" onClick={() => setAddThemeOpen(true)} />
               </FormGroup>
             </>
           )}
@@ -195,7 +213,12 @@ export function Settings(props: SettingsProps) {
                 />
               </FormGroup>
               <view style={{ display: 'flex', flexDirection: 'row', columnGap: '8px', alignItems: 'center' } as any}>
+                {/* Leaves the app for a browser — it is a link, and it sits
+                    beside the row's one real action. Framed, the two carried
+                    equal weight and neither said which one you came here to
+                    press. */}
                 <Button
+                  minimal
                   icon="link"
                   text="Create Token on GitHub"
                   onClick={() => {
@@ -226,6 +249,7 @@ export function Settings(props: SettingsProps) {
                 />
                 {ghUser ? (
                   <Button
+                    minimal
                     text="Sign Out"
                     onClick={() => {
                       setGhUser(null);

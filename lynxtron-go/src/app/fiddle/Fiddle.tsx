@@ -76,6 +76,7 @@ export function Fiddle(props: FiddleProps) {
   const devBoot = isDevMode() ? DEV_PRESET : null;
   const [templatePickerOpen, setTemplatePickerOpen] = useState(devBoot?.openSurface === 'templates');
   const [settingsOpen, setSettingsOpen] = useState(devBoot?.openSurface === 'settings');
+  const [settingsPanel, setSettingsPanel] = useState<'general' | 'appearance' | 'execution' | 'github'>('general');
   const [versionsOpen, setVersionsOpen] = useState(devBoot?.openSurface === 'versions');
   const [tourOpen, setTourOpen] = useState(devBoot?.openSurface === 'tour');
   const [historyOpen, setHistoryOpen] = useState(devBoot?.openSurface === 'history');
@@ -529,7 +530,11 @@ export function Fiddle(props: FiddleProps) {
     'fiddle:toggleFile': (data: any) => { const id = data?.id; if (typeof id === 'string') fiddle.toggleEditor(id); },
     'fiddle:selectFile': (data: any) => { const id = data?.id; if (typeof id === 'string') fiddle.selectEditor(id); },
     'fiddle:showTour': () => setTourOpen(true),
-    'fiddle:openSettings': () => setSettingsOpen(true),
+    'fiddle:openSettings': (data: any) => {
+      const p = data?.panel;
+      if (p === 'general' || p === 'appearance' || p === 'execution' || p === 'github') setSettingsPanel(p);
+      setSettingsOpen(true);
+    },
     'fiddle:openVersions': () => setVersionsOpen(true),
     'fiddle:openHelp': () => handleOpenHelp(),
     'fiddle:persistNow': () => {
@@ -729,7 +734,7 @@ export function Fiddle(props: FiddleProps) {
           onCancel={() => setTemplatePickerOpen(false)}
         />
       )}
-      <Settings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} onAppearanceChange={handleAppearanceChange} />
+      <Settings isOpen={settingsOpen} initialPanel={settingsPanel} onClose={() => setSettingsOpen(false)} onAppearanceChange={handleAppearanceChange} />
       <VersionChooser
         isOpen={versionsOpen}
         isMac={isMacPlatform}

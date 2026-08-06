@@ -41,7 +41,7 @@ export function AddVersionDialog(props: AddVersionDialogProps) {
         Local versions are stored in your Lynxtron Fiddle config and used only on this machine.
       </Callout>
       <view style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', columnGap: '8px', marginTop: '16px' } as any}>
-        <Button text="Cancel" onClick={props.onClose} />
+        <Button text="Cancel" minimal onClick={props.onClose} />
         <Button
           text="Add"
           intent="primary"
