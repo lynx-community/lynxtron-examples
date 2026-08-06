@@ -42,12 +42,18 @@ export function Button(props: ButtonProps) {
     props.onClick?.();
   };
 
+  // Passed explicitly, because <Icon> writes fontSize as an INLINE style and no
+  // stylesheet rule can outrank it — `.bp3-button-icon { font-size }` was dead
+  // the whole time, which is why every button's glyph rendered at Icon's own
+  // 14px default and came out taller than the 13px label beside it.
+  const iconSize = props.small ? 12 : props.large ? 15 : 13;
+
   return (
     <view className={cls} bindtap={handleTap}>
-      {props.iconNode ?? (props.icon ? <Icon icon={props.icon} className="bp3-button-icon" /> : null)}
+      {props.iconNode ?? (props.icon ? <Icon icon={props.icon} size={iconSize} className="bp3-button-icon" /> : null)}
       {props.text ? <text className="bp3-button-text">{props.text}</text> : null}
       {props.children}
-      {props.rightIcon ? <Icon icon={props.rightIcon} className="bp3-button-icon" /> : null}
+      {props.rightIcon ? <Icon icon={props.rightIcon} size={iconSize} className="bp3-button-icon" /> : null}
     </view>
   );
 }

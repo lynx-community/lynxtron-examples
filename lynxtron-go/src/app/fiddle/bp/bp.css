@@ -3,101 +3,84 @@
    compatibility with copied LESS from electron-fiddle's src/less/. */
 
 /* ── Button ───────────────────────────────────────────────────────────── */
+
+/* The scale everything else in this app converged on: 28px tall, a 13px label,
+   a 6px radius, one hairline. What was here was stock Blueprint 3 — 30px, 14px,
+   a 3px radius, a top-lit GRADIENT SHEEN, and a fake border painted with an
+   inset box-shadow in a hardcoded near-black. The commands bar, the mosaic
+   toolbar and the gallery each escaped it by overriding every property locally,
+   which is why the only buttons still wearing 2016 were the ones on surfaces
+   nobody had redesigned yet: Settings and every dialog. */
 .bp3-button {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   column-gap: 6px;
-  height: 30px;
-  padding: 0 10px;
-  border-radius: 3px;
+  height: 28px;
+  min-height: 28px;
+  min-width: 28px;
+  padding: 0 12px;
+  border-radius: 6px;
   white-space: nowrap;
   flex-shrink: 0;
   flex-grow: 0;
   flex-basis: content;
   width: fit-content;
-  background-color: var(--background-1);   /* background-1 */
-  background-image: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0));
-  color: var(--text-color-1);              /* text-color-1 */
-  border: none;
-  cursor: pointer;
-  min-width: 30px;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
-  box-shadow: inset 0 0 0 1px rgba(16,22,26,0.4);
+  cursor: pointer;
+  /* A wash over whatever ground the button sits on, not a fixed tone: these
+     appear on the chrome tone in dialogs and on content elsewhere, and
+     --background-1 was only ever right on one of them. */
+  background-color: var(--overlay-soft);
+  background-image: none;
+  color: var(--bp-text);
+  /* A real hairline, the same one panels and fields wear. The inset shadow it
+     replaces was rgba(16,22,26,0.4) — a near-black groove that read as a bevel
+     on dark and as dirt on light. */
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
+  box-shadow: none;
 }
-.bp3-button:hover { background-color: rgba(138,155,168,0.15); }  /* fiddle blueprint.less dark override */
+.bp3-button:hover { background-color: var(--overlay-strong); }
 .bp3-button:active,
 .bp3-button.bp3-active {
-  background-color: #202b33;               /* stock bp3-dark active */
-  background-image: none;
-  box-shadow:
-    inset 0 0 0 1px rgba(16,22,26,0.6),
-    inset 0 1px 2px rgba(16,22,26,0.2);
+  background-color: var(--overlay-strong);
+  border-color: var(--edge-strong);
 }
 .bp3-button.bp3-disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
-.bp3-button.bp3-large { height: 40px; padding: 5px 15px; font-size: 16px; min-width: 40px; }
-.bp3-button.bp3-small { height: 24px; padding: 0 7px; font-size: 12px; min-width: 24px; }
+.bp3-button.bp3-large { height: 34px; min-height: 34px; min-width: 34px; padding: 0 16px; font-size: 14px; }
+.bp3-button.bp3-small { height: 24px; min-height: 24px; min-width: 24px; padding: 0 8px; font-size: 12px; }
 
+/* Frameless: no ground and no edge until you point at it. Muted at rest is the
+   whole point — it used to sit at --text-color-3 (#dcdcdc, all but white), so a
+   "minimal" button was as loud as a filled one and only the box was missing. */
 .bp3-button.bp3-minimal {
-  background: none;
-  background-image: none;
-  box-shadow: none;
-  color: var(--text-color-3);              /* text-color-3 */
-}
-.bp3-button.bp3-minimal:hover {
-  background-color: rgba(138,155,168,0.15);   /* stock bp3-dark minimal hover */
-  color: var(--text-color-1);
-}
-.bp3-button.bp3-minimal.bp3-active {
-  background-color: rgba(138,155,168,0.3);
-  color: var(--bp-text);
-}
-
-/* Light theme: upstream only re-colors Blueprint inside `.fiddle.bp3-dark`
-   (blueprint.less) — light mode is stock Blueprint 3. Values below are from
-   @blueprintjs/core 3.x blueprint.css. This block must stay ABOVE the intent
-   rules: `.theme-light .bp3-button` ties them on specificity, so source order
-   is what keeps intent buttons colored in light mode. */
-.theme-light .bp3-button {
-  background-color: #f5f8fa;
-  background-image: linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0));
-  color: #182026;
-  box-shadow:
-    inset 0 0 0 1px rgba(16,22,26,0.2),
-    inset 0 -1px 0 rgba(16,22,26,0.1);
-}
-.theme-light .bp3-button:hover {
-  background-color: #ebf1f5;
-  box-shadow:
-    inset 0 0 0 1px rgba(16,22,26,0.2),
-    inset 0 -1px 0 rgba(16,22,26,0.1);
-}
-.theme-light .bp3-button:active,
-.theme-light .bp3-button.bp3-active {
-  background-color: #d8e1e8;
-  background-image: none;
-  box-shadow:
-    inset 0 0 0 1px rgba(16,22,26,0.2),
-    inset 0 1px 2px rgba(16,22,26,0.2);
-}
-.theme-light .bp3-button.bp3-minimal {
   background-color: transparent;
   background-image: none;
   box-shadow: none;
+  border-color: transparent;
+  color: var(--bp-text-muted);
 }
-.theme-light .bp3-button.bp3-minimal:hover {
-  background-color: rgba(167,182,194,0.3);
-  color: #182026;
+.bp3-button.bp3-minimal:hover {
+  background-color: var(--overlay-soft);
+  border-color: transparent;
+  color: var(--bp-text);
 }
-.theme-light .bp3-button.bp3-minimal.bp3-active {
-  background-color: rgba(115,134,148,0.3);
-  color: #182026;
+.bp3-button.bp3-minimal.bp3-active {
+  background-color: var(--overlay-strong);
+  border-color: transparent;
+  color: var(--bp-text);
 }
+
+/* No `.theme-light .bp3-button` block any more. It existed to restore stock
+   Blueprint light values on top of stock Blueprint dark ones; every colour
+   above is now a role token that flips with the theme on its own. */
 
 /* The primary action wears the brand. Run is the point of this app, and it was
    Blueprint's stock blue — the same blue as every other Blueprint app, and the
@@ -109,6 +92,7 @@
      surface you can press. */
   background-image: linear-gradient(to bottom, var(--brand-hi), var(--brand));
   color: var(--brand-ink);
+  border-color: transparent;
   box-shadow: none;
 }
 .bp3-button.bp3-intent-primary .bp3-button-text,
@@ -121,34 +105,60 @@
 }
 .bp3-button.bp3-intent-primary:active,
 .bp3-button.bp3-intent-primary.bp3-active { background-color: var(--brand-active); }
+
+/* Success is the brand, not #0f9960. This app's brand IS green, so Blueprint's
+   success green was a SECOND green — near enough to read as the same colour and
+   far enough to look like a rendering fault when the two ever met. */
+.bp3-button.bp3-intent-success {
+  background-color: var(--brand);
+  background-image: linear-gradient(to bottom, var(--brand-hi), var(--brand));
+  color: var(--brand-ink);
+  border-color: transparent;
+}
+.bp3-button.bp3-intent-success .bp3-button-text,
+.bp3-button.bp3-intent-success .bp3-icon { color: var(--brand-ink); }
+.bp3-button.bp3-intent-success:hover { background-color: var(--brand-hover); }
+
+/* Amber and red stay: they are the only two semantics in the app that are not
+   about emphasis, and no theme token means "this will hurt". The sheen goes,
+   and danger stops being declared twice — the second copy silently kept the
+   first one's gradient while looking like it had replaced it. */
+.bp3-button.bp3-intent-warning {
+  background-color: #d9822b;
+  background-image: none;
+  color: #ffffff;
+  border-color: transparent;
+}
+.bp3-button.bp3-intent-warning:hover { background-color: #bf7326; }
+
 .bp3-button.bp3-intent-danger {
   background-color: #db3737;
-  background-image: linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(255,255,255,0));
-  color: var(--text-color-1);
+  background-image: none;
+  color: #ffffff;
+  border-color: transparent;
 }
+.bp3-button.bp3-intent-danger .bp3-button-text,
+.bp3-button.bp3-intent-danger .bp3-icon { color: #ffffff; }
 .bp3-button.bp3-intent-danger:hover { background-color: #c23030; }
 .bp3-button.bp3-intent-danger:active,
 .bp3-button.bp3-intent-danger.bp3-active { background-color: #a82a2a; }
 
-.bp3-button.bp3-intent-success { background-color: #0f9960; color: var(--text-color-1); }
-.bp3-button.bp3-intent-success:hover { background-color: #0d8050; }
-
-.bp3-button.bp3-intent-warning { background-color: #d9822b; color: var(--text-color-1); }
-.bp3-button.bp3-intent-warning:hover { background-color: #bf7326; }
-
-.bp3-button.bp3-intent-danger { background-color: #db3737; color: var(--text-color-1); }
-.bp3-button.bp3-intent-danger:hover { background-color: #c23030; }
-
+/* No font-size here: the label INHERITS the button's, which is what makes
+   `small` and `large` mean anything. It was pinned at 14px, so every small
+   button had a small box around a full-size label and the size prop only ever
+   changed the padding. */
 .bp3-button-text {
   color: inherit;
-  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   lines: 1;
   flex-shrink: 0;
 }
-.bp3-button-icon { color: inherit; font-size: 14px; flex-shrink: 0; }
+/* No font-size here either, and none is possible: <Icon> writes fontSize as an
+   INLINE style, which no stylesheet rule can outrank. Button.tsx passes the
+   size explicitly instead. */
+.bp3-button-icon { color: inherit; flex-shrink: 0; }
 
 /* ── Icon ─────────────────────────────────────────────────────────────── */
 .bp3-icon { display: inline-block; font-size: 16px; line-height: 1; color: var(--bp-text); }
@@ -163,10 +173,10 @@
 .bp3-button-group.bp3-vertical { flex-direction: column; }
 .bp3-button-group.bp3-fill { display: flex; width: 100%; }
 .bp3-button-group .bp3-button { border-radius: 0; }
-.bp3-button-group .bp3-button:first-child { border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
-.bp3-button-group .bp3-button:last-child { border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
-.bp3-button-group.bp3-vertical .bp3-button:first-child { border-radius: 3px 3px 0 0; }
-.bp3-button-group.bp3-vertical .bp3-button:last-child { border-radius: 0 0 3px 3px; }
+.bp3-button-group .bp3-button:first-child { border-top-left-radius: 6px; border-bottom-left-radius: 6px; }
+.bp3-button-group .bp3-button:last-child { border-top-right-radius: 6px; border-bottom-right-radius: 6px; }
+.bp3-button-group.bp3-vertical .bp3-button:first-child { border-radius: 6px 6px 0 0; }
+.bp3-button-group.bp3-vertical .bp3-button:last-child { border-radius: 0 0 6px 6px; }
 
 /* ── ControlGroup ─────────────────────────────────────────────────────── */
 .bp3-control-group {
