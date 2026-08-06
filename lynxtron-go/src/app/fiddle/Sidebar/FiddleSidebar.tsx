@@ -3,6 +3,7 @@ import { SplitContainer } from '../../components/Layout/SplitContainer';
 import { Button, Icon, InputGroup, AppToaster } from '../bp';
 import { isSafeRelativePath } from '../state/FiddleState';
 import { searchNpm, parseDependencies, addDependency, removeDependency, type NpmSearchResult } from './npm-search';
+import { fileIcon } from '../../store';
 import { DEFAULT_EDITORS } from '../types';
 import type { FiddleFile } from '../state/FiddleState';
 import './FiddleSidebar.css';
@@ -11,16 +12,6 @@ import './FiddleSidebar.css';
 // package.json is reserved.
 const VALID_EXT = /\.(cjs|js|mjs|html|css|json|jsx|ts|tsx)$/;
 
-/** Ink for a file row's glyph. Hue is the type; the glyph stays the same. */
-function iconTint(name: string): string {
-  const ext = name.split('.').pop()?.toLowerCase() ?? '';
-  if (ext === 'tsx' || ext === 'jsx') return ' FiddleSidebar-ItemIcon--tsx';
-  if (ext === 'ts' || ext === 'js' || ext === 'mjs' || ext === 'cjs') return ' FiddleSidebar-ItemIcon--ts';
-  if (ext === 'css') return ' FiddleSidebar-ItemIcon--css';
-  if (ext === 'json') return ' FiddleSidebar-ItemIcon--json';
-  if (ext === 'md') return ' FiddleSidebar-ItemIcon--md';
-  return '';
-}
 
 export function validateNewFileName(name: string, existing: string[]): string | null {
   if (!isSafeRelativePath(name)) return 'Path must stay inside the fiddle';
@@ -151,7 +142,11 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
             return (
               <view key={f.id} className="FiddleSidebar-AddRow">
                 <view className="FiddleSidebar-AddRowInput">
-                  <Icon icon="document" size={13} className="FiddleSidebar-ItemIcon" />
+                  {/* Of the name being typed, not of the file as it stands: rename
+                      main.js to main.css and the glyph turns over before you commit,
+                      which is the cheapest possible confirmation that the extension
+                      landed the way you meant it to. */}
+                  <text className="FiddleSidebar-ItemGlyph">{fileIcon(renaming.name || f.id)}</text>
                   <InputGroup
                     fill
                     placeholder={f.id}
@@ -178,7 +173,13 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
               className={cls}
               bindtap={() => props.onSelectEditor(f.id)}
             >
-              <Icon icon="document" size={13} className={'FiddleSidebar-ItemIcon' + iconTint(f.id)} />
+              {/* The same glyph Quick Open uses for the same file. Two file
+                  lists in one app were speaking two icon languages — a tinted
+                  monochrome document here, an emoji there — and the one you
+                  reach for by keyboard is not the one you reach for by eye, so
+                  the mismatch showed up every time you used both. One list,
+                  one language; `fileIcon` is the single map. */}
+              <text className="FiddleSidebar-ItemGlyph">{fileIcon(f.id)}</text>
               <view className="FiddleSidebar-ItemLabel">
                 <text className="FiddleSidebar-ItemName" text-maxline="1">{f.id}</text>
               </view>
@@ -225,7 +226,7 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
         {addingName != null ? (
           <view className="FiddleSidebar-AddRow">
             <view className="FiddleSidebar-AddRowInput">
-              <Icon icon="document" size={13} className="FiddleSidebar-ItemIcon" />
+              <text className="FiddleSidebar-ItemGlyph">{fileIcon(addingName || 'file.js')}</text>
               <InputGroup
                 fill
                 placeholder="file.js"
