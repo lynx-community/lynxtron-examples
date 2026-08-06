@@ -32,9 +32,13 @@ export function registerShowcaseCommands(deps: {
     },
   });
 
+  // Named for its destination. "Open Showcase" loads a showcase into THIS
+  // Fiddle; this fetches one and opens it as a workspace in a new IDE window.
+  // They were "Open Showcase" and "Open Showcase (URL)" — one verb, one noun,
+  // two different products, and nothing in either name said which.
   registerCommand({
     id: 'showcase.openUrl',
-    label: 'Open Showcase (URL)',
+    label: 'Open Showcase from URL in IDE',
     execute: () => {
       deps.startUrlFetch();
     },
@@ -144,7 +148,7 @@ export function registerShowcaseCommands(deps: {
 
   registerCommand({
     id: 'folder.open',
-    label: 'Open Folder',
+    label: 'Open Folder in IDE',
     keybinding: 'Cmd+Shift+O',
     execute: () => { deps.setPickerOpen(false); deps.openFolderDialog(); },
   });

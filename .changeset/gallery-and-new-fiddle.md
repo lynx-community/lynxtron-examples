@@ -37,3 +37,33 @@ third label competing with the two real controls.
 Also removes a stale light-theme override that was repainting the cards' `Open`
 Blueprint blue — the brand token already adapts per theme, so the override was
 undoing the accent in exactly one of them.
+
+**One rule for the IDE: it is always its own window.**
+
+The IDE was reachable six ways and three of them swapped the shell inside the
+running process — the Fiddle you were working in silently became a different
+product. That also broke the assumption the one deliberate path was built
+around: the Scintilla registry, its keyWindow attach, and the config-store
+writer lease all assume one window per process, which is exactly why the
+gallery's `IDE` action spawns a child. One entry point honoured that; the rest
+went around it.
+
+Now every "open a workspace" act spawns, and every command says where it goes:
+
+- `File ▸ Open Folder in IDE…` and the palette's `Open Folder in IDE` (⇧⌘O)
+  spawn a window instead of converting this one
+- the palette's `Open Showcase from URL in IDE` — previously `Open Showcase
+  (URL)`, which differed from `Open Showcase` only in landing you in a
+  different product — does the same
+- `File ▸ Open Fiddle Folder…` (⌘O) keeps loading a folder into this Fiddle,
+  and now says so
+
+The spawned window receives its folder by env rather than by deep link: the
+deep-link scheme is a public contract with a parser and tests, and this is a
+private handoff between a parent and the child it just spawned.
+
+Also removes a duplicate delivery: `main.ts` answered the openFolder bridge call
+both through its reply callback and as a `folderOpened` broadcast, a fallback
+from when the reply was unreliable. Harmless while both did the same thing —
+but with the callback now spawning, honouring the broadcast too would have
+opened a new window *and* converted the old one.

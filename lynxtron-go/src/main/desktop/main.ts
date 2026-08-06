@@ -558,7 +558,9 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
     ? [
         {
           id: 'openFolder',
-          label: 'Open Folder…',
+          // Says where it goes. The IDE is always its own window now, so this
+          // no longer replaces whatever you were working in.
+          label: 'Open Folder in IDE…',
           accelerator: 'CmdOrCtrl+O',
           registerAccelerator: true,
           // App.tsx runs the native dialog itself through the openFolder
@@ -596,7 +598,11 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
         { type: 'separator' },
         {
           id: 'open',
-          label: 'Open...',
+          // Loads a folder's fiddle files into THIS Fiddle (fiddle:openFolder
+          // → loadLocalFiddle). Distinct from "Open Folder in IDE…" below,
+          // which opens a workspace in its own window — the two used to be
+          // "Open..." and "Open Folder…", which said nothing about either.
+          label: 'Open Fiddle Folder…',
           accelerator: 'CmdOrCtrl+O',
           registerAccelerator: true,
           click: async () => {
