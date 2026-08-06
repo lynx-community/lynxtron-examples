@@ -725,7 +725,7 @@ export function Fiddle(props: FiddleProps) {
         <TemplatePicker
           onPickBlank={() => { fiddle.loadTemplate('blank'); setCurrentShowcase(null); setTemplatePickerOpen(false); }}
           onPickHelloLynxtron={() => { fiddle.loadTemplate('hello-lynxtron'); setCurrentShowcase(null); setTemplatePickerOpen(false); }}
-          onPickShowcase={handlePickShowcase}
+          onBrowseShowcases={() => { setTemplatePickerOpen(false); props.onOpenGallery(); }}
           onCancel={() => setTemplatePickerOpen(false)}
         />
       )}
