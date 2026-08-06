@@ -1,69 +1,103 @@
-.Version-List { display: flex; flex-direction: column; row-gap: 2px; }
-.Version-Item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 3px;
-  cursor: pointer;
-}
-.Version-Item:hover { background-color: rgba(138,155,168,0.15); }
-.Version-Item--active { background-color: var(--bp-selected-bg); }
-.Version-ItemText { color: var(--bp-text); font-size: 13px; }
-.Version-Check { color: #48aff0; font-size: 14px; }
-.Version-Empty { color: var(--bp-text-muted); font-size: 13px; }
-.Version-CatalogList { max-height: 260px; min-height: 100px; }
+/* ── Version popover ──────────────────────────────────────────────────────
+   A list-popover anchored under the version chooser, built to the same rules
+   as the commands overflow beside it: one panel on the chrome tone behind a
+   hairline, a small radius, and a shadow doing the lifting.
 
-/* ── Typography ───────────────────────────────────────────────────────────
-   The dialog was built out of inline styles — a font size and a letter
-   spacing repeated at each call site, section labels padded 12px while their
-   rows were padded 12px plus a border radius, and a monospace path that set
-   its own family. Nothing lined up down the left edge and no two labels agreed
-   on a size. One set of classes, one left edge. */
-.Version-Section {
+   It was a 640px modal. What it does is pick one value from a list and apply
+   it immediately, so the modal's "Done" confirmed nothing — and the control
+   that opens it is a chevron, which promises a menu, not a sheet. */
+
+.Version-Backdrop {
+  /* absolute, NOT fixed: Lynx promotes a fixed node directly under the root,
+     which would lift the dismiss surface out of the platform overlay it is
+     rendered into — and the overlay swallows every tap meant for it. */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Not transparent: Lynx skips fully transparent views in hit testing. */
+  background-color: rgba(0, 0, 0, 0.001);
+  pointer-events: auto;
+  z-index: 500;
+}
+
+.Version-Panel {
+  position: absolute;
+  top: 54px;
+  left: 12px;
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  z-index: 501;
+  border-radius: 10px;
+  background-color: var(--surface-chrome);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+/* macOS keeps the traffic lights, so the anchor starts past the lane. */
+.Version-Panel--mac { left: 92px; }
+
+.Version-Scroll {
+  /* An explicit cap, NOT `flex: 1`. The panel is auto-height, and a flex child
+     with a zero basis inside an auto-height parent computes to zero in Lynx —
+     the list vanished and only the footer rendered. The palette's results list
+     is capped the same way, for the same reason. */
+  max-height: 420px;
+  padding: 6px 0;
+}
+
+/* Sections are labels in the list, not bars across it. The old ones were full
+   rows with their own ground, which is what let a scrolled catalog row slide
+   underneath one and collide with it. */
+.Version-SectionLabel {
+  display: block;
+  padding: 10px 14px 4px 14px;
+  font-size: 10px;
+  letter-spacing: 0.9px;
+  text-transform: none;
+  color: var(--bp-text-muted);
+  opacity: 0.75;
+}
+.Version-SectionRow {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 12px 6px 12px;
+  padding-right: 12px;
 }
-.Version-SectionLabel {
-  font-size: 10px;
-  line-height: 14px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--bp-text-muted);
-}
+.Version-SectionLabel--inline { padding-bottom: 4px; }
 .Version-SectionAction {
   font-size: 11px;
-  line-height: 14px;
-  color: #48aff0;
+  color: var(--bp-text-muted);
+  padding: 4px 2px;
+}
+.Version-SectionAction:hover { color: var(--bp-text); }
+
+/* Rows are bands: full bleed, square, one height. */
+.Version-Item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 8px;
+  padding: 7px 14px;
   cursor: pointer;
 }
+.Version-Item:hover { background-color: var(--overlay-soft); }
+/* Neutral, like every other selected surface in this app. The brand lives on
+   the check mark — a mark, not a ground. */
+.Version-Item--active { background-color: var(--overlay-strong); }
+
 .Version-ItemMain {
-  flex-grow: 1;
-  flex-shrink: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
-}
-/* A version is a name; a path is data. */
-.Version-ItemMeta {
-  font-family: 'SF Mono', Menlo, monospace;
-  font-size: 11px;
-  line-height: 15px;
-  color: var(--bp-text-muted);
-  margin-top: 1px;
-}
-.Version-ItemRemove {
-  flex-shrink: 0;
-  padding: 2px 8px;
-  cursor: pointer;
-}
-.Version-ItemRemoveText {
-  font-size: 11px;
-  line-height: 15px;
-  color: #ff7373;
+  flex: 1;
+  min-width: 0;
+  row-gap: 1px;
 }
 .Version-ItemHead {
   display: flex;
@@ -71,8 +105,63 @@
   align-items: center;
   column-gap: 6px;
 }
-/* The bundled row is the only one that carries a badge; it should not sit
-   taller than the rows beneath it because of it. */
-.Version-Item { min-height: 40px; }
-/* The first label needs no lead-in — the dialog body's padding is its space. */
-.Version-Section--first { padding-top: 0; }
+.Version-ItemText {
+  font-size: 12px;
+  color: var(--bp-text);
+}
+/* A path or a date is data. */
+.Version-ItemMeta {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  line-height: 14px;
+  color: var(--bp-text-muted);
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ONE treatment for every row action. Remove was red text, Download was a
+   boxed button and the prereleases toggle was a blue link — three answers to
+   the same question, in a panel with four rows of content. */
+.Version-ItemAction {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background-color: var(--overlay-soft);
+}
+.Version-ItemAction:hover { background-color: var(--overlay-strong); }
+.Version-ItemActionText {
+  font-size: 11px;
+  color: var(--bp-text-muted);
+}
+.Version-ItemAction:hover .Version-ItemActionText { color: var(--bp-text); }
+
+/* The brand, on the mark that says which one is live. */
+.Version-Check {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--brand);
+}
+
+.Version-Loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 8px;
+  padding: 20px;
+}
+.Version-LoadingText { font-size: 11px; color: var(--bp-text-muted); }
+
+.Version-Foot {
+  flex-shrink: 0;
+  padding: 9px 14px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--hairline);
+}
+.Version-Foot:hover { background-color: var(--overlay-soft); }
+.Version-FootText {
+  font-size: 11px;
+  color: var(--bp-text-muted);
+}
+.Version-Foot:hover .Version-FootText { color: var(--bp-text); }

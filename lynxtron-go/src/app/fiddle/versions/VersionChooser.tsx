@@ -1,5 +1,6 @@
 import { useEffect, useState } from '@lynx-js/react';
-import { Button, Dialog, NonIdealState, Spinner, Tag } from '../bp';
+import { NonIdealState, Spinner, Tag } from '../bp';
+import { PlatformOverlay } from '../../components/shared/PlatformOverlay';
 import { getExposed, appendFiddleOutput as appendOutput, foundationApi } from '../../store';
 import { AddVersionDialog } from './AddVersionDialog';
 import { fetchLynxtronVersions, type CatalogVersion } from './catalog';
@@ -23,6 +24,8 @@ function saveLocalVersions(versions: LocalVersion[]) {
 
 export interface VersionChooserProps {
   isOpen: boolean;
+  /** macOS keeps a traffic-light lane, so the anchor sits further right. */
+  isMac?: boolean;
   currentVersion: string;
   selectedLocalName: string | null;
   onSelect: (localName: string | null) => void;
@@ -95,69 +98,78 @@ export function VersionChooser(props: VersionChooserProps) {
     }
   };
 
+  if (!props.isOpen) {
+    return (
+      <AddVersionDialog isOpen={addOpen} onClose={() => setAddOpen(false)} onAdd={handleAdd} />
+    );
+  }
+
   return (
     <>
-      <Dialog isOpen={props.isOpen} title="Lynxtron Version" onClose={props.onClose} width={640}>
-        <view className="Version-List">
-          <view className="Version-Section Version-Section--first">
-            <text className="Version-SectionLabel">BUNDLED</text>
-          </view>
-          <view
-            className={'Version-Item' + (props.selectedLocalName == null ? ' Version-Item--active' : '')}
-            bindtap={() => props.onSelect(null)}
-          >
-            <text className="Version-ItemText">{props.currentVersion}</text>
-            <Tag intent="success" minimal>bundled</Tag>
-            {props.selectedLocalName == null ? <text className="Version-Check">✓</text> : null}
-          </view>
-
-          {localVersions.length > 0 && (
-            <>
-              <view className="Version-Section">
-                <text className="Version-SectionLabel">LOCAL</text>
+      {/* A popover, not a modal. The control that opens this is a chevron, and a
+          chevron promises a menu that drops out of it — a 640px sheet that dims
+          the window is a different promise. What happens here is picking one
+          value from a list, and it applies the moment you pick it: there was
+          nothing for the modal's "Done" to confirm, which is why it was a
+          filled brand button that only closed the thing it sat in.
+          Anchored, like the commands overflow beside it, so the bar has one
+          kind of list-popover rather than two. */}
+      <PlatformOverlay priority={120}>
+        <view className="Version-Backdrop" bindtap={props.onClose} />
+        <view className={'Version-Panel' + (props.isMac ? ' Version-Panel--mac' : '')}>
+          <scroll-view className="Version-Scroll" scroll-orientation="vertical">
+            <text className="Version-SectionLabel">Bundled</text>
+            <view
+              className={'Version-Item' + (props.selectedLocalName == null ? ' Version-Item--active' : '')}
+              bindtap={() => props.onSelect(null)}
+            >
+              <view className="Version-ItemMain">
+                <text className="Version-ItemText">{props.currentVersion}</text>
               </view>
-              {localVersions.map(v => (
-                <view
-                  key={v.name}
-                  className={'Version-Item' + (props.selectedLocalName === v.name ? ' Version-Item--active' : '')}
-                  bindtap={() => props.onSelect(v.name)}
-                >
-                  <view className="Version-ItemMain">
-                    <text className="Version-ItemText">{v.name}</text>
-                    <text className="Version-ItemMeta">{v.folder}</text>
-                  </view>
-                  {props.selectedLocalName === v.name ? <text className="Version-Check">✓</text> : null}
-                  <view className="Version-ItemRemove" bindtap={(e: any) => { e?.stopPropagation?.(); handleRemove(v.name); }}>
-                    <text className="Version-ItemRemoveText">Remove</text>
-                  </view>
-                </view>
-              ))}
-            </>
-          )}
-
-          <view className="Version-Section">
-            <text className="Version-SectionLabel">REMOTE CATALOG</text>
-            <view bindtap={() => setShowPrereleases(v => !v)}>
-              <text className="Version-SectionAction">
-                {showPrereleases ? 'Hide prereleases' : 'Show prereleases'}
-              </text>
+              <Tag intent="success" minimal>bundled</Tag>
+              {props.selectedLocalName == null ? <text className="Version-Check">✓</text> : null}
             </view>
-          </view>
 
-          {catalogLoading ? (
-            <view style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '20px' } as any}>
-              <Spinner size={24} intent="primary" />
-              <text className="bp-muted" style={{ fontSize: '12px' } as any}>Fetching version catalog…</text>
+            {localVersions.length > 0 && (
+              <>
+                <text className="Version-SectionLabel">Local</text>
+                {localVersions.map(v => (
+                  <view
+                    key={v.name}
+                    className={'Version-Item' + (props.selectedLocalName === v.name ? ' Version-Item--active' : '')}
+                    bindtap={() => props.onSelect(v.name)}
+                  >
+                    <view className="Version-ItemMain">
+                      <text className="Version-ItemText">{v.name}</text>
+                      <text className="Version-ItemMeta" text-maxline="1">{v.folder}</text>
+                    </view>
+                    {props.selectedLocalName === v.name ? <text className="Version-Check">✓</text> : null}
+                    <view className="Version-ItemAction" bindtap={(e: any) => { e?.stopPropagation?.(); handleRemove(v.name); }}>
+                      <text className="Version-ItemActionText">Remove</text>
+                    </view>
+                  </view>
+                ))}
+              </>
+            )}
+
+            <view className="Version-SectionRow">
+              <text className="Version-SectionLabel Version-SectionLabel--inline">Catalog</text>
+              <view bindtap={() => setShowPrereleases(v => !v)}>
+                <text className="Version-SectionAction">
+                  {showPrereleases ? 'Hide prereleases' : 'Show prereleases'}
+                </text>
+              </view>
             </view>
-          ) : catalogError ? (
-            <NonIdealState
-              icon="warning-sign"
-              title="Couldn't fetch catalog"
-              description={catalogError}
-            />
-          ) : (
-            <scroll-view className="Version-CatalogList" scroll-orientation="vertical">
-              {filteredCatalog.slice(0, 40).map(v => (
+
+            {catalogLoading ? (
+              <view className="Version-Loading">
+                <Spinner size={18} intent="primary" />
+                <text className="Version-LoadingText">Fetching catalog…</text>
+              </view>
+            ) : catalogError ? (
+              <NonIdealState icon="warning-sign" title="Couldn't fetch catalog" description={catalogError} />
+            ) : (
+              filteredCatalog.slice(0, 40).map(v => (
                 <view key={v.version} className="Version-Item">
                   <view className="Version-ItemMain">
                     <view className="Version-ItemHead">
@@ -171,18 +183,25 @@ export function VersionChooser(props: VersionChooserProps) {
                   {installingVersion === v.version ? (
                     <Spinner size={14} intent="primary" />
                   ) : (
-                    <Button text="Download" small onClick={() => handleDownload(v)} disabled={installingVersion !== null} />
+                    <view
+                      className="Version-ItemAction"
+                      bindtap={() => { if (installingVersion === null) handleDownload(v); }}
+                    >
+                      <text className="Version-ItemActionText">Download</text>
+                    </view>
                   )}
                 </view>
-              ))}
-            </scroll-view>
-          )}
+              ))
+            )}
+          </scroll-view>
+          {/* One quiet row at the foot, not a button bar: there is nothing to
+              confirm, so the only thing left is the one act the list cannot
+              offer — pointing at a runtime already on disk. */}
+          <view className="Version-Foot" bindtap={() => setAddOpen(true)}>
+            <text className="Version-FootText">＋  Add a local runtime…</text>
+          </view>
         </view>
-        <view style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '12px' } as any}>
-          <Button icon="add" text="Add Local Version" onClick={() => setAddOpen(true)} />
-          <Button text="Done" intent="primary" onClick={props.onClose} />
-        </view>
-      </Dialog>
+      </PlatformOverlay>
       <AddVersionDialog
         isOpen={addOpen}
         onClose={() => setAddOpen(false)}

@@ -530,6 +530,7 @@ export function Fiddle(props: FiddleProps) {
     'fiddle:selectFile': (data: any) => { const id = data?.id; if (typeof id === 'string') fiddle.selectEditor(id); },
     'fiddle:showTour': () => setTourOpen(true),
     'fiddle:openSettings': () => setSettingsOpen(true),
+    'fiddle:openVersions': () => setVersionsOpen(true),
     'fiddle:openHelp': () => handleOpenHelp(),
     'fiddle:persistNow': () => {
       fiddle.flushAll();
@@ -731,6 +732,7 @@ export function Fiddle(props: FiddleProps) {
       <Settings isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} onAppearanceChange={handleAppearanceChange} />
       <VersionChooser
         isOpen={versionsOpen}
+        isMac={isMacPlatform}
         currentVersion={currentVersion}
         selectedLocalName={selectedLocalName}
         onSelect={handleSelectLocalVersion}
