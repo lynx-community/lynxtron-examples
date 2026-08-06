@@ -20,4 +20,5 @@
   border-radius: 4px;
   background-color: rgba(138,155,168,0.4);
 }
-.WelcomeTour-Dot--active { background-color: #137cbd; }
+/* The step you are on is a mark. */
+.WelcomeTour-Dot--active { background-color: var(--brand); }
