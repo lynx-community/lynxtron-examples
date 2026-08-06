@@ -225,8 +225,7 @@
 }
 .theme-light .bp3-input-group .bp3-input:focus {
   box-shadow:
-    inset 0 0 0 1px #137cbd,
-    inset 0 0 0 3px rgba(19,124,189,0.3);
+    inset 0 0 0 1px var(--edge-strong);
 }
 .bp3-input-group .bp3-input-icon {
   position: absolute;
@@ -248,28 +247,35 @@
   z-index: 100;
   pointer-events: auto;
 }
+/* Dialogs speak the same chrome as the palette and the version popover: a panel
+   on the chrome tone behind a hairline, lifted by its shadow rather than by a
+   heavier tone or a thicker border. The ordinal --background-3 and
+   --border-color-1 were from the palette this app no longer uses. */
 .bp3-dialog {
   width: 500px;
   max-height: 80%;
-  background-color: var(--background-3);   /* background-3 — matches upstream .dialog */
-  border-radius: 6px;
+  background-color: var(--surface-chrome);
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border-color-1);   /* border-color-1 */
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
 }
+/* A title, not a title BAR. The header carried its own ground and a rule under
+   it, which made every dialog two stacked surfaces before any content; the
+   panel is one surface and the title sits in it. */
 .bp3-dialog-header {
-  height: 44px;
-  padding: 0 16px;
+  height: 40px;
+  padding: 0 10px 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-color-1);  /* match the dialog's own border */
-  background-color: var(--background-1);   /* background-1 */
-  border-radius: 6px 6px 0 0;
 }
 .bp3-dialog-title {
-  font-size: 15px;
+  font-size: 13px;
   color: var(--bp-text);
   font-weight: 500;
 }
@@ -295,7 +301,7 @@
   flex-direction: column;
   gap: 6px;
 }
-.bp3-callout.bp3-intent-primary { background-color: rgba(19,124,189,0.15); }
+.bp3-callout.bp3-intent-primary { background-color: var(--overlay-soft); }
 .bp3-callout.bp3-intent-success { background-color: rgba(15,153,96,0.15); }
 .bp3-callout.bp3-intent-warning { background-color: rgba(217,130,43,0.15); }
 .bp3-callout.bp3-intent-danger  { background-color: rgba(219,55,55,0.15); }
@@ -321,9 +327,16 @@
   align-items: center;
   justify-content: center;
 }
-.bp3-checkbox-indicator--checked { background-color: #137cbd; }
-.bp3-checkbox-check { color: var(--text-color-1); font-size: 10px; }
-.bp3-checkbox-label { color: var(--bp-text); font-size: 13px; }
+/* A ticked box is a MARK, which is where the brand belongs — the same rule that
+   gives the palette's command glyphs their green and keeps it off every surface.
+   #137cbd was Blueprint's stock blue, and after the palette and the gallery gave
+   theirs up this was the last one in the app. */
+.bp3-checkbox-indicator--checked {
+  background-color: var(--brand);
+  border-color: var(--brand);
+}
+.bp3-checkbox-check { color: var(--brand-ink); font-size: 10px; }
+.bp3-checkbox-label { color: var(--bp-text); font-size: 12px; }
 
 /* ── FormGroup ────────────────────────────────────────────────────────── */
 .bp3-form-group {
@@ -376,7 +389,7 @@
 }
 .bp3-spinner-ring {
   border: 2px solid rgba(138,155,168,0.2);
-  border-top-color: #137cbd;
+  border-top-color: var(--brand);
   border-radius: 50%;
   width: 100%;
   height: 100%;
@@ -409,7 +422,7 @@
   font-size: 13px;
 }
 .bp3-menu-item:hover { background-color: rgba(138,155,168,0.15); }
-.bp3-menu-item.bp3-active { background-color: #137cbd; color: var(--text-color-1); }
+.bp3-menu-item.bp3-active { background-color: var(--overlay-strong); color: var(--bp-text); }
 .bp3-menu-item.bp3-disabled { opacity: 0.5; cursor: not-allowed; }
 .bp3-menu-item.bp3-disabled:hover { background: none; }
 .bp3-menu-item-icon { flex-shrink: 0; color: var(--bp-text-muted); font-size: 14px; }
@@ -487,7 +500,7 @@
 .bp3-tag.bp3-large { padding: 4px 10px; font-size: 14px; min-height: 30px; }
 .bp3-tag.bp3-round { border-radius: 20px; }
 .bp3-tag.bp3-minimal { background-color: rgba(138,155,168,0.15); }
-.bp3-tag.bp3-intent-primary { background-color: #137cbd; }
+.bp3-tag.bp3-intent-primary { background-color: var(--overlay-strong); }
 .bp3-tag.bp3-intent-success { background-color: #0f9960; }
 .bp3-tag.bp3-intent-warning { background-color: #d9822b; }
 .bp3-tag.bp3-intent-danger { background-color: #db3737; }
@@ -496,7 +509,7 @@
    minimal tag rendered as a block of saturated colour. Minimal means tinted
    text on a tint of its own colour — the intent still reads, without a badge
    shouting louder than the row it labels. */
-.bp3-tag.bp3-minimal.bp3-intent-primary { background-color: rgba(19,124,189,0.18); }
+.bp3-tag.bp3-minimal.bp3-intent-primary { background-color: var(--overlay-soft); }
 .bp3-tag.bp3-minimal.bp3-intent-success { background-color: rgba(15,153,96,0.18); }
 .bp3-tag.bp3-minimal.bp3-intent-warning { background-color: rgba(217,130,43,0.18); }
 .bp3-tag.bp3-minimal.bp3-intent-danger  { background-color: rgba(219,55,55,0.18); }
@@ -535,7 +548,7 @@
   align-items: center;
   justify-content: center;
 }
-.bp3-radio-indicator--checked { background-color: #137cbd; box-shadow: none; }
+.bp3-radio-indicator--checked { background-color: var(--brand); box-shadow: none; }
 .bp3-radio-dot {
   width: 6px;
   height: 6px;
@@ -599,7 +612,7 @@
     0 8px 24px rgba(16,22,26,0.4);
   pointer-events: auto;
 }
-.bp3-toast.bp3-intent-primary { background-color: #137cbd; }
+.bp3-toast.bp3-intent-primary { background-color: var(--surface-raised); }
 .bp3-toast.bp3-intent-success { background-color: #0f9960; }
 .bp3-toast.bp3-intent-warning { background-color: #d9822b; }
 .bp3-toast.bp3-intent-danger { background-color: #db3737; }
@@ -626,8 +639,11 @@
   box-shadow: inset 0 0 0 1px rgba(16,22,26,0.2);
 }
 .theme-light .bp3-checkbox-indicator--checked,
-.theme-light .bp3-radio-indicator--checked { background-color: #137cbd; }
-.theme-light .bp3-checkbox-check { color: #ffffff; }
+.theme-light .bp3-radio-indicator--checked {
+  background-color: var(--brand);
+  border-color: var(--brand);
+}
+.theme-light .bp3-checkbox-check { color: var(--brand-ink); }
 .theme-light .bp3-radio-dot { background-color: #ffffff; }
 .theme-light .bp3-menu {
   box-shadow:

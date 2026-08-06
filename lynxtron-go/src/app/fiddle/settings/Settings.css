@@ -1,48 +1,85 @@
-.Settings-Layout { display: flex; gap: 16px; min-height: 360px; }
+/* ── Settings ─────────────────────────────────────────────────────────────
+   Same language as the rest of the app: frameless rows, neutral selection, one
+   recessed field treatment, and no button bar for a panel whose every change
+   is already saved. */
+
+.Settings-Layout { display: flex; column-gap: 20px; min-height: 340px; }
+
 .Settings-Sidebar {
-  width: 160px;
+  width: 132px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  border-right: 1px solid var(--bp-surface-deep);
-  padding-right: 8px;
+  row-gap: 2px;
+  flex-shrink: 0;
+  border-right-width: 1px;
+  border-right-style: solid;
+  border-right-color: var(--hairline);
+  padding-right: 10px;
 }
 .Settings-SidebarItem {
-  padding: 8px 10px;
-  border-radius: 3px;
+  padding: 0 10px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
   cursor: pointer;
 }
-.Settings-SidebarItem:hover { background-color: rgba(138,155,168,0.15); }
-.Settings-SidebarItem--active { background-color: var(--bp-selected-bg); }
-.Settings-SidebarItemText { color: var(--bp-text); font-size: 13px; }
-.Settings-Body { flex: 1; display: flex; flex-direction: column; }
-.Settings-SectionTitle {
-  font-size: 15px;
-  color: var(--bp-text);
-  font-weight: 500;
-  margin-bottom: 12px;
-}
-.Settings-Radios {
+.Settings-SidebarItem:hover { background-color: var(--overlay-soft); }
+/* Neutral. This was --bp-selected-bg, the stock VS Code blue — the last one
+   left in the app after the palette and the gallery gave theirs up. */
+.Settings-SidebarItem--active { background-color: var(--overlay-strong); }
+.Settings-SidebarItemText { color: var(--bp-text-muted); font-size: 12px; }
+.Settings-SidebarItem--active .Settings-SidebarItemText { color: var(--bp-text); }
+
+.Settings-Body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+/* ── Segment group: one exclusive choice ────────────────────────────────── */
+.Settings-Segment {
   display: flex;
-  gap: 16px;
+  flex-direction: row;
+  align-self: flex-start;
+  padding: 2px;
+  border-radius: 8px;
+  background-color: var(--overlay-soft);
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--hairline);
 }
-.Settings-Footer {
+.Settings-SegmentItem {
+  padding: 0 12px;
+  height: 24px;
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--bp-surface-deep);
-  margin: 16px -20px -20px -20px;
-  background-color: var(--bp-button-bg);
-  border-radius: 0 0 6px 6px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
 }
+.Settings-SegmentItem:hover { background-color: var(--overlay-soft); }
+.Settings-SegmentItem--active { background-color: var(--overlay-strong); }
+.Settings-SegmentText { font-size: 12px; color: var(--bp-text-muted); }
+.Settings-SegmentItem--active .Settings-SegmentText { color: var(--bp-text); }
 
 /* A numeric field is as wide as the number it holds, not as wide as the row.
    It also has to be wide at all: .bp3-input is `flex: 1`, i.e. flex-basis 0,
    so an input group with no width collapses the field to zero — the font size
    control was a 0px box you could neither read nor type into. */
 .SettingsNumberInput {
-  width: 88px;
+  width: 72px;
   flex-grow: 0;
   flex-shrink: 0;
 }
+
+/* One input in this app, wherever it appears — the same recess as the gist
+   URL, the module search and the palette query. */
+.Settings-Body .bp3-input {
+  height: 28px;
+  min-height: 28px;
+  font-size: 12px;
+  border-radius: 6px;
+  border-width: 0;
+  box-shadow: none;
+  background-color: var(--overlay-soft);
+  color: var(--bp-text);
+}
+.Settings-Body .bp3-input:hover,
+.Settings-Body .bp3-input:focus { background-color: var(--overlay-strong); }

@@ -97,7 +97,6 @@ export function Settings(props: SettingsProps) {
         <view className="Settings-Body">
           {panel === 'general' && (
             <>
-              <text className="Settings-SectionTitle">General</text>
               <FormGroup label="Welcome tour">
                 <Checkbox
                   checked={state.showWelcomeTour}
@@ -116,16 +115,22 @@ export function Settings(props: SettingsProps) {
           )}
           {panel === 'appearance' && (
             <>
-              <text className="Settings-SectionTitle">Appearance</text>
-              <FormGroup label="Theme" helperText="System theme follows the OS light/dark preference.">
-                <view className="Settings-Radios">
+              <FormGroup label="Theme" helperText="System follows the OS light/dark preference.">
+                {/* One choice, so one control. Three checkboxes said "tick any
+                    number of these" for a setting that can only ever be one —
+                    and left it possible to render a state with none ticked. A
+                    segment group says exclusive by its shape. */}
+                <view className="Settings-Segment">
                   {(['dark', 'light', 'system'] as const).map(t => (
-                    <Checkbox
+                    <view
                       key={t}
-                      checked={state.theme === t}
-                      label={t.charAt(0).toUpperCase() + t.slice(1)}
-                      onChange={() => update('theme', t)}
-                    />
+                      className={'Settings-SegmentItem' + (state.theme === t ? ' Settings-SegmentItem--active' : '')}
+                      bindtap={() => update('theme', t)}
+                    >
+                      <text className="Settings-SegmentText">
+                        {t.charAt(0).toUpperCase() + t.slice(1)}
+                      </text>
+                    </view>
                   ))}
                 </view>
               </FormGroup>
@@ -151,13 +156,12 @@ export function Settings(props: SettingsProps) {
                 />
               </FormGroup>
               <FormGroup label="Custom themes" helperText="Import your own theme JSON to skin the whole app.">
-                <Button icon="add" text="Add Theme…" onClick={() => setAddThemeOpen(true)} />
+                <Button icon="add" text="Add Theme…" minimal onClick={() => setAddThemeOpen(true)} />
               </FormGroup>
             </>
           )}
           {panel === 'execution' && (
             <>
-              <text className="Settings-SectionTitle">Execution</text>
               <FormGroup label="Runtime flags" helperText="Passed on the Lynxtron command line when Run is pressed.">
                 <InputGroup
                   fill
@@ -173,7 +177,6 @@ export function Settings(props: SettingsProps) {
           )}
           {panel === 'github' && (
             <>
-              <text className="Settings-SectionTitle">GitHub</text>
               {ghUser ? (
                 <Callout intent="success" icon="tick" title={`Signed in as ${ghUser.login}`}>
                   {ghUser.name ? `${ghUser.name} — ` : ''}publish + private gists enabled.
@@ -238,9 +241,6 @@ export function Settings(props: SettingsProps) {
             </>
           )}
         </view>
-      </view>
-      <view className="Settings-Footer">
-        <Button text="Done" intent="primary" onClick={props.onClose} />
       </view>
       <AddThemeDialog
         isOpen={addThemeOpen}
