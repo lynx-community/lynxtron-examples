@@ -61,6 +61,77 @@ describe('BidirectionalListEngine deterministic integration', () => {
     expect(followed?.bottom).toBe(200);
   });
 
+  it('retries a stable position mismatch before settling', async () => {
+    const driver = new MockBidirectionalListDriver({
+      items: Array.from({ length: 4 }, (_, index) => ({ key: String(index), height: 100 })),
+      viewportHeight: 200,
+      scrollTop: 200,
+    });
+    const verify = vi.fn()
+      .mockResolvedValueOnce('mismatched')
+      .mockResolvedValueOnce('matched');
+    const scrollTo = vi.spyOn(driver, 'scrollTo');
+    const engine = new BidirectionalListEngine<MockListItem>({
+      initialItems: Array.from({ length: 4 }, (_, index) => ({ key: String(index), height: 100 })),
+      getItemKey: (item) => item.key,
+      driver,
+      onCommit: ({ items }) => driver.setItems(items),
+      positionReconciler: { verify, recover: vi.fn() },
+    });
+
+    const result = await engine.append([{ key: '4', height: 100 }], {
+      position: { type: 'follow-insert', target: 'last', align: 'end' },
+    });
+
+    expect(result.outcome).toBe('settled');
+    expect(verify).toHaveBeenCalledTimes(2);
+    expect(scrollTo).toHaveBeenCalledTimes(2);
+  });
+
+  it('remounts after a reconciled detached viewport and then verifies again', async () => {
+    const driver = new MockBidirectionalListDriver({
+      items: [{ key: 'a', height: 100 }],
+      viewportHeight: 200,
+    });
+    const verify = vi.fn()
+      .mockResolvedValueOnce('detached')
+      .mockResolvedValueOnce('matched');
+    const recover = vi.fn().mockResolvedValue(undefined);
+    const engine = new BidirectionalListEngine<MockListItem>({
+      initialItems: [{ key: 'a', height: 100 }],
+      getItemKey: (item) => item.key,
+      driver,
+      onCommit: ({ items }) => driver.setItems(items),
+      positionReconciler: { verify, recover },
+    });
+
+    const result = await engine.reset([{ key: 'new', height: 100 }], { position: 'end' });
+    expect(result.outcome).toBe('settled');
+    expect(recover).toHaveBeenCalledOnce();
+    expect(verify).toHaveBeenCalledTimes(2);
+  });
+
+  it('fails instead of exposing a transaction that never reconciles', async () => {
+    const driver = new MockBidirectionalListDriver({
+      items: [{ key: 'a', height: 100 }],
+      viewportHeight: 200,
+    });
+    const verify = vi.fn().mockResolvedValue('mismatched');
+    const recover = vi.fn().mockResolvedValue(undefined);
+    const engine = new BidirectionalListEngine<MockListItem>({
+      initialItems: [{ key: 'a', height: 100 }],
+      getItemKey: (item) => item.key,
+      driver,
+      onCommit: ({ items }) => driver.setItems(items),
+      positionReconciler: { verify, recover },
+    });
+
+    const result = await engine.reset([{ key: 'new', height: 100 }], { position: 'end' });
+    expect(result).toMatchObject({ outcome: 'failed', operation: 'reset' });
+    expect(verify).toHaveBeenCalledTimes(3);
+    expect(recover).toHaveBeenCalledOnce();
+  });
+
   it('does not settle append-follow when only the native scroll command has returned', async () => {
     let confirmGeometry: (() => void) | undefined;
     const begin = vi.fn(() => new Promise<void>((resolve) => { confirmGeometry = resolve; }));

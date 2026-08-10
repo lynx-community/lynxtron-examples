@@ -6,6 +6,7 @@ export {
 export {
   isFileMutationTimelineEntry,
   isFileMutationTool,
+  isWorkingTool,
   prepareConversationItems,
   toolTouchesChangedFile,
 } from './conversation-items';

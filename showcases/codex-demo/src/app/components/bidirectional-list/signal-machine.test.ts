@@ -10,11 +10,13 @@ function geometry(input: {
   lastCellIndex?: number;
   eventSource?: ListEventSource;
   trigger?: 'scroll' | 'scrolltoupper' | 'scrolltolower' | 'query';
+  queryReason?: 'content-settled' | 'position-verification';
 }): Extract<NormalizedNativeListSignal, { type: 'geometry' }> {
   const listHeight = 300;
   return {
     type: 'geometry',
     trigger: input.trigger ?? 'scroll',
+    ...(input.queryReason ? { queryReason: input.queryReason } : {}),
     eventSource: input.eventSource ?? 2,
     geometry: {
       scrollTop: input.scrollTop,
@@ -95,9 +97,8 @@ describe('ListSignalMachine viewport truth', () => {
       queryReason: 'content-settled',
     });
     expect(event).toMatchObject({
-      type: 'viewport',
-      cause: 'query',
-      queryReason: 'content-settled',
+      type: 'viewport-reconciled',
+      reason: 'content-settled',
       snapshot: { start: { near: true, distancePx: 120 } },
     });
   });
@@ -130,6 +131,27 @@ describe('ListSignalMachine user gestures', () => {
     })).filter((event) => event.type === 'user-reached-edge')).toEqual([]);
     machine.observe(state(1));
     expect(machine.getSnapshot()).toMatchObject({ motion: 'idle', userGestureId: undefined });
+  });
+
+  it('does not attribute layout geometry to an overlapping user gesture', () => {
+    const machine = new ListSignalMachine();
+    machine.observe(geometry({ scrollTop: 200, maxScroll: 600 }));
+    machine.observe(state(2));
+
+    const [layoutViewport] = machine.observe(geometry({
+      scrollTop: 600,
+      maxScroll: 600,
+      eventSource: 1,
+    }));
+    expect(layoutViewport).toMatchObject({ type: 'viewport' });
+    expect(layoutViewport?.snapshot.userGestureId).toBeUndefined();
+
+    const [userViewport] = machine.observe(geometry({
+      scrollTop: 500,
+      maxScroll: 600,
+      eventSource: 2,
+    }));
+    expect(userViewport?.snapshot.userGestureId).toBe(1);
   });
 
   it('does not emit merely because a gesture starts at an existing edge', () => {
@@ -255,7 +277,7 @@ describe('ListSignalMachine user gestures', () => {
 });
 
 describe('ListSignalMachine append follow', () => {
-  it('settles only on newer exact-end geometry containing the appended boundary item', async () => {
+  it('settles only on reconciled query geometry containing the appended boundary item', async () => {
     const machine = new ListSignalMachine({ followTimeoutMs: 1_000 });
     machine.observe(geometry({ scrollTop: 600, maxScroll: 600, firstCellIndex: 5, lastCellIndex: 7 }));
     let settled = false;
@@ -272,7 +294,19 @@ describe('ListSignalMachine append follow', () => {
     expect(settled).toBe(false);
     expect(machine.getSnapshot().pendingFollow?.transactionId).toBe(9);
 
+    const nativeEvents = machine.observe(geometry({
+      scrollTop: 800,
+      maxScroll: 800,
+      firstCellIndex: 7,
+      lastCellIndex: 9,
+    }));
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    expect(nativeEvents).not.toContainEqual(expect.objectContaining({ type: 'append-follow-settled' }));
+
     const events = machine.observe(geometry({
+      trigger: 'query',
+      queryReason: 'position-verification',
       scrollTop: 800,
       maxScroll: 800,
       firstCellIndex: 7,

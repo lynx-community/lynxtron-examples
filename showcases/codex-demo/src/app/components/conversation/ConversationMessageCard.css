@@ -17,6 +17,5 @@
 
 .conversation-tool-activity-text {
   min-width: 0;
-  color: #969ba4;
-  font-size: 11px;
+  flex: 1;
 }

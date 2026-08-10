@@ -96,18 +96,6 @@
       ]
     },
     {
-      "name": "@lynxtron-examples/hello-world",
-      "description": "Minimal hello world showcase demonstrating the Lynxtron window + preload bridge",
-      "path": "showcases/hello-world",
-      "thumbnail": null,
-      "tags": [
-        "beginner"
-      ],
-      "targets": [
-        "desktop"
-      ]
-    },
-    {
       "name": "@lynxtron-examples/native-texture-canvas",
       "description": "Native Texture Canvas extension showcase with Lynx controls and a native drawing surface",
       "path": "showcases/native-texture-canvas",

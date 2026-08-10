@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ChangedFile, TimelineEntry, ToolItem } from '../../../shared/agent';
-import { prepareConversationItems, toolTouchesChangedFile } from './conversation-items';
+import { isWorkingTool, prepareConversationItems, toolTouchesChangedFile } from './conversation-items';
 
 function toolEntry(id: string, tool: Partial<ToolItem>): TimelineEntry {
   return {
@@ -21,6 +21,14 @@ const changed: ChangedFile[] = [{
 }];
 
 describe('conversation tool classification', () => {
+  it('only marks non-terminal tool states as working', () => {
+    expect(isWorkingTool({ toolCallId: 'pending', title: 'read' })).toBe(true);
+    expect(isWorkingTool({ toolCallId: 'running', title: 'read', status: 'in_progress' })).toBe(true);
+    expect(isWorkingTool({ toolCallId: 'done', title: 'read', status: 'completed' })).toBe(false);
+    expect(isWorkingTool({ toolCallId: 'failed', title: 'read', status: 'failed' })).toBe(false);
+    expect(isWorkingTool({ toolCallId: 'cancelled', title: 'read', status: 'cancelled' })).toBe(false);
+  });
+
   it('classifies shell tools by their changed-file locations', () => {
     const tool = toolEntry('shell-write', {
       kind: 'execute',

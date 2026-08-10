@@ -41,6 +41,15 @@ function isCompletedTool(tool?: ToolItem): boolean {
   return status === 'completed' || status === 'complete' || status === 'success' || status === 'succeeded';
 }
 
+export function isWorkingTool(tool?: ToolItem): boolean {
+  if (!tool) return false;
+  const status = (tool.status ?? 'pending').toLowerCase().replace(/[\s-]+/g, '_');
+  return ![
+    'completed', 'complete', 'success', 'succeeded',
+    'error', 'failed', 'failure', 'cancelled', 'canceled',
+  ].includes(status);
+}
+
 /** Collapse completed work details and reserve changed files for ChangeSummaryCard. */
 export function prepareConversationItems(items: TimelineEntry[], changedFiles: ChangedFile[]): TimelineEntry[] {
   const visible: TimelineEntry[] = [];

@@ -1,9 +1,9 @@
 import { useState } from '@lynx-js/react';
 import type { TimelineEntry } from '../../../shared/agent';
-import { Button } from '../ui';
+import { Button, LoadingText } from '../ui';
 import { MarkdownMessage } from './MarkdownMessage';
 import { ToolCard } from './ToolCard';
-import { looksLikeFilePath } from './conversation-items';
+import { isWorkingTool, looksLikeFilePath } from './conversation-items';
 import './ConversationMessageCard.css';
 
 export interface ConversationMessageCardProps {
@@ -48,12 +48,14 @@ export function ConversationMessageCard({ item, onOpenFile, onOpenTool, onOpenLi
       : inferredTitlePath
         ? () => onOpenFile(inferredTitlePath)
         : onOpenTool;
-    const failed = ['error', 'failed', 'failure', 'cancelled'].includes((item.tool.status ?? '').toLowerCase());
-    if (!failed) {
+    if (isWorkingTool(item.tool)) {
       return (
         <view className="conversation-tool-activity">
           <view className="conversation-tool-activity-icon" />
-          <text className="conversation-tool-activity-text" text-maxline="1">Working on {item.tool.title}</text>
+          <LoadingText
+            className="conversation-tool-activity-text"
+            text={`Working on ${item.tool.title}`}
+          />
         </view>
       );
     }

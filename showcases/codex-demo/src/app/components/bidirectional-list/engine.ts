@@ -15,8 +15,12 @@ import type {
   InsertPositionPolicy,
   ListMutationKind,
   ListTransactionResult,
+  PositionReconciler,
+  PositionVerificationRequest,
   ReplaceOptions,
 } from './types';
+
+const POSITION_RECONCILE_MAX_ATTEMPTS = 3;
 
 interface EngineMutation<T> {
   request: ListMutationRequest;
@@ -37,6 +41,7 @@ export interface BidirectionalListEngineOptions<T> {
   }) => void;
   onSettled?: (result: ListTransactionResult) => void;
   appendFollowSettlement?: AppendFollowSettlement;
+  positionReconciler?: PositionReconciler;
 }
 
 /** Headless mutation/anchoring engine shared by the Lynx adapter and deterministic tests. */
@@ -47,6 +52,7 @@ export class BidirectionalListEngine<T> {
   private readonly onCommit: BidirectionalListEngineOptions<T>['onCommit'];
   private readonly onSettled?: BidirectionalListEngineOptions<T>['onSettled'];
   private readonly appendFollowSettlement?: AppendFollowSettlement;
+  private readonly positionReconciler?: PositionReconciler;
   private machine: BidirectionalListMachineState = initialBidirectionalListMachineState();
   private nextRequestId = 1;
   private readonly mutations = new Map<number, EngineMutation<T>>();
@@ -59,6 +65,7 @@ export class BidirectionalListEngine<T> {
     this.onCommit = options.onCommit;
     this.onSettled = options.onSettled;
     this.appendFollowSettlement = options.appendFollowSettlement;
+    this.positionReconciler = options.positionReconciler;
     this.assertUniqueKeys(this.items);
   }
 
@@ -264,7 +271,42 @@ export class BidirectionalListEngine<T> {
         desiredTop = anchor.top;
       }
 
-      if (targetKey) await this.driver.scrollTo({ key: targetKey, align, offset: desiredTop, smooth });
+      if (targetKey) {
+        const targetIndex = this.items.findIndex((item) => this.getItemKey(item) === targetKey);
+        const verification: PositionVerificationRequest = {
+          transactionId,
+          operation: mutation.request.operation,
+          targetKey,
+          targetIndex,
+          align,
+          expectedTop: desiredTop,
+        };
+        let matched = false;
+        let recovered = false;
+        for (let attempt = 1; attempt <= POSITION_RECONCILE_MAX_ATTEMPTS; attempt += 1) {
+          await this.driver.scrollTo({ key: targetKey, align, offset: desiredTop, smooth });
+          if (!this.positionReconciler) {
+            matched = true;
+            break;
+          }
+          const outcome = await this.positionReconciler.verify(verification);
+          if (outcome === 'matched') {
+            matched = true;
+            break;
+          }
+          // A stable-but-wrong attachment can retain non-empty cells from an
+          // older layout generation, so cellCount alone cannot identify every
+          // broken native state. After one ordinary retry, remount once for
+          // either a detached viewport or a persistent stable mismatch.
+          if (!recovered && (outcome === 'detached' || attempt === 2)) {
+            await this.positionReconciler.recover(verification);
+            recovered = true;
+          }
+        }
+        if (!matched) {
+          throw new Error(`Position reconciliation failed for ${targetKey}`);
+        }
+      }
       this.dispatch({ type: 'RESTORE_APPLIED', transactionId });
 
       // PITFALL (observed): the native method callback only confirms command

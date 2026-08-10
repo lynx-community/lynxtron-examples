@@ -211,16 +211,31 @@ export class ListSignalMachine implements AppendFollowSettlement {
       }
     }
 
-    events.unshift({
-      type: 'viewport',
-      cause: signal.trigger === 'query' ? 'query' : 'geometry',
-      queryReason: signal.queryReason,
-      snapshot: this.getSnapshot(),
-    });
+    const emittedSnapshot = this.getSnapshot();
+    // A layout/imperative-scroll event can arrive while a user gesture is
+    // still open. The gesture id describes temporal overlap, not authorship;
+    // only SCROLL-sourced geometry (or an explicit gesture reconciliation)
+    // may be exposed to consumers as user-backed viewport state.
+    if (signal.trigger !== 'query' && signal.eventSource !== EVENT_SOURCE_SCROLL) {
+      emittedSnapshot.userGestureId = undefined;
+    }
+    events.unshift(signal.trigger === 'query'
+      ? {
+        type: 'viewport-reconciled',
+        reason: signal.queryReason ?? 'manual',
+        snapshot: emittedSnapshot,
+      }
+      : {
+        type: 'viewport',
+        cause: 'geometry',
+        snapshot: emittedSnapshot,
+      });
 
     const pending = this.pendingFollow;
     if (
       pending
+      && signal.trigger === 'query'
+      && signal.queryReason === 'position-verification'
       && this.snapshot.revision > pending.startedAfterRevision
       && this.snapshot.end.at
       && (this.snapshot.lastCellIndex ?? -1) >= pending.request.expectedBoundaryIndex

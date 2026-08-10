@@ -2404,6 +2404,10 @@ text {
   font-size: 9px;
 }
 
+.agent-status-loading {
+  max-width: 58px;
+}
+
 .agent-task-title {
   color: #34383f;
   font-size: 12px;
@@ -2568,6 +2572,11 @@ text {
 .agent-activity-title {
   color: #444950;
   font-size: 9px;
+  font-weight: 620;
+}
+
+.agent-activity-loading {
+  width: 100%;
   font-weight: 620;
 }
 
@@ -5004,6 +5013,9 @@ text {
 .permission-actions {
   width: auto;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   justify-content: flex-end;
   gap: 7px;
 }
@@ -5011,6 +5023,10 @@ text {
 .permission-button {
   height: 28px;
   min-width: 58px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
   padding: 0 12px;
   border: 1px solid transparent;
   border-radius: 8px;
@@ -5022,6 +5038,8 @@ text {
 }
 
 .permission-button-text {
+  line-height: 14px;
+  text-align: center;
   color: #4d525a;
   font-size: 10px;
   font-weight: 550;

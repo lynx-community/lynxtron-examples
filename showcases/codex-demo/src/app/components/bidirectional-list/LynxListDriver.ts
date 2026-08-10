@@ -14,7 +14,8 @@ interface NativeListCell {
 }
 
 export interface LynxListDriverOptions {
-  id: string;
+  id?: string;
+  getNativeId?: () => string;
   getViewportHeight: () => number;
   getMountedKeys: () => readonly string[];
   layoutTimeoutMs?: number;
@@ -48,7 +49,7 @@ export function lynxListAlignment(align: ListAlignment): 'top' | 'middle' | 'bot
 
 /** Imperative adapter around Lynx list methods. It contains no sequence or pagination policy. */
 export class LynxListDriver implements BidirectionalListDriver {
-  private readonly id: string;
+  private readonly getNativeId: () => string;
   private readonly getViewportHeight: () => number;
   private readonly getMountedKeys: () => readonly string[];
   private readonly layoutTimeoutMs: number;
@@ -60,7 +61,10 @@ export class LynxListDriver implements BidirectionalListDriver {
   }>();
 
   constructor(options: LynxListDriverOptions) {
-    this.id = options.id;
+    if (!options.id && !options.getNativeId) {
+      throw new Error('LynxListDriver requires id or getNativeId');
+    }
+    this.getNativeId = options.getNativeId ?? (() => options.id!);
     this.getViewportHeight = options.getViewportHeight;
     this.getMountedKeys = options.getMountedKeys;
     this.layoutTimeoutMs = options.layoutTimeoutMs ?? 1_200;
@@ -176,7 +180,11 @@ export class LynxListDriver implements BidirectionalListDriver {
     return new Promise((resolve, reject) => {
       try {
         lynx.createSelectorQuery()
-          .select(`#${this.id}`)
+          // A remounted native List must have a new selector identity. Lynx
+          // can keep the old native node registered briefly (and, on macOS,
+          // sometimes indefinitely), so querying a reused id may return the
+          // previous generation's scroll metrics and an empty cell set.
+          .select(`#${this.getNativeId()}`)
           .invoke({
             method,
             ...(params ? { params } : {}),

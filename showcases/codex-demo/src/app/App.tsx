@@ -24,6 +24,7 @@ import './App.css';
 import {
   ChangeSummaryCard,
   ConversationMessageCard,
+  isWorkingTool,
   prepareConversationItems,
 } from './components/conversation';
 import { Button, LoadingSpinner, LoadingText, Popover } from './components/ui';
@@ -426,6 +427,7 @@ export function App() {
   const [backendId, setBackendId] = useState('opencode');
   const [tasks, setTasks] = useState<AgentTask[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState('');
+  const [timelineInstanceId, setTimelineInstanceId] = useState(0);
   const [workspace, setWorkspace] = useState('');
   const [historyItems, setHistoryItems] = useState<TimelineEntry[]>([]);
   const [liveItems, setLiveItems] = useState<TimelineEntry[]>([]);
@@ -1080,6 +1082,7 @@ export function App() {
       setTasks((current) => [task, ...current.filter((item) => item.id !== task.id)]);
       selectedTaskIdRef.current = task.id;
       setSelectedTaskId(task.id);
+      setTimelineInstanceId((current) => current + 1);
       clearPendingText();
       setHistoryItems([]);
       setLiveItems([]);
@@ -1115,6 +1118,7 @@ export function App() {
     setAccessMenuOpen(false);
     setModelMenuOpen(false);
     setSelectedTaskId(task.id);
+    setTimelineInstanceId((current) => current + 1);
     setWorkspace(task.cwd);
     clearPendingText();
     setHistoryItems(cachedTimeline?.historyItems ?? []);
@@ -1452,9 +1456,9 @@ export function App() {
             </scroll-view>
           ) : (
             <ChatList
-              key={selectedTaskId}
+              key={`${selectedTaskId}:${timelineInstanceId}`}
               ref={timelineRef}
-              id="conversation-timeline"
+              id={`conversation-timeline-${timelineInstanceId}`}
               bounces={false}
               items={conversationItems}
               renderItem={(item) => (
@@ -1671,7 +1675,12 @@ export function App() {
                         <text className="agent-primary-name">{selectedBackend?.label ?? 'Agent'}</text>
                         <text className="agent-primary-model" text-maxline="1">{modelLabel}</text>
                       </view>
-                      <view className={`agent-status agent-status--${selectedTask.status}`}><view className="agent-status-dot" /><text className="agent-status-text">{selectedTask.status}</text></view>
+                      <view className={`agent-status agent-status--${selectedTask.status}`}>
+                        <view className="agent-status-dot" />
+                        {selectedTask.status === 'running' || selectedTask.status === 'waiting'
+                          ? <LoadingText className="agent-status-loading" size="compact" text={selectedTask.status === 'waiting' ? 'Waiting' : 'Running'} />
+                          : <text className="agent-status-text">{selectedTask.status}</text>}
+                      </view>
                     </view>
                     <text className="agent-task-title" text-maxline="2">{selectedTask.title}</text>
                     <view className="agent-meta-row"><text className="agent-meta-label">Workspace</text><text className="agent-meta-value" text-maxline="1">{workspaceName}</text></view>
@@ -1690,7 +1699,9 @@ export function App() {
                     <view className="agent-activity" key={activity.id}>
                       <view className={`agent-activity-icon agent-activity-icon--${activity.kind}`}><text className="agent-activity-icon-text">{activity.kind === 'tool' ? '›_' : activity.kind === 'plan' ? '✓' : '◌'}</text></view>
                       <view className="agent-activity-copy">
-                        <text className="agent-activity-title" text-maxline="1">{activity.tool?.title ?? (activity.kind === 'plan' ? 'Updated plan' : 'Reasoning')}</text>
+                        {isWorkingTool(activity.tool)
+                          ? <LoadingText className="agent-activity-loading" size="compact" text={`Working on ${activity.tool!.title}`} />
+                          : <text className="agent-activity-title" text-maxline="1">{activity.tool?.title ?? (activity.kind === 'plan' ? 'Updated plan' : 'Reasoning')}</text>}
                         <text className="agent-activity-detail" text-maxline="2">{activity.tool?.text ?? activity.text ?? activity.plan?.[0]?.content ?? ''}</text>
                       </view>
                     </view>

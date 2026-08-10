@@ -1,11 +1,12 @@
-/* Shared indeterminate text loading state. Lynx supports gradients directly in color. */
+/* Shared indeterminate work state. Lynx supports gradients directly in text color. */
 .loading-text {
+  min-width: 0;
   color: linear-gradient(
     90deg,
     #999da5 0%,
-    #999da5 0%,
-    #f1f2f4 0%,
-    #999da5 15%,
+    #999da5 38%,
+    #f1f2f4 50%,
+    #999da5 62%,
     #999da5 100%
   );
   font-weight: 400;
@@ -13,6 +14,11 @@
   animation-name: loading-text-sweep;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
+}
+
+.loading-text--compact {
+  font-size: 9px;
+  line-height: 13px;
 }
 
 .loading-text--small {
@@ -27,21 +33,24 @@
 
 @keyframes loading-text-sweep {
   0% {
-    color: linear-gradient(90deg, #999da5 0%, #999da5 0%, #f1f2f4 0%, #999da5 15%, #999da5 100%);
+    color: linear-gradient(90deg, #999da5 0%, #999da5 100%, #999da5 100%, #999da5 100%, #999da5 100%);
   }
-  20% {
-    color: linear-gradient(90deg, #999da5 0%, #999da5 5%, #f1f2f4 20%, #999da5 35%, #999da5 100%);
+  12% {
+    color: linear-gradient(90deg, #999da5 0%, #999da5 0%, #f1f2f4 0%, #999da5 14%, #999da5 100%);
   }
-  40% {
-    color: linear-gradient(90deg, #999da5 0%, #999da5 25%, #f1f2f4 40%, #999da5 55%, #999da5 100%);
+  31% {
+    color: linear-gradient(90deg, #999da5 0%, #999da5 13%, #f1f2f4 27%, #999da5 41%, #999da5 100%);
   }
-  60% {
-    color: linear-gradient(90deg, #999da5 0%, #999da5 45%, #f1f2f4 60%, #999da5 75%, #999da5 100%);
+  50% {
+    color: linear-gradient(90deg, #999da5 0%, #999da5 36%, #f1f2f4 50%, #999da5 64%, #999da5 100%);
   }
-  80% {
-    color: linear-gradient(90deg, #999da5 0%, #999da5 65%, #f1f2f4 80%, #999da5 95%, #999da5 100%);
+  69% {
+    color: linear-gradient(90deg, #999da5 0%, #999da5 59%, #f1f2f4 73%, #999da5 87%, #999da5 100%);
+  }
+  88% {
+    color: linear-gradient(90deg, #999da5 0%, #999da5 86%, #f1f2f4 100%, #999da5 100%, #999da5 100%);
   }
   100% {
-    color: linear-gradient(90deg, #999da5 0%, #999da5 85%, #f1f2f4 100%, #999da5 100%, #999da5 100%);
+    color: linear-gradient(90deg, #999da5 0%, #999da5 100%, #999da5 100%, #999da5 100%, #999da5 100%);
   }
 }

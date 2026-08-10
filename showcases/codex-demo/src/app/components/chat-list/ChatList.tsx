@@ -22,7 +22,6 @@ import {
   TIMELINE_MAX_MOUNTED_ITEMS,
   TIMELINE_PREFETCH_BUFFER_ITEMS,
   TIMELINE_REMOTE_PAGE_ITEMS,
-  estimateTimelineItemHeight,
 } from '../../timeline-window';
 import {
   BidirectionalList,
@@ -73,7 +72,11 @@ function summarizeListSignal(signal: ListSignalEvent): Record<string, unknown> {
   return {
     type: signal.type,
     cause: signal.type === 'viewport' ? signal.cause : undefined,
-    queryReason: signal.type === 'viewport' ? signal.queryReason : undefined,
+    queryReason: signal.type === 'viewport'
+      ? signal.queryReason
+      : signal.type === 'viewport-reconciled'
+        ? signal.reason
+        : undefined,
     edge: signal.type === 'user-reached-edge' || signal.type === 'user-repeated-edge'
       ? signal.edge
       : undefined,
@@ -264,6 +267,7 @@ export const ChatList = forwardRef<ChatListHandle, ChatListProps>(function ChatL
     syncRunning.current = true;
     let shouldRefreshSignals = false;
     let didReplaceRows = false;
+    let replaceFailed = false;
     logFlow('rows-flush-start');
     try {
       while (!rowsEqual(appliedRows.current, desiredRows.current)) {
@@ -289,6 +293,7 @@ export const ChatList = forwardRef<ChatListHandle, ChatListProps>(function ChatL
           anchorErrorPx: result.anchorErrorPx,
         });
         if (result.outcome !== 'settled') {
+          replaceFailed = true;
           onRevealPerformance?.({
             traceId: `chat-list-sync-${result.id}`,
             phase: 'complete',
@@ -331,10 +336,19 @@ export const ChatList = forwardRef<ChatListHandle, ChatListProps>(function ChatL
       syncRunning.current = false;
       if (!remoteRequestInFlight.current && !remoteAwaitingLayout.current) revealBusy.current = false;
       const needsAnotherFlush = !rowsEqual(appliedRows.current, desiredRows.current);
-      logFlow('rows-flush-complete', { needsAnotherFlush });
-      if (needsAnotherFlush) void flushRows();
-      else if (shouldRefreshSignals) {
+      logFlow('rows-flush-complete', { needsAnotherFlush, replaceFailed });
+      // The engine already exhausted retry + native remount recovery. Retrying
+      // the identical desired rows synchronously only spins navigation
+      // transactions against the same broken native generation. A subsequent
+      // real rows change/effect is allowed to try again.
+      if (needsAnotherFlush && !replaceFailed) void flushRows();
+      else if (shouldRefreshSignals || replaceFailed) {
         setRevealingEarlier(false);
+        // Pagination is driven by reconciled viewport state, not by whether
+        // the native List accepted the latest rows. A failed positioning
+        // transaction must still re-query: near/at should load immediately,
+        // while a non-near viewport should restart the 1.5s background fill.
+        // Otherwise one render failure permanently disconnects both paths.
         void listRef.current?.refreshSignals('content-settled');
       }
     }
@@ -474,6 +488,37 @@ export const ChatList = forwardRef<ChatListHandle, ChatListProps>(function ChatL
 
   scheduleBackgroundFillRef.current = scheduleBackgroundFill;
 
+  // Background preloading is data-state driven. It must not depend on a
+  // `content-settled` viewport signal: native positioning can fail or omit a
+  // signal while the data source is still perfectly able to supply history.
+  // The list signal only upgrades near/at work to immediate foreground work.
+  useEffect(() => {
+    const busy = revealBusy.current
+      || remoteRequestInFlight.current
+      || remoteAwaitingLayout.current
+      || syncRunning.current
+      || loadingEarlier
+      || requestingEarlier
+      || revealingEarlier;
+    if (busy) {
+      cancelBackgroundFill('data-state-busy');
+      return;
+    }
+    scheduleBackgroundFill();
+    return () => cancelBackgroundFill('data-state-change');
+    // Deliberately keyed to pagination state rather than callback identity.
+    // `logFlow` changes during unrelated renders and must not perpetually
+    // restart the 1.5s debounce while an agent is streaming.
+  }, [
+    hasEarlier,
+    items.length,
+    loadingEarlier,
+    requestingEarlier,
+    revealingEarlier,
+    windowRange.end,
+    windowRange.start,
+  ]);
+
   const revealLater = useCallback(() => {
     logFlow('reveal-later-attempt');
     if (revealBusy.current || windowAtTail) {
@@ -505,17 +550,23 @@ export const ChatList = forwardRef<ChatListHandle, ChatListProps>(function ChatL
     });
     if (decision.followingTail !== undefined) {
       followingTail.current = decision.followingTail;
-      if (decision.followingTail) setNewerContentAvailable(false);
+      if (decision.followingTail) {
+        setNewerContentAvailable(false);
+      } else {
+        forceEndOnNextSync.current = false;
+        if (tailFollowTimer.current) {
+          clearTimeout(tailFollowTimer.current);
+          tailFollowTimer.current = null;
+        }
+      }
       setIsFollowingTail(decision.followingTail);
     }
     if (decision.earlier !== 'none') {
       cancelBackgroundFill('immediate-near-or-edge');
       revealEarlier(decision.earlier === 'allow-remote', 'foreground');
-    } else if (decision.backgroundEarlier) {
-      scheduleBackgroundFill();
     }
     if (decision.later) revealLater();
-  }, [cancelBackgroundFill, logFlow, revealEarlier, revealLater, scheduleBackgroundFill]);
+  }, [cancelBackgroundFill, logFlow, revealEarlier, revealLater]);
 
   const handleOuterLayout = useCallback((event: any) => {
     const detail = event?.detail ?? event;
@@ -767,11 +818,6 @@ export const ChatList = forwardRef<ChatListHandle, ChatListProps>(function ChatL
         initialItems={initialRows.current}
         getItemKey={rowKey}
         renderItem={renderRow}
-        estimateItemSize={(row) => row.kind === 'spacer'
-          ? row.height
-          : row.kind === 'footer'
-            ? Math.max(1, footerHeight || DEFAULT_FOOTER_ESTIMATE)
-            : estimateTimelineItemHeight(row.item)}
         initialPosition="end"
         bounces={bounces}
         signalNearThresholdPx={SIGNAL_NEAR_THRESHOLD_PX}

@@ -78,4 +78,30 @@ describe('LynxListDriver layout handshake', () => {
     expect(query.invoke).toHaveBeenCalledWith(expect.objectContaining({ method: 'getScrollInfo' }));
     driver.dispose();
   });
+
+  it('resolves the native selector id for every invocation after a remount', async () => {
+    let generation = 0;
+    const query: Record<string, any> = {
+      select: vi.fn(() => query),
+      invoke: vi.fn((options: Record<string, any>) => {
+        options.success({ scrollY: 0, maxScrollOffset: 0 });
+        return query;
+      }),
+      exec: vi.fn(),
+    };
+    vi.stubGlobal('lynx', { createSelectorQuery: () => query });
+    const driver = new LynxListDriver({
+      getNativeId: () => `test-list--native-${generation}`,
+      getViewportHeight: () => 480,
+      getMountedKeys: () => ['a'],
+    });
+
+    await driver.getScrollInfo();
+    generation = 1;
+    await driver.getScrollInfo();
+
+    expect(query.select).toHaveBeenNthCalledWith(1, '#test-list--native-0');
+    expect(query.select).toHaveBeenNthCalledWith(2, '#test-list--native-1');
+    driver.dispose();
+  });
 });

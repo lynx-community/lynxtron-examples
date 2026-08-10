@@ -34,18 +34,22 @@ import type {
   ListSignalQueryReason,
   NativeListSignalType,
   NormalizedNativeListSignal,
+  PositionReconciler,
+  PositionVerificationRequest,
   ListSnapshot,
+  ListSignalSnapshot,
   ListTransactionResult,
 } from './types';
 import './BidirectionalList.css';
 
-const DEFAULT_ITEM_ESTIMATE = 80;
 const LAYOUT_COMPLETION_FALLBACK_MS = 160;
 const EDGE_DIAGNOSTIC_RANGE_PX = 640;
 const NATIVE_DIAGNOSTIC_MIN_INTERVAL_MS = 80;
 const QUERY_SETTLE_INTERVAL_MS = 16;
 const QUERY_MAX_SAMPLES = 4;
 const QUERY_STABLE_TOLERANCE_PX = 0.75;
+const POSITION_MATCH_TOLERANCE_PX = 1;
+const RECOVERY_LAYOUT_TIMEOUT_MS = 1_200;
 const EVENT_SOURCE_LAYOUT = 1;
 const SCROLL_STATE_STOP = 1;
 const SCROLL_STATE_DRAGGING = 2;
@@ -122,7 +126,6 @@ function BidirectionalListInner<T>(
     initialItems,
     getItemKey,
     renderItem,
-    estimateItemSize,
     initialPosition = 'end',
     bounces = true,
     edgeThreshold,
@@ -139,6 +142,8 @@ function BidirectionalListInner<T>(
 ) {
   const [items, setItems] = useState<readonly T[]>(() => [...initialItems]);
   const [layoutRevision, setLayoutRevision] = useState(0);
+  const [nativeListGeneration, setNativeListGeneration] = useState(0);
+  const nativeListGenerationRef = useRef(0);
   const [viewportHeight, setViewportHeight] = useState(0);
   const itemsRef = useRef(items);
   const mountedKeysRef = useRef<readonly string[]>([]);
@@ -158,6 +163,17 @@ function BidirectionalListInner<T>(
   const lastStableDiagnosticSignatureRef = useRef('');
   const queryGenerationRef = useRef(0);
   const gestureQueryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconcileViewportRef = useRef<(
+    reason: ListSignalQueryReason,
+  ) => Promise<ActiveGeometrySample | undefined>>(async () => undefined);
+  const remountNativeListRef = useRef<(
+    request: PositionVerificationRequest,
+  ) => Promise<void>>(async () => {});
+  const recoveryLayoutWaiterRef = useRef<{
+    resolve: () => void;
+    reject: (error: Error) => void;
+    timer: ReturnType<typeof setTimeout>;
+  } | null>(null);
   const callbacksRef = useRef({
     onEdgeStateChange,
     onStartReached,
@@ -195,10 +211,42 @@ function BidirectionalListInner<T>(
   const driverRef = useRef<LynxListDriver | null>(null);
   if (!driverRef.current) {
     driverRef.current = new LynxListDriver({
-      id,
+      getNativeId: () => `${id}--native-${nativeListGenerationRef.current}`,
       getViewportHeight: () => viewportHeightRef.current,
       getMountedKeys: () => mountedKeysRef.current,
     });
+  }
+
+  const positionReconcilerRef = useRef<PositionReconciler | null>(null);
+  if (!positionReconcilerRef.current) {
+    positionReconcilerRef.current = {
+      verify: async (request) => {
+        const sample = await reconcileViewportRef.current('position-verification');
+        if (!sample) return 'unstable';
+        if (itemsRef.current.length > 0 && sample.cells.length === 0) return 'detached';
+        const target = sample.cells.find((cell) => cell.key === request.targetKey);
+        if (!target) return 'mismatched';
+        const close = (left: number, right: number) => (
+          Math.abs(left - right) <= POSITION_MATCH_TOLERANCE_PX
+        );
+        const distanceToEnd = Math.max(0, sample.scroll.maxScroll - sample.scroll.scrollTop);
+        const isFirst = request.targetIndex === 0;
+        const isLast = request.targetIndex === itemsRef.current.length - 1;
+        const aligned = request.align === 'start'
+          ? close(target.top, request.expectedTop)
+          : request.align === 'end'
+            ? close(target.bottom, sample.scroll.listHeight)
+            : close((target.top + target.bottom) / 2, sample.scroll.listHeight / 2);
+        const clampedBoundaryMatch = request.align === 'start'
+          ? isFirst && sample.scroll.scrollTop <= POSITION_MATCH_TOLERANCE_PX
+          : request.align === 'end'
+            ? isLast && distanceToEnd <= POSITION_MATCH_TOLERANCE_PX
+            : (isFirst && sample.scroll.scrollTop <= POSITION_MATCH_TOLERANCE_PX)
+              || (isLast && distanceToEnd <= POSITION_MATCH_TOLERANCE_PX);
+        return aligned || clampedBoundaryMatch ? 'matched' : 'mismatched';
+      },
+      recover: (request) => remountNativeListRef.current(request),
+    };
   }
 
   const engineRef = useRef<BidirectionalListEngine<T> | null>(null);
@@ -257,6 +305,7 @@ function BidirectionalListInner<T>(
         callbacksRef.current.onTransactionSettled?.(result);
       },
       appendFollowSettlement: signalMachineRef.current,
+      positionReconciler: positionReconcilerRef.current,
     });
   }
 
@@ -363,7 +412,9 @@ function BidirectionalListInner<T>(
     }
   }, [emitListFlow]);
 
-  const refreshSignals = useCallback(async (reason: ListSignalQueryReason = 'manual') => {
+  const reconcileViewport = useCallback(async (
+    reason: ListSignalQueryReason = 'manual',
+  ): Promise<ActiveGeometrySample | undefined> => {
     const generation = ++queryGenerationRef.current;
     const startedAt = Date.now();
     let previous: ActiveGeometrySample | undefined;
@@ -393,8 +444,17 @@ function BidirectionalListInner<T>(
         }
       }
 
-      const sample = accepted ?? previous;
-      if (!sample || generation !== queryGenerationRef.current) return;
+      if (!accepted || generation !== queryGenerationRef.current) {
+        emitListFlow('query-signal-complete', {
+          generation,
+          reason,
+          durationMs: Date.now() - startedAt,
+          sampleCount,
+          stable: false,
+        });
+        return undefined;
+      }
+      const sample = accepted;
       const scrollTop = Math.max(0, Math.min(sample.scroll.scrollTop, sample.scroll.maxScroll));
       const distanceToEnd = Math.max(0, sample.scroll.maxScroll - scrollTop);
       const normalized: NormalizedNativeListSignal = {
@@ -429,6 +489,7 @@ function BidirectionalListInner<T>(
         cellCount: normalized.cellCount,
       });
       publishNormalizedSignal(normalized);
+      return sample;
     } catch (error) {
       if (generation !== queryGenerationRef.current) return;
       emitListFlow('query-signal-failed', {
@@ -437,8 +498,45 @@ function BidirectionalListInner<T>(
         durationMs: Date.now() - startedAt,
         error: error instanceof Error ? error.message : String(error),
       });
+      return undefined;
     }
   }, [emitListFlow, publishNormalizedSignal]);
+
+  reconcileViewportRef.current = reconcileViewport;
+
+  const refreshSignals = useCallback(async (reason: ListSignalQueryReason = 'manual') => {
+    await reconcileViewport(reason);
+  }, [reconcileViewport]);
+
+  const recoverNativeList = useCallback((request: PositionVerificationRequest): Promise<void> => {
+    const activeWaiter = recoveryLayoutWaiterRef.current;
+    if (activeWaiter) {
+      clearTimeout(activeWaiter.timer);
+      activeWaiter.reject(new Error('Native list recovery superseded'));
+      recoveryLayoutWaiterRef.current = null;
+    }
+    emitListFlow('native-list-remount-start', {
+      transactionId: request.transactionId,
+      operation: request.operation,
+      targetKey: request.targetKey,
+    });
+    queryGenerationRef.current += 1;
+    nativeSignalNormalizerRef.current.reset();
+    lastNativeDiagnosticRef.current = { signature: '', timestamp: 0 };
+    return new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        if (recoveryLayoutWaiterRef.current?.timer !== timer) return;
+        recoveryLayoutWaiterRef.current = null;
+        reject(new Error(`Native list recovery layout timed out for ${request.targetKey}`));
+      }, RECOVERY_LAYOUT_TIMEOUT_MS);
+      recoveryLayoutWaiterRef.current = { resolve, reject, timer };
+      const nextGeneration = nativeListGenerationRef.current + 1;
+      nativeListGenerationRef.current = nextGeneration;
+      setNativeListGeneration(nextGeneration);
+    });
+  }, [emitListFlow]);
+
+  remountNativeListRef.current = recoverNativeList;
 
   const emitNativeSignal = useCallback(<T extends NativeListSignalType,>(
     type: T,
@@ -505,6 +603,13 @@ function BidirectionalListInner<T>(
 
   const handleLayoutComplete = useCallback((event: ListLayoutCompleteEvent) => {
     emitNativeSignal('layoutcomplete', event);
+    const recoveryWaiter = recoveryLayoutWaiterRef.current;
+    if (recoveryWaiter) {
+      clearTimeout(recoveryWaiter.timer);
+      recoveryLayoutWaiterRef.current = null;
+      emitListFlow('native-list-remount-layout-ready');
+      recoveryWaiter.resolve();
+    }
     const transactionId = pendingLayoutTransactionRef.current;
     if (transactionId !== null) {
       if (layoutCompletionFallbackRef.current) {
@@ -547,7 +652,7 @@ function BidirectionalListInner<T>(
         geometryReason(layoutRevision === 0 ? 'initial-layout' : 'content-resize'),
       );
     }
-  }, [emitNativeSignal, geometryReason, initialPosition, layoutRevision, publishGeometry, refreshSignals]);
+  }, [emitListFlow, emitNativeSignal, geometryReason, initialPosition, layoutRevision, publishGeometry, refreshSignals]);
 
   const handleScroll = useCallback((event: ListScrollEvent) => {
     emitNativeSignal('scroll', event);
@@ -625,6 +730,11 @@ function BidirectionalListInner<T>(
   useEffect(() => () => {
     if (layoutCompletionFallbackRef.current) clearTimeout(layoutCompletionFallbackRef.current);
     if (gestureQueryTimerRef.current) clearTimeout(gestureQueryTimerRef.current);
+    if (recoveryLayoutWaiterRef.current) {
+      clearTimeout(recoveryLayoutWaiterRef.current.timer);
+      recoveryLayoutWaiterRef.current.reject(new Error('Bidirectional list unmounted during recovery'));
+      recoveryLayoutWaiterRef.current = null;
+    }
     queryGenerationRef.current += 1;
     signalMachineRef.current.reset();
     driverRef.current?.dispose();
@@ -633,7 +743,8 @@ function BidirectionalListInner<T>(
   return (
     <view className="bidirectional-list-shell">
       <list
-        id={id}
+        key={`${id}:${nativeListGeneration}`}
+        id={`${id}--native-${nativeListGeneration}`}
         className="bidirectional-list"
         list-type="single"
         scroll-orientation="vertical"
@@ -660,7 +771,6 @@ function BidirectionalListInner<T>(
               key={getItemKey(item)}
               item-key={getItemKey(item)}
               className="bidirectional-list-item"
-              estimated-main-axis-size-px={Math.max(1, estimateItemSize?.(item, absoluteIndex) ?? DEFAULT_ITEM_ESTIMATE)}
             >
               {renderItem(item, absoluteIndex)}
             </list-item>

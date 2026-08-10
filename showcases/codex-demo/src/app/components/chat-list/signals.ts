@@ -31,18 +31,26 @@ export function decideChatListSignal(
   signal: ListSignalEvent,
   tailThresholdPx = 48,
 ): ChatListSignalDecision {
-  if (signal.type === 'viewport') {
-    if (signal.cause === 'query') {
-      const followingTail = signal.queryReason === 'gesture'
-        ? (signal.snapshot.end.distancePx ?? Number.POSITIVE_INFINITY) <= tailThresholdPx
-        : undefined;
-      return {
-        followingTail,
-        earlier: signal.snapshot.start.near ? 'allow-remote' : 'none',
-        backgroundEarlier: !signal.snapshot.start.near,
-        later: false,
-      };
+  if (signal.type === 'viewport-reconciled') {
+    // Position verification and recovery are transaction-internal probes.
+    // Feeding them into pagination creates a feedback loop: each successful
+    // row replacement schedules another fill, while a failed replacement can
+    // immediately request the same navigation again. Data loading only reacts
+    // to user/settled-content reconciliation.
+    if (signal.reason === 'position-verification' || signal.reason === 'recovery') {
+      return NO_ACTION;
     }
+    const followingTail = signal.reason === 'gesture'
+      ? (signal.snapshot.end.distancePx ?? Number.POSITIVE_INFINITY) <= tailThresholdPx
+      : undefined;
+    return {
+      followingTail,
+      earlier: signal.snapshot.start.near ? 'allow-remote' : 'none',
+      backgroundEarlier: !signal.snapshot.start.near,
+      later: false,
+    };
+  }
+  if (signal.type === 'viewport') {
     if (signal.cause !== 'geometry') return NO_ACTION;
     if (signal.snapshot.userGestureId !== undefined) {
       const followingTail = (signal.snapshot.end.distancePx ?? Number.POSITIVE_INFINITY)

@@ -142,7 +142,6 @@ export interface BidirectionalListProps<T> {
   initialItems: readonly T[];
   getItemKey: (item: T) => string;
   renderItem: (item: T, index: number) => any;
-  estimateItemSize?: (item: T, index: number) => number;
   initialPosition?: 'start' | 'end';
   /** Whether the native list may move beyond its scroll boundary. Defaults to true. */
   bounces?: boolean;
@@ -258,9 +257,21 @@ export interface ListSignalSnapshot {
   pendingFollow?: ListPendingFollow;
 }
 
-export type ListSignalQueryReason = 'initial-layout' | 'gesture' | 'content-settled' | 'manual';
+export type ListSignalQueryReason =
+  | 'initial-layout'
+  | 'gesture'
+  | 'content-settled'
+  | 'position-verification'
+  | 'recovery'
+  | 'manual';
 
 export type ListSignalEvent =
+  | {
+    /** Authoritative viewport state after consecutive active queries agreed. */
+    type: 'viewport-reconciled';
+    reason: ListSignalQueryReason;
+    snapshot: ListSignalSnapshot;
+  }
   | {
     type: 'viewport';
     cause: 'geometry' | 'scroll-state' | 'query';
@@ -296,6 +307,26 @@ export interface AppendFollowRequest {
 export interface AppendFollowSettlement {
   begin(request: AppendFollowRequest): Promise<void>;
   cancel(transactionId: number, reason: string): void;
+}
+
+export type PositionVerificationOutcome = 'matched' | 'mismatched' | 'detached' | 'unstable';
+
+export interface PositionVerificationRequest {
+  transactionId: number;
+  operation: ListMutationKind;
+  targetKey: string;
+  targetIndex: number;
+  align: ListAlignment;
+  expectedTop: number;
+}
+
+/**
+ * Active-query reconciliation owned by the list wrapper. Engine transactions
+ * never inspect raw Lynx events and may only settle after this verifier agrees.
+ */
+export interface PositionReconciler {
+  verify(request: PositionVerificationRequest): Promise<PositionVerificationOutcome>;
+  recover(request: PositionVerificationRequest): Promise<void>;
 }
 
 

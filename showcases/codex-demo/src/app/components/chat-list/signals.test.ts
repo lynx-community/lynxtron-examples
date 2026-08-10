@@ -18,7 +18,7 @@ function viewport(value: ListSignalSnapshot): ListSignalEvent {
 }
 
 function query(value: ListSignalSnapshot): ListSignalEvent {
-  return { type: 'viewport', cause: 'query', queryReason: 'content-settled', snapshot: value };
+  return { type: 'viewport-reconciled', reason: 'content-settled', snapshot: value };
 }
 
 describe('ChatList stable signal boundary', () => {
@@ -71,6 +71,16 @@ describe('ChatList stable signal boundary', () => {
       backgroundEarlier: true,
       later: false,
     });
+  });
+
+  it('does not let transaction verification probes drive pagination', () => {
+    expect(decideChatListSignal({
+      type: 'viewport-reconciled',
+      reason: 'position-verification',
+      snapshot: snapshot({
+        start: { known: true, at: true, near: true, distancePx: 0 },
+      }),
+    })).toEqual({ earlier: 'none', backgroundEarlier: false, later: false });
   });
 });
 
