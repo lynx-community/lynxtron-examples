@@ -331,6 +331,11 @@ async function main() {
 
   log('=== Step 1: Pack showcases ===');
   for (const dir of await listPackageDirs(path.join(rootDir, 'showcases'))) {
+    const pkg = await readJson(path.join(dir, 'package.json'));
+    if (!pkg.showcase) {
+      log(`Skipping ${path.basename(dir)} (no "showcase" metadata in package.json)`);
+      continue;
+    }
     await buildAndPackShowcase(dir);
   }
 
