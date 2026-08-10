@@ -103,6 +103,15 @@ function installBundledNodeShim(): void {
         const npxCmd = path.join(shimDir, 'npx.cmd');
         const npxBody = `@echo off\r\nset "LYNXTRON_RUN_AS_NODE=1"\r\n"${execPath}" "${pnpmCjs}" exec %*\r\n`;
         fs.writeFileSync(npxCmd, npxBody);
+        // The bundled pnpm package's own `bin/` directory contains only
+        // `pnpm.cjs` — npm normally creates a `pnpm.cmd` in `node_modules/.bin`
+        // pointing at it, but `copyPackage('pnpm')` in prepare-runtime-deps
+        // just copies the package tree, not the `.bin` shortcuts. Without
+        // this shim `spawn('pnpm.cmd', …)` raises ENOENT and every fetched
+        // showcase's install/start dies before pnpm even boots.
+        const pnpmCmd = path.join(shimDir, 'pnpm.cmd');
+        const pnpmBody = `@echo off\r\nset "LYNXTRON_RUN_AS_NODE=1"\r\n"${execPath}" "${pnpmCjs}" %*\r\n`;
+        fs.writeFileSync(pnpmCmd, pnpmBody);
       }
     } else {
       const nodeShim = path.join(shimDir, 'node');
@@ -114,6 +123,16 @@ function installBundledNodeShim(): void {
         const npxBody = `#!/bin/sh\nexec env LYNXTRON_RUN_AS_NODE=1 "${execPath}" "${pnpmCjs}" exec "$@"\n`;
         fs.writeFileSync(npxShim, npxBody);
         fs.chmodSync(npxShim, 0o755);
+        // Same story as `pnpm.cmd` on Windows: the copied pnpm package's
+        // `bin/pnpm.cjs` is not itself named `pnpm`, and `copyPackage` skips
+        // the `node_modules/.bin/pnpm` symlink that would normally provide
+        // that alias. Without an explicit shim, PATH lookups for `pnpm`
+        // fall through to whatever the user's login shell exports — and
+        // machines without a global pnpm hit `spawn pnpm ENOENT`.
+        const pnpmShim = path.join(shimDir, 'pnpm');
+        const pnpmBody = `#!/bin/sh\nexec env LYNXTRON_RUN_AS_NODE=1 "${execPath}" "${pnpmCjs}" "$@"\n`;
+        fs.writeFileSync(pnpmShim, pnpmBody);
+        fs.chmodSync(pnpmShim, 0o755);
       }
     }
 
