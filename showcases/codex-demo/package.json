@@ -1,0 +1,43 @@
+{
+  "name": "@lynxtron-examples/codex-demo",
+  "version": "0.0.1",
+  "main": "main.js",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lynx-community/lynxtron-examples",
+    "directory": "showcases/codex-demo"
+  },
+  "scripts": {
+    "prepare:computer-use": "node scripts/prepare-computer-use-runtime.mjs",
+    "prepare:opencode": "node scripts/prepare-opencode-runtime.mjs",
+    "smoke:computer-use": "node scripts/smoke-computer-use-mcp.mjs",
+    "build": "pnpm run prepare:computer-use && pnpm run prepare:opencode && rspeedy build && rspack build",
+    "dev": "pnpm run prepare:computer-use && pnpm run prepare:opencode && cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
+    "start": "cross-env TARGET_ENV=desktop pnpm run build && lynxtron ./dist/desktop",
+    "test": "vitest run",
+    "test:chatlist": "vitest run src/app/timeline-scroll.test.ts src/app/timeline-window.test.ts src/app/timeline-data.test.ts src/app/timeline-reveal-machine.test.ts src/main/desktop/agents/runtime.test.ts",
+    "typecheck": "tsc --noEmit -p src/app/tsconfig.json && tsc --noEmit -p src/main/desktop/tsconfig.json"
+  },
+  "dependencies": {
+    "@lynx-js/lynxtron": "catalog:",
+    "markdown-it": "14.3.0",
+    "open-computer-use": "0.3.1",
+    "prismjs": "1.30.0"
+  },
+  "devDependencies": {
+    "@lynx-js/lynxtron-dev-plugins": "catalog:",
+    "@lynx-js/react": "catalog:",
+    "@lynx-js/rspeedy": "catalog:",
+    "@lynx-js/types": "catalog:",
+    "@lynxtron-examples/config": "workspace:*",
+    "@rspack/cli": "catalog:",
+    "@rspack/core": "catalog:",
+    "@types/node": "^22.0.0",
+    "@types/prismjs": "1.26.6",
+    "concurrently": "catalog:",
+    "cross-env": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "^3.2.4"
+  }
+}

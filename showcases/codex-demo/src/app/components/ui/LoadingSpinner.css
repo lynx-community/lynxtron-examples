@@ -1,0 +1,40 @@
+/* Shared loading indicator surface. */
+.loading-spinner-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.loading-spinner {
+  flex-shrink: 0;
+  border-style: solid;
+  border-color: #d8dadd;
+  border-top-color: #5f646c;
+  border-radius: 50%;
+  animation: loading-spinner-rotate 720ms linear infinite;
+}
+
+.loading-spinner--small {
+  width: 12px;
+  height: 12px;
+  border-width: 1.5px;
+}
+
+.loading-spinner--medium {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.loading-spinner-label {
+  color: #858a92;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+@keyframes loading-spinner-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

@@ -1,0 +1,141 @@
+/* Conversation tool-result card surface. */
+.tool-card {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e1e3e6;
+  border-radius: 10px;
+  background-color: #fafafa;
+}
+
+.tool-card.ui-button--disabled {
+  opacity: 1;
+}
+
+.tool-card--interactive:active {
+  border-color: #cfd3d9;
+  background-color: #f5f6f7;
+}
+
+.tool-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background-color: #eceef2;
+}
+
+.tool-icon--completed {
+  background-color: #e5f5eb;
+}
+
+.tool-icon--failed {
+  background-color: #fbe8e8;
+}
+
+.tool-icon-text {
+  color: #676c77;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.tool-body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 1px;
+}
+
+.tool-heading {
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tool-title {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #50545e;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.tool-status {
+  flex-shrink: 0;
+  color: #8f939d;
+  font-size: 8px;
+  line-height: 18px;
+}
+
+.tool-status--in_progress {
+  color: #2f7df4;
+}
+
+.tool-status--completed {
+  color: #24955a;
+}
+
+.tool-status--failed {
+  color: #d04f4f;
+}
+
+.tool-locations {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tool-location {
+  height: 23px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid #e6e7e9;
+  border-radius: 7px;
+  background-color: #fafafa;
+}
+
+.tool-location:active {
+  background-color: #f0f1f3;
+}
+
+.tool-location-icon {
+  color: #7b7fd0;
+  font-size: 9px;
+}
+
+.tool-location-text {
+  min-width: 0;
+  flex: 1;
+  color: #555a63;
+  font-family: "SFMono-Regular", Menlo, monospace;
+  font-size: 9px;
+  line-height: 16px;
+}
+
+.tool-output {
+  display: block;
+  overflow: hidden;
+  color: #777c86;
+  font-family: "SFMono-Regular", Menlo, monospace;
+  font-size: 8px;
+  line-height: 13px;
+  white-space: pre-wrap;
+  cursor: text;
+}
