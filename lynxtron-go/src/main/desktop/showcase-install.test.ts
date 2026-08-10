@@ -206,6 +206,50 @@ describe('showcase install helpers', () => {
     expect(status.reason).toBe('bootstrapped');
   });
 
+  it('flags a half-populated node_modules as incomplete', () => {
+    const showcaseDir = makeTempDir('lynxtron-status-incomplete-');
+    writeJson(path.join(showcaseDir, 'package.json'), {
+      name: 'counter',
+      private: true,
+      devDependencies: {
+        'cross-env': '^10.0.0',
+        'concurrently': '^8.0.0',
+      },
+    });
+    // Present: cross-env. Missing: concurrently. Simulates an install killed
+    // mid-way, or a dangling pnpm symlink into an evicted store entry.
+    writeJson(path.join(showcaseDir, 'node_modules', 'cross-env', 'package.json'), {
+      name: 'cross-env',
+      version: '10.0.0',
+    });
+
+    const status = getShowcaseDependencyStatus(showcaseDir, {});
+    expect(status.needsInstall).toBe(true);
+    expect(status.reason).toBe('incomplete-node-modules');
+  });
+
+  it('accepts a fully populated node_modules for declared dependencies', () => {
+    const showcaseDir = makeTempDir('lynxtron-status-complete-');
+    writeJson(path.join(showcaseDir, 'package.json'), {
+      name: 'counter',
+      private: true,
+      dependencies: { 'left-pad': '1.0.0' },
+      devDependencies: { 'cross-env': '10.0.0' },
+    });
+    writeJson(path.join(showcaseDir, 'node_modules', 'left-pad', 'package.json'), {
+      name: 'left-pad',
+      version: '1.0.0',
+    });
+    writeJson(path.join(showcaseDir, 'node_modules', 'cross-env', 'package.json'), {
+      name: 'cross-env',
+      version: '10.0.0',
+    });
+
+    const status = getShowcaseDependencyStatus(showcaseDir, {});
+    expect(status.needsInstall).toBe(false);
+    expect(status.reason).toBe('bootstrapped');
+  });
+
   it('requires install after package.json changes', () => {
     const showcaseDir = makeTempDir('lynxtron-status-manifest-');
     writeJson(path.join(showcaseDir, 'package.json'), {

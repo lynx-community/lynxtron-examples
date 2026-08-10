@@ -5,6 +5,7 @@ import path from 'path';
 
 export type ShowcaseInstallReason =
   | 'missing-node-modules'
+  | 'incomplete-node-modules'
   | 'manifest-changed'
   | 'bootstrapped'
   | 'up-to-date';
@@ -499,6 +500,24 @@ export function getShowcaseDependencyStatus(
     };
   }
 
+  // A `node_modules` directory can exist while its contents are a broken
+  // shell: pnpm creates the symlink layout up front and populates the store
+  // afterwards, so an install killed mid-way (network flake, 5 min timeout,
+  // user quit) leaves dangling symlinks that pass `existsSync` on the dir
+  // itself but resolve to nothing. The observable failure is `sh: cross-env:
+  // command not found` at `pnpm start`, because the package's manifest lists
+  // dependencies whose install-time bin never landed. Verify every declared
+  // dependency actually resolves before trusting the tree.
+  if (isNodeModulesIncomplete(resolvedShowcasePath)) {
+    return {
+      needsInstall: true,
+      reason: 'incomplete-node-modules',
+      fingerprint,
+      resolvedShowcasePath,
+      installPlan,
+    };
+  }
+
   if (!recordedFingerprint) {
     return {
       needsInstall: false,
@@ -526,4 +545,34 @@ export function getShowcaseDependencyStatus(
     resolvedShowcasePath,
     installPlan,
   };
+}
+
+function isNodeModulesIncomplete(showcasePath: string): boolean {
+  const nodeModulesDir = path.join(showcasePath, 'node_modules');
+  if (!fs.existsSync(nodeModulesDir)) return true;
+
+  let pkg: any;
+  try {
+    pkg = readPackageJson(showcasePath);
+  } catch {
+    return false;
+  }
+
+  const declared: string[] = [
+    ...Object.keys(pkg?.dependencies ?? {}),
+    ...Object.keys(pkg?.devDependencies ?? {}),
+  ];
+  if (!declared.length) return false;
+
+  for (const name of declared) {
+    // `existsSync` follows symlinks, so a dangling pnpm symlink into a
+    // half-populated `.pnpm` store reports false. Checking the package's
+    // own `package.json` (rather than just the directory) additionally
+    // rejects the case where the store dropped the manifest but kept the
+    // folder — that would still be unusable.
+    if (!fs.existsSync(path.join(nodeModulesDir, name, 'package.json'))) {
+      return true;
+    }
+  }
+  return false;
 }
