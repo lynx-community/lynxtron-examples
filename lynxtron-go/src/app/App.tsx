@@ -1413,6 +1413,12 @@ export function App(props: { onRender?: () => void } = {}) {
       setPickerMode(undefined);
       setPickerOpen(true);
     };
+    const onPaste = () => {
+      const text = foundationApi()?.clipboard?.readText?.();
+      if (typeof text === 'string' && text.length > 0) {
+        setPickerQuery(current => current + text);
+      }
+    };
     const onTogglePanel = () => {
       log('[IDE] ide:togglePanel received');
       setBottomPanelOpen(v => { const next = !v; saveLayout('layout.bottomPanelOpen', next); return next; });
@@ -1432,6 +1438,7 @@ export function App(props: { onRender?: () => void } = {}) {
       emitter.addListener('ide:openFolder', onOpenFolder);
       emitter.addListener('ide:quickOpen', onQuickOpen);
       emitter.addListener('ide:commandPalette', onCommandPalette);
+      emitter.addListener('ide:paste', onPaste);
       emitter.addListener('ide:togglePanel', onTogglePanel);
       emitter.addListener('ide:findInFile', onFindInFile);
       emitter.addListener('ide:findInFiles', onFindInFiles);
@@ -1444,6 +1451,7 @@ export function App(props: { onRender?: () => void } = {}) {
         emitter.removeListener('ide:openFolder', onOpenFolder);
         emitter.removeListener('ide:quickOpen', onQuickOpen);
         emitter.removeListener('ide:commandPalette', onCommandPalette);
+        emitter.removeListener('ide:paste', onPaste);
         emitter.removeListener('ide:togglePanel', onTogglePanel);
         emitter.removeListener('ide:findInFile', onFindInFile);
         emitter.removeListener('ide:findInFiles', onFindInFiles);
@@ -2839,6 +2847,16 @@ export function App(props: { onRender?: () => void } = {}) {
       NativeModules.bridge.call('setSurface', { surface: showLegacyIde ? 'workspace' : 'fiddle' }, () => {});
     } catch (_) { /* older runtimes without the bridge keep the boot menu */ }
   }, [showLegacyIde]);
+
+  // Lynxtron 0.0.8 does not deliver Cocoa's native paste action to Lynx
+  // inputs. Tell main to route Cmd+V to the palette only for its lifetime;
+  // closing it immediately restores the native paste role for editors.
+  useEffect(() => {
+    try {
+      // @ts-ignore
+      NativeModules.bridge.call('setQuickPickerOpen', { open: pickerOpen }, () => {});
+    } catch (_) { /* older runtimes keep the native menu role */ }
+  }, [pickerOpen]);
 
   /**
    * The app's ground is the WINDOW's background, not an element's — nothing in
