@@ -14,7 +14,7 @@ import { bridgeCall } from '@lynxtron-examples/fiddle-kit/bridge';
 // native bar renders it).
 export function App() {
   const [bounds, setBounds] = useState('');
-  const [title, setTitle] = useState('Lynxtron Fiddle');
+  const [title, setTitle] = useState('Lynxtron Go');
   const [status, setStatus] = useState('');
 
   const refreshBounds = useCallback(async () => {

@@ -85,7 +85,7 @@ root.render(<App />);
 `,
   [DEFAULT_EDITORS.PACKAGE]: `{
   "name": "my-lynxtron-fiddle",
-  "productName": "My Lynxtron Fiddle",
+  "productName": "My Lynxtron App",
   "version": "1.0.0",
   "main": "main.js",
   "dependencies": {}

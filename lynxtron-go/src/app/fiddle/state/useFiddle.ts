@@ -44,7 +44,7 @@ interface FiddleDiagnosticIndicator extends IndicatorRange {
 }
 
 function logFiddleDiagnostics(message: string): void {
-  try { getExposed()?.utils?.log(`[Fiddle LS] ${message}`); } catch (_) {}
+  try { getExposed()?.utils?.log(`[Lynxtron Go LS] ${message}`); } catch (_) {}
 }
 
 function restoreLastSession(): FiddleSnapshot | null {
@@ -167,7 +167,7 @@ export function useFiddle(): UseFiddleResult {
         if (otherWriterHoldsLease(cfg, now)) {
           if (!readOnlyAnnounced.current) {
             readOnlyAnnounced.current = true;
-            appendOutput('info', '[Fiddle] Another instance owns session persistence — this one is read-only.');
+            appendOutput('info', '[Lynxtron Go] Another instance owns session persistence — this one is read-only.');
           }
           return;
         }

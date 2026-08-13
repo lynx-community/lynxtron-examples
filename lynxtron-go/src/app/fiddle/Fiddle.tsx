@@ -102,7 +102,7 @@ export function Fiddle(props: FiddleProps) {
   const handleSelectLocalVersion = useCallback((name: string | null) => {
     setSelectedLocalName(name);
     foundationApi()?.config?.set?.('fiddle.selectedLocalVersion', name);
-    appendOutput('info', `[Fiddle] Selected runtime: ${name ?? 'bundled ' + currentVersion}`);
+    appendOutput('info', `[Lynxtron Go] Selected runtime: ${name ?? 'bundled ' + currentVersion}`);
   }, [currentVersion]);
 
   const resolveLocalVersionFolder = useCallback((): string | null => {
@@ -196,7 +196,7 @@ export function Fiddle(props: FiddleProps) {
       return;
     }
     fiddle.loadSnapshot(snap);
-    appendOutput('info', `[Fiddle] Opened ${path}`);
+    appendOutput('info', `[Lynxtron Go] Opened ${path}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -237,17 +237,17 @@ export function Fiddle(props: FiddleProps) {
     try {
       // @ts-ignore — bridge.call is callback-style, not a promise.
       NativeModules.bridge.call('openHelp', {}, (result: any) => {
-        if (!result?.ok) appendOutput('error', '[Fiddle] Could not open the help page.');
+        if (!result?.ok) appendOutput('error', '[Lynxtron Go] Could not open the help page.');
       });
     } catch (_) {
-      appendOutput('error', '[Fiddle] Could not open the help page.');
+      appendOutput('error', '[Lynxtron Go] Could not open the help page.');
     }
   }, []);
 
   const handleRun = useCallback(() => {
     if (runner.isRunning) {
       const ok = runner.stop();
-      appendOutput('info', ok ? `[Fiddle] Stopped pid=${runner.pid}` : `[Fiddle] Stop failed`);
+      appendOutput('info', ok ? `[Lynxtron Go] Stopped pid=${runner.pid}` : `[Lynxtron Go] Stop failed`);
       return;
     }
     // A single loaded fiddle builds and runs ITSELF, not its collection.
@@ -276,7 +276,7 @@ export function Fiddle(props: FiddleProps) {
       const workspaceRoot = fiddle.snap.source.ref;
       const values = fiddle.values();
       if (!writeFiddleToWorkspace(workspaceRoot, values)) {
-        appendOutput('error', `[Fiddle] Failed to write edits into ${workspaceRoot}`);
+        appendOutput('error', `[Lynxtron Go] Failed to write edits into ${workspaceRoot}`);
         return;
       }
       // Run just wrote the buffers to disk — they ARE the saved content now.
@@ -291,8 +291,8 @@ export function Fiddle(props: FiddleProps) {
       })();
       if (built && !sourceNewer) {
         const pid = runner.start(workspaceRoot);
-        if (pid) appendOutput('info', `[Fiddle] Run showcase: pid=${pid} ${workspaceRoot}`);
-        else appendOutput('error', '[Fiddle] Showcase run failed to spawn.');
+        if (pid) appendOutput('info', `[Lynxtron Go] Run showcase: pid=${pid} ${workspaceRoot}`);
+        else appendOutput('error', '[Lynxtron Go] Showcase run failed to spawn.');
       } else {
         const hasStart = (() => {
           try {
@@ -302,16 +302,16 @@ export function Fiddle(props: FiddleProps) {
         })();
         const why = built ? 'Source newer than build' : 'Not built';
         if (hasStart) {
-          appendOutput('info', `[Fiddle] ${why} — build & launch (npm start)…`);
+          appendOutput('info', `[Lynxtron Go] ${why} — build & launch (npm start)…`);
           void runner.startBuildRun(workspaceRoot).then(pid => {
-            if (pid) appendOutput('info', `[Fiddle] Build & launch: pid=${pid} ${workspaceRoot}`);
-            else appendOutput('error', '[Fiddle] Build & launch failed to start.');
+            if (pid) appendOutput('info', `[Lynxtron Go] Build & launch: pid=${pid} ${workspaceRoot}`);
+            else appendOutput('error', '[Lynxtron Go] Build & launch failed to start.');
           });
         } else {
-          appendOutput('info', `[Fiddle] ${why} — no start script; running dev pipeline…`);
+          appendOutput('info', `[Lynxtron Go] ${why} — no start script; running dev pipeline…`);
           void runner.startDev(workspaceRoot).then(pid => {
-            if (pid) appendOutput('info', `[Fiddle] Dev run: pid=${pid} ${workspaceRoot}`);
-            else appendOutput('error', '[Fiddle] Dev run failed to start.');
+            if (pid) appendOutput('info', `[Lynxtron Go] Dev run: pid=${pid} ${workspaceRoot}`);
+            else appendOutput('error', '[Lynxtron Go] Dev run failed to start.');
           });
         }
       }
@@ -323,19 +323,19 @@ export function Fiddle(props: FiddleProps) {
     }
     const workspace = materializeFiddle(fiddle.snap, fiddle.values());
     if (!workspace) {
-      appendOutput('error', '[Fiddle] Run: failed to materialize workspace.');
+      appendOutput('error', '[Lynxtron Go] Run: failed to materialize workspace.');
       return;
     }
     const localFolder = resolveLocalVersionFolder();
     if (localFolder) {
       const result = spawnRuntimeForWorkspace(workspace, localFolder);
-      if (result.ok) appendOutput('info', `[Fiddle] Run [${selectedLocalName}]: pid=${result.pid}`);
-      else appendOutput('error', `[Fiddle] Run failed: ${result.error ?? 'unknown'}`);
+      if (result.ok) appendOutput('info', `[Lynxtron Go] Run [${selectedLocalName}]: pid=${result.pid}`);
+      else appendOutput('error', `[Lynxtron Go] Run failed: ${result.error ?? 'unknown'}`);
       return;
     }
     const pid = runner.start(workspace);
-    if (pid) appendOutput('info', `[Fiddle] Run: pid=${pid} workspace=${workspace}`);
-    else appendOutput('error', '[Fiddle] Run failed to spawn.');
+    if (pid) appendOutput('info', `[Lynxtron Go] Run: pid=${pid} workspace=${workspace}`);
+    else appendOutput('error', '[Lynxtron Go] Run failed to spawn.');
   }, [currentShowcase, props.onRunShowcase, props.onRunFiddleSource, fiddle, runner, resolveLocalVersionFolder, selectedLocalName]);
 
   const handleSave = useCallback(async () => {
@@ -347,10 +347,10 @@ export function Fiddle(props: FiddleProps) {
       const ok = writeFiddleToWorkspace(workspaceRoot, fiddle.values());
       if (ok) {
         fiddle.markSaved();
-        appendOutput('info', `[Fiddle] Saved to ${workspaceRoot}`);
+        appendOutput('info', `[Lynxtron Go] Saved to ${workspaceRoot}`);
         AppToaster.show({ message: `Saved to workspace`, intent: 'success', icon: 'floppy-disk' });
       } else {
-        appendOutput('error', `[Fiddle] Save failed to ${workspaceRoot}`);
+        appendOutput('error', `[Lynxtron Go] Save failed to ${workspaceRoot}`);
         AppToaster.show({ message: 'Save failed', intent: 'danger', icon: 'error' });
       }
       return;
@@ -360,10 +360,10 @@ export function Fiddle(props: FiddleProps) {
     const ok = writeFiddleToFolder(fiddle.snap, dir, fiddle.values());
     if (ok) {
       fiddle.markSaved();
-      appendOutput('info', `[Fiddle] Saved to ${dir}`);
+      appendOutput('info', `[Lynxtron Go] Saved to ${dir}`);
       AppToaster.show({ message: `Saved to ${dir}`, intent: 'success', icon: 'floppy-disk' });
     } else {
-      appendOutput('error', `[Fiddle] Save failed to ${dir}`);
+      appendOutput('error', `[Lynxtron Go] Save failed to ${dir}`);
       AppToaster.show({ message: 'Save failed', intent: 'danger', icon: 'error' });
     }
   }, [fiddle]);
@@ -382,7 +382,7 @@ export function Fiddle(props: FiddleProps) {
       return;
     }
     const existingGistId = fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.ref ?? null : null;
-    appendOutput('info', existingGistId ? `[Fiddle] Updating gist ${existingGistId}…` : `[Fiddle] Publishing new gist…`);
+    appendOutput('info', existingGistId ? `[Lynxtron Go] Updating gist ${existingGistId}…` : `[Lynxtron Go] Publishing new gist…`);
     try {
       const result = await publishGistFiddle(
         token,
@@ -391,14 +391,14 @@ export function Fiddle(props: FiddleProps) {
         existingGistId,
       );
       fiddle.markSaved();
-      appendOutput('info', `[Fiddle] Gist published: ${result.htmlUrl}`);
+      appendOutput('info', `[Lynxtron Go] Gist published: ${result.htmlUrl}`);
       AppToaster.show({
         message: existingGistId ? `Updated gist ${result.id}` : `Published gist ${result.id}`,
         intent: 'success',
         icon: 'cloud-upload',
       });
     } catch (e: any) {
-      appendOutput('error', `[Fiddle] Gist publish failed: ${e?.message ?? String(e)}`);
+      appendOutput('error', `[Lynxtron Go] Gist publish failed: ${e?.message ?? String(e)}`);
       AppToaster.show({
         message: `Gist publish failed: ${e?.message ?? 'unknown'}`,
         intent: 'danger',
@@ -414,27 +414,27 @@ export function Fiddle(props: FiddleProps) {
   const handlePickShowcase = useCallback((entry: ShowcaseEntry) => {
     setCurrentShowcase(entry);
     setTemplatePickerOpen(false);
-    appendOutput('info', `[Fiddle] Fetching showcase "${entry.name}"…`);
+    appendOutput('info', `[Lynxtron Go] Fetching showcase "${entry.name}"…`);
     AppToaster.show({ message: `Downloading ${entry.name}…`, intent: 'primary', icon: 'cloud-download' });
     void (async () => {
       try {
         const workspaceRoot = await resolveShowcaseWorkspace(entry);
         if (!workspaceRoot) {
-          appendOutput('error', `[Fiddle] Could not fetch showcase "${entry.name}".`);
+          appendOutput('error', `[Lynxtron Go] Could not fetch showcase "${entry.name}".`);
           AppToaster.show({ message: `Fetch failed: ${entry.name}`, intent: 'danger', icon: 'error', timeout: 6000 });
           return;
         }
         const snap = loadShowcaseFiddle(entry, workspaceRoot);
         if (!snap) {
-          appendOutput('error', `[Fiddle] No source files found in ${workspaceRoot}`);
+          appendOutput('error', `[Lynxtron Go] No source files found in ${workspaceRoot}`);
           AppToaster.show({ message: `No source files in ${entry.name}`, intent: 'warning', icon: 'warning-sign' });
           return;
         }
         fiddle.loadSnapshot(snap);
-        appendOutput('info', `[Fiddle] Opened "${entry.name}" (${snap.files.size} files) from ${workspaceRoot}`);
+        appendOutput('info', `[Lynxtron Go] Opened "${entry.name}" (${snap.files.size} files) from ${workspaceRoot}`);
         AppToaster.show({ message: `Opened ${entry.name} — hit Run to launch it`, intent: 'success', icon: 'tick' });
       } catch (e: any) {
-        appendOutput('error', `[Fiddle] Showcase open failed: ${e?.message ?? String(e)}`);
+        appendOutput('error', `[Lynxtron Go] Showcase open failed: ${e?.message ?? String(e)}`);
         AppToaster.show({ message: `Open failed: ${e?.message ?? 'unknown'}`, intent: 'danger', icon: 'error', timeout: 6000 });
       }
     })();
@@ -450,24 +450,24 @@ export function Fiddle(props: FiddleProps) {
     (req: { entry: ShowcaseEntry; id: string; title: string; upstream: string }) => {
       setCurrentShowcase(req.entry);
       setTemplatePickerOpen(false);
-      appendOutput('info', `[Fiddle] Opening ${req.id}…`);
+      appendOutput('info', `[Lynxtron Go] Opening ${req.id}…`);
       void (async () => {
         try {
           const workspaceRoot = await resolveShowcaseWorkspace(req.entry);
           if (!workspaceRoot) {
-            appendOutput('error', `[Fiddle] Could not fetch "${req.entry.name}".`);
+            appendOutput('error', `[Lynxtron Go] Could not fetch "${req.entry.name}".`);
             return;
           }
           const snap = loadSingleFiddle(req.entry, workspaceRoot, req);
           if (!snap) {
-            appendOutput('error', `[Fiddle] No source found for ${req.id}`);
+            appendOutput('error', `[Lynxtron Go] No source found for ${req.id}`);
             return;
           }
           fiddle.loadSnapshot(snap);
-          appendOutput('info', `[Fiddle] Opened ${req.id} (${snap.files.size} files)`);
+          appendOutput('info', `[Lynxtron Go] Opened ${req.id} (${snap.files.size} files)`);
           AppToaster.show({ message: `Opened ${req.title} — hit Run`, intent: 'success', icon: 'tick' });
         } catch (e: any) {
-          appendOutput('error', `[Fiddle] Open ${req.id} failed: ${e?.message ?? String(e)}`);
+          appendOutput('error', `[Lynxtron Go] Open ${req.id} failed: ${e?.message ?? String(e)}`);
         }
       })();
     },
@@ -494,13 +494,13 @@ export function Fiddle(props: FiddleProps) {
   const handleLoadGist = useCallback((input: string) => {
     const id = parseGistId(input);
     if (!id) {
-      appendOutput('warn', `[Fiddle] Not a recognizable gist id/url: ${input}`);
+      appendOutput('warn', `[Lynxtron Go] Not a recognizable gist id/url: ${input}`);
       return;
     }
-    appendOutput('info', `[Fiddle] Loading gist ${id}…`);
+    appendOutput('info', `[Lynxtron Go] Loading gist ${id}…`);
     void loadGistFiddle(id)
-      .then(snap => { fiddle.loadSnapshot(snap); appendOutput('info', `[Fiddle] Loaded gist ${id}.`); })
-      .catch(e => appendOutput('error', `[Fiddle] Gist load failed: ${e?.message ?? String(e)}`));
+      .then(snap => { fiddle.loadSnapshot(snap); appendOutput('info', `[Lynxtron Go] Loaded gist ${id}.`); })
+      .catch(e => appendOutput('error', `[Lynxtron Go] Gist load failed: ${e?.message ?? String(e)}`));
   }, [fiddle]);
 
   // App-menu events (main.ts buildAppMenu sends `fiddle:*` global events —
@@ -751,11 +751,11 @@ export function Fiddle(props: FiddleProps) {
         onCheckout={(sha) => {
           const gistId = fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.ref : null;
           if (!gistId) return;
-          appendOutput('info', `[Fiddle] Checkout gist ${gistId} @ ${sha.slice(0, 7)}…`);
+          appendOutput('info', `[Lynxtron Go] Checkout gist ${gistId} @ ${sha.slice(0, 7)}…`);
           void loadGistFiddle(gistId, sha)
             .then(snap => {
               fiddle.loadSnapshot(snap);
-              appendOutput('info', `[Fiddle] Loaded revision ${sha.slice(0, 7)}.`);
+              appendOutput('info', `[Lynxtron Go] Loaded revision ${sha.slice(0, 7)}.`);
               AppToaster.show({
                 message: `Loaded revision ${sha.slice(0, 7)}`,
                 intent: 'success',
@@ -763,7 +763,7 @@ export function Fiddle(props: FiddleProps) {
               });
             })
             .catch(e => {
-              appendOutput('error', `[Fiddle] Checkout failed: ${e?.message ?? String(e)}`);
+              appendOutput('error', `[Lynxtron Go] Checkout failed: ${e?.message ?? String(e)}`);
               AppToaster.show({
                 message: `Checkout failed: ${e?.message ?? 'unknown'}`,
                 intent: 'danger',

@@ -38,7 +38,7 @@ export function AddVersionDialog(props: AddVersionDialogProps) {
         />
       </FormGroup>
       <Callout intent="primary" icon="info-sign">
-        Local versions are stored in your Lynxtron Fiddle config and used only on this machine.
+        Local versions are stored in your Lynxtron Go config and used only on this machine.
       </Callout>
       <view style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', columnGap: '8px', marginTop: '16px' } as any}>
         <Button text="Cancel" minimal onClick={props.onClose} />

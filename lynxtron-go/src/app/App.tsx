@@ -2178,7 +2178,7 @@ export function App(props: { onRender?: () => void } = {}) {
       log(`[runShowcaseEntry] isBuilt: ${isBuilt}`);
       if (!isBuilt) {
         showOutput('error', 'Showcase not built — dist/desktop/main.js not found');
-        appendProcessLine('stderr', 'Not built — dist/desktop/main.js not found. Open it in the Fiddle and Run to build from source.');
+        appendProcessLine('stderr', 'Not built — dist/desktop/main.js not found. Open it in Lynxtron Go and Run to build from source.');
         setStatus('Not built');
         return;
       }
