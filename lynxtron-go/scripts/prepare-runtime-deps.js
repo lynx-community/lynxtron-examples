@@ -217,9 +217,15 @@ function main() {
   copyPackageEntries('@lynx-js/react', [
     'package.json',
     'types',
+    // types/react.docs.d.ts re-exports root and hooks from runtime/lib.
+    // Keeping only the public types/ directory makes the module resolvable
+    // while silently dropping exports such as `root` in packaged builds.
+    'runtime/lib',
     'runtime/jsx-runtime',
     'runtime/jsx-dev-runtime',
   ]);
+  const reactRoot = resolvePackageDir('@lynx-js/react');
+  copyPackageFrom('preact', reactRoot, 'preact');
   copyPackageEntries('@lynx-js/types', ['package.json', 'types']);
   copyPackage('@types/react');
   copyPackage('@types/prop-types');
@@ -247,8 +253,12 @@ function main() {
   for (const requiredTypeFile of [
     '@lynx-js/lynxtron/apis/lynxtron.d.ts',
     '@lynx-js/react/types/react.d.ts',
+    '@lynx-js/react/runtime/lib/lynx-api.d.ts',
+    '@lynx-js/react/runtime/lib/core/hooks/react.d.ts',
     '@lynx-js/react/runtime/jsx-runtime/index.d.ts',
     '@lynx-js/types/types/index.d.ts',
+    'preact/src/index.d.ts',
+    'preact/compat/src/index.d.ts',
     '@types/react/index.d.ts',
     '@types/node/index.d.ts',
   ]) {
