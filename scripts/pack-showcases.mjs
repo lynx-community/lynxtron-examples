@@ -1,6 +1,9 @@
 #!/usr/bin/env node
-// Build every showcase and pack it into a `.tgz` under a single output
-// directory, ready to be uploaded as GitHub Release assets.
+// Build every publishable showcase and pack it into a `.tgz` under a single
+// output directory, ready to be uploaded as GitHub Release assets. A workspace
+// under showcases/ is publishable only when its package.json contains
+// `showcase` metadata; standalone cases such as codex-demo intentionally omit
+// that metadata and must not be built or packed here.
 //
 // This is the CI-facing counterpart to `scripts/preview.mjs`: preview packs
 // tarballs next to each showcase and serves them via a local registry, whereas

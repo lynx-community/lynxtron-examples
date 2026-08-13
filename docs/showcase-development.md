@@ -349,8 +349,10 @@ Merging that PR triggers publishing:
 - **GitHub Release** — a `lynxtron-go-v<version>` release is created with:
   - Lynxtron GO installers: `*.dmg` (macOS) and `*-Setup.exe` (Windows), built via
     `lynxtron-builder`.
-  - Every showcase packed as a `.tgz` (built on the macOS runner because native
-    `.node` addons are host-platform specific).
+  - Every publishable showcase (a package with `showcase` metadata) packed as a
+    `.tgz` and built on the macOS runner because native `.node` addons are
+    host-platform specific. Standalone cases without that metadata, such as
+    `codex-demo`, are not included in release artifacts.
 
 Native artifacts (installers + showcase tarballs) are built on their matching OS
 runner. The npm publish requires each `@lynxtron-examples/*` package on npmjs
@@ -360,7 +362,7 @@ to have an OIDC trusted publisher configured, pointing at this repository's
 ### Building release artifacts locally
 
 ```bash
-# Pack every showcase into dist/showcase-artifacts/*.tgz
+# Pack every publishable showcase into dist/showcase-artifacts/*.tgz
 node scripts/pack-showcases.mjs
 
 # Build the Lynxtron GO installer for the current platform
