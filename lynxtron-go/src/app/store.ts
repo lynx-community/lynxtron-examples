@@ -247,7 +247,7 @@ export function appendProcessLine(stream: ProcessLogEntry['stream'], message: st
   }]);
 }
 
-/** Fiddle status lines ([Fiddle] …, [DevCmd] …) belong in the SHARED console.
+/** Lynxtron Go status lines ([Lynxtron Go] …, [DevCmd] …) belong in the SHARED console.
     appendOutput writes only the legacy IDE's outputLog, which the Fiddle
     console never renders — status lines sent there are invisible in the
     Fiddle UI. Deliberately does NOT also write outputLog: the mirror effect

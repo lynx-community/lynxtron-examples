@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lynxtron Fiddle — Help</title>
+<title>Lynxtron Go — Help</title>
 <style>
   /* Fiddle Dark — the same palette the app renders with. */
   :root {
@@ -140,7 +140,7 @@
 <main>
   <header>
     <div class="masthead">
-      <h1>Lynxtron Fiddle</h1>
+      <h1>Lynxtron Go</h1>
       <span class="tag">HELP</span>
       <div class="lang-switch" role="group" aria-label="Language">
         <button id="btn-en" aria-pressed="true" onclick="setLang('en')">EN</button>
@@ -197,9 +197,9 @@
           <code>&lt;text&gt;</code> / <code>&lt;image&gt;</code> 等元素。所有文字必须放在
           <code>&lt;text&gt;</code> 里。</span></li>
       <li><span class="L-en"><code>main.js</code> runs in the main process and calls
-          <code>win.loadFile('main.lynx.bundle')</code> — the bundle the Fiddle builds from your renderer.</span>
+          <code>win.loadFile('main.lynx.bundle')</code> — the bundle Lynxtron Go builds from your renderer.</span>
           <span class="L-zh"><code>main.js</code> 运行在主进程,调用
-          <code>win.loadFile('main.lynx.bundle')</code> —— 也就是 Fiddle 从你的 renderer 构建出的 bundle。</span></li>
+          <code>win.loadFile('main.lynx.bundle')</code> —— 也就是 Lynxtron Go 从你的 renderer 构建出的 bundle。</span></li>
       <li><span class="L-en">CSS is Lynx CSS: flexbox and CSS variables work; browser-isms
           (<code>:hover</code> layout tricks, <code>overflow:&nbsp;scroll</code>, DOM APIs) don't.</span>
           <span class="L-zh">CSS 是 Lynx CSS:flexbox 和 CSS 变量可用;浏览器特有的写法
@@ -274,29 +274,29 @@
 
   <h2><span class="L-en">Deep links</span><span class="L-zh">深链</span></h2>
   <div class="card wide">
-    <p class="L-en">Other tools (and the docs site) can drive the Fiddle through its URL scheme:</p>
-    <p class="L-zh">其他工具(以及文档站)可以通过 URL scheme 驱动 Fiddle:</p>
-<pre class="L-en"><b>lynxtron-go://showcase/open?id=</b>counter            open a showcase in the Fiddle
+    <p class="L-en">Other tools (and the docs site) can drive Lynxtron Go through its URL scheme:</p>
+    <p class="L-zh">其他工具(以及文档站)可以通过 URL scheme 驱动 Lynxtron Go:</p>
+<pre class="L-en"><b>lynxtron-go://showcase/open?id=</b>counter            open a showcase in Lynxtron Go
 <b>lynxtron-go://showcase/open?id=</b>counter<b>&amp;target=ide</b>  …in a separate IDE window
 <b>lynxtron-go://lynxview_page?bundle=</b>https://…/x.lynx.bundle   preview a hosted bundle
 <b>lynxtron-go://open?url=</b>https://…/x.lynx.bundle              short alias of the form above</pre>
-<pre class="L-zh"><b>lynxtron-go://showcase/open?id=</b>counter            在 Fiddle 中打开 showcase
+<pre class="L-zh"><b>lynxtron-go://showcase/open?id=</b>counter            在 Lynxtron Go 中打开 showcase
 <b>lynxtron-go://showcase/open?id=</b>counter<b>&amp;target=ide</b>  ……在独立 IDE 窗口中打开
 <b>lynxtron-go://lynxview_page?bundle=</b>https://…/x.lynx.bundle   预览托管的 bundle
 <b>lynxtron-go://open?url=</b>https://…/x.lynx.bundle              上一条的短别名</pre>
   </div>
 
   <div class="note">
-    <span class="L-en">Everything is autosaved: the Fiddle restores your last session — files, layout
+    <span class="L-en">Everything is autosaved: Lynxtron Go restores your last session — files, layout
     and edits — every time it starts. Run also writes your edits back into the
     showcase workspace on disk, so treat opened showcases as working copies.</span>
-    <span class="L-zh">一切自动保存:每次启动时 Fiddle 都会恢复上次会话 —— 文件、布局和编辑内容。
+    <span class="L-zh">一切自动保存:每次启动时 Lynxtron Go 都会恢复上次会话 —— 文件、布局和编辑内容。
     Run 也会把编辑写回磁盘上的 showcase workspace,请把打开的 showcase 当作工作副本对待。</span>
   </div>
 
   <footer>
-    <span>Lynxtron Fiddle</span>
-    <span><a href="https://github.com/icecreamx10/lynxtron-showcases">github.com/icecreamx10/lynxtron-showcases</a></span>
+    <span>Lynxtron Go</span>
+    <span><a href="https://github.com/lynx-community/lynxtron-examples">github.com/lynx-community/lynxtron-examples</a></span>
   </footer>
 </main>
 <script>

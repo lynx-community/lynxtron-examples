@@ -131,7 +131,7 @@ export function Commands(props: CommandsProps) {
           {/* Gallery drops its word for the same reason Console did: it is a
               view toggle whose state is on screen, and hovering still names
               it. */}
-          <Tooltip content={gallery ? 'Back to Fiddle' : 'Browse showcases'}>
+          <Tooltip content={gallery ? 'Back to Lynxtron Go' : 'Browse showcases'}>
             <Button
               icon="folder-open"
               minimal
@@ -173,7 +173,7 @@ export function Commands(props: CommandsProps) {
           {/* Beside the field, not inside it. As a rightElement it was absolutely
               positioned over the input, so the URL ran underneath the button and
               the two read as one confused control. */}
-          <Tooltip content="Load this gist as a Fiddle" align="end">
+          <Tooltip content="Load this gist in Lynxtron Go" align="end">
             <Button
               icon="cloud-download"
               small
@@ -184,7 +184,7 @@ export function Commands(props: CommandsProps) {
           </Tooltip>
         </view>
         <Tooltip
-          content={props.gistId ? 'Update the gist this Fiddle came from' : 'Publish these files as a GitHub gist'}
+          content={props.gistId ? 'Update the gist this fiddle came from' : 'Publish these files as a GitHub gist'}
           align="end"
         >
           <Button icon="upload" minimal disabled={gallery} onClick={props.onPublishGist} />

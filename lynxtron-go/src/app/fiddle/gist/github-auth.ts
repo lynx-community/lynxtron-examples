@@ -28,4 +28,4 @@ export async function validateGitHubToken(token: string): Promise<GitHubUser> {
  * the user pastes the token back into Settings.
  */
 export const TOKEN_CREATION_URL =
-  'https://github.com/settings/tokens/new?scopes=gist&description=Lynxtron+Fiddle';
+  'https://github.com/settings/tokens/new?scopes=gist&description=Lynxtron+Go';

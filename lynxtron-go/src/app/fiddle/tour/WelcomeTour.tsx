@@ -14,8 +14,8 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    title: 'Welcome to Lynxtron Fiddle',
-    body: 'Fiddle is the fastest way to prototype a Lynxtron desktop app. Edit code, hit Run, see it live.',
+    title: 'Welcome to Lynxtron Go',
+    body: 'Lynxtron Go is the fastest way to prototype a Lynxtron desktop app. Edit code, hit Run, see it live.',
   },
   {
     title: 'Start from a template',

@@ -216,7 +216,7 @@ export function GalleryHome({
                 reachable from the palette as Open Example Artifact. Dev tooling
                 does not belong in the product's chrome. */}
           <view className="GalleryTopBarActions">
-            <Tooltip content="Back to the Fiddle" align="end">
+            <Tooltip content="Back to Lynxtron Go" align="end">
               <Button className="GalleryBack" icon="chevron-left" text="Back" small minimal onClick={onBack} />
             </Tooltip>
           </view>
