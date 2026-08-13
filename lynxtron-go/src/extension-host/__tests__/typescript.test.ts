@@ -228,7 +228,12 @@ const App = () => {
 
     expect(markers.some(m => m.message.includes("Cannot find name 'process'"))).toBe(false);
     expect(markers.some(m => m.code === 5097)).toBe(false);
-    expect(markers.filter(m => m.severity === 'error')).toHaveLength(0);
+    // A clean checkout links the workspace package before packages/config has
+    // produced dist/lynx.config.d.ts. That independent build-order diagnostic
+    // is not evidence that the package-local tools tsconfig was missed.
+    expect(markers.filter(m => m.severity === 'error'
+      && !(m.code === 2307 && m.message.includes("'@lynxtron-examples/config/lynx'"))))
+      .toHaveLength(0);
   });
 
   it('loads ambient web declarations included by tsconfig', () => {
