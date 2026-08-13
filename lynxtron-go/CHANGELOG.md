@@ -1,5 +1,334 @@
 # lynxtron-go
 
+## 0.1.1
+
+### Patch Changes
+
+- 58a61f9: Retire the last stock Blueprint button.
+
+  Every designed surface in this app had escaped `.bp3-button` by overriding every
+  property locally — the commands bar, the mosaic toolbar, the gallery top bar all
+  set their own height, size, radius and ground. So the base rule survived
+  untouched, and the buttons still wearing 2016 were exactly the ones on surfaces
+  nobody had redesigned: Settings and every dialog.
+
+  The base is now the scale everything else converged on — 28px, a 13px label, a
+  6px radius, one hairline — and loses the three things that dated it: a top-lit
+  **gradient sheen**, a fake border painted with an **inset box-shadow in a
+  hardcoded near-black**, and a `.theme-light` block that existed only to restore
+  stock Blueprint light values over stock Blueprint dark ones. Every colour is a
+  role token now, so the theme flips on its own.
+
+  Three bugs fell out of reading it closely:
+
+  - **`.bp3-button-icon { font-size }` was dead.** `<Icon>` writes `fontSize` as an
+    inline style, which no stylesheet rule can outrank — so every button's glyph
+    rendered at Icon's own 14px default, taller than the label beside it, and the
+    commands bar's `13px` had never once applied. `Button` passes the size
+    explicitly now, scaled with `small` / `large`.
+  - **`.bp3-button-text` pinned the label at 14px**, so `small` and `large` only
+    ever changed the padding — a small button was a small box around a full-size
+    label. The label inherits now.
+  - **`.bp3-intent-danger` was declared twice**, and the second copy silently kept
+    the first one's gradient while looking like it had replaced it.
+
+  `intent-success` was `#0f9960` — a **second green** in an app whose brand is
+  green, near enough to read as the same colour and far enough to look like a
+  rendering fault when the two ever met. It is the brand now.
+
+  And the hierarchy those buttons sit in, by the rule the rest of the app follows —
+  one emphasis per group, everything else recedes:
+
+  - `Create Token on GitHub` leaves the app for a browser; it is a link, and
+    framed it carried the same weight as `Sign In` beside it
+  - `Sign Out` likewise
+  - `Cancel` in every dialog — the escape, not a second action
+  - `Add Theme…` goes the other way and gets its frame back: a frameless button
+    reads as pressable because its neighbours do, and this one is alone under a
+    label, so with no edge it was indistinguishable from the helper text until the
+    pointer happened to cross it
+
+  `fiddle:openSettings` takes a `panel` now. Three of the four Settings panes were
+  reachable only by clicking the nav, so they could not be captured or regressed
+  without a human at the keyboard — the same gap `fiddle:toggleGallery` closed.
+
+- 6c24c4c: Give the commands bar room to breathe, and the palette a way to be found.
+
+  - **The palette has a visible entry point.** ⌘P and ⌘K existed only as menu
+    accelerators, so the feature was invisible unless you already knew it was
+    there. A search button now sits beside Gallery — its sibling, one browsing by
+    eye and the other by typing — and the accelerator _is_ its label, rendered as
+    data rather than prose.
+
+  - **Five right-hand buttons became two.** New Fiddle, Save, Gist History and
+    Help moved into an overflow; all four already carry accelerators, and spending
+    bar width on them squeezed the gist address into a field too narrow to read a
+    URL in. Publish stays, because publishing has no key.
+
+    The overflow is owned by the Fiddle shell rather than the bar: the 51px header
+    clips its own children, so a menu anchored inside it can never open, and
+    native editor views paint above all Lynx UI regardless of z-index — it joins
+    the dialogs that already suppress the editors while open.
+
+  - **The gist field no longer resizes while you type.** It animated between two
+    widths depending on whether it had content, so the field grew out from under
+    the caret at the first keystroke. Fixed at 280px.
+
+  - **Accelerators look like accelerators.** Every shortcut shown in the UI — the
+    palette button, every overflow item — now uses one key-cap treatment: 10px
+    mono on a tinted ground, quiet by default and brought to full contrast on
+    hover. Previously the palette hint was plain text large enough to compete with
+    the label beside it.
+
+  - **Menu item text was invisible.** `.bp3-menu-item-text` carried `flex: 1`,
+    whose zero basis collapses a `<text>` to zero width in a row: Lynx has no
+    `min-content` and its shrink floor is `0px`, so nothing holds the text open
+    the way `min-width: auto` does on the web. It grows with `flex-grow` and an
+    `auto` basis instead. The Menu primitive had never been rendered before this
+    change, so nothing had exercised it.
+
+  - **Editor panes read as objects.** Each pane closes with a hairline instead of
+    relying on gutter gaps alone, and the focused one states itself structurally —
+    brighter edge, lifted toolbar — rather than by tinting its title. The toolbar
+    drops from 30px to 28px, loses the doubled separator (a top border _and_ a
+    drop shadow, for one edge that the gutter already draws) in favour of a single
+    rule under the label, and sets the file path in monospace at 12px so chrome
+    sits below the code it names. The control cluster is no longer
+    `transform: scale(0.75)` — scaling shrank the hit targets and knocked the
+    glyphs off the baseline; the buttons are simply sized small.
+
+  - **The bar has tooltips, and Console has dropped its label.** Lynx draws no
+    tooltip and `title` is inert here — the only "tooltip" in the Lynxtron API is
+    a vibrancy material name — so every `title` in this bar promised an
+    affordance that did not exist, and no control could shed its word. A bar
+    tooltip was blocked twice over: the header clips its children, and the native
+    editor painted above all Lynx UI. Both are gone, so the bubble now renders
+    through the shared platform overlay host, positioned from the anchor's
+    measured rect. Console, whose label only repeated a panel already on screen,
+    is now an icon.
+
+  - **The version button wears the Lynxtron mark** instead of `saved`, a tick
+    that said "saved" — something that button has never meant. Two lockups ship,
+    because the mark is a near-black disc that reads as a hole on the dark bar,
+    and Lynx's `filter` has no `invert` to derive one at runtime.
+
+  - **The gallery's Electron Fiddles collection has a card.** All 55 sat below
+    ten full-bleed cards, past two screens, with nothing on the first screen
+    saying they existed. The collection now takes the first grid slot; its one
+    action is Browse, because opening or running "all 55 fiddles" is exactly the
+    confusion the collection was split up to avoid.
+
+  - **The bar is one filled control and a row of glyphs.** Run wears the Lynxtron
+    mark instead of a play triangle — this builds a project and starts a runtime,
+    and the mark says which one — and it is the only shape in the chrome. The
+    version chooser drops the mark it used to carry (two marks competing in one
+    glance, on the quietest control in the bar) and is now text with a chevron.
+    Search moves to the left, where you look for it, and is shaped like the field
+    it opens rather than a button. Console, Gallery, Load, Publish, Settings and
+    the overflow are icons; the tooltips carry their names. A hairline separates
+    the gist field from the app rail, because two cloud arrows either side of
+    nothing read as one set of four.
+
+  - **Panels sit on the ground instead of being carved out of it.** 6px corners
+    on the sidebar, the console and every editor pane, with real space around
+    them — a radius is invisible if the panel is flush to its neighbours, so the
+    seam widened to 6px and the whole group is inset from the window edge.
+
+  - **The overflow menu can be dismissed again.** Its backdrop was
+    `position: fixed`, and Lynx promotes a fixed node directly under the root —
+    which lifted the dismiss surface straight out of the platform overlay it was
+    rendered into, behind an overlay that was already swallowing every tap meant
+    for it. Absolute keeps it inside; the geometry is identical.
+
+- 68d28d3: Put the gallery on the app's palette, and stop rendering the showcase registry
+  twice.
+
+  **The gallery was built on the ordinal `--background-N` tokens**, which carry no
+  meaning and drifted out of step when the window moved to role-named tiers:
+  `--background-2` is a near-black with a teal cast, so the page read as a
+  different application opening inside this one. It now uses the same three roles
+  as everywhere else — the page is chrome, each card is content, and the thumb
+  well and footer are washes over the card rather than a fourth and fifth tone.
+  The standalone overlay's hardcoded `#0b1220` goes with them, and the PREVIEW
+  badge stops being Blueprint blue.
+
+  **New Fiddle carried a second copy of the showcase registry** — the same eleven
+  entries the gallery renders, in a weaker card with no thumbnail, no actions and
+  tags as bare text. It also silently omitted the 55-entry Electron Fiddles
+  collection, so the list looked complete while showing a subset.
+
+  Two renderings of one registry is one too many, and the gallery's is strictly
+  the better one. The dialog now keeps only what exists nowhere else — Blank and
+  Hello Lynxtron — and hands off to the gallery for the rest. A dialog should hold
+  the choice you can make in a sentence; picking among eleven showcases and
+  deciding whether to open, run or IDE one is a page, and there is already a page
+  for it.
+
+  **The gallery's top bar follows the commands bar's grammar.** It had three
+  treatments for three controls — a text button with an arrow, a boxed button, and
+  bare lowercase text — and the boxed one put the page's strongest emphasis on its
+  weakest action: opening an arbitrary folder is an escape hatch, while the real
+  actions on this page live on the cards. All frameless now, with a divider
+  between navigation and actions, and the dev probe as a dim icon rather than a
+  third label competing with the two real controls.
+
+  Also removes a stale light-theme override that was repainting the cards' `Open`
+  Blueprint blue — the brand token already adapts per theme, so the override was
+  undoing the accent in exactly one of them.
+
+  **One rule for the IDE: it is always its own window.**
+
+  The IDE was reachable six ways and three of them swapped the shell inside the
+  running process — the Fiddle you were working in silently became a different
+  product. That also broke the assumption the one deliberate path was built
+  around: the Scintilla registry, its keyWindow attach, and the config-store
+  writer lease all assume one window per process, which is exactly why the
+  gallery's `IDE` action spawns a child. One entry point honoured that; the rest
+  went around it.
+
+  Now every "open a workspace" act spawns, and every command says where it goes:
+
+  - `File ▸ Open Folder in IDE…` and the palette's `Open Folder in IDE` (⇧⌘O)
+    spawn a window instead of converting this one
+  - the palette's `Open Showcase from URL in IDE` — previously `Open Showcase
+(URL)`, which differed from `Open Showcase` only in landing you in a
+    different product — does the same
+  - `File ▸ Open Fiddle Folder…` (⌘O) keeps loading a folder into this Fiddle,
+    and now says so
+
+  The spawned window receives its folder by env rather than by deep link: the
+  deep-link scheme is a public contract with a parser and tests, and this is a
+  private handoff between a parent and the child it just spawned.
+
+  Also removes a duplicate delivery: `main.ts` answered the openFolder bridge call
+  both through its reply callback and as a `folderOpened` broadcast, a fallback
+  from when the reply was unreliable. Harmless while both did the same thing —
+  but with the callback now spawning, honouring the broadcast too would have
+  opened a new window _and_ converted the old one.
+
+  **⇧⌘O now exists.** `Open Folder in IDE…` lived only in the workspace submenu,
+  so on the Fiddle surface — where you would actually reach for it — there was no
+  menu item and no accelerator, while the palette displayed `Cmd+Shift+O` beside
+  a command nothing had bound. A palette keybinding string is a label, not a
+  registration; menu accelerators are the only keyboard path. The item is on both
+  surfaces now, at ⇧⌘O on each.
+
+  **The palette focuses itself, for real this time.** The previous change reported
+  this as done and it never was: the edit that added the effect silently matched
+  nothing and only the element id landed. Beyond that, the mechanism needed to be
+  different — invoking `focus` on a field that is demonstrably not focused returns
+  success anyway, as does `setFocus`, so the invoke's own callback cannot be
+  trusted. It retries until the field's `bindfocus` fires, which is the only
+  signal that focus actually arrived.
+
+- f0b369d: Three fixes found while testing the IDE surface.
+
+  **The palette opened behind the code.** Native Scintilla views paint above all
+  Lynx UI whatever the z-index says, so an overlay does not cover the editor — the
+  editor covers the overlay. The palette, gallery, dialogs, loading state, and
+  toasts now register with one shared `cover-view` host, which composites their
+  children into a platform overlay slice above native views without creating a
+  second macOS overlay surface during rapid modal transitions. The Scintilla extension now keeps the
+  originating `lynx_view_t`, mounts its NSView/HWND under that view's native
+  parent, and keeps the editor below Clay's overlay host instead of guessing the
+  key window and floating above the entire Lynx surface. Editors stay attached
+  while overlays are open, preserving focus, selection, scroll position, and
+  paint state.
+
+  **One resolver, and reuse what is already on disk.** The Fiddle and the IDE are
+  two views of one workspace, but each carried its own copy of "local source tree,
+  else fetch" — two functions meaning the same thing, free to drift, sharing every
+  failure anyway. They now share one, which also gained the step both were
+  missing: `fetch` wipes and re-extracts its destination on every call, so opening
+  a showcase in the Fiddle and then in the IDE downloaded and installed the same
+  workspace twice, seconds apart. A materialized workspace is now reused, verified
+  by reading its manifest so a half-extracted directory from an interrupted fetch
+  is not mistaken for a usable one.
+
+  **A failed workspace says so.** A window opened to prepare a showcase that never
+  arrived showed the same "Open Folder" invitation as an idle one; the reason sat
+  in the Output panel, which is closed by default. The editor area now names the
+  failure and offers Try again.
+
+- 35eca0d: Modernize Settings, and spend the last of the Blueprint blue.
+
+  Settings was the one surface never touched by this design pass, and it still
+  carried the things the rest of the app has given up:
+
+  - **A blue selected nav item.** `--bp-selected-bg` is stock VS Code blue, and
+    after the palette and the gallery gave theirs up this was one of the last.
+    Selection is neutral now, as it is everywhere else.
+  - **Three checkboxes for one choice.** Dark / Light / System can only ever be
+    one, but three checkboxes say "tick any number of these" — and left it
+    possible to render a state with none ticked. It is a segment group, which
+    says exclusive by its shape.
+  - **A footer with a filled `Done`.** Every change here is persisted the moment
+    you make it, so `Done` confirmed nothing; it was a second filled brand
+    control competing with Run for the one emphasis the window has.
+  - **A heading repeating the nav.** The pane said "Appearance" directly beside
+    the highlighted "Appearance".
+  - **A stock input.** The font size field now wears the same recess as the gist
+    URL, the module search and the palette query.
+
+  The `Dialog` primitive comes with it: a panel on the chrome tone behind a
+  hairline with a 10px radius, lifted by its shadow. The header was a second
+  surface stacked on the first — its own ground and a rule under it — so every
+  dialog began with two tones before any content.
+
+  And the last Blueprint blue is gone from the primitives, split by the rule the
+  rest of the app follows — **the brand goes on marks, never on surfaces**:
+
+  - marks → brand: checkbox tick, radio dot, spinner, the tour's current-step dot
+  - surfaces → neutral: menu selection, primary tag and toast grounds, callout
+    wash, input focus ring
+
+- 68d2de6: One icon language for files: the sidebar wears the glyphs Quick Open already
+  uses.
+
+  The app had two file lists speaking two different languages about the same
+  files. Quick Open (⌘P) showed 📘 for TypeScript, 🎨 for CSS, ⚛️ for a component;
+  the sidebar showed the same monochrome document outline for all of them, tinted
+  by extension in a colour code nothing taught you. The list you reach for by
+  keyboard and the list you reach for by eye disagreed, so the mismatch showed up
+  every time you used both.
+
+  `fileIcon` is now the single map, and the tint classes are gone — the glyph is
+  the type, so the ink has nothing left to say.
+
+  The rename and new-file rows take the glyph of the name **being typed**, not of
+  the file as it stands: rename `main.js` to `main.css` and the icon turns over
+  before you commit, which is the cheapest confirmation that the extension landed
+  the way you meant it to.
+
+- 90cb430: Standardize the product name as Lynxtron Go across window titles, menus, help,
+  onboarding, gallery navigation, runtime messages, and visible console output.
+
+  Keep “fiddle” only where it describes an editable example, upstream Electron
+  Fiddle content, or a compatibility-sensitive internal identifier.
+
+- c972a5f: Make the Lynxtron version chooser a popover.
+
+  It was a 640px modal, which is the wrong object for it. The act here is picking
+  one value from a list and the pick applies immediately, so the modal's `Done`
+  confirmed nothing — it was a filled brand button whose only job was to close the
+  sheet it sat in, which also meant the app carried two filled brand controls
+  instead of one. And the control that opens it is a chevron, which promises a
+  menu dropping out of it.
+
+  It is an anchored popover now, built to the same rules as the commands overflow
+  beside it, so the bar has one kind of list-popover rather than two.
+
+  - **Section headers are labels, not bars.** They used to be full rows with their
+    own ground, which let a scrolled catalog row slide underneath one — a
+    half-clipped Download button sitting behind a section title.
+  - **One treatment for row actions.** Remove was red text, Download a boxed
+    button, and the prereleases toggle a blue link: three answers to the same
+    question inside four rows of content.
+  - **Selection is neutral and the brand is on the check mark.** The selected row
+    was a stock VS Code blue, the last one left in the app.
+  - **No footer button bar** — nothing to confirm, so all that remains is the one
+    act the list cannot offer: pointing at a runtime already on disk.
+
 ## 0.1.0
 
 ### Minor Changes

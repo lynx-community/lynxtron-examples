@@ -1,5 +1,11 @@
 # @lynxtron-examples/config
 
+## 0.0.6
+
+### Patch Changes
+
+- 4c524f4: Enable CSS inline variables in the shared Lynx showcase configuration so complex desktop showcases can use runtime style variables consistently.
+
 ## 0.0.5
 
 ### Patch Changes
