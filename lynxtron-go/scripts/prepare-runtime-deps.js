@@ -89,7 +89,7 @@ function resolvePackageDir(request, fromDir = projectRoot) {
         try {
           const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
           if (manifest.name === expectedName) {
-            return dir;
+            return fs.realpathSync(dir);
           }
         } catch (_) {}
       }
@@ -102,7 +102,7 @@ function resolvePackageDir(request, fromDir = projectRoot) {
   } catch (_) {}
   const installedDir = findInstalledPackageDir(fromDir, expectedName);
   if (installedDir) {
-    return installedDir;
+    return fs.realpathSync(installedDir);
   }
   throw new Error(`Failed to locate package root for ${request}`);
 }
@@ -112,7 +112,10 @@ function copyPackage(request, destination) {
   const target = path.join(distNodeModules, destination ?? request);
   fs.rmSync(target, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.cpSync(source, target, { recursive: true, dereference: true });
+  // source is already the real package directory. Preserve relative symlinks
+  // inside packages (notably macOS framework Versions/Current links); turning
+  // them into absolute workspace links duplicates binaries and breaks signing.
+  fs.cpSync(source, target, { recursive: true, dereference: false, verbatimSymlinks: true });
   console.log(`[pack] copied runtime dependency: ${request} -> ${target}`);
 }
 
@@ -121,7 +124,7 @@ function copyPackageFrom(request, fromDir, destination) {
   const target = path.join(distNodeModules, destination ?? request);
   fs.rmSync(target, { recursive: true, force: true });
   fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.cpSync(source, target, { recursive: true, dereference: true });
+  fs.cpSync(source, target, { recursive: true, dereference: false, verbatimSymlinks: true });
   console.log(`[pack] copied runtime dependency: ${request} -> ${target}`);
   return target;
 }
@@ -139,7 +142,11 @@ function copyPackageEntries(request, entries, destination) {
     }
     const targetPath = path.join(target, entry);
     fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-    fs.cpSync(sourcePath, targetPath, { recursive: true, dereference: true });
+    fs.cpSync(sourcePath, targetPath, {
+      recursive: true,
+      dereference: false,
+      verbatimSymlinks: true,
+    });
   }
 
   console.log(`[pack] copied runtime dependency entries: ${request} -> ${target}`);
@@ -158,7 +165,11 @@ function copyDirectoryEntries(sourceRoot, entries, destination) {
     }
     const targetPath = path.join(target, entry);
     fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-    fs.cpSync(sourcePath, targetPath, { recursive: true, dereference: true });
+    fs.cpSync(sourcePath, targetPath, {
+      recursive: true,
+      dereference: false,
+      verbatimSymlinks: true,
+    });
   }
 
   console.log(`[pack] copied runtime directory entries: ${sourceRoot} -> ${target}`);
@@ -232,10 +243,29 @@ function main() {
   copyPackage('csstype');
   copyPackage('@types/node');
   copyPackage('undici-types');
+
+  // These packages are declaration-only fallbacks in the shipped app. Keep
+  // their export maps but remove dependency metadata: every declaration
+  // dependency is staged explicitly above and listed in package.runtime.json,
+  // so the builder must not replace this pruned closure with workspace copies.
+  for (const typeOnlyPackage of [
+    '@lynx-js/react',
+    '@lynx-js/types',
+    '@types/react',
+    '@types/prop-types',
+    '@types/node',
+    'csstype',
+    'preact',
+    'undici-types',
+  ]) {
+    sanitizeManifest(path.join(distNodeModules, typeOnlyPackage));
+  }
   copyPackage('typescript');
   copyPackage('vscode-css-languageservice');
   const cssSourceRoot = resolvePackageDir('vscode-css-languageservice');
   copyPackageFrom('@vscode/l10n', cssSourceRoot);
+  copyPackageFrom('vscode-languageserver-textdocument', cssSourceRoot);
+  copyPackageFrom('vscode-languageserver-types', cssSourceRoot);
   copyPackageFrom('vscode-uri', cssSourceRoot);
 
   const scintillaRoot = path.join(projectRoot, 'scintilla-extension');

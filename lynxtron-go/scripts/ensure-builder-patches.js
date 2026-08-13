@@ -32,6 +32,40 @@ function ensureBuilderCliPackageResolution(builderRoot) {
   console.log('[pack] patched lynxtron-builder package resolution.');
 }
 
+function ensureAppPackageDependencyFilter(appBuilderRoot) {
+  const appFileCopierPath = path.join(appBuilderRoot, 'out', 'util', 'appFileCopier.js');
+  const source = fs.readFileSync(appFileCopierPath, 'utf8');
+  const oldPath = 'const projectPkgPath = path.join(packager.projectDir, "package.json");';
+  const newPath = 'const projectPkgPath = path.join(packager.appDir, "package.json");';
+
+  if (source.includes(newPath)) {
+    return;
+  }
+  if (!source.includes(oldPath)) {
+    throw new Error(`Unable to correct app package dependency filter in ${appFileCopierPath}`);
+  }
+
+  fs.writeFileSync(appFileCopierPath, source.replace(oldPath, newPath));
+  console.log('[pack] dependency filter now reads the runtime app package.json.');
+}
+
+function ensureTypeDeclarationsIncluded(appBuilderRoot) {
+  const fileMatcherPath = path.join(appBuilderRoot, 'out', 'fileMatcher.js');
+  const source = fs.readFileSync(fileMatcherPath, 'utf8');
+  const oldExcluded = 'cc,d.ts," +';
+  const newExcluded = 'cc," +';
+
+  if (source.includes(newExcluded) && !source.includes(oldExcluded)) {
+    return;
+  }
+  if (!source.includes(oldExcluded)) {
+    throw new Error(`Unable to retain declaration files in ${fileMatcherPath}`);
+  }
+
+  fs.writeFileSync(fileMatcherPath, source.replace(oldExcluded, newExcluded));
+  console.log('[pack] node_modules declaration files will be included.');
+}
+
 function main() {
   const projectRoot = path.resolve(__dirname, '..');
   const builderPackagePath = resolveFrom(projectRoot, '@lynx-js/lynxtron-builder/package.json');
@@ -52,6 +86,8 @@ function main() {
 
   if (!electronMacSource.includes('function moveHelpers(')) {
     console.log('[pack] app-builder-lib helper patch already active; skip.');
+    ensureAppPackageDependencyFilter(appBuilderRoot);
+    ensureTypeDeclarationsIncluded(appBuilderRoot);
     return;
   }
 
@@ -73,6 +109,9 @@ function main() {
   if (!electronFrameworkAfter.includes('lynxtron')) {
     throw new Error(`builder patch was not applied to ${electronFrameworkPath}`);
   }
+
+  ensureAppPackageDependencyFilter(appBuilderRoot);
+  ensureTypeDeclarationsIncluded(appBuilderRoot);
 
   console.log('[pack] app-builder-lib patch applied.');
 }
