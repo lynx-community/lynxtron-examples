@@ -17,6 +17,12 @@ interface ProjectConfig {
   rootFiles: string[];
 }
 
+/**
+ * Declarations shipped with Lynxtron GO for projects whose dependencies have
+ * not been installed yet. This is a resolution registry, not a set of ambient
+ * types: TypeScript reaches an entry only when the selected tsconfig requests
+ * it through `types`, `jsxImportSource`, or a source import/require.
+ */
 interface BundledToolchainFallback {
   moduleEntries: Map<string, string>;
   typeEntries: Map<string, string>;
@@ -208,7 +214,13 @@ function resolveBundledToolchainFallback(): BundledToolchainFallback {
   addModule('@rspack/core', rspackCoreRoot ? path.join(rspackCoreRoot, 'dist/index.d.ts') : null);
   addModule('@rspack/cli', rspackCliRoot ? path.join(rspackCliRoot, 'dist/index.d.ts') : null);
 
-  addModule('@lynx-js/lynxtron', lynxtronRoot ? path.join(lynxtronRoot, 'apis/lynxtron.d.ts') : null);
+  const lynxtronTypes = lynxtronRoot ? path.join(lynxtronRoot, 'apis/lynxtron.d.ts') : null;
+  // Desktop code may import the package entry. The fixed in-memory Fiddle uses
+  // the runtime-provided bare module instead; both expose the same declarations.
+  // Merely registering these names does not inject them into app projects —
+  // resolveModuleNames is called only for imports/requires in that project.
+  addModule('@lynx-js/lynxtron', lynxtronTypes);
+  addModule('lynxtron', lynxtronTypes);
   addModule(
     '@lynx-js/lynxtron/context-bridge',
     lynxtronRoot ? path.join(lynxtronRoot, 'apis/api/context-bridge.d.ts') : null,

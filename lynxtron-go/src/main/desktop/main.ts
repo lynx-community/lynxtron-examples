@@ -4,6 +4,7 @@ import { spawn, execFileSync } from 'child_process';
 import type { LynxWindow as LynxWindowInstance } from '@lynx-js/lynxtron';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 import path from 'path';
+import { createPasteMenuItem } from './menu-paste';
 import { fetchExampleArtifact } from './example-artifact';
 import {
   PUBLIC_DEEP_LINK_SCHEME,
@@ -143,6 +144,7 @@ let quitFlushTimer: ReturnType<typeof setTimeout> | null = null;
 // reports through the setSurface bridge call and the menu is rebuilt to match.
 let menuSurface: MenuSurface = 'fiddle';
 let menuWindow: LynxWindowInstance | null = null;
+let menuQuickPickerOpen = false;
 
 // Register native extensions
 try {
@@ -463,7 +465,11 @@ function reloadWindow(w: LynxWindowInstance) {
   }
 }
 
-function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
+function buildAppMenu(
+  w: LynxWindowInstance,
+  surface: MenuSurface,
+  quickPickerOpen = menuQuickPickerOpen,
+) {
   const isWorkspace = surface === 'workspace';
   /** Fiddle surface only — Fiddle.tsx is unmounted on the workspace surface. */
   const sendCmd = (cmd: string, data: Record<string, unknown> = {}) => {
@@ -669,7 +675,7 @@ function buildAppMenu(w: LynxWindowInstance, surface: MenuSurface) {
       { type: 'separator' },
       { role: 'cut' },
       { role: 'copy' },
-      { role: 'paste' },
+      createPasteMenuItem(quickPickerOpen, () => sendIde('paste')),
       { role: 'selectAll' },
       // Find belongs to the IDE's file tree and editor tabs; the Fiddle has no
       // corresponding surface, so these appear only where they work.
@@ -912,7 +918,7 @@ if (!hasSingleInstanceLock) {
       // The UI confirms (and thereafter reports every change) via setSurface.
       menuSurface = isIdeBootTarget ? 'workspace' : 'fiddle';
       menuWindow = w;
-      buildAppMenu(w, menuSurface);
+      buildAppMenu(w, menuSurface, menuQuickPickerOpen);
       console.log('[PC_Host] buildAppMenu completed successfully');
     } catch (e) {
       console.error('[PC_Host] buildAppMenu FAILED:', e);
@@ -997,13 +1003,24 @@ if (!hasSingleInstanceLock) {
           if (next !== menuSurface && menuWindow) {
             menuSurface = next;
             try {
-              buildAppMenu(menuWindow, next);
+              buildAppMenu(menuWindow, next, menuQuickPickerOpen);
               console.log(`[PC_Host] menu rebuilt for surface: ${next}`);
             } catch (e) {
               console.error('[PC_Host] menu rebuild FAILED:', e);
             }
           }
           callback.sendReply({ ok: true, surface: menuSurface });
+        } else if (name === 'setQuickPickerOpen') {
+          const next = params.open === true;
+          if (next !== menuQuickPickerOpen && menuWindow) {
+            menuQuickPickerOpen = next;
+            try {
+              buildAppMenu(menuWindow, menuSurface, next);
+            } catch (e) {
+              console.error('[PC_Host] quick-picker menu rebuild FAILED:', e);
+            }
+          }
+          callback.sendReply({ ok: true, open: menuQuickPickerOpen });
         } else if (name === 'setWindowBackground') {
           /**
            * The app's ground lives on the WINDOW, not on a Lynx element.

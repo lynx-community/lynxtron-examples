@@ -211,7 +211,21 @@ function main() {
     copyPackageFrom(dep, tarRoot);
   }
 
-  copyPackage('@types/node/package.json', '@types/node');
+  // The extension host resolves missing showcase dependencies against the
+  // official declarations shipped with Lynxtron GO. This remains type-only:
+  // each showcase tsconfig decides which declarations are linked.
+  copyPackageEntries('@lynx-js/react', [
+    'package.json',
+    'types',
+    'runtime/jsx-runtime',
+    'runtime/jsx-dev-runtime',
+  ]);
+  copyPackageEntries('@lynx-js/types', ['package.json', 'types']);
+  copyPackage('@types/react');
+  copyPackage('@types/prop-types');
+  copyPackage('csstype');
+  copyPackage('@types/node');
+  copyPackage('undici-types');
   copyPackage('typescript');
   copyPackage('vscode-css-languageservice');
   const cssSourceRoot = resolvePackageDir('vscode-css-languageservice');
@@ -229,6 +243,19 @@ function main() {
     'lynxtron-scintilla-editor',
   );
   sanitizeManifest(path.join(distNodeModules, 'lynxtron-scintilla-editor'));
+
+  for (const requiredTypeFile of [
+    '@lynx-js/lynxtron/apis/lynxtron.d.ts',
+    '@lynx-js/react/types/react.d.ts',
+    '@lynx-js/react/runtime/jsx-runtime/index.d.ts',
+    '@lynx-js/types/types/index.d.ts',
+    '@types/react/index.d.ts',
+    '@types/node/index.d.ts',
+  ]) {
+    if (!fs.existsSync(path.join(distNodeModules, requiredTypeFile))) {
+      throw new Error(`Packaged type fallback is missing ${requiredTypeFile}`);
+    }
+  }
 }
 
 main();

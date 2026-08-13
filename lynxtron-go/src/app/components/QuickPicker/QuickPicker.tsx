@@ -3,6 +3,7 @@ import './QuickPicker.css';
 import { PlatformOverlay } from '../shared/PlatformOverlay';
 import { fileIcon, type TreeNode, type ShowcaseEntry, SHOWCASE_REGISTRY } from '../../store';
 import { filterCommands } from '../../commands/registry';
+import { valueFromPasteEvent } from './paste';
 
 type PickerMode = 'files' | 'commands' | 'showcases' | 'url' | 'example' | 'bundleUrl';
 
@@ -98,6 +99,13 @@ export function QuickPicker({
     if (rows.length) rows[activeIndex].activate();
   }, [mode, query, onSelect, rows, activeIndex]);
 
+  const handlePaste = useCallback((event: any) => {
+    const nextValue = valueFromPasteEvent(query, event);
+    if (nextValue !== null) onQueryChange(nextValue);
+  }, [query, onQueryChange]);
+  // Lynxtron's native event exists ahead of @lynx-js/types' InputProps entry.
+  const nativePasteProps = { bindpaste: handlePaste } as any;
+
   /**
    * Lynx `<input>` exposes only blur/confirm/focus/input/selection, so the
    * arrows cannot be read off the field itself. `global-bindkeydown` fires
@@ -180,6 +188,7 @@ export function QuickPicker({
           value={query}
           bindfocus={onFieldFocus}
           bindinput={(e: any) => onQueryChange(e.detail.value)}
+          {...nativePasteProps}
           bindconfirm={handleConfirm}
           placeholder={PLACEHOLDER[mode]}
         />

@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { TypeScriptLanguageService } from '../language-server/typescript';
+import { HELLO_LYNXTRON } from '../../app/fiddle/state/FiddleState';
 
 // Use a fake file path that looks like an absolute path but doesn't exist on disk.
 // The LanguageServiceHost falls back gracefully for missing lib files when
@@ -112,6 +113,37 @@ const greet = (name: string): string => {
         code: 2304,
         message: "Cannot find name 'asdf'.",
       }),
+    ]));
+  });
+
+  it('uses the desktop Lynxtron fallback for the default in-memory main file', () => {
+    const mainPath = '/tmp/lynxtron-fiddle-diagnostics/template-hello-lynxtron/main.js';
+    svc.updateFile(mainPath, HELLO_LYNXTRON['main.js'], 1);
+
+    const markers = svc.getDiagnostics(mainPath);
+
+    expect(markers.some(m => m.code === 2307 && m.message.includes("'lynxtron'"))).toBe(false);
+    expect(markers.filter(m => m.severity === 'error')).toHaveLength(0);
+  });
+
+  it('uses Lynx JSX types for the default in-memory renderer file', () => {
+    const rendererPath = '/tmp/lynxtron-fiddle-diagnostics/template-hello-lynxtron/renderer.js';
+    svc.updateFile(rendererPath, HELLO_LYNXTRON['renderer.js'], 1);
+
+    const markers = svc.getDiagnostics(rendererPath);
+
+    expect(markers.some(m => m.code === 2307 && m.message.includes("'@lynx-js/react'"))).toBe(false);
+    expect(markers.some(m => m.code === 2875 || m.code === 7026)).toBe(false);
+    expect(markers.filter(m => m.severity === 'error')).toHaveLength(0);
+  });
+
+  it('still reports genuinely unknown standalone modules', () => {
+    svc.updateFile(FAKE_JS, "require('not-a-real-lynxtron-module')", 1);
+
+    const markers = svc.getDiagnostics(FAKE_JS);
+
+    expect(markers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ code: 2307, severity: 'error' }),
     ]));
   });
 
@@ -321,6 +353,16 @@ root.render(<App />);
       expect(markers.some(m => m.code === 2875)).toBe(false);
       expect(markers.some(m => m.code === 2307)).toBe(false);
       expect(markers.filter(m => m.severity === 'error')).toHaveLength(0);
+
+      const nodeLeakPath = path.join(appRoot, 'node-leak.ts');
+      svc.updateFile(nodeLeakPath, 'process.cwd();', 1);
+      const nodeLeakMarkers = svc.getDiagnostics(nodeLeakPath);
+      expect(nodeLeakMarkers).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          severity: 'error',
+          message: expect.stringContaining("Cannot find name 'process'"),
+        }),
+      ]));
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
@@ -391,6 +433,17 @@ contextBridge.exposeInLynxBTS({ bridge: { filePath } });
       expect(preloadMarkers.some(m => m.message.includes('process'))).toBe(false);
       expect(mainMarkers.filter(m => m.severity === 'error')).toHaveLength(0);
       expect(preloadMarkers.filter(m => m.severity === 'error')).toHaveLength(0);
+
+      const lynxLeakPath = path.join(desktopRoot, 'lynx-leak.ts');
+      svc.updateFile(lynxLeakPath, 'NativeModules.bridge.request({ method: "test" });', 1);
+      const lynxLeakMarkers = svc.getDiagnostics(lynxLeakPath);
+      expect(lynxLeakMarkers).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          code: 2304,
+          severity: 'error',
+          message: expect.stringContaining("Cannot find name 'NativeModules'"),
+        }),
+      ]));
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
