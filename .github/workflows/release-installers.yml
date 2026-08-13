@@ -103,8 +103,8 @@ jobs:
           security default-keychain -d user -s "$keychain_path"
           security find-identity -v -p codesigning "$keychain_path"
 
-      # macOS: dmg installer + every showcase tarball (native .node addons are
-      # host-platform specific, so tarballs are built on the macOS runner).
+      # macOS: dmg installer + publishable showcase tarballs (native .node
+      # addons are host-platform specific, so tarballs are built here).
       - name: Build macOS installer
         if: runner.os == 'macOS'
         run: pnpm --dir lynxtron-go run pack
