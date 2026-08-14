@@ -6,9 +6,9 @@
   "dependencies": {
     "@isaacs/fs-minipass": "^4.0.0",
     "@lynx-js/react": "0.123.1",
-    "@lynx-js/lynxtron": "0.0.8",
+    "@lynx-js/lynxtron": "0.0.10",
     "@lynx-js/types": "4.1.0",
-    "@lynxtron-examples/cli": "0.0.5",
+    "@lynxtron-examples/cli": "0.0.6",
     "@types/node": "22.20.0",
     "@types/prop-types": "15.7.15",
     "@types/react": "18.3.31",
