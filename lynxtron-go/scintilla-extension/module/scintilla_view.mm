@@ -47,13 +47,39 @@
 @end
 
 @interface LynxtronScintillaView : ScintillaView
+@property(nonatomic, strong) NSView* scrollerCornerFillView;
 - (void)syncBounceBackgroundWithStyleDefault;
+- (void)updateScrollerCornerFillFrame;
 @end
 
 @implementation LynxtronScintillaView
 
 + (Class)contentViewClass {
     return [LynxtronSCIContentView class];
+}
+
+- (void)layout {
+    [super layout];
+    [self updateScrollerCornerFillFrame];
+}
+
+- (void)updateScrollerCornerFillFrame {
+    NSScroller* horizontalScroller = self.scrollView.horizontalScroller;
+    NSScroller* verticalScroller = self.scrollView.verticalScroller;
+    const BOOL visible = self.scrollView.hasHorizontalScroller &&
+                         self.scrollView.hasVerticalScroller &&
+                         horizontalScroller != nil &&
+                         verticalScroller != nil;
+    self.scrollerCornerFillView.hidden = !visible;
+    if (!visible) return;
+
+    // NSScrollView leaves this rectangle uncovered when both legacy scrollers
+    // are present. Pin our fill view to the same bottom-right intersection.
+    self.scrollerCornerFillView.frame = NSMakeRect(
+        NSMinX(verticalScroller.frame),
+        NSMinY(horizontalScroller.frame),
+        NSWidth(verticalScroller.frame),
+        NSHeight(horizontalScroller.frame));
 }
 
 - (void)syncBounceBackgroundWithStyleDefault {
@@ -70,6 +96,20 @@
     self.scrollView.backgroundColor = backgroundColor;
     self.scrollView.contentView.drawsBackground = YES;
     self.scrollView.contentView.backgroundColor = backgroundColor;
+
+    // AppKit leaves a separate rectangle where the horizontal and vertical
+    // legacy scrollers meet. Its default fill stays white in a dark editor.
+    if (self.scrollerCornerFillView == nil) {
+        self.scrollerCornerFillView = [[NSView alloc] initWithFrame:NSZeroRect];
+        self.scrollerCornerFillView.autoresizingMask =
+            NSViewMinXMargin | NSViewMaxYMargin;
+        [self.scrollView addSubview:self.scrollerCornerFillView];
+    }
+    if (self.scrollerCornerFillView != nil) {
+        self.scrollerCornerFillView.wantsLayer = YES;
+        self.scrollerCornerFillView.layer.backgroundColor = backgroundColor.CGColor;
+        [self updateScrollerCornerFillFrame];
+    }
 }
 
 @end
@@ -98,6 +138,14 @@
         _owner = owner;
         _scintillaView = [[LynxtronScintillaView alloc] initWithFrame:self.bounds];
         [_scintillaView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        // During a live mosaic resize AppKit can leave the scroll view's
+        // private content-background view one legacy-scroller (17pt) larger
+        // than the scroll view itself. NSView does not clip subviews by
+        // default, so that private background otherwise paints across the
+        // neighbouring pane's toolbar. Keep every AppKit-owned scroll-view
+        // child contained by the editor's native bounds.
+        _scintillaView.scrollView.wantsLayer = YES;
+        _scintillaView.scrollView.layer.masksToBounds = YES;
         _scintillaView.delegate = self;  // receive SCN_MODIFIED etc.
         [self addSubview:_scintillaView];
     }

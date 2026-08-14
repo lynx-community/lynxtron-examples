@@ -6,10 +6,11 @@ import * as path from 'path';
 // `catalog:` resolve to the versions they were built against. `latest` is used
 // where the showcase does not care about pinning (config is unversioned surface).
 const CATALOG_VERSIONS: Record<string, string> = {
-  '@lynx-js/lynxtron': '0.0.8',
-  '@lynx-js/lynxtron-builder': '0.0.8',
-  '@lynx-js/lynxtron-dev-plugins': '0.0.8',
-  '@lynx-js/lynx-library-headers': '0.0.8',
+  '@lynx-js/lynxtron': '0.0.10',
+  '@lynx-js/lynxtron-builder': '0.0.10',
+  '@lynx-js/lynxtron-dev-plugins': '0.0.10',
+  '@lynx-js/lynx-library-headers': '0.0.10',
+  '@lynx-js/lynxtron-rebuild': '0.0.10',
   '@lynx-js/config-rsbuild-plugin': '0.2.0',
   '@lynx-js/react': '0.123.1',
   '@lynx-js/react-rsbuild-plugin': '^0.18.1',
@@ -34,8 +35,9 @@ const ROOT_DEPENDENCIES: Record<string, string> = {
   // hoist them, so unless the workspace root depends on them itself the patch
   // step errors and the whole install — and therefore every fetched showcase —
   // fails. The source monorepo carries them at its root for the same reason.
-  'app-builder-lib': '26.8.1',
-  'dmg-builder': '26.8.1',
+  'app-builder-lib': '26.13.0',
+  'dmg-builder': '26.13.0',
+  'electron-builder-squirrel-windows': '26.13.0',
 };
 
 /**
