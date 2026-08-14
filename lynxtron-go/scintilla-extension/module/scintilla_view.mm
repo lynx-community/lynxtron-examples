@@ -47,9 +47,10 @@
 @end
 
 @interface LynxtronScintillaView : ScintillaView
+@property(nonatomic, strong) NSView* scrollerLeadingFillView;
 @property(nonatomic, strong) NSView* scrollerCornerFillView;
 - (void)syncBounceBackgroundWithStyleDefault;
-- (void)updateScrollerCornerFillFrame;
+- (void)updateScrollerFillFrames;
 @end
 
 @implementation LynxtronScintillaView
@@ -60,18 +61,37 @@
 
 - (void)layout {
     [super layout];
-    [self updateScrollerCornerFillFrame];
+    [self updateScrollerFillFrames];
 }
 
-- (void)updateScrollerCornerFillFrame {
+- (void)updateScrollerFillFrames {
     NSScroller* horizontalScroller = self.scrollView.horizontalScroller;
     NSScroller* verticalScroller = self.scrollView.verticalScroller;
-    const BOOL visible = self.scrollView.hasHorizontalScroller &&
-                         self.scrollView.hasVerticalScroller &&
-                         horizontalScroller != nil &&
-                         verticalScroller != nil;
-    self.scrollerCornerFillView.hidden = !visible;
-    if (!visible) return;
+    const BOOL horizontalVisible = self.scrollView.hasHorizontalScroller &&
+                                   horizontalScroller != nil &&
+                                   !horizontalScroller.hidden;
+
+    // A vertical ruler moves the horizontal scroller to the right. AppKit
+    // leaves the strip below that ruler as a separate, system-coloured view;
+    // in a dark editor it otherwise shows up as a conspicuous white block.
+    const CGFloat leadingWidth = horizontalVisible
+        ? MAX(0.0, NSMinX(horizontalScroller.frame) - NSMinX(self.scrollView.bounds))
+        : 0.0;
+    self.scrollerLeadingFillView.hidden = leadingWidth <= 0.0;
+    if (leadingWidth > 0.0) {
+        self.scrollerLeadingFillView.frame = NSMakeRect(
+            NSMinX(self.scrollView.bounds),
+            NSMinY(horizontalScroller.frame),
+            leadingWidth,
+            NSHeight(horizontalScroller.frame));
+    }
+
+    const BOOL cornerVisible = horizontalVisible &&
+                               self.scrollView.hasVerticalScroller &&
+                               verticalScroller != nil &&
+                               !verticalScroller.hidden;
+    self.scrollerCornerFillView.hidden = !cornerVisible;
+    if (!cornerVisible) return;
 
     // NSScrollView leaves this rectangle uncovered when both legacy scrollers
     // are present. Pin our fill view to the same bottom-right intersection.
@@ -97,6 +117,17 @@
     self.scrollView.contentView.drawsBackground = YES;
     self.scrollView.contentView.backgroundColor = backgroundColor;
 
+    if (self.scrollerLeadingFillView == nil) {
+        self.scrollerLeadingFillView = [[NSView alloc] initWithFrame:NSZeroRect];
+        self.scrollerLeadingFillView.autoresizingMask =
+            NSViewMaxXMargin | NSViewMaxYMargin;
+        [self.scrollView addSubview:self.scrollerLeadingFillView];
+    }
+    if (self.scrollerLeadingFillView != nil) {
+        self.scrollerLeadingFillView.wantsLayer = YES;
+        self.scrollerLeadingFillView.layer.backgroundColor = backgroundColor.CGColor;
+    }
+
     // AppKit leaves a separate rectangle where the horizontal and vertical
     // legacy scrollers meet. Its default fill stays white in a dark editor.
     if (self.scrollerCornerFillView == nil) {
@@ -108,8 +139,8 @@
     if (self.scrollerCornerFillView != nil) {
         self.scrollerCornerFillView.wantsLayer = YES;
         self.scrollerCornerFillView.layer.backgroundColor = backgroundColor.CGColor;
-        [self updateScrollerCornerFillFrame];
     }
+    [self updateScrollerFillFrames];
 }
 
 @end
