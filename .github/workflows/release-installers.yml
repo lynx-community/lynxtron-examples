@@ -107,15 +107,28 @@ jobs:
       # addons are host-platform specific, so tarballs are built here).
       - name: Build macOS installer
         if: runner.os == 'macOS'
-        run: pnpm --dir lynxtron-go run pack
+        env:
+          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ runner.temp }}/lynxtron-notarization.p8
+        run: |
+          test -n "$APPLE_API_KEY_BASE64"
+          test -n "$APPLE_API_KEY_ID"
+          test -n "$APPLE_API_ISSUER"
+          printf '%s' "$APPLE_API_KEY_BASE64" | base64 --decode > "$APPLE_API_KEY"
+          chmod 600 "$APPLE_API_KEY"
+          pnpm --dir lynxtron-go run pack
 
-      - name: Verify macOS signature
+      - name: Verify macOS distribution
         if: runner.os == 'macOS'
         run: |
           app_path=$(find lynxtron-go/dist -type d -name 'Lynxtron Go.app' -print -quit)
           test -n "$app_path"
           codesign --verify --deep --strict --verbose=2 "$app_path"
           codesign --display --verbose=4 "$app_path"
+          xcrun stapler validate "$app_path"
+          spctl --assess --type execute --verbose=4 "$app_path"
 
       - name: Pack showcases
         if: runner.os == 'macOS'
@@ -138,8 +151,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Clean up macOS signing keychain
+      - name: Clean up macOS signing materials
         if: runner.os == 'macOS' && always()
         run: |
           security delete-keychain "$RUNNER_TEMP/lynxtron-go-signing.keychain-db" || true
           rm -f "$RUNNER_TEMP/lynxtron-go-signing.p12"
+          rm -f "$RUNNER_TEMP/lynxtron-notarization.p8"
