@@ -6,12 +6,8 @@ import fontUrl from './assets/blueprint-icons-16.ttf?inline';
 // Blueprint 3 icon font (icons-16.ttf from @blueprintjs/icons@3.33.0).
 // Codepoints extracted from lib/esm/generated/iconContents.js of that package —
 // the same glyphs upstream Electron Fiddle renders via @blueprintjs/core <Icon>.
-// Clay registers the native font face by the family stored in the TTF name
-// table. Unlike CSS @font-face it does not create an alias from the arbitrary
-// `font-family` passed to addFont. Using `blueprint-icons-16` here made
-// addFont's callback succeed, then text lookup fell through to the system font
-// and every private-use codepoint painted as tofu. All name-table records in
-// this file use `pt-iconosaurus-16`.
+// Clay resolves the native face using the family stored in the TTF name table;
+// all name-table records in this file use `pt-iconosaurus-16`.
 export const ICON_FONT_FAMILY = 'pt-iconosaurus-16';
 
 export const ICON_CODEPOINTS: Record<string, string> = {
@@ -92,14 +88,6 @@ let loaded = false;
 let requested = false;
 const listeners: Listener[] = [];
 
-function debugLog(msg: string): void {
-  'background only';
-  try {
-    console.log(msg);
-    (NativeModules as any)?.bridge?.send?.('logFromUi', { message: msg });
-  } catch (_) {}
-}
-
 export function isIconFontLoaded(): boolean {
   return loaded;
 }
@@ -108,14 +96,11 @@ export function onIconFontLoaded(fn: Listener): () => void {
   'background only';
   listeners.push(fn);
   return () => {
-    const i = listeners.indexOf(fn);
-    if (i >= 0) listeners.splice(i, 1);
+    const index = listeners.indexOf(fn);
+    if (index >= 0) listeners.splice(index, 1);
   };
 }
 
-// Loads the icon font via lynx.addFont. Safe to call repeatedly; only the
-// first call issues the request. If the host has no font resource loader the
-// callback never fires and <Icon> keeps its unicode-glyph fallback.
 export function ensureIconFont(): void {
   'background only';
   if (requested) return;
@@ -123,17 +108,12 @@ export function ensureIconFont(): void {
   try {
     (lynx as any).addFont(
       { 'font-family': ICON_FONT_FAMILY, src: `url(${fontUrl})` },
-      (err: unknown) => {
-        if (err) {
-          debugLog(`[icon-font] addFont failed: ${JSON.stringify(err)}`);
-          return; // keep unicode fallback
-        }
+      () => {
         loaded = true;
-        for (const fn of [...listeners]) fn();
+        for (const listener of [...listeners]) listener();
       },
     );
-  } catch (e) {
-    // host has no font loader — unicode fallback stays in place
-    debugLog(`[icon-font] addFont threw: ${String(e)}`);
+  } catch (_) {
+    requested = false;
   }
 }
