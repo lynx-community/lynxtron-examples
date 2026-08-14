@@ -5,7 +5,7 @@ import { pluginReactLynx } from '@lynx-js/react-rsbuild-plugin';
 import { compilerOptionsKeys, configKeys, type CompilerOptions, type Config } from '@lynx-js/type-config';
 import { pluginTypeCheck } from '@rsbuild/plugin-type-check';
 import { pluginRspeedyDevReady } from '@lynx-js/lynxtron-dev-plugins/rspeedy';
-import { fileURLToPath, pathToFileURL } from 'url';
+import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
 import { execSync, execFileSync } from 'node:child_process';
@@ -67,8 +67,10 @@ function resolveThumbnailUrl(thumbnail: string | null): string | null {
   const staged = thumbnail.replace(/[\\/]/g, '__');
   fs.mkdirSync(THUMBNAIL_STAGE, { recursive: true });
   fs.copyFileSync(source, path.join(THUMBNAIL_STAGE, staged));
-  // rspack copies ./thumbnails -> dist/desktop/thumbnails (see rspack.config.ts).
-  return pathToFileURL(path.resolve(__dirname, 'dist', 'desktop', 'thumbnails', staged)).href;
+  // Keep only the install-relative identifier in the Lynx bundle. The host
+  // injects the real file:// resource root at runtime; baking path.resolve()
+  // here writes the GitHub runner's /Users/runner/work path into installers.
+  return `thumbnails/${staged}`;
 }
 
 /**
@@ -85,8 +87,7 @@ function resolveThumbnailUrl(thumbnail: string | null): string | null {
  * contrast/saturate but NOT invert, and brightness cannot lift black. So the
  * reverse is a real second asset, checked in beside the original.
  */
-const brandUrl = (file: string) =>
-  pathToFileURL(path.resolve(__dirname, 'dist', 'desktop', 'brand', file)).href;
+const brandUrl = (file: string) => `brand/${file}`;
 const BRAND_MARK_URL = brandUrl('lynxtron.png');
 const BRAND_MARK_ON_DARK_URL = brandUrl('lynxtron-on-dark.png');
 

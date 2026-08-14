@@ -58,9 +58,17 @@ export interface IconProps {
 export function Icon(props: IconProps) {
   const [fontReady, setFontReady] = useState(isIconFontLoaded());
   useEffect(() => {
+    'background only';
+    // Subscribe before requesting so the first icon cannot miss a fast
+    // callback. Then synchronize this component's render snapshot: icons that
+    // rendered before the shared font loaded but run their effect afterwards
+    // otherwise remain on the fallback forever.
+    const unsubscribe = onIconFontLoaded(() => {
+      setFontReady(true);
+    });
     ensureIconFont();
-    if (isIconFontLoaded()) return;
-    return onIconFontLoaded(() => setFontReady(true));
+    if (isIconFontLoaded()) setFontReady(true);
+    return unsubscribe;
   }, []);
 
   const cls = 'bp3-icon bp3-icon-' + props.icon + (props.className ? ' ' + props.className : '');
@@ -76,7 +84,17 @@ export function Icon(props: IconProps) {
     display: 'inline-block',
   };
   if (props.color) textStyle.color = props.color;
-  if (useFont) textStyle.fontFamily = ICON_FONT_FAMILY;
-  const glyph = useFont ? ICON_CODEPOINTS[props.icon] : (GLYPH[props.icon] ?? '?');
-  return <text className={cls} style={textStyle}>{glyph}</text>;
+  // Keep the loaded-font and fallback cases as distinct JSX branches. Clay's
+  // addFont callback is dispatched before its font/layout work is guaranteed
+  // complete; mutating an existing fallback text node to a downloaded family
+  // can leave that native node bound to its old typeface and render PUA glyphs
+  // as tofu. A fresh text node resolves the now-registered family correctly.
+  if (useFont) {
+    return (
+      <text className={cls} style={{ ...textStyle, fontFamily: ICON_FONT_FAMILY }}>
+        {ICON_CODEPOINTS[props.icon]}
+      </text>
+    );
+  }
+  return <text className={cls} style={textStyle}>{GLYPH[props.icon] ?? '?'}</text>;
 }

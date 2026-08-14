@@ -27,6 +27,17 @@ npmRebuild: false
 extraResources:
   - from: src/assets
     to: assets
+  # Lynx <image> reads file:// itself and cannot read inside app.asar. Keep
+  # display assets beside app.asar and resolve this root at runtime.
+  - from: resources/lynxtron.png
+    to: brand/lynxtron.png
+  - from: src/assets/lynxtron-on-dark.png
+    to: brand/lynxtron-on-dark.png
+  - from: thumbnails
+    to: thumbnails
+  # Opened by the platform browser, which cannot read an app.asar path.
+  - from: src/main/desktop/help.html
+    to: help.html
 icon: lynxtron.png
 electronBranding:
   projectName: lynxtron
