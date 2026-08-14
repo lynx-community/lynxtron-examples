@@ -4,6 +4,8 @@ import { spawn, execFileSync } from 'child_process';
 import type { LynxWindow as LynxWindowInstance } from '@lynx-js/lynxtron';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { appFileResourceRoots, appGlobalProps, appResourceDir } from './app-resources';
 import { createPasteMenuItem } from './menu-paste';
 import { fetchExampleArtifact } from './example-artifact';
 import {
@@ -15,6 +17,19 @@ import {
 
 const { app, LynxWindow, dialog, Menu } =
   require('lynxtron') as typeof import('@lynx-js/lynxtron');
+
+function getAppResourceLocation() {
+  const packagedResourceDir = (process as any).resourcesPath;
+  return {
+    isPackaged: app.isPackaged,
+    resourcesPath: typeof packagedResourceDir === 'string' ? packagedResourceDir : undefined,
+    moduleDir: __dirname,
+  };
+}
+
+function getAppLoadOptions() {
+  return { globalProps: appGlobalProps(appResourceDir(getAppResourceLocation())) };
+}
 // The foundation-service thread's `process.versions` has no `lynxtron` key —
 // only the main process sees it. Hand it over via env for the UI's version
 // button (preload-foundation-service reads it as a fallback).
@@ -327,7 +342,10 @@ function installFileResourceFetcher(win: LynxWindowInstance, allowedFileRoots: s
         try {
           const parsed = new URL(urlString);
           if (parsed.protocol === 'file:') {
-            const filePath = decodeURIComponent(parsed.pathname);
+            // Handles encoded characters plus Windows drive/UNC paths. URL's
+            // pathname would leave a Windows path as /C:/... and incorrectly
+            // fail the allowed-root check.
+            const filePath = fileURLToPath(parsed);
             if (!isAllowedFilePath(filePath)) {
               console.log('[PC_Host] fetch-resource: file:// path outside allowed roots:', filePath);
               fail();
@@ -402,7 +420,7 @@ function openExternalUrl(url: string): boolean {
 // shell.openExternal — the runtime's openExternal focuses the browser but
 // silently drops file:// URLs (verified live).
 function openHelpPage(): boolean {
-  const helpPath = path.join(__dirname, 'help.html');
+  const helpPath = path.join(appResourceDir(getAppResourceLocation()), 'help.html');
   if (!fs.existsSync(helpPath)) {
     console.warn('[PC_Host] help.html missing at', helpPath);
     return false;
@@ -455,9 +473,9 @@ type MenuSurface = 'fiddle' | 'workspace';
 function reloadWindow(w: LynxWindowInstance) {
   try {
     if (isDev) {
-      w.loadURL('http://localhost:3000/main.lynx.bundle');
+      w.loadURL('http://localhost:3000/main.lynx.bundle', getAppLoadOptions());
     } else {
-      w.loadFile(LYNX_BUNDLE_PATH);
+      w.loadFile(LYNX_BUNDLE_PATH, getAppLoadOptions());
     }
     console.log('[PC_Host] menu: reload');
   } catch (e: any) {
@@ -890,7 +908,10 @@ if (!hasSingleInstanceLock) {
 
     // The app's own UI bundle fetches assets from its dist dir; materialized
     // fiddle workspaces live under tmpdir.
-    installFileResourceFetcher(w, [__dirname, os.tmpdir()]);
+    installFileResourceFetcher(
+      w,
+      appFileResourceRoots(getAppResourceLocation(), os.tmpdir()),
+    );
     // The traffic lights vanish in macOS fullscreen, and the space reserved for
     // them becomes dead width at the left of the commands bar. Only the main
     // process can see the transition, so it reports it and the UI lets the bar
@@ -1160,10 +1181,10 @@ if (!hasSingleInstanceLock) {
 
     w.show();
     if (isDev) {
-      w.loadURL('http://localhost:3000/main.lynx.bundle');
+      w.loadURL('http://localhost:3000/main.lynx.bundle', getAppLoadOptions());
     } else {
       console.log('[PC_Host] Loading bundle file:', LYNX_BUNDLE_PATH);
-      w.loadFile(LYNX_BUNDLE_PATH);
+      w.loadFile(LYNX_BUNDLE_PATH, getAppLoadOptions());
     }
   });
 

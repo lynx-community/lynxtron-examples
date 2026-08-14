@@ -6,7 +6,13 @@ import fontUrl from './assets/blueprint-icons-16.ttf?inline';
 // Blueprint 3 icon font (icons-16.ttf from @blueprintjs/icons@3.33.0).
 // Codepoints extracted from lib/esm/generated/iconContents.js of that package —
 // the same glyphs upstream Electron Fiddle renders via @blueprintjs/core <Icon>.
-export const ICON_FONT_FAMILY = 'blueprint-icons-16';
+// Clay registers the native font face by the family stored in the TTF name
+// table. Unlike CSS @font-face it does not create an alias from the arbitrary
+// `font-family` passed to addFont. Using `blueprint-icons-16` here made
+// addFont's callback succeed, then text lookup fell through to the system font
+// and every private-use codepoint painted as tofu. All name-table records in
+// this file use `pt-iconosaurus-16`.
+export const ICON_FONT_FAMILY = 'pt-iconosaurus-16';
 
 export const ICON_CODEPOINTS: Record<string, string> = {
   cog: '\ue645',
