@@ -1,5 +1,11 @@
 # @lynxtron-examples/cli
 
+## 0.0.6
+
+### Patch Changes
+
+- 4d8393b: Upgrade the Lynxtron runtime and companion toolchain to 0.0.10 to avoid shutdown task-runner teardown crashes, keep generated workspaces on the same runtime, and contain native Scintilla scroll views during split resizing.
+
 ## 0.0.5
 
 ### Patch Changes
