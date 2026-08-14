@@ -43,6 +43,8 @@ electronBranding:
   projectName: lynxtron
   productName: Lynxtron
 mac:
+  notarize: true
+  hardenedRuntime: true
   target:
     - dmg
   artifactName: lynxtron-go-darwin-${arch}.${ext}
