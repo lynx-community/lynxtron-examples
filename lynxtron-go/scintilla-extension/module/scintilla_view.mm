@@ -480,6 +480,15 @@ void ScintillaView::SetContent(const char* data, size_t length) {
             if (current == text) return;
         }
         [container.scintillaView message:SCI_SETTEXT wParam:0 lParam:(sptr_t)text.c_str()];
+        // Host-driven replacement is a document load, not a user edit.
+        // SCI_SETTEXT records the inserted document in Scintilla's undo
+        // history, so the first Cmd+Z on an untouched editor otherwise
+        // removes the entire file. Also discard history from the previously
+        // displayed IDE tab: applying that history to this document would be
+        // equally incorrect. User edits made after this point are collected
+        // normally and remain undoable.
+        [container.scintillaView message:SCI_EMPTYUNDOBUFFER wParam:0 lParam:0];
+        [container.scintillaView message:SCI_SETSAVEPOINT wParam:0 lParam:0];
         [container.scintillaView setNeedsDisplay:YES];
     };
     if ([NSThread isMainThread]) {
