@@ -1,5 +1,14 @@
 # lynxtron-go
 
+## 0.1.2
+
+### Patch Changes
+
+- 9013a2a: Restore native Cmd+V paste in quick open and bundle the declaration dependencies needed for packaged TypeScript diagnostics.
+- 4d8393b: Upgrade the Lynxtron runtime and companion toolchain to 0.0.10 to avoid shutdown task-runner teardown crashes, keep generated workspaces on the same runtime, and contain native Scintilla scroll views during split resizing.
+- Updated dependencies [4d8393b]
+  - @lynxtron-examples/cli@0.0.6
+
 ## 0.1.1
 
 ### Patch Changes
