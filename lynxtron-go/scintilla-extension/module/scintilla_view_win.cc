@@ -402,7 +402,13 @@ LRESULT CALLBACK HostWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpar
   } else if (message == WM_ERASEBKGND) {
     RECT rect{};
     ::GetClientRect(hwnd, &rect);
-    HBRUSH brush = ::CreateSolidBrush(kEditorBackgroundColor);
+    HWND child = ::GetWindow(hwnd, GW_CHILD);
+    COLORREF bg_color = kEditorBackgroundColor;
+    if (child) {
+      LPARAM scintilla_bg = SciSend(child, SCI_STYLEGETBACK, STYLE_DEFAULT, 0);
+      bg_color = RGB(scintilla_bg & 0xFF, (scintilla_bg >> 8) & 0xFF, (scintilla_bg >> 16) & 0xFF);
+    }
+    HBRUSH brush = ::CreateSolidBrush(bg_color);
     if (brush) {
       ::FillRect(reinterpret_cast<HDC>(wparam), &rect, brush);
       ::DeleteObject(brush);
@@ -412,7 +418,13 @@ LRESULT CALLBACK HostWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpar
     PAINTSTRUCT ps{};
     HDC dc = ::BeginPaint(hwnd, &ps);
     if (dc) {
-      HBRUSH brush = ::CreateSolidBrush(kEditorBackgroundColor);
+      HWND child = ::GetWindow(hwnd, GW_CHILD);
+      COLORREF bg_color = kEditorBackgroundColor;
+      if (child) {
+        LPARAM scintilla_bg = SciSend(child, SCI_STYLEGETBACK, STYLE_DEFAULT, 0);
+        bg_color = RGB(scintilla_bg & 0xFF, (scintilla_bg >> 8) & 0xFF, (scintilla_bg >> 16) & 0xFF);
+      }
+      HBRUSH brush = ::CreateSolidBrush(bg_color);
       if (brush) {
         ::FillRect(dc, &ps.rcPaint, brush);
         ::DeleteObject(brush);
