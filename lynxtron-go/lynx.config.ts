@@ -9,6 +9,10 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
 import { execSync, execFileSync } from 'node:child_process';
+import {
+  resolveExplicitShowcaseSourceMode,
+  resolveRemoteShowcaseRef,
+} from './src/shared/showcase-source.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,8 +25,10 @@ const monorepoRoot = path.resolve(__dirname, '..');
 // - local-registry: bake file:// tgz URLs for local registry / preview testing
 // - local-workspace: keep local source-tree open fallback for runtime debugging
 const showcaseSourceMode = (() => {
-  const explicitMode = process.env.LYNXTRON_SHOWCASE_SOURCE;
-  if (explicitMode === 'local-registry' || explicitMode === 'local-workspace') {
+  const explicitMode = resolveExplicitShowcaseSourceMode(
+    process.env.LYNXTRON_SHOWCASE_SOURCE,
+  );
+  if (explicitMode) {
     return explicitMode;
   }
   if (process.env.LYNXTRON_PREVIEW) return 'local-registry';
@@ -101,11 +107,15 @@ function buildShowcaseRegistry() {
         return url.replace(/\.git$/, '').replace(/^git@github\.com:/, 'https://github.com/');
       } catch { return ''; }
     })();
-    const gitBranch = (() => {
+    const gitRef = (() => {
       try {
         return execSync('git rev-parse --abbrev-ref HEAD', { cwd: monorepoRoot, encoding: 'utf-8' }).trim();
       } catch { return 'main'; }
     })();
+    const showcaseRef = resolveRemoteShowcaseRef(
+      process.env.LYNXTRON_SHOWCASE_REF,
+      gitRef,
+    );
 
     return registry.showcases.map((s: any) => {
       let url = '';
@@ -119,7 +129,7 @@ function buildShowcaseRegistry() {
           if (tgz) url = `file://${path.join(showcaseDir, tgz)}`;
         } catch (_) {}
       } else if (gitRemote) {
-        url = `${gitRemote}/tree/${gitBranch}/${s.path}`;
+        url = `${gitRemote}/tree/${showcaseRef}/${s.path}`;
       }
       return {
         name: s.name,

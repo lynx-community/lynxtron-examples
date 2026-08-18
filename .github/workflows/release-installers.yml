@@ -108,6 +108,8 @@ jobs:
       - name: Build macOS installer
         if: runner.os == 'macOS'
         env:
+          LYNXTRON_SHOWCASE_SOURCE: remote
+          LYNXTRON_SHOWCASE_REF: ${{ steps.tag.outputs.tag }}
           APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
@@ -137,6 +139,9 @@ jobs:
       # Windows: nsis installer.
       - name: Build Windows installer
         if: runner.os == 'Windows'
+        env:
+          LYNXTRON_SHOWCASE_SOURCE: remote
+          LYNXTRON_SHOWCASE_REF: ${{ steps.tag.outputs.tag }}
         run: pnpm --dir lynxtron-go run pack:win
 
       - name: Upload Release assets
