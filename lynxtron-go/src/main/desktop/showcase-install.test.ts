@@ -61,7 +61,7 @@ describe('showcase install helpers', () => {
     const plan = getShowcaseInstallPlan(showcaseDir);
     expect(plan.manager).toBe('npm');
     expect(plan.cwd).toBe(showcaseDir);
-    expect(plan.args).toEqual(['install']);
+    expect(plan.args).toEqual(['install', '--include=dev']);
     expect(plan.userConfigPath).toBeUndefined();
   });
 
@@ -80,7 +80,7 @@ describe('showcase install helpers', () => {
     const plan = getShowcaseInstallPlan(showcaseDir);
     expect(plan.manager).toBe('npm');
     expect(plan.cwd).toBe(showcaseDir);
-    expect(plan.args).toEqual(['install']);
+    expect(plan.args).toEqual(['install', '--include=dev']);
     expect(plan.userConfigPath).toBe(path.join(workspaceRoot, '.npmrc'));
   });
 
@@ -118,7 +118,20 @@ describe('showcase install helpers', () => {
     const plan = getShowcaseInstallPlan(showcaseDir);
     expect(plan.manager).toBe('pnpm');
     expect(plan.cwd).toBe(repoRoot);
-    expect(plan.args).toEqual(['install', '--filter', './showcases/counter...']);
+    expect(plan.args).toEqual(['install', '--prod=false', '--filter', './showcases/counter...']);
+  });
+
+  it('includes source-build dependencies even when the host is in production mode', () => {
+    const showcaseDir = makeTempDir('lynxtron-production-source-run-');
+    writeJson(path.join(showcaseDir, 'package.json'), {
+      name: 'floating-clock',
+      scripts: { start: 'cross-env TARGET_ENV=desktop npm run build' },
+      devDependencies: { 'cross-env': '^10.1.0' },
+    });
+
+    const plan = getShowcaseInstallPlan(showcaseDir);
+    expect(plan.manager).toBe('npm');
+    expect(plan.args).toContain('--include=dev');
   });
 
   it('prefers explicit showcase targets from package metadata', () => {
