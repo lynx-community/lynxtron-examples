@@ -15,6 +15,8 @@ export function createShowcaseConfig(options?: {
   lynxDistPath?: string;
   server?: Record<string, any>;
   reactPluginOptions?: Record<string, any>;
+  /** Compile-time constants injected into the Lynx bundle. */
+  sourceDefine?: Record<string, string>;
 }) {
   const entryMap = options?.entries ?? { main: options?.entry ?? './src/app/index.tsx' };
   const lynxOutput: Record<string, any> = {};
@@ -23,7 +25,10 @@ export function createShowcaseConfig(options?: {
   }
   const environments: Record<string, any> = {
     lynx: {
-      source: { entry: entryMap },
+      source: {
+        entry: entryMap,
+        ...(options?.sourceDefine ? { define: options.sourceDefine } : {}),
+      },
       ...(Object.keys(lynxOutput).length ? { output: lynxOutput } : {}),
     },
   };

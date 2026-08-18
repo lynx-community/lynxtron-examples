@@ -37,6 +37,10 @@ export default defineConfig({
         {
           from: './native-texture-extension/index.cjs',
           to: 'node_modules/lynxtron-native-texture-canvas/index.cjs',
+          // The SHA-256 embedded in the Lynx bundle is computed from this
+          // source file. Mark it as already minimized so Rspack preserves the
+          // exact bytes copied into the published desktop artifact.
+          info: { minimized: true },
         },
         {
           from: './native-texture-extension/package.json',

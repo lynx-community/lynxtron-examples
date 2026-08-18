@@ -9,6 +9,12 @@ import { appFileResourceRoots, appGlobalProps, appResourceDir } from './app-reso
 import { createPasteMenuItem } from './menu-paste';
 import { fetchExampleArtifact } from './example-artifact';
 import {
+  downloadNativeExtension,
+  inspectRemoteBundle,
+  nativeExtensionCacheKey,
+  type NativeExtensionManifest,
+} from './remote-native-extension';
+import {
   PUBLIC_DEEP_LINK_SCHEME,
   extractDeepLinkUrlFromArgv,
   parseDeepLinkUrl,
@@ -146,6 +152,7 @@ const isDev = process.env.NODE_ENV === 'development';
 // Bundle preview windows (from deep links / bridge calls) — one list, they
 // share a lifecycle and the tracking only exists to keep them alive.
 const previewWindows: LynxWindowInstance[] = [];
+const registeredRemoteNativeExtensions = new Map<string, string>();
 let mainWindow: LynxWindowInstance | null = null;
 let mainWindowUiReady = false;
 // Depth-1 on purpose: rapid successive deep links keep only the newest —
@@ -440,6 +447,51 @@ function openPreviewWindow(title: string, fileRoots: string[]): LynxWindowInstan
   });
   win.show();
   return win;
+}
+
+async function prepareRemoteNativeExtension(
+  bundleUrl: string,
+  manifest: NativeExtensionManifest,
+): Promise<boolean> {
+  const cacheKey = nativeExtensionCacheKey(manifest);
+  const registeredKey = registeredRemoteNativeExtensions.get(manifest.name);
+  if (registeredKey === cacheKey) return true;
+  if (registeredKey) {
+    throw new Error(
+      `Native extension "${manifest.name}" is already registered with different code. Restart Lynxtron Go to load this bundle.`,
+    );
+  }
+
+  const source = new URL(bundleUrl);
+  const result = await dialog.showMessageBox({
+    type: 'warning',
+    title: 'Load native demo extension?',
+    message: `This bundle requests the native extension “${manifest.name}”.`,
+    detail: [
+      `Source: ${source.origin}`,
+      `Platform: ${manifest.platform}-${manifest.arch}`,
+      '',
+      'Native code runs with your user permissions. Only continue if you trust this bundle.',
+    ].join('\n'),
+    buttons: ['Load Extension', 'Cancel'],
+    defaultId: 1,
+    cancelId: 1,
+    noLink: true,
+  });
+  if (result.response !== 0) return false;
+
+  const cacheRoot = path.join(app.getPath('userData'), 'remote-native-extensions');
+  const entryPath = await downloadNativeExtension(manifest, bundleUrl, cacheRoot);
+  const nativeRequire = typeof __non_webpack_require__ !== 'undefined'
+    ? __non_webpack_require__ as NodeRequire
+    : require;
+  const extension = nativeRequire(entryPath) as { setUp?: () => boolean };
+  if (typeof extension.setUp !== 'function' || extension.setUp() !== true) {
+    throw new Error(`Native extension "${manifest.name}" did not register successfully`);
+  }
+  registeredRemoteNativeExtensions.set(manifest.name, cacheKey);
+  console.log('[PC_Host] Remote native extension registered:', manifest.name, entryPath);
+  return true;
 }
 
 // Build application menu with IDE keyboard shortcuts.
@@ -1109,6 +1161,11 @@ if (!hasSingleInstanceLock) {
             return;
           }
           try {
+            const manifest = await inspectRemoteBundle(url);
+            if (manifest && !await prepareRemoteNativeExtension(url, manifest)) {
+              callback.sendReply({ ok: false, error: 'Native extension loading was cancelled.' });
+              return;
+            }
             // Remote content: NO file:// access from this window.
             const bundleWin = openPreviewWindow(title, []);
             const loaded = bundleWin.loadURL(url);
