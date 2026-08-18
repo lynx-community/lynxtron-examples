@@ -1,5 +1,13 @@
 # lynxtron-go
 
+## 0.1.5
+
+### Patch Changes
+
+- a83210a: Allow trusted remote showcase bundles to declare, verify, and load native extensions after user confirmation.
+- e320ed1: Fix the white gutter gap beside the macOS Scintilla horizontal scrollbar.
+- 4213065: fix: resolve Windows editor rendering and bump lynxtron deps to 0.0.15
+
 ## 0.1.4
 
 ### Patch Changes

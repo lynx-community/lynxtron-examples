@@ -1,5 +1,11 @@
 # @lynxtron-examples/native-texture-canvas
 
+## 0.0.3
+
+### Patch Changes
+
+- a83210a: Allow trusted remote showcase bundles to declare, verify, and load native extensions after user confirmation.
+
 ## 0.0.2
 
 ### Patch Changes
