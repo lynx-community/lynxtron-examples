@@ -16,13 +16,19 @@ interface LocalShowcase {
   name: string;
 }
 
+interface RemoteTarballShowcase {
+  type: 'remote-tarball';
+  url: string;
+  name: string;
+}
+
 interface ExternalShowcase {
   type: 'external';
   url: string;
   name: string;
 }
 
-type ResolvedShowcase = RepoShowcase | LocalShowcase | ExternalShowcase;
+type ResolvedShowcase = RepoShowcase | LocalShowcase | RemoteTarballShowcase | ExternalShowcase;
 
 // GitHub: https://github.com/{owner}/{repo}/tree/{ref}/showcases/{name}
 const GITHUB_TREE_RE =
@@ -37,14 +43,31 @@ function fileUrlToPath(url: string): string {
   }
 }
 
+function tarballName(fileName: string): string {
+  return fileName
+    .replace(/\.tgz$/i, '')
+    .replace(/-\d+\.\d+\.\d+(?:[-+].*)?$/, '')
+    // Release assets use pnpm's scoped-package filename without the version.
+    .replace(/^lynxtron-examples-/, '');
+}
+
 export function resolveShowcaseUrl(url: string): ResolvedShowcase {
   // file:// protocol → local tarball
   if (url.startsWith('file://')) {
     const filePath = fileUrlToPath(url);
     // Extract name from tarball filename: counter-0.0.1.tgz → counter
     const basename = path.basename(filePath) || 'unknown';
-    const name = basename.replace(/-\d+\.\d+\.\d+.*\.tgz$/, '').replace(/\.tgz$/, '');
+    const name = tarballName(basename);
     return { type: 'local', filePath, name };
+  }
+
+  const parsedUrl = new URL(url);
+  if (/\.tgz$/i.test(parsedUrl.pathname)) {
+    return {
+      type: 'remote-tarball',
+      url,
+      name: tarballName(path.basename(parsedUrl.pathname)),
+    };
   }
 
   const githubMatch = url.match(GITHUB_TREE_RE);
@@ -61,7 +84,7 @@ export function resolveShowcaseUrl(url: string): ResolvedShowcase {
   }
 
   // External: extract name from URL
-  const urlObj = new URL(url);
+  const urlObj = parsedUrl;
   const segments = urlObj.pathname.split('/').filter(Boolean);
   let name = segments[segments.length - 1] || 'unknown';
   name = name.replace(/\.git$/, '');

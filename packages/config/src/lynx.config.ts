@@ -48,6 +48,7 @@ export function createShowcaseConfig(options?: {
     alignMouseEventWithW3C: true,
     enableCSSInheritance,
     enableCSSInlineVariables: true,
+    enableMouseDragScroll: false,
   };
   return defineConfig({
     output: { filename: '[name].[platform].bundle' },
@@ -55,11 +56,12 @@ export function createShowcaseConfig(options?: {
     ...(options?.server ? { server: options.server } : {}),
     plugins: [
       pluginLynxConfig(defaultLynxConfig, {
-        configKeys: [...configKeys, 'alignMouseEventWithW3C', 'enableCSSInlineVariables'],
+        configKeys: [...configKeys, 'alignMouseEventWithW3C', 'enableCSSInlineVariables', 'enableMouseDragScroll'],
         compilerOptionsKeys,
         validate: (input) => input as Config & CompilerOptions & {
           alignMouseEventWithW3C: boolean;
           enableCSSInlineVariables: boolean;
+          enableMouseDragScroll: boolean;
         },
       }),
       pluginReactLynx({

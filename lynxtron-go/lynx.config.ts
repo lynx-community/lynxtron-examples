@@ -20,11 +20,13 @@ const monorepoRoot = path.resolve(__dirname, '..');
 // - remote: bake GitHub tree URLs for published/private-remote testing
 // - local-registry: bake file:// tgz URLs for local registry / preview testing
 // - local-workspace: keep local source-tree open fallback for runtime debugging
+// - release-artifacts: consume prebuilt showcase tgz assets from this Release
 const showcaseSourceMode = (() => {
   const explicitMode = process.env.LYNXTRON_SHOWCASE_SOURCE;
-  if (explicitMode === 'local-registry' || explicitMode === 'local-workspace') {
+  if (explicitMode === 'local-registry' || explicitMode === 'local-workspace' || explicitMode === 'release-artifacts') {
     return explicitMode;
   }
+  if (process.env.LYNXTRON_RELEASE_TAG) return 'release-artifacts';
   if (process.env.LYNXTRON_PREVIEW) return 'local-registry';
   // Remote mode bakes {remote}/tree/{CURRENT BRANCH}/... into every showcase
   // URL. On a branch that was never pushed, every Run then 404s against the
@@ -45,9 +47,10 @@ const showcaseSourceMode = (() => {
   } catch (_) { /* offline / not a git checkout — keep remote */ }
   return 'remote';
 })();
-const isLocalSourceMode = showcaseSourceMode !== 'remote';
+const isPreviewMode = showcaseSourceMode === 'local-registry' || showcaseSourceMode === 'local-workspace';
 const isLocalRegistry = showcaseSourceMode === 'local-registry';
 const isLocalWorkspace = showcaseSourceMode === 'local-workspace';
+const isReleaseArtifacts = showcaseSourceMode === 'release-artifacts';
 const registryPath = path.resolve(monorepoRoot, 'showcase-registry.json');
 
 // Thumbnails are staged into the app's own bundle rather than linked at their
@@ -118,6 +121,11 @@ function buildShowcaseRegistry() {
           const tgz = files.find((f: string) => f.endsWith('.tgz'));
           if (tgz) url = `file://${path.join(showcaseDir, tgz)}`;
         } catch (_) {}
+      } else if (isReleaseArtifacts && gitRemote && s.path?.startsWith('showcases/')) {
+        const releaseTag = process.env.LYNXTRON_RELEASE_TAG;
+        if (!releaseTag) throw new Error('LYNXTRON_RELEASE_TAG is required for release-artifacts mode');
+        const assetName = `${String(s.name).replace(/^@/, '').replace('/', '-')}.tgz`;
+        url = `${gitRemote}/releases/download/${encodeURIComponent(releaseTag)}/${assetName}`;
       } else if (gitRemote) {
         url = `${gitRemote}/tree/${gitBranch}/${s.path}`;
       }
@@ -222,7 +230,7 @@ export default defineConfig({
     define: {
       __SHOWCASE_REGISTRY__: JSON.stringify(bakedShowcases),
       __FIDDLE_CATALOG__: JSON.stringify(bakedFiddles),
-      __SHOWCASE_PREVIEW__: JSON.stringify(isLocalSourceMode),
+      __SHOWCASE_PREVIEW__: JSON.stringify(isPreviewMode),
       __SHOWCASE_LOCAL_WORKSPACE__: JSON.stringify(isLocalWorkspace),
       __BRAND_MARK_URL__: JSON.stringify(BRAND_MARK_URL),
       __BRAND_MARK_ON_DARK_URL__: JSON.stringify(BRAND_MARK_ON_DARK_URL),
@@ -232,11 +240,13 @@ export default defineConfig({
     pluginLynxConfig({
       alignMouseEventWithW3C: true,
       enableCSSInheritance: true,
+      enableMouseDragScroll: false,
     }, {
-      configKeys: [...configKeys, 'alignMouseEventWithW3C'],
+      configKeys: [...configKeys, 'alignMouseEventWithW3C', 'enableMouseDragScroll'],
       compilerOptionsKeys,
       validate: (input) => input as Config & CompilerOptions & {
         alignMouseEventWithW3C: boolean;
+        enableMouseDragScroll: boolean;
       },
     }),
     pluginReactLynx({

@@ -65,4 +65,21 @@ describe('resolveShowcaseUrl', () => {
       name: 'my-app',
     });
   });
+
+  it('identifies a versioned remote tarball artifact', () => {
+    expect(resolveShowcaseUrl('https://example.com/releases/counter-0.0.4.tgz')).toEqual({
+      type: 'remote-tarball',
+      url: 'https://example.com/releases/counter-0.0.4.tgz',
+      name: 'counter',
+    });
+  });
+
+  it('restores the bare showcase name from a scoped release asset', () => {
+    const url = 'https://github.com/lynx-community/lynxtron-examples/releases/download/lynxtron-go-v0.0.7/lynxtron-examples-floating-clock.tgz';
+    expect(resolveShowcaseUrl(url)).toEqual({
+      type: 'remote-tarball',
+      url,
+      name: 'floating-clock',
+    });
+  });
 });
