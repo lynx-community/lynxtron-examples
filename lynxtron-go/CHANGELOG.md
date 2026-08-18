@@ -1,5 +1,11 @@
 # lynxtron-go
 
+## 0.1.4
+
+### Patch Changes
+
+- 7d27135: Prevent Cmd+Z from clearing an untouched editor after Lynxtron Go loads a file.
+
 ## 0.1.3
 
 ### Patch Changes
