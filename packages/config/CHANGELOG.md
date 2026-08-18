@@ -1,5 +1,11 @@
 # @lynxtron-examples/config
 
+## 0.0.7
+
+### Patch Changes
+
+- a83210a: Allow trusted remote showcase bundles to declare, verify, and load native extensions after user confirmation.
+
 ## 0.0.6
 
 ### Patch Changes
