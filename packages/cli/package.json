@@ -1,6 +1,6 @@
 {
   "name": "@lynxtron-examples/cli",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "CLI to fetch, build and run Lynxtron showcases. Internal to Lynxtron GO — not published to npm.",
   "license": "Apache-2.0",
   "private": true,
