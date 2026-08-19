@@ -417,7 +417,9 @@ LRESULT CALLBACK ParentWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
 }
 
 LRESULT CALLBACK HostWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
-  if (message == WM_NOTIFY && lparam != 0) {
+  if (message == WM_MOUSEACTIVATE) {
+    return MA_NOACTIVATE;
+  } else if (message == WM_NOTIFY && lparam != 0) {
     DispatchScintillaNotification(reinterpret_cast<SCNotification*>(lparam));
   } else if (message == WM_SIZE) {
     HWND child = ::GetWindow(hwnd, GW_CHILD);

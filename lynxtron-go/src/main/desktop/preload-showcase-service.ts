@@ -51,6 +51,8 @@ function openExternalUrl(url: string, dbg: DebugLogger) {
     const opener = spawn(command, args, {
       stdio: 'ignore',
       detached: true,
+              shell: process.platform === 'win32',
+              shell: process.platform === 'win32',
       env: { ...process.env },
     });
     opener.unref();
@@ -284,6 +286,8 @@ function runInstallCommand(options: {
       env: options.env,
       stdio: ['ignore', 'pipe', 'pipe'],
       detached: true,
+              shell: process.platform === 'win32',
+              shell: process.platform === 'win32',
     });
     if (options.outputBuffer) {
       attachProcessOutput(child, 'showcase.install', options.outputBuffer);
@@ -350,6 +354,8 @@ function runBufferedCommand(options: {
       env: options.env,
       stdio: ['ignore', 'pipe', 'pipe'],
       detached: true,
+              shell: process.platform === 'win32',
+              shell: process.platform === 'win32',
     });
     if (options.outputBuffer) {
       attachProcessOutput(child, options.source, options.outputBuffer);
@@ -586,6 +592,8 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
           cwd: showcasePath,
           stdio: ['ignore', 'pipe', 'pipe'],
           detached: true,
+              shell: process.platform === 'win32',
+              shell: process.platform === 'win32',
           env: showcaseSpawnEnv(showcasePath),
         });
         attachProcessOutput(child, 'showcase.runFiddle', processOutputBuffer);
@@ -612,6 +620,8 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
             detached: true,
+              shell: process.platform === 'win32',
+              shell: process.platform === 'win32',
             env: showcaseSpawnEnv(showcasePath),
           });
           dbg(`showcase.run: process spawned, pid: ${child.pid}`);
@@ -636,6 +646,8 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
             detached: true,
+              shell: process.platform === 'win32',
+              shell: process.platform === 'win32',
             env: showcaseSpawnEnv(showcasePath),
           });
           attachProcessOutput(child, 'showcase.start', processOutputBuffer);
@@ -656,6 +668,8 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
             detached: true,
+              shell: process.platform === 'win32',
+              shell: process.platform === 'win32',
             env: showcaseSpawnEnv(showcasePath),
           });
           attachProcessOutput(child, 'showcase.dev', processOutputBuffer);
@@ -733,6 +747,8 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
             detached: true,
+              shell: process.platform === 'win32',
+              shell: process.platform === 'win32',
             env: { ...process.env, LYNXTRON_RUN_AS_NODE: '1' },
           });
           attachUrlOpener(child, 'showcase.runWeb', dbg);
@@ -763,6 +779,8 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
             detached: true,
+              shell: process.platform === 'win32',
+              shell: process.platform === 'win32',
             env: { ...process.env },
           });
           attachUrlOpener(child, 'showcase.startWeb', dbg);
@@ -787,6 +805,8 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
             cwd: showcasePath,
             stdio: ['ignore', 'pipe', 'pipe'],
             detached: true,
+              shell: process.platform === 'win32',
+              shell: process.platform === 'win32',
             env: { ...process.env },
           });
           attachUrlOpener(child, 'showcase.devWeb', dbg);
