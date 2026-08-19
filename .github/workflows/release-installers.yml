@@ -108,6 +108,7 @@ jobs:
       - name: Build macOS installer
         if: runner.os == 'macOS'
         env:
+          LYNXTRON_RELEASE_TAG: ${{ steps.tag.outputs.tag }}
           APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}

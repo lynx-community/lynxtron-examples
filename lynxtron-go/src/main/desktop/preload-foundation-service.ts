@@ -63,8 +63,6 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
     },
     clipboard: {
       readText: (): string | null => readClipboardText(),
-      // Lynx <text> has no selection on desktop — copy goes through the OS
-      // clipboard tool instead (pbcopy/clip/xclip all read stdin).
       writeText: (text: string): boolean => {
         try {
           const cmd = process.platform === 'darwin' ? 'pbcopy'

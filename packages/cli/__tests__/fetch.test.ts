@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import * as http from 'http';
 import * as tar from 'tar';
 import { pathToFileURL } from 'url';
 import { clearFetchDestination, fetch } from '../src/commands/fetch';
@@ -57,5 +58,51 @@ describe('fetch command', () => {
     expect(fs.existsSync(path.join(destDir, 'stale.txt'))).toBe(false);
     expect(fs.existsSync(path.join(destDir, 'package.json'))).toBe(true);
     expect(fs.existsSync(path.join(destDir, 'dist', 'desktop', 'main.js'))).toBe(true);
+  });
+
+  it('downloads a packed release artifact and runs it without installing', async () => {
+    const workspaceRoot = makeTempDir('lynxtron-fetch-remote-ws-');
+    const packageRoot = makeTempDir('lynxtron-fetch-remote-pkg-');
+    const packageDir = path.join(packageRoot, 'package');
+    const tarPath = path.join(packageRoot, 'floating-clock.tgz');
+
+    fs.mkdirSync(path.join(packageDir, 'dist', 'desktop'), { recursive: true });
+    fs.writeFileSync(
+      path.join(packageDir, 'package.json'),
+      JSON.stringify({
+        name: '@lynxtron-examples/floating-clock',
+        version: '0.0.4',
+        showcase: { description: 'clock' },
+      }),
+      'utf-8',
+    );
+    fs.writeFileSync(path.join(packageDir, 'dist', 'desktop', 'main.js'), '// packed build\n', 'utf-8');
+    await tar.c({ gzip: true, file: tarPath, cwd: packageRoot }, ['package']);
+
+    const server = http.createServer((request, response) => {
+      if (request.url === '/lynxtron-examples-floating-clock.tgz') {
+        response.writeHead(302, { location: '/download/floating-clock.tgz' });
+        response.end();
+        return;
+      }
+      response.writeHead(200, { 'content-type': 'application/octet-stream' });
+      fs.createReadStream(tarPath).pipe(response);
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+
+    try {
+      const address = server.address();
+      if (!address || typeof address === 'string') throw new Error('test server address unavailable');
+      // Keep the public URL shaped like a Release asset while exercising the
+      // redirect that GitHub uses for the actual object download.
+      const url = `http://127.0.0.1:${address.port}/lynxtron-examples-floating-clock.tgz`;
+      await fetch(url, workspaceRoot);
+      const destDir = path.join(workspaceRoot, 'showcases', 'floating-clock');
+      expect(fs.readFileSync(path.join(destDir, 'dist', 'desktop', 'main.js'), 'utf-8'))
+        .toBe('// packed build\n');
+      expect(fs.existsSync(path.join(destDir, 'node_modules'))).toBe(false);
+    } finally {
+      await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+    }
   });
 });

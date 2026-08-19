@@ -2,6 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { extractDeepLinkUrlFromArgv, parseDeepLinkUrl } from './deep-link';
 
 describe('parseDeepLinkUrl', () => {
+  it('decodes a scoped showcase id from the public deep link', () => {
+    expect(parseDeepLinkUrl(
+      'lynxtron-go://showcase/open?id=%40lynxtron-examples%2Ffloating-clock',
+    )).toEqual({
+      ok: true,
+      intent: {
+        kind: 'showcase-open',
+        showcaseId: '@lynxtron-examples/floating-clock',
+      },
+    });
+  });
+
   it('parses home deep link', () => {
     const result = parseDeepLinkUrl('lynxtron-go://home');
     expect(result).toEqual({

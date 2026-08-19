@@ -327,7 +327,11 @@ export function getShowcaseInstallPlan(showcasePath: string): ShowcaseInstallPla
   if (!workspaceRoot) {
     return {
       command: npmCommand,
-      args: ['install'],
+      // Source runs compile the showcase, so build tools in devDependencies
+      // are runtime requirements for this operation. Packaged Lynxtron GO may
+      // inherit NODE_ENV=production / omit=dev; make the install intent
+      // explicit instead of accepting an install that cannot run `start`.
+      args: ['install', '--include=dev'],
       cwd: resolvedShowcasePath,
       manager: 'npm',
       requiredNodeModules: [path.join(resolvedShowcasePath, 'node_modules')],
@@ -338,7 +342,7 @@ export function getShowcaseInstallPlan(showcasePath: string): ShowcaseInstallPla
   const relativeShowcasePath = path.relative(workspaceRoot, resolvedShowcasePath).split(path.sep).join('/');
   return {
     command: pnpmCommand,
-    args: ['install', '--filter', `./${relativeShowcasePath}...`],
+    args: ['install', '--prod=false', '--filter', `./${relativeShowcasePath}...`],
     cwd: workspaceRoot,
     manager: 'pnpm',
     requiredNodeModules: [

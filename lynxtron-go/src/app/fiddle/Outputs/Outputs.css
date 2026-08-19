@@ -57,6 +57,7 @@
   padding: 8px 12px;
   font-family: monospace;
   overflow: hidden;
+  cursor: text;
 }
 .Outputs-Empty { color: var(--bp-text-muted); font-size: 13px; }
 .Outputs-Line {
@@ -77,6 +78,7 @@
   font-family: monospace;
   font-size: 11px;
   flex-shrink: 0;
+  cursor: text;
 }
 .Outputs-Message {
   color: var(--bp-text-muted);
@@ -85,6 +87,7 @@
   font-weight: 600;
   white-space: pre-wrap;
   flex: 1;
+  cursor: text;
 }
 
 .Outputs-StopText {

@@ -2,6 +2,7 @@ import { resolveShowcaseUrl } from '../registry/resolver.js';
 import { WorkspaceManager } from '../workspace/manager.js';
 import { emit, log } from '../utils/ndjson.js';
 import * as https from 'https';
+import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as tar from 'tar';
@@ -79,6 +80,8 @@ export async function fetch(url: string, workspaceRoot: string): Promise<void> {
       await fetchRepoShowcase(resolved, manager);
     } else if (resolved.type === 'local') {
       await fetchLocalTarball(resolved, manager);
+    } else if (resolved.type === 'remote-tarball') {
+      await fetchRemoteTarball(resolved, manager);
     } else {
       await fetchExternal(resolved, manager);
     }
@@ -114,6 +117,11 @@ async function fetchLocalTarball(
   const destDir = manager.getShowcasePath(name);
   clearFetchDestination(destDir);
   fs.mkdirSync(destDir, { recursive: true });
+  await extractPackedShowcase(filePath, destDir);
+  await preparePackedShowcase(name, destDir, manager);
+}
+
+async function extractPackedShowcase(filePath: string, destDir: string): Promise<void> {
 
   // npm pack tarballs have a 'package/' prefix, strip it
   await tar.x({
@@ -121,6 +129,13 @@ async function fetchLocalTarball(
     cwd: destDir,
     strip: 1,
   });
+}
+
+async function preparePackedShowcase(
+  name: string,
+  destDir: string,
+  manager: WorkspaceManager,
+): Promise<void> {
 
   // Local tarballs from npm pack contain built dist/ — no install needed.
   // If the tarball has dist/desktop/main.js, it's ready to run directly.
@@ -141,6 +156,26 @@ async function fetchLocalTarball(
       timeout: 300000,
     });
     emit({ type: 'install-success', name });
+  }
+}
+
+async function fetchRemoteTarball(
+  resolved: Extract<ReturnType<typeof resolveShowcaseUrl>, { type: 'remote-tarball' }>,
+  manager: WorkspaceManager,
+): Promise<void> {
+  const { url, name } = resolved;
+  const destDir = manager.getShowcasePath(name);
+  const tmpTar = path.join(manager.getRootPath(), `${name}.download.tgz`);
+  clearFetchDestination(destDir);
+  fs.mkdirSync(destDir, { recursive: true });
+
+  log(`Downloading packed showcase: ${url}`);
+  try {
+    await downloadFile(url, tmpTar);
+    await extractPackedShowcase(tmpTar, destDir);
+    await preparePackedShowcase(name, destDir, manager);
+  } finally {
+    if (fs.existsSync(tmpTar)) fs.unlinkSync(tmpTar);
   }
 }
 
@@ -213,36 +248,47 @@ async function fetchExternal(
 // ── HTTP download helper ──────────────────────────────────────────────────
 
 // TODO: Remove GITHUB_TOKEN/GH_TOKEN auth once repo is public.
-function getAuthHeaders(): Record<string, string> {
+function getAuthHeaders(url: string): Record<string, string> {
   const headers: Record<string, string> = { 'User-Agent': 'lynxtron-examples-cli' };
   const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-  if (token) {
+  const hostname = new URL(url).hostname.toLowerCase();
+  if (token && (hostname === 'github.com' || hostname === 'api.github.com')) {
     headers['Authorization'] = `Bearer ${token}`;
   }
   return headers;
 }
 
-function downloadFile(url: string, dest: string): Promise<void> {
+function downloadFile(url: string, dest: string, redirectsRemaining = 5): Promise<void> {
   return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(dest);
-    https
-      .get(url, { headers: getAuthHeaders() }, (response) => {
+    const client = url.startsWith('https:') ? https : http;
+    client
+      .get(url, { headers: getAuthHeaders(url) }, (response) => {
         if (response.statusCode === 302 || response.statusCode === 301) {
-          file.close();
-          downloadFile(response.headers.location!, dest).then(resolve, reject);
+          response.resume();
+          if (redirectsRemaining <= 0) {
+            reject(new Error(`Too many redirects while fetching ${url}`));
+            return;
+          }
+          const location = response.headers.location;
+          if (!location) {
+            reject(new Error(`Redirect missing Location header while fetching ${url}`));
+            return;
+          }
+          downloadFile(new URL(location, url).href, dest, redirectsRemaining - 1).then(resolve, reject);
           return;
         }
         if (response.statusCode && response.statusCode >= 400) {
-          file.close();
-          fs.unlinkSync(dest);
+          response.resume();
           reject(new Error(`HTTP ${response.statusCode} fetching ${url}`));
           return;
         }
+        const file = fs.createWriteStream(dest);
         response.pipe(file);
         file.on('finish', () => {
           file.close();
           resolve();
         });
+        file.on('error', reject);
       })
       .on('error', reject);
   });
