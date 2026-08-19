@@ -57,8 +57,6 @@ export function Outputs(props: OutputsProps) {
 
   const clear = useCallback(() => { clearProcessLog(); setEntries([]); }, []);
 
-  // Lynx <text> isn't selectable on desktop — Copy puts the whole console
-  // into the OS clipboard instead.
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef<any>(null);
   const entriesRef = useRef(entries);
@@ -120,15 +118,15 @@ export function Outputs(props: OutputsProps) {
           // An empty console IS an idle console — one dim prompt line where
           // the first real line will land, not a poster about being empty.
           <view className="Outputs-Line">
-            <text className="Outputs-IdleHint">Run output streams here · ⌘R</text>
+            <text className="Outputs-IdleHint" text-selection={true} flatten={false}>Run output streams here · ⌘R</text>
           </view>
         ) : (
           entries.map((e, i) => (
             // seq, not array index: the 500-cap front-trim shifts indices,
             // which would reconcile every line as changed.
             <view key={e.seq ?? i} className={'Outputs-Line Outputs-Line--' + e.stream}>
-              <text className="Outputs-Timestamp">{e.timestamp}</text>
-              <text className="Outputs-Message">{e.message}</text>
+              <text className="Outputs-Timestamp" text-selection={true} flatten={false}>{e.timestamp}</text>
+              <text className="Outputs-Message" text-selection={true} flatten={false}>{e.message}</text>
             </view>
           ))
         )}

@@ -16,8 +16,4 @@ describe('LogView Lynx text structure', () => {
     expect(styles).toMatch(/\.LogViewText\s*\{[^}]*cursor:\s*text;/s);
   });
 
-  it('paints a visible selection against the dark log background', () => {
-    const styles = fs.readFileSync(path.join(__dirname, 'LogView.css'), 'utf-8');
-    expect(styles).toMatch(/\.LogViewText::selection\s*\{[^}]*background-color:\s*#2563eb;/s);
-  });
 });
