@@ -1,6 +1,7 @@
 ---
 '@lynxtron-examples/cli': patch
 '@lynxtron-examples/config': patch
+'@lynxtron-examples/floating-clock': patch
 'lynxtron-go': patch
 ---
 
