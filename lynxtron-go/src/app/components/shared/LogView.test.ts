@@ -9,4 +9,15 @@ describe('LogView Lynx text structure', () => {
     expect(source).toContain('<text className="LogViewText" text-selection={true} flatten={false}>');
     expect(source).toMatch(/<text[^>]*>\s*\{children\}\s*<\/text>/);
   });
+
+  it('uses the text-editing cursor across the scrollable log surface', () => {
+    const styles = fs.readFileSync(path.join(__dirname, 'LogView.css'), 'utf-8');
+    expect(styles).toMatch(/\.LogViewScroll\s*\{[^}]*cursor:\s*text;/s);
+    expect(styles).toMatch(/\.LogViewText\s*\{[^}]*cursor:\s*text;/s);
+  });
+
+  it('paints a visible selection against the dark log background', () => {
+    const styles = fs.readFileSync(path.join(__dirname, 'LogView.css'), 'utf-8');
+    expect(styles).toMatch(/\.LogViewText::selection\s*\{[^}]*background-color:\s*#2563eb;/s);
+  });
 });

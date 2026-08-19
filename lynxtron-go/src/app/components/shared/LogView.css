@@ -3,6 +3,7 @@
   width: 100%;
   padding: 6px 10px;
   overflow: hidden;
+  cursor: text;
 }
 
 .LogViewText {
@@ -15,4 +16,9 @@
   white-space: pre-wrap;
   word-break: break-all;
   cursor: text;
+}
+
+.LogViewText::selection {
+  color: #ffffff;
+  background-color: #2563eb;
 }
