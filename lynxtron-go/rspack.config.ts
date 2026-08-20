@@ -10,6 +10,18 @@ import { pluginLynxtron } from '@lynx-js/lynxtron-dev-plugins/rspack';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isDev = process.env.NODE_ENV === 'development';
+const runtimePackageManifest = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, './src/main/desktop/package.runtime.json'), 'utf-8'),
+);
+const appPackageManifest = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, './package.json'), 'utf-8'),
+);
+
+// package.runtime.json deliberately contains only the runtime dependency
+// closure, but electron-builder reads it from dist/desktop. Keep its version
+// in sync with the app manifest so the release tag and bundled app agree.
+runtimePackageManifest.version = appPackageManifest.version;
+const serializedRuntimePackageManifest = `${JSON.stringify(runtimePackageManifest, null, 2)}\n`;
 const scintillaNativeModulePath = path.resolve(__dirname, './scintilla-extension/build/Release/lynx_scintilla_module.node');
 const scintillaRuntimePatterns: Array<{ from: string; to: string }> = [
   { from: './scintilla-extension/package.json', to: 'node_modules/lynxtron-scintilla-editor/package.json' },
@@ -59,7 +71,11 @@ const desktopConfig = defineConfig({
   plugins: [
     new rspack.CopyRspackPlugin({
       patterns: [
-        { from: './src/main/desktop/package.runtime.json', to: 'package.json' },
+        {
+          from: './src/main/desktop/package.runtime.json',
+          to: 'package.json',
+          transform: () => serializedRuntimePackageManifest,
+        },
         // Static help page, opened in the system browser (Help button / menu).
         { from: './src/main/desktop/help.html', to: 'help.html' },
         { from: './output/bundle/lynx/', to: '.' },

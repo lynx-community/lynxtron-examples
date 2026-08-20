@@ -25,21 +25,18 @@ import { execSync, type ExecSyncOptions } from 'child_process';
 const NON_INTERACTIVE_ENV = { CI: 'true', npm_config_confirm_modules_purge: 'false' };
 
 /**
- * `CI: 'true'` above also makes pnpm default `frozen-lockfile` to true, which
- * we must undo. The workspace being installed into is synthesized under
- * ~/.lynxtron-go: its manifests are rewritten from the current catalog on every
- * fetch, while its lockfile is a cache left by whatever was fetched last. The
- * moment the catalog moves the two disagree and every fetch dies with
- * ERR_PNPM_OUTDATED_LOCKFILE, so the showcase never installs and the window
- * that asked for it sits on the Fiddle forever.
+ * A fetched source showcase is an independent published package, not a member
+ * of the synthesized pnpm workspace. Install it with npm so its devDependencies
+ * and their executable shims live in that package's node_modules/.bin.
  *
- * The inverse of a repo CI install: there the lockfile is the source of truth
- * and must not drift; here it is a cache that has to follow the manifests.
- *
- * It has to be a flag. pnpm does not read `npm_config_frozen_lockfile` from the
- * environment — setting it changes nothing, verified against pnpm 10.15.1.
+ * In particular, pnpm's filtered workspace install can link `cross-env` into
+ * node_modules without creating node_modules/.bin/cross-env. `npm run build`
+ * then fails in production with `cross-env: command not found`, even though the
+ * package itself appears installed. `--include=dev` is explicit because the app
+ * runs installs non-interactively and must not inherit a user's production-only
+ * npm configuration. No lockfile belongs to a fetched cache directory.
  */
-const INSTALL_FLAGS = '--no-frozen-lockfile';
+const NPM_SOURCE_INSTALL_FLAGS = '--include=dev --no-package-lock --registry=https://registry.npmjs.org/';
 
 function execCapture(command: string, options: ExecSyncOptions = {}): void {
   try {
@@ -58,6 +55,18 @@ function execCapture(command: string, options: ExecSyncOptions = {}): void {
     (wrapped as any).stdout = stdout;
     throw wrapped;
   }
+}
+
+function installSourceShowcase(destDir: string, npmCacheDir: string): void {
+  execCapture(`npm install ${NPM_SOURCE_INSTALL_FLAGS}`, {
+    cwd: destDir,
+    timeout: 300000,
+    // The host app must not inherit an arbitrary user's npm cache. In
+    // particular, a cache previously written with sudo makes npm fail before
+    // it installs any dependency. Keep this implementation-owned cache beside
+    // the generated workspace instead.
+    env: { npm_config_cache: npmCacheDir },
+  });
 }
 
 
@@ -144,17 +153,12 @@ async function preparePackedShowcase(
     log(`Built dist found — skipping install (ready to run)`);
   } else {
     // Source-only tarball — needs install + build
-    log(`No built dist — running pnpm install...`);
+    log(`No built dist — running npm install with devDependencies...`);
     try {
       await manager.rewriteWorkspaceRefs(name);
     } catch (_) {}
     emit({ type: 'install-start', name });
-    // Scope install to just this showcase so other workspace members
-    // (previously-fetched showcases) don't run their postinstall scripts.
-    execCapture(`pnpm install ${INSTALL_FLAGS} --filter=./showcases/${name}...`, {
-      cwd: manager.getRootPath(),
-      timeout: 300000,
-    });
+    installSourceShowcase(destDir, path.join(manager.getRootPath(), '.npm-cache'));
     emit({ type: 'install-success', name });
   }
 }
@@ -211,12 +215,7 @@ async function fetchRepoShowcase(
   await manager.rewriteWorkspaceRefs(resolved.name);
 
   emit({ type: 'install-start', name: resolved.name });
-  execCapture(
-    `pnpm install ${INSTALL_FLAGS} --filter=./showcases/${resolved.name}... --registry=https://registry.npmjs.org/`,
-    {
-      cwd: manager.getRootPath(),
-    }
-  );
+  installSourceShowcase(destDir, path.join(manager.getRootPath(), '.npm-cache'));
   emit({ type: 'install-success', name: resolved.name });
 
   // GitHub source tarballs never carry `dist/` (it is gitignored), so build
@@ -224,7 +223,7 @@ async function fetchRepoShowcase(
   const distMain = path.join(destDir, 'dist', 'desktop', 'main.js');
   if (!fs.existsSync(distMain)) {
     log(`Building ${resolved.name}...`);
-    execCapture('pnpm run build', { cwd: destDir });
+    execCapture('npm run build', { cwd: destDir });
   }
 }
 
@@ -241,7 +240,7 @@ async function fetchExternal(
   execCapture(`git clone --depth 1 ${resolved.url} ${destDir}`);
 
   emit({ type: 'install-start', name: resolved.name });
-  execCapture(`pnpm install ${INSTALL_FLAGS}`, { cwd: destDir });
+  installSourceShowcase(destDir, path.join(manager.getRootPath(), '.npm-cache'));
   emit({ type: 'install-success', name: resolved.name });
 }
 

@@ -85,69 +85,9 @@ function inheritShellPath(): void {
 }
 inheritShellPath();
 
-// pnpm's shebang is `#!/usr/bin/env node`, so subprocess `pnpm install` calls
-// (spawned by the CLI when fetching a showcase) need to find a `node` on PATH.
-// Packaged apps launched from Finder rarely have one. Ship a shim that
-// re-executes the current lynxtron binary in Node mode (LYNXTRON_RUN_AS_NODE=1)
-// and prepend it to PATH so any child looking for `node` finds ours. Also
-// prepend the bundled pnpm's bin dir so plain `pnpm` resolves.
-function installBundledNodeShim(): void {
-  try {
-    const shimDir = path.join(os.homedir(), '.lynxtron-go', 'bin');
-    fs.mkdirSync(shimDir, { recursive: true });
-
-    const isWindows = process.platform === 'win32';
-    const execPath = process.execPath;
-
-    // Locate bundled pnpm shipped next to app.asar.unpacked/node_modules/pnpm.
-    const resourcesDir = isWindows
-      ? path.join(path.dirname(execPath), 'resources')
-      : path.join(path.dirname(path.dirname(execPath)), 'Resources');
-    const pnpmCandidates = [
-      path.join(resourcesDir, 'app.asar.unpacked', 'node_modules', 'pnpm', 'bin', 'pnpm.cjs'),
-      path.join(resourcesDir, 'app', 'node_modules', 'pnpm', 'bin', 'pnpm.cjs'),
-    ];
-    const pnpmCjs = pnpmCandidates.find((p) => fs.existsSync(p));
-    const pnpmBinDirs = pnpmCandidates
-      .map((p) => path.dirname(p))
-      .filter((dir) => fs.existsSync(dir));
-
-    if (isWindows) {
-      const nodeCmd = path.join(shimDir, 'node.cmd');
-      // Set LYNXTRON_RUN_AS_NODE only for the child so we don't recurse in on ourselves.
-      const cmdBody = `@echo off\r\nset "LYNXTRON_RUN_AS_NODE=1"\r\n"${execPath}" %*\r\n`;
-      fs.writeFileSync(nodeCmd, cmdBody);
-      // Third-party postinstall scripts (e.g. older lynxtron-rebuild) invoke
-      // `npx node-gyp rebuild`, but packaged apps ship neither npm nor npx.
-      // Fall back to bundled pnpm's `exec`, which resolves binaries the same
-      // way (node_modules/.bin lookup) using our node shim as the runtime.
-      if (pnpmCjs) {
-        const npxCmd = path.join(shimDir, 'npx.cmd');
-        const npxBody = `@echo off\r\nset "LYNXTRON_RUN_AS_NODE=1"\r\n"${execPath}" "${pnpmCjs}" exec %*\r\n`;
-        fs.writeFileSync(npxCmd, npxBody);
-      }
-    } else {
-      const nodeShim = path.join(shimDir, 'node');
-      const shBody = `#!/bin/sh\nexec env LYNXTRON_RUN_AS_NODE=1 "${execPath}" "$@"\n`;
-      fs.writeFileSync(nodeShim, shBody);
-      fs.chmodSync(nodeShim, 0o755);
-      if (pnpmCjs) {
-        const npxShim = path.join(shimDir, 'npx');
-        const npxBody = `#!/bin/sh\nexec env LYNXTRON_RUN_AS_NODE=1 "${execPath}" "${pnpmCjs}" exec "$@"\n`;
-        fs.writeFileSync(npxShim, npxBody);
-        fs.chmodSync(npxShim, 0o755);
-      }
-    }
-
-    const existing = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
-    process.env.PATH = Array.from(
-      new Set([shimDir, ...pnpmBinDirs, ...existing]),
-    ).join(path.delimiter);
-  } catch (err) {
-    console.warn('[PC_Host] installBundledNodeShim failed:', err);
-  }
-}
-installBundledNodeShim();
+// Source fallback intentionally uses the user's standard node/npm toolchain.
+// Do not put a Lynxtron Node-mode shim on PATH: npm's `env node` shebang would
+// then run under the Lynxtron host runtime instead of the Node runtime it needs.
 const isDev = process.env.NODE_ENV === 'development';
 // Bundle preview windows (from deep links / bridge calls) — one list, they
 // share a lifecycle and the tracking only exists to keep them alive.

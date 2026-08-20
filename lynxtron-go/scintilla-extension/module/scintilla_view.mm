@@ -44,6 +44,38 @@
     return adjustedRect;
 }
 
+// Editing accelerators belong to Scintilla only when its validation says the
+// operation can change state. Otherwise return the original key event to the
+// enclosing Flutter view so Lynx's selectable text gets a chance to handle it.
+- (BOOL)performKeyEquivalent:(NSEvent *)event {
+    const NSEventModifierFlags shortcutModifiers =
+        event.modifierFlags & (NSEventModifierFlagCommand |
+                               NSEventModifierFlagControl |
+                               NSEventModifierFlagOption |
+                               NSEventModifierFlagShift);
+    if (shortcutModifiers == NSEventModifierFlagCommand) {
+        NSString* characters = event.charactersIgnoringModifiers.lowercaseString;
+        if ([characters isEqualToString:@"c"] || [characters isEqualToString:@"x"]) {
+            SEL action = [characters isEqualToString:@"c"] ? @selector(copy:) : @selector(cut:);
+            NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:@"" action:action keyEquivalent:@""];
+            if (![self validateUserInterfaceItem:item]) {
+                Class flutterViewClass = NSClassFromString(@"FlutterView");
+                for (NSView* ancestor = self.superview; ancestor; ancestor = ancestor.superview) {
+                    if (flutterViewClass && [ancestor isKindOfClass:flutterViewClass]) {
+                        [ancestor keyDown:event];
+                        return YES;
+                    }
+                }
+                return NO;
+            }
+        }
+        if ([[NSApp mainMenu] performKeyEquivalent:event]) {
+            return YES;
+        }
+    }
+    return [super performKeyEquivalent:event];
+}
+
 @end
 
 @interface LynxtronScintillaView : ScintillaView
@@ -185,19 +217,6 @@
 
 - (BOOL)isFlipped {
     return YES;
-}
-
-// Let Cmd+key combinations (menu accelerators like Cmd+S, Cmd+P) pass through
-// to the NSMenu system instead of being consumed by the Scintilla editor.
-// Without this, Scintilla's keyDown handler eats the event before the menu
-// accelerator matching phase (performKeyEquivalent) has a chance to fire.
-- (BOOL)performKeyEquivalent:(NSEvent *)event {
-    if (event.modifierFlags & NSEventModifierFlagCommand) {
-        if ([[NSApp mainMenu] performKeyEquivalent:event]) {
-            return YES;
-        }
-    }
-    return [super performKeyEquivalent:event];
 }
 
 // ScintillaNotificationProtocol — fires on the main thread for every
