@@ -4,6 +4,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as http from 'http';
 import * as tar from 'tar';
+import { execFileSync } from 'child_process';
 import { pathToFileURL } from 'url';
 import { clearFetchDestination, fetch } from '../src/commands/fetch';
 
@@ -105,4 +106,30 @@ describe('fetch command', () => {
       await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
     }
   });
+
+  it('installs source-only showcase devDependencies with npm', async () => {
+    const workspaceRoot = makeTempDir('lynxtron-fetch-source-ws-');
+    const packageRoot = makeTempDir('lynxtron-fetch-source-pkg-');
+    const packageDir = path.join(packageRoot, 'package');
+    const tarPath = path.join(packageRoot, 'source-only.tgz');
+
+    fs.mkdirSync(packageDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(packageDir, 'package.json'),
+      JSON.stringify({
+        name: '@lynxtron-examples/source-only',
+        version: '0.0.1',
+        scripts: { verify: 'cross-env FIXTURE_VALUE=ready node -e "process.exit(process.env.FIXTURE_VALUE === String.fromCharCode(114,101,97,100,121) ? 0 : 1)"' },
+        devDependencies: { 'cross-env': '10.1.0' },
+      }, null, 2),
+      'utf-8',
+    );
+    await tar.c({ gzip: true, file: tarPath, cwd: packageRoot }, ['package']);
+
+    await fetch(pathToFileURL(tarPath).href, workspaceRoot);
+
+    const destDir = path.join(workspaceRoot, 'showcases', 'source-only');
+    expect(fs.existsSync(path.join(destDir, 'node_modules', '.bin', 'cross-env'))).toBe(true);
+    expect(() => execFileSync('npm', ['run', 'verify'], { cwd: destDir, stdio: 'pipe' })).not.toThrow();
+  }, 120_000);
 });

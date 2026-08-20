@@ -193,6 +193,11 @@ function main() {
     throw new Error('dist/desktop/package.json is missing; run the desktop build first.');
   }
 
+  // Keep staged runtime resources reproducible when a pack is repeated in the
+  // same output directory. In particular, do not let an obsolete npm runtime
+  // from an older build be copied into a later installer.
+  fs.rmSync(path.join(projectRoot, 'dist', 'desktop', 'runtime'), { recursive: true, force: true });
+
   const lynxtronPackageJson = require(path.join(resolvePackageDir('@lynx-js/lynxtron'), 'package.json'));
   const lynxtronEntries = [...new Set([...(lynxtronPackageJson.files ?? []), 'package.json', 'dist'])];
   const lynxtronTarget = copyPackageEntries('@lynx-js/lynxtron', lynxtronEntries);
@@ -203,16 +208,6 @@ function main() {
   if (!fs.existsSync(path.join(cliTarget, 'dist', 'index.js'))) {
     throw new Error(
       "@lynxtron-examples/cli was copied without a built dist/. Run 'pnpm --dir packages/cli run build' first.",
-    );
-  }
-
-  // pnpm is bundled so packaged apps can install showcase dependencies
-  // without depending on the user having node/pnpm on PATH.
-  copyPackage('pnpm');
-  const pnpmTarget = path.join(distNodeModules, 'pnpm');
-  if (!fs.existsSync(path.join(pnpmTarget, 'dist', 'pnpm.cjs'))) {
-    throw new Error(
-      "pnpm was copied without dist/pnpm.cjs. Verify the pnpm dependency in lynxtron-go/package.json.",
     );
   }
 

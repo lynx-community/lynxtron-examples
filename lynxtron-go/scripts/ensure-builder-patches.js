@@ -38,15 +38,19 @@ function ensureAppPackageDependencyFilter(appBuilderRoot) {
   const oldPath = 'const projectPkgPath = path.join(packager.projectDir, "package.json");';
   const newPath = 'const projectPkgPath = path.join(packager.appDir, "package.json");';
 
-  if (source.includes(newPath)) {
-    return;
-  }
-  if (!source.includes(oldPath)) {
-    throw new Error(`Unable to correct app package dependency filter in ${appFileCopierPath}`);
+  let patched = source;
+  if (!patched.includes(newPath)) {
+    if (!patched.includes(oldPath)) {
+      throw new Error(`Unable to correct app package dependency filter in ${appFileCopierPath}`);
+    }
+    patched = patched.replace(oldPath, newPath);
   }
 
-  fs.writeFileSync(appFileCopierPath, source.replace(oldPath, newPath));
-  console.log('[pack] dependency filter now reads the runtime app package.json.');
+  if (patched === source) {
+    return;
+  }
+  fs.writeFileSync(appFileCopierPath, patched);
+  console.log('[pack] dependency filter reads the runtime app package.json.');
 }
 
 function ensureTypeDeclarationsIncluded(appBuilderRoot) {
