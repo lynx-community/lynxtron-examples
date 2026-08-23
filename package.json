@@ -29,7 +29,10 @@
       "@lynx-js/lynxtron",
       "@lynx-js/lynxtron-builder",
       "better-sqlite3"
-    ]
+    ],
+    "patchedDependencies": {
+      "@lynx-js/lynxtron-rebuild@0.0.1-alpha.40": "patches/@lynx-js__lynxtron-rebuild@0.0.1-alpha.40.patch"
+    }
   },
   "packageManager": "pnpm@10.15.1"
 }
