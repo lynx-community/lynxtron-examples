@@ -37,7 +37,7 @@ jobs:
       # Serialize so the two OS jobs don't race to create the same release.
       max-parallel: 1
       matrix:
-        os: [macos-13, windows-2022]
+        os: [macos-latest, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Repo
@@ -105,10 +105,14 @@ jobs:
 
       # macOS: dmg installer + publishable showcase tarballs (native .node
       # addons are host-platform specific, so tarballs are built here).
+      # LYNXTRON_TARGET_ARCH forces the Scintilla native module to be
+      # cross-compiled to x86_64 on the Apple Silicon runner so it matches
+      # the x64 dmg produced by electron-builder.
       - name: Build macOS installer
         if: runner.os == 'macOS'
         env:
           LYNXTRON_RELEASE_TAG: ${{ steps.tag.outputs.tag }}
+          LYNXTRON_TARGET_ARCH: x64
           APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}

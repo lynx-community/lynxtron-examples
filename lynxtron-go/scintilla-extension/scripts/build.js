@@ -10,7 +10,13 @@ if (!supportedPlatforms.has(process.platform) && !forceBuild) {
 }
 
 const command = process.platform === 'win32' ? 'cmake-js.cmd' : 'cmake-js';
-const child = spawn(command, ['compile'], {
+const args = ['compile'];
+// LYNXTRON_TARGET_ARCH (e.g. 'x64', 'arm64') lets CI cross-compile from
+// Apple Silicon runners to x86_64 without switching to an Intel host.
+if (process.platform === 'darwin' && process.env.LYNXTRON_TARGET_ARCH) {
+  args.push(`--arch=${process.env.LYNXTRON_TARGET_ARCH}`);
+}
+const child = spawn(command, args, {
   stdio: 'inherit',
   shell: process.platform === 'win32',
   windowsHide: false,
