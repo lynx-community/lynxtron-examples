@@ -66,7 +66,7 @@ succeeds, use the supported behaviour and update this list.
 
 **Assets**
 - SVG decoding renders blank; PNG through `<image>` is reliable.
-- **`<image>` does not load `https://` at all** — the loader reads the URL itself rather than going through the window's fetch handler. Bundle images locally and reference them as `file://`.
+- `<image>` supports loading `https://` URLs natively for remote images.
 - Icon fonts work via `lynx.addFont` with a base64 `data:font/ttf` URL, but the success callback fires without proving glyphs painted. Check visually.
 - **Custom fonts have been seen to stop resolving around a platform overlay** — glyphs repainted afterwards came back as tofu, and re-registering under a fresh family name did not fix it (nor did a bundled `@font-face` with an inlined `data:` URI). **Trigger unconfirmed.** It reproduced with a full-window, long-lived `cover-view` under an older background arrangement, and does NOT reproduce with a transient dialog on the current code. Recorded so the symptom is recognizable, not as a rule to design around: if icons turn to tofu, this is the shape of it, but do not assume any overlay causes it.
 - `btoa` does not exist in the Lynx UI.

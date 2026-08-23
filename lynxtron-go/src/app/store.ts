@@ -127,7 +127,7 @@ const BAKED_SHOWCASE_REGISTRY: ShowcaseEntry[] =
   typeof __SHOWCASE_REGISTRY__ !== 'undefined' ? __SHOWCASE_REGISTRY__ : [];
 export const SHOWCASE_REGISTRY: ShowcaseEntry[] = BAKED_SHOWCASE_REGISTRY.map(entry => ({
   ...entry,
-  thumbnail: entry.thumbnail ? appResourceUrl(entry.thumbnail) : null,
+  thumbnail: entry.thumbnail ? (entry.thumbnail.startsWith('http') || entry.thumbnail.startsWith('file://') ? entry.thumbnail : appResourceUrl(entry.thumbnail)) : null,
 }));
 export const SHOWCASE_PREVIEW: boolean =
   typeof __SHOWCASE_PREVIEW__ !== 'undefined' ? __SHOWCASE_PREVIEW__ : false;

@@ -33,8 +33,6 @@ extraResources:
     to: brand/lynxtron.png
   - from: src/assets/lynxtron-on-dark.png
     to: brand/lynxtron-on-dark.png
-  - from: thumbnails
-    to: thumbnails
   # Opened by the platform browser, which cannot read an app.asar path.
   - from: src/main/desktop/help.html
     to: help.html

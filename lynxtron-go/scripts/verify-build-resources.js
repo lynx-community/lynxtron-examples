@@ -19,13 +19,6 @@ const missing = requiredFiles.filter(relativePath =>
 if (missing.length > 0) {
   throw new Error(`Missing built resources: ${missing.join(', ')}`);
 }
-const thumbnailDir = path.join(desktopDir, 'thumbnails');
-const thumbnails = fs.existsSync(thumbnailDir)
-  ? fs.readdirSync(thumbnailDir).filter(file => file.endsWith('.png'))
-  : [];
-if (thumbnails.length === 0) {
-  throw new Error('No packaged gallery thumbnails were generated.');
-}
 
 const bundle = fs.readFileSync(path.join(desktopDir, 'main.lynx.bundle')).toString('latin1');
 const forbiddenBuildPaths = [
@@ -64,5 +57,5 @@ if (releaseTag) {
 
 console.log(
   `[pack] verified resources: ${requiredFiles.length} required files, `
-  + `${thumbnails.length} thumbnails, runtime version ${runtimeManifest.version}, no build-machine paths`,
+  + `runtime version ${runtimeManifest.version}, no build-machine paths`,
 );

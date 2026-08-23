@@ -79,8 +79,6 @@ const desktopConfig = defineConfig({
         // Static help page, opened in the system browser (Help button / menu).
         { from: './src/main/desktop/help.html', to: 'help.html' },
         { from: './output/bundle/lynx/', to: '.' },
-        // Gallery thumbnails, staged by lynx.config.ts (Lynx <image> cannot load https).
-        { from: './thumbnails/', to: 'thumbnails/', noErrorOnMissing: true },
         // The Lynxtron mark, shown in the commands bar, in both lockups. Same
         // reason these are copied files rather than URLs: Lynx <image> loads
         // file:// only.

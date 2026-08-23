@@ -53,28 +53,8 @@ const isLocalWorkspace = showcaseSourceMode === 'local-workspace';
 const isReleaseArtifacts = showcaseSourceMode === 'release-artifacts';
 const registryPath = path.resolve(monorepoRoot, 'showcase-registry.json');
 
-// Thumbnails are staged into the app's own bundle rather than linked at their
-// origin. Lynx's `<image>` loader reads the URL itself — it does not go through
-// the window's fetch handler — and it does not load https at all, so every
-// remote-mode thumbnail came up blank even once the URL answered 200. Copying
-// them in makes the gallery work in both source modes and leaves the packaged
-// app self-contained.
-const THUMBNAIL_STAGE = path.resolve(__dirname, 'thumbnails');
-fs.rmSync(THUMBNAIL_STAGE, { recursive: true, force: true });
-
-function resolveThumbnailUrl(thumbnail: string | null): string | null {
-  if (!thumbnail) return null;
-  const source = path.resolve(monorepoRoot, thumbnail);
-  if (!fs.existsSync(source)) return null;
-  // Flatten, so showcases cannot collide on a bare `thumbnail.png`.
-  const staged = thumbnail.replace(/[\\/]/g, '__');
-  fs.mkdirSync(THUMBNAIL_STAGE, { recursive: true });
-  fs.copyFileSync(source, path.join(THUMBNAIL_STAGE, staged));
-  // Keep only the install-relative identifier in the Lynx bundle. The host
-  // injects the real file:// resource root at runtime; baking path.resolve()
-  // here writes the GitHub runner's /Users/runner/work path into installers.
-  return `thumbnails/${staged}`;
-}
+// Thumbnails are now loaded over HTTP(S) for remote showcases or file:// for local.
+// The app is responsible for resolving these absolute URLs.
 
 /**
  * The Lynxtron mark, as a URL the renderer can actually load.
@@ -112,6 +92,9 @@ function buildShowcaseRegistry() {
 
     return registry.showcases.map((s: any) => {
       let url = '';
+      let thumbnailUrl = null;
+      const rawGithubBase = gitRemote ? gitRemote.replace(/^https:\/\/github\.com\//, 'https://raw.githubusercontent.com/') : '';
+
       if (isLocalRegistry) {
         // Preview: point to local pre-packed tarball
         // Convention: showcases/<name>/<name>-<version>.tgz
@@ -119,7 +102,7 @@ function buildShowcaseRegistry() {
         try {
           const files = fs.readdirSync(showcaseDir);
           const tgz = files.find((f: string) => f.endsWith('.tgz'));
-          if (tgz) url = `file://${path.join(showcaseDir, tgz)}`;
+          if (tgz) url = `file://${path.join(showcaseDir, tgz).replace(/\\/g, '/')}`;
         } catch (_) {}
       } else if (isReleaseArtifacts && gitRemote && s.path?.startsWith('showcases/')) {
         const releaseTag = process.env.LYNXTRON_RELEASE_TAG;
@@ -129,6 +112,20 @@ function buildShowcaseRegistry() {
       } else if (gitRemote) {
         url = `${gitRemote}/tree/${gitBranch}/${s.path}`;
       }
+
+      if (s.thumbnail) {
+        if (isLocalRegistry || isLocalWorkspace) {
+          thumbnailUrl = `file://${path.resolve(monorepoRoot, s.thumbnail).replace(/\\/g, '/')}`;
+        } else if (isReleaseArtifacts && rawGithubBase) {
+          const releaseTag = process.env.LYNXTRON_RELEASE_TAG;
+          if (releaseTag) {
+            thumbnailUrl = `${rawGithubBase}/${releaseTag}/${s.thumbnail}`;
+          }
+        } else if (rawGithubBase) {
+          thumbnailUrl = `${rawGithubBase}/${gitBranch}/${s.thumbnail}`;
+        }
+      }
+
       return {
         name: s.name,
         description: s.description || '',
@@ -136,7 +133,7 @@ function buildShowcaseRegistry() {
         targets: Array.isArray(s.targets) ? s.targets : ['desktop'],
         path: s.path || undefined,
         url,
-        thumbnail: resolveThumbnailUrl(s.thumbnail ?? null),
+        thumbnail: thumbnailUrl,
       };
     });
   } catch (e) {
