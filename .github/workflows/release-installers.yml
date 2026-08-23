@@ -34,10 +34,10 @@ jobs:
       contents: write
     strategy:
       fail-fast: false
-      # Serialize so the two OS jobs don't race to create the same release.
+      # Now only running on Windows since macOS installers are disabled.
       max-parallel: 1
       matrix:
-        os: [macos-latest, windows-2022]
+        os: [windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Repo
@@ -74,65 +74,8 @@ jobs:
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
-      - name: Import macOS signing certificate
-        if: runner.os == 'macOS'
-        env:
-          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
-          MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: |
-          certificate_path="$RUNNER_TEMP/lynxtron-go-signing.p12"
-          keychain_path="$RUNNER_TEMP/lynxtron-go-signing.keychain-db"
-
-          printf '%s' "$MACOS_CERTIFICATE" | base64 --decode > "$certificate_path"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
-          security set-keychain-settings -lut 21600 "$keychain_path"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
-          security import "$certificate_path" \
-            -P "$MACOS_CERTIFICATE_PWD" \
-            -A \
-            -t cert \
-            -f pkcs12 \
-            -k "$keychain_path"
-          security set-key-partition-list \
-            -S apple-tool:,apple:,codesign: \
-            -s \
-            -k "$KEYCHAIN_PASSWORD" \
-            "$keychain_path"
-          security list-keychains -d user -s "$keychain_path"
-          security default-keychain -d user -s "$keychain_path"
-          security find-identity -v -p codesigning "$keychain_path"
-
-      # macOS: dmg installer + publishable showcase tarballs (native .node
-      # addons are host-platform specific, so tarballs are built here).
-      - name: Build macOS installer
-        if: runner.os == 'macOS'
-        env:
-          LYNXTRON_RELEASE_TAG: ${{ steps.tag.outputs.tag }}
-          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-          APPLE_API_KEY: ${{ runner.temp }}/lynxtron-notarization.p8
-        run: |
-          test -n "$APPLE_API_KEY_BASE64"
-          test -n "$APPLE_API_KEY_ID"
-          test -n "$APPLE_API_ISSUER"
-          printf '%s' "$APPLE_API_KEY_BASE64" | base64 --decode > "$APPLE_API_KEY"
-          chmod 600 "$APPLE_API_KEY"
-          pnpm --dir lynxtron-go run pack
-
-      - name: Verify macOS distribution
-        if: runner.os == 'macOS'
-        run: |
-          app_path=$(find lynxtron-go/dist -type d -name 'Lynxtron Go.app' -print -quit)
-          test -n "$app_path"
-          codesign --verify --deep --strict --verbose=2 "$app_path"
-          codesign --display --verbose=4 "$app_path"
-          xcrun stapler validate "$app_path"
-          spctl --assess --type execute --verbose=4 "$app_path"
-
       - name: Pack showcases
-        if: runner.os == 'macOS'
+        if: runner.os == 'Windows'
         run: node scripts/pack-showcases.mjs
 
       # Windows: nsis installer.
@@ -148,15 +91,7 @@ jobs:
           tag_name: ${{ steps.tag.outputs.tag }}
           fail_on_unmatched_files: false
           files: |
-            lynxtron-go/dist/*.dmg
             lynxtron-go/dist/*.exe
             dist/showcase-artifacts/*.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Clean up macOS signing materials
-        if: runner.os == 'macOS' && always()
-        run: |
-          security delete-keychain "$RUNNER_TEMP/lynxtron-go-signing.keychain-db" || true
-          rm -f "$RUNNER_TEMP/lynxtron-go-signing.p12"
-          rm -f "$RUNNER_TEMP/lynxtron-notarization.p8"
