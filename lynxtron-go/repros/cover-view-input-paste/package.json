@@ -8,7 +8,7 @@
     "start": "npm run build && lynxtron ./dist/desktop"
   },
   "dependencies": {
-    "@lynx-js/lynxtron": "0.0.15",
+    "@lynx-js/lynxtron": "0.0.1-alpha.30",
     "@lynx-js/react": "0.123.1"
   },
   "devDependencies": {

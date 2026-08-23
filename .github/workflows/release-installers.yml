@@ -49,6 +49,12 @@ jobs:
           node-version: 22
 
       - name: Install Dependencies
+        # NPM_CONFIG_ARCH=x64 tells packages with postinstall binary
+        # downloaders (notably @lynx-js/lynxtron and @lynx-js/lynxtron-rebuild)
+        # to pull the x64 slice on the arm64 macOS runner, so the runtime
+        # matches the x64 dmg produced by electron-builder.
+        env:
+          NPM_CONFIG_ARCH: ${{ runner.os == 'macOS' && 'x64' || '' }}
         run: |
           npm i -g corepack@latest --force
           corepack enable
