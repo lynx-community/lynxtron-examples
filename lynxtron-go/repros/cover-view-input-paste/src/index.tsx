@@ -51,7 +51,7 @@ function App() {
         <InputProbe id="plain-input" label="A — ordinary Lynx input" />
       </view>
 
-      <cover-view className="cover-region">
+      <cover-view className="cover-region" event-through={true}>
         <InputProbe id="cover-input" label="B — input inside cover-view" />
       </cover-view>
     </view>

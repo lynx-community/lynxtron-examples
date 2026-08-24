@@ -63,7 +63,7 @@ export function PlatformOverlayHost() {
   }, []);
 
   return (
-    <cover-view className={'PlatformOverlayHost' + (activeEntries.length === 0 ? ' is-empty' : '')}>
+    <cover-view className={'PlatformOverlayHost' + (activeEntries.length === 0 ? ' is-empty' : '')} event-through={true}>
       {activeEntries.map(entry => (
         <view
           key={entry.id}
