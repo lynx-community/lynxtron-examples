@@ -121,8 +121,15 @@ void RedrawEditorWindow(HWND hwnd) {
   ::RedrawWindow(hwnd,
                  nullptr,
                  nullptr,
-                 RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
+                 // Scintilla paints its whole client area. Erasing first
+                 // exposes a dark intermediate frame during live resize.
+                 RDW_INVALIDATE | RDW_NOERASE | RDW_UPDATENOW);
   ::UpdateWindow(hwnd);
+}
+
+void InvalidateEditorWindow(HWND hwnd) {
+  if (!hwnd) return;
+  ::RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_NOERASE);
 }
 
 void RedrawHostAndEditor(HWND host) {
@@ -131,8 +138,17 @@ void RedrawHostAndEditor(HWND host) {
   ::RedrawWindow(host,
                  nullptr,
                  nullptr,
-                 RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW);
+                 // The child is invalidated explicitly below. Do not erase the
+                 // host or recursively invalidate the child before it paints.
+                 RDW_INVALIDATE | RDW_NOERASE | RDW_UPDATENOW);
   if (child) RedrawEditorWindow(child);
+}
+
+void InvalidateHostAndEditor(HWND host) {
+  if (!host) return;
+  HWND child = ::GetWindow(host, GW_CHILD);
+  ::RedrawWindow(host, nullptr, nullptr, RDW_INVALIDATE | RDW_NOERASE);
+  if (child) InvalidateEditorWindow(child);
 }
 
 void RestoreParentSubclassIfUnused(HWND parent) {
@@ -255,7 +271,10 @@ ScintillaView* ViewForHost(HWND host) {
 
 void ConfigureScintilla(HWND hwnd) {
   SciSend(hwnd, SCI_SETTECHNOLOGY, SC_TECHNOLOGY_DEFAULT, 0);
-  SciSend(hwnd, SCI_SETBUFFEREDDRAW, 0, 0);
+  // Paint into an off-screen buffer and present the completed editor frame in
+  // one operation. Direct drawing makes background-only frames visible while
+  // the child HWND is repeatedly resized with the Lynx window.
+  SciSend(hwnd, SCI_SETBUFFEREDDRAW, 1, 0);
   SciSend(hwnd, SCI_SETPHASESDRAW, SC_PHASES_ONE, 0);
   SciSend(hwnd, SCI_SETLAYOUTCACHE, SC_CACHE_NONE, 0);
   SciSend(hwnd, SCI_SETCODEPAGE, SC_CP_UTF8, 0);
@@ -299,38 +318,6 @@ void ConfigureScintilla(HWND hwnd) {
   SciSend(hwnd, SCI_INDICSETFORE, 0, 0x3232FA);
   SciSend(hwnd, SCI_INDICSETFORE, 1, 0x00BBFF);
   SciSend(hwnd, SCI_INDICSETFORE, 2, 0xFF8800);
-}
-
-BOOL CALLBACK FindMainWindowProc(HWND hwnd, LPARAM lparam) {
-  DWORD window_pid = 0;
-  ::GetWindowThreadProcessId(hwnd, &window_pid);
-  if (window_pid != ::GetCurrentProcessId()) return TRUE;
-  if (!::IsWindowVisible(hwnd)) return TRUE;
-  if (::GetWindow(hwnd, GW_OWNER) != nullptr) return TRUE;
-
-  RECT rect{};
-  if (!::GetClientRect(hwnd, &rect)) return TRUE;
-  const int width = rect.right - rect.left;
-  const int height = rect.bottom - rect.top;
-  if (width <= 0 || height <= 0) return TRUE;
-
-  *reinterpret_cast<HWND*>(lparam) = hwnd;
-  return FALSE;
-}
-
-HWND FindMainWindow() {
-  HWND foreground = ::GetForegroundWindow();
-  if (foreground) {
-    DWORD pid = 0;
-    ::GetWindowThreadProcessId(foreground, &pid);
-    if (pid == ::GetCurrentProcessId() && ::GetWindow(foreground, GW_OWNER) == nullptr) {
-      return foreground;
-    }
-  }
-
-  HWND hwnd = nullptr;
-  ::EnumWindows(FindMainWindowProc, reinterpret_cast<LPARAM>(&hwnd));
-  return hwnd;
 }
 
 void DispatchScintillaNotification(SCNotification* notification) {
@@ -429,7 +416,6 @@ LRESULT CALLBACK HostWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpar
                      LOWORD(lparam),
                      HIWORD(lparam),
                      SWP_NOZORDER | SWP_NOACTIVATE);
-      RedrawEditorWindow(child);
     }
   } else if (message == WM_ERASEBKGND) {
     RECT rect{};
@@ -463,7 +449,6 @@ LRESULT CALLBACK HostWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpar
       }
     }
     ::EndPaint(hwnd, &ps);
-    RedrawEditorWindow(::GetWindow(hwnd, GW_CHILD));
     return 0;
   } else if (message == WM_SETFOCUS) {
     HWND child = ::GetWindow(hwnd, GW_CHILD);
@@ -476,8 +461,6 @@ LRESULT CALLBACK HostWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpar
       ::ShowWindow(hwnd, SW_HIDE);
       return 0;
     }
-    RedrawHostAndEditor(hwnd);
-  } else if (message == WM_WINDOWPOSCHANGED) {
     RedrawHostAndEditor(hwnd);
   } else if (message == WM_NCDESTROY) {
     std::lock_guard<std::mutex> lock(g_window_mutex);
@@ -512,7 +495,9 @@ bool EnsureHostWindowClassRegistered() {
   HMODULE module = g_scintilla_module_handle ? g_scintilla_module_handle : ::GetModuleHandleW(nullptr);
   WNDCLASSEXW wc{};
   wc.cbSize = sizeof(wc);
-  wc.style = CS_HREDRAW | CS_VREDRAW;
+  // The Scintilla child covers the host. Invalidating the complete host on
+  // every width/height change briefly reveals its background during resize.
+  wc.style = 0;
   wc.lpfnWndProc = HostWndProc;
   wc.hInstance = module;
   wc.hCursor = ::LoadCursorW(nullptr, MAKEINTRESOURCEW(32513));
@@ -539,19 +524,52 @@ int ScaleLayoutValue(float value, float pixel_ratio) {
   return RoundLayoutValue(value * scale);
 }
 
-void PositionOwnedPopup(HWND parent, HWND host, int x, int y, int width, int height) {
-  POINT origin{x, y};
-  ::ClientToScreen(parent, &origin);
-  if (::GetWindow(host, GW_OWNER) != parent) {
-    ::SetWindowLongPtrW(host, GWLP_HWNDPARENT, reinterpret_cast<LONG_PTR>(parent));
+void EnsureParentClipsChildren(HWND parent) {
+  if (!parent || !::IsWindow(parent)) return;
+  LONG_PTR style = ::GetWindowLongPtrW(parent, GWL_STYLE);
+  if ((style & WS_CLIPCHILDREN) != 0) return;
+
+  ::SetLastError(ERROR_SUCCESS);
+  LONG_PTR previous = ::SetWindowLongPtrW(parent, GWL_STYLE,
+                                          style | WS_CLIPCHILDREN);
+  if (previous == 0 && ::GetLastError() != ERROR_SUCCESS) {
+    DebugLog("EnsureParentClipsChildren failed lastError=" +
+             std::to_string(::GetLastError()));
   }
-  ::SetWindowPos(host,
-                 HWND_TOP,
-                 origin.x,
-                 origin.y,
-                 width,
-                 height,
-                 SWP_SHOWWINDOW | SWP_NOACTIVATE);
+}
+
+bool WindowRectMatches(HWND window, HWND parent, int x, int y, int width, int height) {
+  RECT rect{};
+  if (!::GetWindowRect(window, &rect)) return false;
+  POINT top_left{rect.left, rect.top};
+  POINT bottom_right{rect.right, rect.bottom};
+  ::MapWindowPoints(nullptr, parent, &top_left, 1);
+  ::MapWindowPoints(nullptr, parent, &bottom_right, 1);
+  return top_left.x == x && top_left.y == y &&
+         bottom_right.x - top_left.x == width &&
+         bottom_right.y - top_left.y == height;
+}
+
+bool PositionWindowIfNeeded(HWND window, HWND parent, int x, int y,
+                            int width, int height) {
+  const bool rect_changed =
+      !WindowRectMatches(window, parent, x, y, width, height);
+  const bool needs_show = !::IsWindowVisible(window);
+  if (!rect_changed && !needs_show) return false;
+
+  UINT flags = SWP_SHOWWINDOW | SWP_NOACTIVATE | SWP_NOZORDER;
+  if (!rect_changed) flags |= SWP_NOMOVE | SWP_NOSIZE;
+  return ::SetWindowPos(window, nullptr, x, y, width, height, flags) != FALSE;
+}
+
+bool PositionChildHost(HWND parent, HWND host, int x, int y, int width, int height) {
+  if (::GetParent(host) != parent) {
+    ::SetParent(host, parent);
+  }
+  // The renderer's DirectComposition target and Clay overlay windows are
+  // siblings of this host. PositionWindowIfNeeded preserves their established
+  // order and avoids emitting resize messages for an unchanged rectangle.
+  return PositionWindowIfNeeded(host, parent, x, y, width, height);
 }
 
 }  // namespace
@@ -649,9 +667,16 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
            " thread=" + std::to_string(::GetCurrentThreadId()));
   UpdateLayoutPosition(left, top);
 
-  HWND parent = FindMainWindow();
+  // The registration opaque is the exact LynxView that owns this native
+  // element. Resolve its renderer HWND instead of guessing from the process'
+  // foreground/top-level windows; the latter attaches to the wrong window as
+  // soon as multiple LynxWindow instances coexist.
+  HWND parent = lynx_view_
+      ? AsHwnd(lynx_view_get_native_window(lynx_view_))
+      : nullptr;
   DebugLog("OnLayoutChanged parent=" + std::to_string(reinterpret_cast<uintptr_t>(parent)));
   if (!parent) return;
+  EnsureParentClipsChildren(parent);
 
   const int x = ScaleLayoutValue(left, pixel_ratio);
   const int y = ScaleLayoutValue(top, pixel_ratio);
@@ -670,14 +695,12 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
     DebugLog("OnLayoutChanged create host begin");
     if (!EnsureHostWindowClassRegistered()) return;
     HMODULE module = g_scintilla_module_handle ? g_scintilla_module_handle : ::GetModuleHandleW(nullptr);
-    POINT origin{x, y};
-    ::ClientToScreen(parent, &origin);
-    host = ::CreateWindowExW(WS_EX_TOOLWINDOW,
+    host = ::CreateWindowExW(0,
                              kHostWindowClassName,
                              L"",
-                             WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-                             origin.x,
-                             origin.y,
+                             WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+                             x,
+                             y,
                              std::max(1, w),
                              std::max(1, h),
                              parent,
@@ -694,8 +717,8 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
       std::lock_guard<std::mutex> lock(g_window_mutex);
       g_views_by_host_hwnd[host] = this;
     }
-  } else if (::GetWindow(host, GW_OWNER) != parent) {
-    ::SetWindowLongPtrW(host, GWLP_HWNDPARENT, reinterpret_cast<LONG_PTR>(parent));
+  } else if (::GetParent(host) != parent) {
+    ::SetParent(host, parent);
   }
 
   HWND hwnd = AsHwnd(win_view_);
@@ -746,9 +769,10 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
   // Mark the themed child visible while its host is still hidden, then reveal
   // the host. Reversing this order exposes the host/default control for a
   // paint between the two SetWindowPos calls.
-  ::SetWindowPos(hwnd, HWND_TOP, 0, 0, w, h, SWP_SHOWWINDOW | SWP_NOACTIVATE);
-  PositionOwnedPopup(parent, host, x, y, w, h);
-  RedrawHostAndEditor(host);
+  const bool editor_changed =
+      PositionWindowIfNeeded(hwnd, host, 0, 0, w, h);
+  const bool host_changed = PositionChildHost(parent, host, x, y, w, h);
+  if (host_changed || editor_changed) InvalidateHostAndEditor(host);
   std::string text;
   bool has_content = false;
   {
@@ -806,19 +830,16 @@ void ScintillaView::RepositionForParentMove() {
 
   const int width = std::max(1, win_layout_width_);
   const int height = std::max(1, win_layout_height_);
-  PositionOwnedPopup(parent, host, win_layout_x_, win_layout_y_, width, height);
+  const bool host_changed = PositionChildHost(
+      parent, host, win_layout_x_, win_layout_y_, width, height);
 
   HWND hwnd = AsHwnd(win_view_);
+  bool editor_changed = false;
   if (hwnd && ::IsWindow(hwnd)) {
-    ::SetWindowPos(hwnd,
-                   HWND_TOP,
-                   0,
-                   0,
-                   width,
-                   height,
-                   SWP_SHOWWINDOW | SWP_NOACTIVATE);
+    editor_changed =
+        PositionWindowIfNeeded(hwnd, host, 0, 0, width, height);
   }
-  RedrawHostAndEditor(host);
+  if (host_changed || editor_changed) InvalidateHostAndEditor(host);
 }
 
 void ScintillaView::HideForParentTransition() {
@@ -1042,12 +1063,17 @@ void ScintillaView::AttachToWindow() {
   // child host. This is also the route-transition inverse of DetachFromWindow.
   HWND host = AsHwnd(win_host_);
   if (host && ::IsWindow(host)) {
-    HWND parent = FindMainWindow();
+    HWND parent = lynx_view_
+        ? AsHwnd(lynx_view_get_native_window(lynx_view_))
+        : AsHwnd(win_parent_);
     if (parent) {
-      ::SetWindowLongPtrW(host, GWLP_HWNDPARENT, reinterpret_cast<LONG_PTR>(parent));
+      EnsureParentClipsChildren(parent);
+      if (::GetParent(host) != parent) {
+        ::SetParent(host, parent);
+      }
       TrackViewParent(this, AsHwnd(win_parent_), parent);
       win_parent_ = parent;
-      PositionOwnedPopup(parent, host,
+      PositionChildHost(parent, host,
                          win_layout_x_, win_layout_y_,
                          std::max(1, win_layout_width_),
                          std::max(1, win_layout_height_));
