@@ -34,7 +34,7 @@ export function LogView({ id, children }: LogViewProps) {
 
   return (
     <scroll-view id={scrollId} className="LogViewScroll" scroll-y>
-      <text className="LogViewText" text-selection={true} flatten={false}>
+      <text className="LogViewText" text-selection={true} flatten={false} ignore-focus={true} focusable={false}>
         {children}
       </text>
     </scroll-view>
