@@ -121,7 +121,7 @@ private:
   void* cocoa_view_ = nullptr; // Pointer to ScintillaCocoa (NSView)
   void* win_host_ = nullptr;   // Pointer to the Win32 child host HWND
   void* win_view_ = nullptr;   // Pointer to the Win32 Scintilla HWND
-  void* win_parent_ = nullptr; // Pointer to the Lynx renderer HWND that owns the child host
+  void* win_parent_ = nullptr; // Pointer to the owner/main HWND for the Win32 overlay
   int win_layout_x_ = 0;
   int win_layout_y_ = 0;
   int win_layout_width_ = 0;
