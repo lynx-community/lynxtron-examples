@@ -1,3 +1,7 @@
+import {
+  createNativeEditRoleMenuItem,
+} from './menu-edit';
+
 export interface PasteMenuItem {
   role?: 'paste';
   label?: string;
@@ -15,8 +19,11 @@ export interface PasteMenuItem {
 export function createPasteMenuItem(
   quickPickerOpen: boolean,
   pasteIntoQuickPicker: () => void,
+  platform = process.platform,
 ): PasteMenuItem {
-  if (!quickPickerOpen) return { role: 'paste' };
+  if (!quickPickerOpen) {
+    return createNativeEditRoleMenuItem('paste', platform);
+  }
   return {
     label: 'Paste',
     accelerator: 'CmdOrCtrl+V',

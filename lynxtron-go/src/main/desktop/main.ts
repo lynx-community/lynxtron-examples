@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { appFileResourceRoots, appGlobalProps, appResourceDir } from './app-resources';
 import { createPasteMenuItem } from './menu-paste';
+import { createNativeEditRoleMenuItem } from './menu-edit';
 import { fetchExampleArtifact } from './example-artifact';
 import {
   downloadNativeExtension,
@@ -680,13 +681,13 @@ function buildAppMenu(
   template.push({
     label: 'Edit',
     submenu: [
-      { role: 'undo' },
-      { role: 'redo' },
+      createNativeEditRoleMenuItem('undo'),
+      createNativeEditRoleMenuItem('redo'),
       { type: 'separator' },
-      { role: 'cut' },
-      { role: 'copy' },
+      createNativeEditRoleMenuItem('cut'),
+      createNativeEditRoleMenuItem('copy'),
       createPasteMenuItem(quickPickerOpen, () => sendIde('paste')),
-      { role: 'selectAll' },
+      createNativeEditRoleMenuItem('selectAll'),
       // Find belongs to the IDE's file tree and editor tabs; the Fiddle has no
       // corresponding surface, so these appear only where they work.
       ...(isWorkspace
