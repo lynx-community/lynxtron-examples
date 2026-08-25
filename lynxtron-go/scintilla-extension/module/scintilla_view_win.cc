@@ -263,6 +263,21 @@ bool ShouldHoldHostHidden(HWND parent) {
   return pending_it != g_parent_restore_reveal_pending.end() && pending_it->second;
 }
 
+bool IsLynxSurfacePointerDown(UINT message) {
+  switch (message) {
+    case WM_LBUTTONDOWN:
+    case WM_RBUTTONDOWN:
+    case WM_MBUTTONDOWN:
+    case WM_XBUTTONDOWN:
+#ifdef WM_POINTERDOWN
+    case WM_POINTERDOWN:
+#endif
+      return true;
+    default:
+      return false;
+  }
+}
+
 ScintillaView* ViewForHost(HWND host) {
   std::lock_guard<std::mutex> lock(g_window_mutex);
   auto it = g_views_by_host_hwnd.find(host);
@@ -353,6 +368,20 @@ LRESULT CALLBACK ParentWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
       message == WM_WINDOWPOSCHANGED || message == WM_MOVE || message == WM_MOVING ||
       message == WM_SIZE || message == WM_SIZING || message == WM_SHOWWINDOW ||
       message == WM_EXITSIZEMOVE;
+
+  // Scintilla is a real child HWND, so clicking it correctly gives it the
+  // Win32 keyboard focus. The Lynx renderer is not a standard focusable
+  // control, though, and a later click on its surface does not reliably take
+  // that focus back. The stale child focus then keeps keys such as Ctrl+C in
+  // Scintilla even while the user is selecting text in a Lynx log/output.
+  //
+  // This procedure only receives pointer messages targeted at the renderer;
+  // clicks inside Scintilla remain targeted at the child and never enter this
+  // branch. Restore focus before Lynx handles the pointer down so its ensuing
+  // selection/interaction owns the keyboard event stream as well.
+  if (IsLynxSurfacePointerDown(message) && ::GetFocus() != hwnd) {
+    ::SetFocus(hwnd);
+  }
 
   if (message == WM_SIZE && wparam == SIZE_MINIMIZED) {
     SetParentWasMinimized(hwnd, true);
