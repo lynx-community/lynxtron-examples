@@ -540,8 +540,8 @@ export function Fiddle(props: FiddleProps) {
     'fiddle:persistNow': () => {
       fiddle.flushAll();
       fiddle.persistNow();
-      // Ack so a pending ⌘Q can quit immediately instead of sleeping out
-      // its dead-man fallback.
+      // Ack so a pending ⌘Q or reload can proceed immediately instead of
+      // sleeping out its dead-man fallback.
       // @ts-ignore
       try { NativeModules.bridge.send('persistDone', {}); } catch (_) {}
     },

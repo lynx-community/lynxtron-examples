@@ -101,6 +101,13 @@ let pendingDeepLinkPayload: HostDeepLinkPayload | null = null;
 // Pending ⌘Q: armed by the Quit menu item, disarmed by the UI's persistDone
 // ack (which quits immediately) or by its own dead-man expiry.
 let quitFlushTimer: ReturnType<typeof setTimeout> | null = null;
+// Pending reload: same shape as quitFlushTimer. Reload re-issues loadURL/
+// loadFile, which tears down the UI without giving the persist tick a chance
+// to fold live editor text back into foundation.config — so the fresh UI
+// restores the last periodic snapshot and drops every keystroke since it.
+// Ask the UI to flushAll + persistNow first and only reload on the ack.
+let reloadFlushTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingReloadWindow: LynxWindowInstance | null = null;
 // Which product the menu is currently built for, and the window it belongs to.
 // The UI is the only thing that knows which surface it is showing, so it
 // reports through the setSurface bridge call and the menu is rebuilt to match.
@@ -457,22 +464,55 @@ async function prepareRemoteNativeExtension(
 type MenuSurface = 'fiddle' | 'workspace';
 
 /**
- * Re-issue whichever load brought this window up. The same two branches as the
- * initial load, deliberately: a dev window points at the rspeedy server and a
- * packaged one at the bundle on disk, and a reload that swapped between them
- * would be a different window, not the same one again.
+ * LynxWindow has no reload() and re-issuing loadFile to the same bundle path
+ * is a no-op (observed: no component unmount, no listeners re-register). To
+ * get Electron Fiddle's "restart the renderer, keep user content" semantics
+ * we tell the UI to remount its React tree from scratch — the fiddle surface
+ * carries a key that changes on this event, so <App> unmounts and remounts,
+ * and its cold-start restoreLastSession pulls the session that persistNow
+ * just wrote back into the newly created Scintilla views.
  */
 function reloadWindow(w: LynxWindowInstance) {
   try {
-    if (isDev) {
-      w.loadURL('http://localhost:3000/main.lynx.bundle', getAppLoadOptions());
-    } else {
-      w.loadFile(LYNX_BUNDLE_PATH, getAppLoadOptions());
-    }
-    console.log('[PC_Host] menu: reload');
+    const ok = w.sendGlobalEvent('fiddle:remount', {});
+    console.log('[PC_Host] menu: reload (sendGlobalEvent fiddle:remount ->', ok, ')');
   } catch (e: any) {
     console.error('[PC_Host] reload failed:', e?.message ?? String(e));
   }
+}
+
+/**
+ * Reload flushes editor state through the same persistNow → persistDone
+ * handshake as ⌘Q. Live editor text lives in the native Scintilla views and
+ * only reaches foundation.config on the 1.5s persist tick — reloading before
+ * that tick lands drops every keystroke since it. Arm a dead-man fallback so
+ * an absent/hung UI cannot leave the reload stranded.
+ *
+ * Only the fiddle surface owns the session persistence flow; the workspace
+ * surface saves through the file system on ⌘S and has no persistNow listener,
+ * so reload it directly instead of waiting out the dead-man timer.
+ */
+function requestReload(w: LynxWindowInstance) {
+  if (menuSurface !== 'fiddle') {
+    reloadWindow(w);
+    return;
+  }
+  if (reloadFlushTimer) {
+    clearTimeout(reloadFlushTimer);
+    reloadFlushTimer = null;
+  }
+  pendingReloadWindow = w;
+  try {
+    w.sendGlobalEvent('fiddle:persistNow', {});
+  } catch (e) {
+    console.error('[PC_Host] reload persistNow send failed:', e);
+  }
+  reloadFlushTimer = setTimeout(() => {
+    reloadFlushTimer = null;
+    const target = pendingReloadWindow;
+    pendingReloadWindow = null;
+    if (target) reloadWindow(target);
+  }, 1000);
 }
 
 function buildAppMenu(
@@ -749,7 +789,7 @@ function buildAppMenu(
         label: 'Reload',
         accelerator: 'CmdOrCtrl+Shift+R',
         registerAccelerator: true,
-        click: () => reloadWindow(w),
+        click: () => requestReload(w),
       },
       { type: 'separator' },
       { role: 'togglefullscreen' },
@@ -957,6 +997,17 @@ if (!hasSingleInstanceLock) {
         clearTimeout(quitFlushTimer);
         quitFlushTimer = null;
         try { app.quit(); } catch (_) {}
+      }
+
+      // Same shape for the reload handshake: fire the pending reload as soon
+      // as the UI acks its flush, otherwise the dead-man fallback in
+      // requestReload eventually reloads with whatever landed in time.
+      if (name === 'persistDone' && reloadFlushTimer) {
+        clearTimeout(reloadFlushTimer);
+        reloadFlushTimer = null;
+        const target = pendingReloadWindow;
+        pendingReloadWindow = null;
+        if (target) reloadWindow(target);
       }
     });
 
