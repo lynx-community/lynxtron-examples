@@ -33,6 +33,12 @@ export interface NodeVersionRequirement {
 
 export type ShowcaseTarget = 'desktop' | 'web';
 
+// @lynx-js/lynxtron <= 0.0.15 installs its runtime with extract-zip@2.0.1,
+// whose yauzl@2.x stream can hang on Node 24.16-24.17 and Node >=26.1.
+// Node 24.18 reverted the stream regression; keep the upper bound conservative
+// until the Node 26 line ships and verifies the corresponding fix.
+export const SHOWCASE_INSTALL_NODE_RANGE = '>=22 <24.16.0 || >=24.18.0 <26.1.0';
+
 const SOURCE_SKIP_DIRS = new Set([
   '.git',
   'node_modules',
@@ -285,6 +291,10 @@ export function isNodeVersionSatisfied(currentVersion: string, range: string): b
   return disjunctions.some(part => tokenizeNodeRange(part).every(token => satisfiesRangeToken(versionParts, token)));
 }
 
+export function formatShowcaseInstallNodeCompatibilityError(currentVersion: string): string {
+  return `Node.js version ${currentVersion} is incompatible with the Lynxtron showcase installer. Use a Node.js version matching ${SHOWCASE_INSTALL_NODE_RANGE}, then retry.`;
+}
+
 function describeNodeVersionRange(range: string): string {
   const trimmed = range.trim();
   const atLeastMatch = trimmed.match(/^>=\s*v?(\d+)(?:\.(\d+))?(?:\.(\d+))?$/);
@@ -307,10 +317,10 @@ export function formatNodeVersionRequirementError(
 ): string {
   const installHint = describeNodeVersionRange(requirement.range);
   if (!currentVersion) {
-    return `Node.js was not detected. Install Node ${installHint} or newer (including npm), then retry.`;
+    return `Node.js was not detected. Install Node ${installHint} (including npm), then retry.`;
   }
 
-  return `Node.js version ${currentVersion} does not satisfy required version ${requirement.range}. Update Node to ${installHint} or newer, then retry.`;
+  return `Node.js version ${currentVersion} does not satisfy required version ${requirement.range}. Update Node to ${installHint}, then retry.`;
 }
 
 export function getShowcaseInstallPlan(showcasePath: string): ShowcaseInstallPlan {
