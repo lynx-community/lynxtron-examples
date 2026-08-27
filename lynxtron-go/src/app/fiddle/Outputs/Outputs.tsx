@@ -77,6 +77,9 @@ export function Outputs(props: OutputsProps) {
   const uptimeMs = props.runningPid != null && props.runStartMs != null
     ? nowMs - props.runStartMs
     : null;
+  const consoleText = entries
+    .map(e => `${e.timestamp} ${e.message}`)
+    .join('\n');
 
   return (
     <view className="Outputs">
@@ -114,22 +117,13 @@ export function Outputs(props: OutputsProps) {
         </view>
       </view>
       <scroll-view className="Outputs-Body" scroll-orientation="vertical">
-        {entries.length === 0 ? (
-          // An empty console IS an idle console — one dim prompt line where
-          // the first real line will land, not a poster about being empty.
-          <view className="Outputs-Line">
-            <text className="Outputs-IdleHint" text-selection={true} flatten={false}>Run output streams here · ⌘R</text>
-          </view>
-        ) : (
-          entries.map((e, i) => (
-            // seq, not array index: the 500-cap front-trim shifts indices,
-            // which would reconcile every line as changed.
-            <view key={e.seq ?? i} className={'Outputs-Line Outputs-Line--' + e.stream}>
-              <text className="Outputs-Timestamp" text-selection={true} flatten={false}>{e.timestamp}</text>
-              <text className="Outputs-Message" text-selection={true} flatten={false}>{e.message}</text>
-            </view>
-          ))
-        )}
+        <text
+          className={entries.length === 0 ? 'Outputs-Log Outputs-IdleHint' : 'Outputs-Log'}
+          text-selection={true}
+          flatten={false}
+        >
+          {consoleText || 'Run output streams here · ⌘R'}
+        </text>
       </scroll-view>
     </view>
   );
