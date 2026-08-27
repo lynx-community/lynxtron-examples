@@ -40,7 +40,7 @@ export async function resolveShowcaseWorkspacePath(
   } catch (_) { /* fall through to the remote paths */ }
 
   try {
-    const existing = api?.materializedPath?.(entry.name);
+    const existing = api?.materializedPath?.(entry.name, entry.url);
     if (existing) {
       hooks.onReuse?.(entry, existing);
       return existing;

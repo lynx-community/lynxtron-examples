@@ -7,6 +7,12 @@ import * as tar from 'tar';
 import { execFileSync } from 'child_process';
 import { pathToFileURL } from 'url';
 import { clearFetchDestination, fetch } from '../src/commands/fetch';
+import {
+  createShowcaseCacheKey,
+  readShowcaseCacheMetadata,
+  restorePreservedShowcaseCache,
+  writeShowcaseCacheMetadata,
+} from '../src/showcase-cache';
 
 describe('fetch command', () => {
   const tmpDirs: string[] = [];
@@ -33,6 +39,45 @@ describe('fetch command', () => {
 
     expect(fs.existsSync(destDir)).toBe(false);
     expect(fs.existsSync(path.join(root, 'showcases'))).toBe(true);
+  });
+
+  it('preserves a legacy workspace when a versioned cache replaces it', () => {
+    const root = makeTempDir('lynxtron-fetch-preserve-');
+    const destDir = path.join(root, 'showcases', 'floating-clock');
+    fs.mkdirSync(destDir, { recursive: true });
+    fs.writeFileSync(path.join(destDir, 'user-edit.ts'), '// keep me\n', 'utf-8');
+
+    const backupPath = clearFetchDestination(
+      destDir,
+      'https://example.com/releases/v2/floating-clock.tgz',
+    );
+
+    expect(fs.existsSync(destDir)).toBe(false);
+    expect(backupPath).not.toBeNull();
+    const backups = fs.readdirSync(path.join(root, 'showcase-backups'));
+    expect(backups).toHaveLength(1);
+    expect(fs.readFileSync(
+      path.join(root, 'showcase-backups', backups[0], 'user-edit.ts'),
+      'utf-8',
+    )).toBe('// keep me\n');
+
+    restorePreservedShowcaseCache(destDir, backupPath!);
+    expect(fs.readFileSync(path.join(destDir, 'user-edit.ts'), 'utf-8')).toBe('// keep me\n');
+    expect(fs.existsSync(backupPath!)).toBe(false);
+  });
+
+  it('replaces a cache in place when its source URL still matches', () => {
+    const root = makeTempDir('lynxtron-fetch-reuse-');
+    const destDir = path.join(root, 'showcases', 'floating-clock');
+    const sourceUrl = 'https://example.com/releases/v2/floating-clock.tgz';
+    fs.mkdirSync(destDir, { recursive: true });
+    fs.writeFileSync(path.join(destDir, 'stale.txt'), 'stale', 'utf-8');
+    writeShowcaseCacheMetadata(destDir, sourceUrl);
+
+    clearFetchDestination(destDir, sourceUrl);
+
+    expect(fs.existsSync(destDir)).toBe(false);
+    expect(fs.existsSync(path.join(root, 'showcase-backups'))).toBe(false);
   });
 
   it('clears stale target contents before extracting a local tarball', async () => {
@@ -102,6 +147,10 @@ describe('fetch command', () => {
       expect(fs.readFileSync(path.join(destDir, 'dist', 'desktop', 'main.js'), 'utf-8'))
         .toBe('// packed build\n');
       expect(fs.existsSync(path.join(destDir, 'node_modules'))).toBe(false);
+      expect(readShowcaseCacheMetadata(destDir)).toEqual({
+        schemaVersion: 1,
+        cacheKey: createShowcaseCacheKey(url),
+      });
     } finally {
       await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
     }

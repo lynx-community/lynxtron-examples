@@ -17,6 +17,7 @@ import {
 import { readInstallState, writeInstallState } from './preload-config-store';
 import type { DebugLogger } from './preload-log';
 import { getRuntimeRequire, resolveLynxtronExecutablePath } from './preload-lynxtron-runtime';
+import { resolveMaterializedShowcasePath } from './showcase-cache';
 
 type RunningShowcaseRecord = Map<number, ChildProcess>;
 type ShowcaseProcessOutputLevel = 'info' | 'warn' | 'error';
@@ -454,7 +455,7 @@ export interface ShowcaseService {
      * already on disk — including opening the same showcase in the other
      * surface seconds later.
      */
-    materializedPath: (name: string) => string | null;
+    materializedPath: (name: string, sourceUrl?: string) => string | null;
     resolveRegistryPath: (relativePath: string) => string | null;
     readProcessOutput: () => ShowcaseProcessOutputEntry[];
     isRunning: (pid: number) => boolean;
@@ -486,21 +487,12 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
 
   return {
     bridge: {
-      materializedPath: (name: string): string | null => {
-        try {
-          if (!name) return null;
-          // Showcases land under <workspace>/showcases/<unscoped name>; the
-          // registry names them @lynxtron-examples/foo.
-          const bare = name.includes('/') ? name.slice(name.lastIndexOf('/') + 1) : name;
-          const dir = path.join(os.homedir(), '.lynxtron-go', 'showcases', bare);
-          // Read the manifest rather than just existsSync: a half-extracted
-          // directory from an interrupted fetch must not pass as usable.
-          const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf-8'));
-          return pkg?.showcase ? dir : null;
-        } catch (_) {
-          return null;
-        }
-      },
+      materializedPath: (name: string, sourceUrl?: string): string | null =>
+        resolveMaterializedShowcasePath(
+          path.join(os.homedir(), '.lynxtron-go'),
+          name,
+          sourceUrl,
+        ),
       fetch: async (url: string): Promise<string> => {
         try {
           dbg(`showcase.fetch enter url=${url}`);

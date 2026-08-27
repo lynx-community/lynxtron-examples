@@ -7,6 +7,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as tar from 'tar';
 import { execSync, type ExecSyncOptions } from 'child_process';
+import {
+  preserveMismatchedShowcaseCache,
+  restorePreservedShowcaseCache,
+  writeShowcaseCacheMetadata,
+} from '../showcase-cache.js';
 
 // execSync with stdio:'pipe' hides stderr, so callers only see
 // "Command failed: <cmd>" with no diagnosis. Wrap it to re-throw an Error
@@ -70,17 +75,34 @@ function installSourceShowcase(destDir: string, npmCacheDir: string): void {
 }
 
 
-export function clearFetchDestination(destDir: string): void {
+export function clearFetchDestination(destDir: string, sourceUrl?: string): string | null {
+  let backupPath: string | null = null;
+  if (sourceUrl) {
+    backupPath = preserveMismatchedShowcaseCache(destDir, sourceUrl);
+    if (backupPath) {
+      log(`Preserved previous showcase workspace at ${backupPath}`);
+    }
+  }
   if (fs.existsSync(destDir)) {
     fs.rmSync(destDir, { recursive: true, force: true });
   }
   fs.mkdirSync(path.dirname(destDir), { recursive: true });
+  return backupPath;
 }
 
 export async function fetch(url: string, workspaceRoot: string): Promise<void> {
   const resolved = resolveShowcaseUrl(url);
   const manager = new WorkspaceManager(workspaceRoot);
   await manager.init();
+
+  if (resolved.type === 'local' && !fs.existsSync(resolved.filePath)) {
+    throw new Error(`Local tarball not found: ${resolved.filePath}`);
+  }
+
+  const destination = resolved.type === 'external'
+    ? manager.getExternalPath(resolved.name)
+    : manager.getShowcasePath(resolved.name);
+  const backupPath = clearFetchDestination(destination, url);
 
   emit({ type: 'fetch-start', name: resolved.name });
 
@@ -94,15 +116,17 @@ export async function fetch(url: string, workspaceRoot: string): Promise<void> {
     } else {
       await fetchExternal(resolved, manager);
     }
+    writeShowcaseCacheMetadata(destination, url);
     emit({
       type: 'fetch-success',
       name: resolved.name,
-      path:
-        resolved.type === 'external'
-          ? manager.getExternalPath(resolved.name)
-          : manager.getShowcasePath(resolved.name),
+      path: destination,
     });
   } catch (err) {
+    if (backupPath) {
+      restorePreservedShowcaseCache(destination, backupPath);
+      log(`Restored previous showcase workspace after fetch failure: ${destination}`);
+    }
     const message = err instanceof Error ? err.message : String(err);
     emit({ type: 'fetch-error', name: resolved.name, error: message });
     throw err;
@@ -117,14 +141,9 @@ async function fetchLocalTarball(
 ): Promise<void> {
   const { filePath, name } = resolved;
 
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`Local tarball not found: ${filePath}`);
-  }
-
   log(`Extracting local tarball: ${filePath}`);
 
   const destDir = manager.getShowcasePath(name);
-  clearFetchDestination(destDir);
   fs.mkdirSync(destDir, { recursive: true });
   await extractPackedShowcase(filePath, destDir);
   await preparePackedShowcase(name, destDir, manager);
@@ -170,7 +189,6 @@ async function fetchRemoteTarball(
   const { url, name } = resolved;
   const destDir = manager.getShowcasePath(name);
   const tmpTar = path.join(manager.getRootPath(), `${name}.download.tgz`);
-  clearFetchDestination(destDir);
   fs.mkdirSync(destDir, { recursive: true });
 
   log(`Downloading packed showcase: ${url}`);
@@ -191,7 +209,6 @@ async function fetchRepoShowcase(
 ): Promise<void> {
   const tarballUrl = `https://api.github.com/repos/${resolved.owner}/${resolved.repo}/tarball/${resolved.ref}`;
   const destDir = manager.getShowcasePath(resolved.name);
-  clearFetchDestination(destDir);
 
   log(`Downloading ${resolved.path} from ${resolved.owner}/${resolved.repo}...`);
 
@@ -234,7 +251,6 @@ async function fetchExternal(
   manager: WorkspaceManager
 ): Promise<void> {
   const destDir = manager.getExternalPath(resolved.name);
-  clearFetchDestination(destDir);
 
   log(`Cloning ${resolved.url}...`);
   execCapture(`git clone --depth 1 ${resolved.url} ${destDir}`);
