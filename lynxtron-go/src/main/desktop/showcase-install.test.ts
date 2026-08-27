@@ -6,6 +6,7 @@ import path from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   buildShowcaseInstallEnv,
+  formatShowcaseInstallNodeCompatibilityError,
   formatNodeVersionRequirementError,
   getShowcaseTargets,
   getShowcaseDependencyStatus,
@@ -17,6 +18,7 @@ import {
   hasShowcaseWebSourceChangesSinceBuild,
   isShowcaseWebBuilt,
   isNodeVersionSatisfied,
+  SHOWCASE_INSTALL_NODE_RANGE,
 } from './showcase-install';
 
 function writeJson(filePath: string, value: unknown) {
@@ -315,13 +317,28 @@ describe('showcase install helpers', () => {
     expect(isNodeVersionSatisfied('23.0.0', '>=22 <23')).toBe(false);
   });
 
+  it('rejects only Node versions affected by the legacy extract-zip stream regression', () => {
+    expect(isNodeVersionSatisfied('22.0.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(true);
+    expect(isNodeVersionSatisfied('24.15.99', SHOWCASE_INSTALL_NODE_RANGE)).toBe(true);
+    expect(isNodeVersionSatisfied('24.16.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(false);
+    expect(isNodeVersionSatisfied('24.17.99', SHOWCASE_INSTALL_NODE_RANGE)).toBe(false);
+    expect(isNodeVersionSatisfied('24.18.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(true);
+    expect(isNodeVersionSatisfied('25.9.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(true);
+    expect(isNodeVersionSatisfied('26.0.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(true);
+    expect(isNodeVersionSatisfied('26.1.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(false);
+    expect(isNodeVersionSatisfied('26.7.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(false);
+  });
+
+  it('formats an actionable showcase installer compatibility error', () => {
+    expect(formatShowcaseInstallNodeCompatibilityError('26.7.0'))
+      .toBe(`Node.js version 26.7.0 is incompatible with the Lynxtron showcase installer. Use a Node.js version matching ${SHOWCASE_INSTALL_NODE_RANGE}, then retry.`);
+  });
+
   it('formats a user-facing node version mismatch error', () => {
-    // npm runs with Lynxtron-as-node — the message must blame the runtime,
-    // not the system Node install.
     expect(formatNodeVersionRequirementError({ range: '>=22', sourceKind: 'engines' }, '20.11.1'))
-      .toBe("Lynxtron's Node.js version 20.11.1 does not satisfy required version >=22. Update Lynxtron to a build shipping Node 22 or newer.");
+      .toBe('Node.js version 20.11.1 does not satisfy required version >=22. Update Node to 22 or newer, then retry.');
     expect(formatNodeVersionRequirementError({ range: '22', sourceKind: 'nvmrc' }, null))
-      .toBe("Lynxtron's Node.js runtime was not detected. Reinstall or update Lynxtron and retry.");
+      .toBe('Node.js was not detected. Install Node 22.x (including npm), then retry.');
   });
 
   it('detects saved source changes newer than dist', () => {

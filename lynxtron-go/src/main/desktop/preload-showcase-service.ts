@@ -4,12 +4,15 @@ import os from 'os';
 import path from 'path';
 import {
   buildShowcaseInstallEnv,
+  formatShowcaseInstallNodeCompatibilityError,
   getShowcaseDependencyStatus as computeShowcaseDependencyStatus,
   getShowcaseTargets,
   hasShowcaseScript,
   hasShowcaseSourceChangesSinceBuild,
   hasShowcaseWebSourceChangesSinceBuild,
   isShowcaseWebBuilt,
+  isNodeVersionSatisfied,
+  SHOWCASE_INSTALL_NODE_RANGE,
 } from './showcase-install';
 import { readInstallState, writeInstallState } from './preload-config-store';
 import type { DebugLogger } from './preload-log';
@@ -202,6 +205,29 @@ function getShowcaseDependencyStatus(showcasePath: string, dbg: DebugLogger) {
   return status;
 }
 
+function readInstallNodeVersion(env: NodeJS.ProcessEnv): string | null {
+  const nodeCommand = process.platform === 'win32' ? 'node.exe' : 'node';
+  try {
+    return execFileSync(nodeCommand, ['--version'], {
+      env,
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim().replace(/^v/i, '') || null;
+  } catch {
+    return null;
+  }
+}
+
+function assertCompatibleInstallNode(env: NodeJS.ProcessEnv) {
+  const nodeVersion = readInstallNodeVersion(env);
+  if (!nodeVersion) {
+    throw new Error('Node.js was not detected. Install Node.js (including npm), then retry.');
+  }
+  if (!isNodeVersionSatisfied(nodeVersion, SHOWCASE_INSTALL_NODE_RANGE)) {
+    throw new Error(formatShowcaseInstallNodeCompatibilityError(nodeVersion));
+  }
+}
+
 async function ensureShowcaseDependencies(
   showcasePath: string,
   dbg: DebugLogger,
@@ -214,6 +240,8 @@ async function ensureShowcaseDependencies(
   }
 
   const commandText = `${status.installPlan.command} ${status.installPlan.args.join(' ')}`;
+  const installEnv = buildShowcaseInstallEnv(status.installPlan.userConfigPath);
+  assertCompatibleInstallNode(installEnv);
   dbg(
     `showcase.install: cwd=${status.installPlan.cwd} reason=${force ? 'forced' : status.reason} command=${commandText}`
     + (status.installPlan.userConfigPath ? ` userconfig=${status.installPlan.userConfigPath}` : '')
@@ -226,7 +254,7 @@ async function ensureShowcaseDependencies(
       command: status.installPlan.command,
       args: status.installPlan.args,
       cwd: status.installPlan.cwd,
-      env: buildShowcaseInstallEnv(status.installPlan.userConfigPath),
+      env: installEnv,
       outputBuffer,
     });
   } catch (error: any) {
