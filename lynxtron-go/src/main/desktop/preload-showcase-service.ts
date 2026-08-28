@@ -10,7 +10,6 @@ import {
   hasShowcaseScript,
   hasShowcaseSourceChangesSinceBuild,
   hasShowcaseWebSourceChangesSinceBuild,
-  isShowcaseWebBuilt,
   isNodeVersionSatisfied,
   SHOWCASE_INSTALL_NODE_RANGE,
 } from './showcase-install';
@@ -18,6 +17,7 @@ import { readInstallState, writeInstallState } from './preload-config-store';
 import type { DebugLogger } from './preload-log';
 import { getRuntimeRequire, resolveLynxtronExecutablePath } from './preload-lynxtron-runtime';
 import { resolveMaterializedShowcasePath } from './showcase-cache';
+import { resolveShowcaseRunTarget } from '@lynxtron-examples/cli/dist/showcase-release.js';
 
 type RunningShowcaseRecord = Map<number, ChildProcess>;
 type ShowcaseProcessOutputLevel = 'info' | 'warn' | 'error';
@@ -615,13 +615,15 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       run: (showcasePath: string): number => {
         dbg(`showcase.run called with showcasePath: ${showcasePath}`);
         try {
-          const distDesktop = path.join(showcasePath, 'dist', 'desktop');
+          const runTarget = resolveShowcaseRunTarget(showcasePath, 'desktop');
+          if (runTarget.kind === 'missing') {
+            throw new Error(`Showcase not built: ${runTarget.reason}`);
+          }
+          const distDesktop = runTarget.path;
           dbg(`showcase.run: distDesktop=${distDesktop}`);
           const mainJsPath = path.join(distDesktop, 'main.js');
           dbg(`showcase.run: checking main.js at ${mainJsPath} exists: ${fs.existsSync(mainJsPath)}`);
-          if (!fs.existsSync(mainJsPath)) {
-            throw new Error('Showcase not built. dist/desktop/main.js not found.');
-          }
+          if (!fs.existsSync(mainJsPath)) throw new Error(`Showcase not built: ${runTarget.reason}`);
           dbg(`showcase.run: calling resolveLynxtronExecutablePath...`);
           const lynxtronExecutable = resolveLynxtronExecutablePath(dbg);
           dbg(`showcase.run: lynxtronExecutable=${lynxtronExecutable}`);
@@ -715,15 +717,21 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
         }
       },
 
-      isBuilt: (dirPath: string): boolean => fs.existsSync(path.join(dirPath, 'dist', 'desktop', 'main.js')),
+      isBuilt: (dirPath: string): boolean => resolveShowcaseRunTarget(dirPath, 'desktop').kind !== 'missing',
 
       getTargets: (showcasePath: string): Array<'desktop' | 'web'> => getShowcaseTargets(showcasePath),
 
-      isWebBuilt: (showcasePath: string): boolean => isShowcaseWebBuilt(showcasePath),
+      isWebBuilt: (showcasePath: string): boolean => resolveShowcaseRunTarget(showcasePath, 'web').kind !== 'missing',
 
-      needsSourceRun: (showcasePath: string): boolean => hasShowcaseSourceChangesSinceBuild(showcasePath),
+      needsSourceRun: (showcasePath: string): boolean => {
+        const target = resolveShowcaseRunTarget(showcasePath, 'desktop');
+        return target.kind !== 'precompiled' && hasShowcaseSourceChangesSinceBuild(showcasePath);
+      },
 
-      needsWebSourceRun: (showcasePath: string): boolean => hasShowcaseWebSourceChangesSinceBuild(showcasePath),
+      needsWebSourceRun: (showcasePath: string): boolean => {
+        const target = resolveShowcaseRunTarget(showcasePath, 'web');
+        return target.kind !== 'precompiled' && hasShowcaseWebSourceChangesSinceBuild(showcasePath);
+      },
 
       needsInstall: (showcasePath: string): boolean => getShowcaseDependencyStatus(showcasePath, dbg).needsInstall,
 
@@ -739,10 +747,9 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       runWeb: (showcasePath: string): number => {
         try {
           ensureShowcaseSupportsWeb(showcasePath);
-          const distWeb = path.join(showcasePath, 'dist', 'web');
-          if (!isShowcaseWebBuilt(showcasePath)) {
-            throw new Error('Showcase web build not found. dist/web/index.html not found.');
-          }
+          const runTarget = resolveShowcaseRunTarget(showcasePath, 'web');
+          if (runTarget.kind === 'missing') throw new Error(`Showcase web build not found: ${runTarget.reason}`);
+          const distWeb = runTarget.path;
           const serverScript = resolveShowcaseWebServerPath();
           if (!fs.existsSync(serverScript)) {
             throw new Error(`Web server entry missing: ${serverScript}`);

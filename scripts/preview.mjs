@@ -11,6 +11,9 @@ import {
   rm,
   writeFile,
 } from 'node:fs/promises';
+import {
+  finalizeShowcaseTarball,
+} from './showcase-release-pack.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -116,11 +119,11 @@ async function buildAndPackShowcase(dir) {
   await removeTarballs(dir);
   log(`Packing ${name}...`);
   await run('pnpm', ['pack', '--pack-destination', dir], { cwd: dir });
-
   const tgz = await findTarball(dir);
   if (!tgz) {
     throw new Error(`Failed to pack ${name}`);
   }
+  await finalizeShowcaseTarball(path.join(dir, tgz), path.join(dir, 'dist'));
   log(`  -> ${tgz}`);
 }
 

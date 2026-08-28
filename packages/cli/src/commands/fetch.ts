@@ -12,6 +12,10 @@ import {
   restorePreservedShowcaseCache,
   writeShowcaseCacheMetadata,
 } from '../showcase-cache.js';
+import {
+  SHOWCASE_LOCAL_BUILD_ROOT,
+  verifyShowcaseRelease,
+} from '../showcase-release.js';
 
 // execSync with stdio:'pipe' hides stderr, so callers only see
 // "Command failed: <cmd>" with no diagnosis. Wrap it to re-throw an Error
@@ -165,14 +169,18 @@ async function preparePackedShowcase(
   manager: WorkspaceManager,
 ): Promise<void> {
 
-  // Local tarballs from npm pack contain built dist/ — no install needed.
-  // If the tarball has dist/desktop/main.js, it's ready to run directly.
-  const hasBuiltDist = fs.existsSync(path.join(destDir, 'dist', 'desktop', 'main.js'));
-  if (hasBuiltDist) {
-    log(`Built dist found — skipping install (ready to run)`);
+  // A Release tarball keeps immutable, verified output in dist_precompiled/.
+  // dist/ is reserved for a build performed from the extracted/editable source
+  // and must never be accepted as proof that the downloaded artifact is valid.
+  const release = verifyShowcaseRelease(destDir);
+  if (release.status === 'verified') {
+    log('Verified release source and precompiled artifact — skipping install');
   } else {
-    // Source-only tarball — needs install + build
-    log(`No built dist — running npm install with devDependencies...`);
+    // Old, incomplete, corrupt, or source-modified packages fall back to the
+    // ordinary local source path. Remove any packed dist/ so it cannot be
+    // mistaken for a local build produced from this source snapshot.
+    fs.rmSync(path.join(destDir, SHOWCASE_LOCAL_BUILD_ROOT), { recursive: true, force: true });
+    log(`Precompiled artifact unavailable (${release.reason}) — installing for local build fallback...`);
     try {
       await manager.rewriteWorkspaceRefs(name);
     } catch (_) {}

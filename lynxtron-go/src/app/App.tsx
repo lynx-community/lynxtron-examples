@@ -2184,10 +2184,17 @@ export function App(props: { onRender?: () => void } = {}) {
       const isBuilt = api.isBuilt(showcasePath);
       console.log('[runShowcaseEntry] isBuilt:', isBuilt);
       log(`[runShowcaseEntry] isBuilt: ${isBuilt}`);
-      if (!isBuilt) {
-        showOutput('error', 'Showcase not built — dist/desktop/main.js not found');
-        appendProcessLine('stderr', 'Not built — dist/desktop/main.js not found. Open it in Lynxtron Go and Run to build from source.');
-        setStatus('Not built');
+      const needsSourceBuild = !isBuilt || !!api.needsSourceRun?.(showcasePath);
+      if (needsSourceBuild) {
+        const why = isBuilt ? 'Published source differs from the available build' : 'Precompiled artifact unavailable';
+        showOutput('info', `${why} — building locally...`);
+        appendProcessLine('command', `${why}; fallback to npm start`);
+        setStatus('Building locally...');
+        const pid = await api.start(showcasePath);
+        setRunningPid(pid);
+        showOutput('info', `Local build & launch started (pid ${pid})`);
+        appendProcessLine('command', `Local build & launch (pid ${pid})`);
+        setStatus(`Running local build (pid ${pid})`);
         return;
       }
       

@@ -3,6 +3,7 @@ import { emit, log } from '../utils/ndjson.js';
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
+import { resolveShowcaseRunTarget } from '../showcase-release.js';
 
 export async function run(name: string, workspaceRoot: string): Promise<void> {
   const manager = new WorkspaceManager(workspaceRoot);
@@ -13,14 +14,14 @@ export async function run(name: string, workspaceRoot: string): Promise<void> {
     process.exit(1);
   }
 
-  const distDesktop = path.join(showcasePath, 'dist', 'desktop');
-  if (!fs.existsSync(path.join(distDesktop, 'main.js'))) {
-    log(`No built output found for "${name}". Run "build" first.`);
+  const runTarget = resolveShowcaseRunTarget(showcasePath, 'desktop');
+  if (runTarget.kind === 'missing') {
+    log(`No verified precompiled or local build output found for "${name}". Run "build" first.`);
     process.exit(1);
   }
 
-  log(`Launching ${name}...`);
-  const child = spawn('lynxtron', [distDesktop], {
+  log(`Launching ${name} from ${runTarget.kind} output...`);
+  const child = spawn('lynxtron', [runTarget.path], {
     stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env },
   });

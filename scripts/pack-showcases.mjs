@@ -18,6 +18,9 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { mkdir, readFile, readdir, rename } from 'node:fs/promises';
+import {
+  finalizeShowcaseTarball,
+} from './showcase-release-pack.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -104,7 +107,8 @@ async function buildAndPackShowcase(dir) {
 
   log(`Packing ${name} -> ${outDir}`);
   await run('pnpm', ['pack', '--pack-destination', outDir], { cwd: dir });
-  await stripVersionSuffix(dir);
+  const tarballPath = await stripVersionSuffix(dir);
+  await finalizeShowcaseTarball(tarballPath, path.join(dir, 'dist'));
 }
 
 // `pnpm pack` names the tarball `<scope>-<name>-<version>.tgz` with no way to
@@ -117,11 +121,11 @@ async function stripVersionSuffix(showcaseDir) {
   const src = path.join(outDir, `${scopeless}-${pkg.version}.tgz`);
   const dest = path.join(outDir, `${scopeless}.tgz`);
   if (!fs.existsSync(src)) {
-    log(`WARN expected tarball not found: ${src}`);
-    return;
+    throw new Error(`Expected tarball not found: ${src}`);
   }
   if (fs.existsSync(dest)) fs.rmSync(dest);
   await rename(src, dest);
+  return dest;
 }
 
 async function main() {

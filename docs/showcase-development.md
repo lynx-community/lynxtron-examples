@@ -18,7 +18,8 @@ Important distinctions:
 
 - A **showcase** is a full Lynxtron app, not a UI-only example bundle
 - An **example artifact** is a pure Lynx UI published artifact and does not imply `dist/desktop`
-- `pnpm preview` validates the **dist distribution flow** locally; it is not a source-mode shortcut
+- `dist/` is always a local build directory; a published precompiled artifact is stored separately as `dist_precompiled/`
+- `pnpm preview` validates the **precompiled distribution flow** locally; it is not a source-mode shortcut
 
 ## Environment Requirements
 
@@ -283,13 +284,108 @@ Build outputs include:
 - `dist/desktop/preload.js`
 - `dist/desktop/main.lynx.bundle`
 
+## Published Showcase Artifact Format
+
+Development builds continue to write `dist/`. The Release workflow must never
+publish that directory with official artifact identity because the extracted
+showcase is editable and subsequent local builds also write `dist/`.
+
+Each published showcase tarball has this layout:
+
+```text
+package/
+├── .lynxtron-release.json
+├── package.json
+├── lynx.config.ts
+├── rspack.config.ts
+├── src/...
+└── dist_precompiled/
+    ├── desktop/
+    │   ├── main.js
+    │   ├── main.lynx.bundle
+    │   └── package.json
+    └── web/...                  # only when the showcase has a web target
+```
+
+The public tarball must not contain `dist/` or `output/`. `pnpm run build`
+creates those local/intermediate directories first. The packaging script runs
+`pnpm pack`, removes `package/dist` and `package/output` from the packed payload,
+injects the completed build as `package/dist_precompiled`, and then writes the
+release manifest. The manifest is written after `pnpm pack` has normalized
+`catalog:` and `workspace:` dependency versions, so consumers hash exactly the
+same `package.json` bytes that were published.
+
+### Release manifest and hashes
+
+`.lynxtron-release.json` binds one published source snapshot to one complete
+precompiled artifact tree:
+
+```json
+{
+  "schemaVersion": 1,
+  "hashAlgorithm": "sha256-tree-v1",
+  "source": { "hash": "<sha256>" },
+  "artifact": {
+    "root": "dist_precompiled",
+    "hash": "<sha256>",
+    "files": ["desktop/main.js", "desktop/main.lynx.bundle", "desktop/package.json"],
+    "targets": {
+      "desktop": {
+        "root": "desktop",
+        "requiredFiles": ["main.js", "main.lynx.bundle", "package.json"]
+      }
+    }
+  }
+}
+```
+
+The source hash covers every file in the published package payload except these
+top-level implementation or generated entries:
+
+```text
+.git/
+.lynxtron-go-cache.json
+.lynxtron-release.json
+dist/
+dist_precompiled/
+node_modules/
+output/
+```
+
+`main.lynx.bundle`, `main.js`, and everything else below
+`dist_precompiled/` are artifacts and must never participate in the source
+hash. The artifact hash covers the complete `dist_precompiled/` tree. Hashing
+uses sorted POSIX relative paths plus each file's SHA-256 content hash; mtimes
+and absolute paths are never inputs.
+
+### Runtime selection and fallback
+
+The runtime follows this order:
+
+| Source hash | Precompiled artifact | Result |
+|---|---|---|
+| matches | file list, required files, and artifact hash all match | run `dist_precompiled/<target>` |
+| matches | missing, unavailable, incomplete, or hash mismatch | install/build source and run `dist/<target>` |
+| differs | any state | build the edited source and run `dist/<target>` |
+
+`dist/` is only a local build candidate. It must never be accepted as the
+official precompiled artifact, and a local build must never write into
+`dist_precompiled/`. Conversely, a verified precompiled run must not load files
+from `dist/`.
+
+The format and decision matrix are enforced by the CLI release-format tests:
+
+```bash
+pnpm --dir packages/cli test
+```
+
 ## E2E Testing with Local Registry
 
 To test the dist distribution flow locally, use the local registry script.
 
 This validates the same product promise that preview is meant to protect:
 
-- showcases are packed as dist artifacts
+- showcases are packed with verified `dist_precompiled/` artifacts
 - Lynxtron GO can consume them
 - the user does not need to manually rebuild showcase source code just to preview them
 
@@ -350,7 +446,8 @@ Merging that PR triggers publishing:
   - Lynxtron GO installers: `*.dmg` (macOS) and `*-Setup.exe` (Windows), built via
     `lynxtron-builder`.
   - Every publishable showcase (a package with `showcase` metadata) packed as a
-    `.tgz` and built on the macOS runner because native `.node` addons are
+    `.tgz` containing source, `.lynxtron-release.json`, and `dist_precompiled/`.
+    It is built on the macOS runner because native `.node` addons are
     host-platform specific. Standalone cases without that metadata, such as
     `codex-demo`, are not included in release artifacts.
 
@@ -397,6 +494,7 @@ Before submitting a showcase:
 
 - [ ] `pnpm run build` produces a runnable `dist/desktop/`
 - [ ] `lynxtron ./dist/desktop` launches successfully
+- [ ] `node scripts/pack-showcases.mjs` produces tarballs with `.lynxtron-release.json` and `dist_precompiled/`, without `dist/` or `output/`
 - [ ] `showcase` field in `package.json` has description and tags
 - [ ] `lynx.config.ts` uses `@lynxtron-examples/config`
 - [ ] No HTML elements — only Lynx built-in elements (`<view>`, `<text>`, etc.)
