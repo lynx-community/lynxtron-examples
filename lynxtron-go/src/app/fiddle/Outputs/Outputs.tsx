@@ -77,10 +77,6 @@ export function Outputs(props: OutputsProps) {
   const uptimeMs = props.runningPid != null && props.runStartMs != null
     ? nowMs - props.runStartMs
     : null;
-  const consoleText = entries
-    .map(e => `${e.timestamp} ${e.message}`)
-    .join('\n');
-
   return (
     <view className="Outputs">
       <view className="Outputs-Header">
@@ -122,7 +118,19 @@ export function Outputs(props: OutputsProps) {
           text-selection={true}
           flatten={false}
         >
-          {consoleText || 'Run output streams here · ⌘R'}
+          {entries.length === 0
+            ? 'Run output streams here · ⌘R'
+            : entries.map((entry, index) => (
+              // Keep every styled span below one selectable text root. This
+              // preserves PR #78's continuous cross-line selection while
+              // restoring the per-stream intent colours it removed.
+              <text key={entry.seq ?? index} className="Outputs-Entry">
+                <text className="Outputs-Timestamp">{entry.timestamp}</text>
+                {'  '}
+                <text className={`Outputs-Message Outputs-Message--${entry.stream}`}>{entry.message}</text>
+                {index < entries.length - 1 ? '\n' : ''}
+              </text>
+            ))}
         </text>
       </scroll-view>
     </view>

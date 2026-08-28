@@ -193,6 +193,28 @@ export interface ProcessLogEntry {
   seq?: number;
 }
 
+interface PreloadProcessLogEntry {
+  level: 'info' | 'warn' | 'error';
+  source: string;
+  message: string;
+}
+
+/** Convert the preload service's wire format into the UI log model. */
+export function normalizePreloadProcessEntries(
+  entries: PreloadProcessLogEntry[],
+  timestamp = new Date().toISOString().slice(11, 19),
+): ProcessLogEntry[] {
+  return entries.map((entry) => ({
+    timestamp,
+    stream: entry.message.startsWith('$ ') || entry.message.startsWith('cwd:')
+      ? 'command'
+      : entry.level === 'error' || entry.level === 'warn'
+        ? 'stderr'
+        : 'stdout',
+    message: entry.message,
+  }));
+}
+
 const processLog: ProcessLogEntry[] = [];
 let processLogSeq = 0;
 let processPollStarted = false;
@@ -237,8 +259,8 @@ export function ensureProcessLogPolling(): void {
   processPollStarted = true;
   setInterval(() => {
     try {
-      const raw: ProcessLogEntry[] = showcaseApi()?.readProcessOutput?.() ?? [];
-      if (raw.length > 0) pushProcessEntries(raw);
+      const raw: PreloadProcessLogEntry[] = showcaseApi()?.readProcessOutput?.() ?? [];
+      if (raw.length > 0) pushProcessEntries(normalizePreloadProcessEntries(raw));
     } catch (_) { /* preload not attached during boot */ }
   }, 250);
 }
