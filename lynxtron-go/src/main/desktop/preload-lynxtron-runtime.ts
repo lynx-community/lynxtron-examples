@@ -136,24 +136,29 @@ export function resolveLynxtronPackageEntryPath(dbg: DebugLogger): string {
   return path.join(resolveLynxtronPackageRoot(getRuntimeRequire()), 'lynxtron.js');
 }
 
-function getAppResourcesPath(dbg?: DebugLogger): string | null {
-  if (process.platform === 'darwin') {
+export function appResourcesPathForExecutable(
+  executablePath: string,
+  platform: NodeJS.Platform,
+): string | null {
+  const platformPath = platform === 'win32' ? path.win32 : path.posix;
+  if (platform === 'darwin') {
     // macOS: .app/Contents/Resources
-    const appPath = process.execPath;
+    const appPath = executablePath;
     if (appPath.endsWith('.app/Contents/MacOS/') || appPath.includes('.app/Contents/MacOS/')) {
-      const contentsDir = path.dirname(path.dirname(appPath));
-      const resourcesPath = path.join(contentsDir, 'Resources');
-      dbg?.(`macOS resources path detected: ${resourcesPath}`);
-      return resourcesPath;
+      const contentsDir = platformPath.dirname(platformPath.dirname(appPath));
+      return platformPath.join(contentsDir, 'Resources');
     }
-  } else if (process.platform === 'win32') {
+  } else if (platform === 'win32') {
     // Windows: resources
-    const exeDir = path.dirname(process.execPath);
-    const resourcesPath = path.join(exeDir, 'resources');
-    dbg?.(`Windows resources path detected: ${resourcesPath}`);
-    return resourcesPath;
+    return platformPath.join(platformPath.dirname(executablePath), 'resources');
   }
   return null;
+}
+
+export function getAppResourcesPath(dbg?: DebugLogger): string | null {
+  const resourcesPath = appResourcesPathForExecutable(process.execPath, process.platform);
+  if (resourcesPath) dbg?.(`${process.platform} resources path detected: ${resourcesPath}`);
+  return resourcesPath;
 }
 
 function tryFindAsarUnpackedExecutable(dbg?: DebugLogger): LynxtronRuntimePaths | null {

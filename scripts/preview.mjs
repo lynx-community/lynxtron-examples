@@ -339,6 +339,10 @@ async function main() {
       log(`Skipping ${path.basename(dir)} (no "showcase" metadata in package.json)`);
       continue;
     }
+    if (pkg.showcase.distribution === 'builtin') {
+      log(`Skipping ${path.basename(dir)} (packed into the Lynxtron Go installer build)`);
+      continue;
+    }
     await buildAndPackShowcase(dir);
   }
 

@@ -109,6 +109,7 @@ export default defineConfig({
     filename: '[name].js',
   },
   externals: {
+    '@lynx-js/lynxtron': 'commonjs lynxtron',
     sqlite3: 'commonjs sqlite3',
   },
   module: {

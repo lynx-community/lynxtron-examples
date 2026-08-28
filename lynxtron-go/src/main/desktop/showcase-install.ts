@@ -33,12 +33,6 @@ export interface NodeVersionRequirement {
 
 export type ShowcaseTarget = 'desktop' | 'web';
 
-// @lynx-js/lynxtron <= 0.0.15 installs its runtime with extract-zip@2.0.1,
-// whose yauzl@2.x stream can hang on Node 24.16-24.17 and Node >=26.1.
-// Node 24.18 reverted the stream regression; keep the upper bound conservative
-// until the Node 26 line ships and verifies the corresponding fix.
-export const SHOWCASE_INSTALL_NODE_RANGE = '>=22 <24.16.0 || >=24.18.0 <26.1.0';
-
 const SOURCE_SKIP_DIRS = new Set([
   '.git',
   'node_modules',
@@ -291,8 +285,11 @@ export function isNodeVersionSatisfied(currentVersion: string, range: string): b
   return disjunctions.some(part => tokenizeNodeRange(part).every(token => satisfiesRangeToken(versionParts, token)));
 }
 
-export function formatShowcaseInstallNodeCompatibilityError(currentVersion: string): string {
-  return `Node.js version ${currentVersion} is incompatible with the Lynxtron showcase installer. Use a Node.js version matching ${SHOWCASE_INSTALL_NODE_RANGE}, then retry.`;
+export function formatShowcaseInstallNodeCompatibilityError(
+  currentVersion: string,
+  requiredRange: string,
+): string {
+  return `The system node resolved from PATH is version ${currentVersion}, but @lynx-js/lynxtron declares Node.js ${requiredRange}. Activate a matching Node.js version in your shell, restart Lynxtron Go, then retry.`;
 }
 
 function describeNodeVersionRange(range: string): string {
@@ -309,9 +306,8 @@ function describeNodeVersionRange(range: string): string {
   return trimmed;
 }
 
-// Published showcase source fallback runs Node via Lynxtron itself, not the
-// system install — so a Node version mismatch is a Lynxtron build to update,
-// never a nudge to install a different Node.
+// Source fallback deliberately uses the user's normal system Node/npm
+// toolchain. Lynxtron's executable is only the app runtime, never a Node shim.
 export function formatNodeVersionRequirementError(
   requirement: NodeVersionRequirement,
   currentVersion: string | null,

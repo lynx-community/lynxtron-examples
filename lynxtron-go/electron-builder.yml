@@ -35,6 +35,8 @@ extraResources:
     to: brand/lynxtron-on-dark.png
   - from: thumbnails
     to: thumbnails
+  - from: resources/builtin-showcases
+    to: builtin-showcases
   # Opened by the platform browser, which cannot read an app.asar path.
   - from: src/main/desktop/help.html
     to: help.html

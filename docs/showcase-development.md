@@ -96,6 +96,8 @@ mkdir -p showcases/my-app/src/main/desktop
 - `showcase.description` — shown in Lynxtron GO's showcase list
 - `showcase.tags` — used for filtering (`beginner`, `advanced`, `animation`, etc.)
 - `showcase.minToolchainVersion` — minimum `@lynxtron-examples/*` version required
+- `showcase.distribution` — omit for a GitHub Release asset; use `"builtin"`
+  only for a standard showcase artifact embedded in the Lynxtron Go installer
 
 ### 3. Create `lynx.config.ts`
 
@@ -315,6 +317,15 @@ release manifest. The manifest is written after `pnpm pack` has normalized
 `catalog:` and `workspace:` dependency versions, so consumers hash exactly the
 same `package.json` bytes that were published.
 
+The normalized dependency versions must already exist on npm and expose every
+subpath referenced by the packed source. A workspace link proving that a local
+build succeeds is not release evidence. In particular, each showcase keeps the
+small `{'@lynx-js/lynxtron': 'commonjs lynxtron'}` Rspack external mapping inline
+instead of importing a workspace-only helper; this lets source fallback build
+against the published `@lynxtron-examples/config` version. A new shared config
+API must be published to npm before any installer or showcase artifact starts
+referencing it.
+
 ### Release manifest and hashes
 
 `.lynxtron-release.json` binds one published source snapshot to one complete
@@ -360,6 +371,30 @@ and absolute paths are never inputs.
 
 ### Runtime selection and fallback
 
+Lynxtron Go classifies a project from the project root, not from the presence
+of a `dist/` directory. The only precompiled short path is all of the following:
+
+1. `package.json` declares `showcase` (the project is a released case);
+2. `.lynxtron-release.json` verifies against the current source tree;
+3. the requested target exists in `dist_precompiled/` and its complete file
+   list, required files, and artifact hash verify.
+
+If any condition is false, the project follows the ordinary source path:
+install dependencies when required, run `npm run build`, validate
+`dist/<target>`, and launch it. This is not a special "force rebuild when an old
+dist exists" rule: `dist/` is simply source-build output and is never an input
+to classification. Blank, Gist, Custom, modified cases, and cases whose
+artifact cannot be opened all share this source path.
+
+Source-path commands use `node` and `npm` resolved from the app's inherited
+`PATH`. Lynxtron Go does not run the Lynxtron executable in Node mode, search
+version-manager directories, or silently select another installed Node. Before
+install/build it reads `engines.node` from the project's installed
+`@lynx-js/lynxtron/package.json` (falling back to the Lynxtron package bundled
+with Go), checks the current `node --version` against that published contract,
+and reports both values on mismatch. Lynxtron owns the compatibility range;
+Go must not maintain an additional hard-coded allow/deny list.
+
 The runtime follows this order:
 
 | Source hash | Precompiled artifact | Result |
@@ -372,6 +407,54 @@ The runtime follows this order:
 official precompiled artifact, and a local build must never write into
 `dist_precompiled/`. Conversely, a verified precompiled run must not load files
 from `dist/`.
+
+### Editable project format
+
+Every editable Lynxtron Go project uses the complete starter layout:
+
+```text
+package.json
+lynx.config.ts
+rspack.config.ts
+src/app/index.tsx
+src/app/App.tsx
+src/app/App.css
+src/app/tsconfig.json
+src/main/desktop/main.ts
+src/main/desktop/tsconfig.json
+```
+
+The installer-bundled Hello case is the canonical starter source. A new Blank
+project copies that complete source into `~/.lynxtron-go/projects/`, removes
+the case identity, release manifest, `dist_precompiled/`, generated output and
+dependency directories, and then behaves as an ordinary source project. Gists
+use the same project format; the retired five-file Gist shape is migrated once
+on import. No code path materializes editor files directly into a temporary
+`dist/desktop`, and renderer code never decides between precompiled and source
+execution.
+
+### Installer-bundled showcases
+
+A standard showcase may set `showcase.distribution` to `"builtin"`. It still
+uses the exact release artifact format above: source, `.lynxtron-release.json`,
+and `dist_precompiled/` are packed into a tgz. The only difference is transport:
+
+- the regular `scripts/pack-showcases.mjs` command excludes built-in showcases
+  from GitHub Release assets;
+- `scripts/pack-showcases.mjs --builtin` builds only those showcases and stages
+  their tgz files in the Lynxtron Go installer;
+- the app resolves `builtin-showcase://<name>` to that staged tgz and then uses
+  the normal CLI fetch, cache, hash verification, edit, build, and run paths.
+
+Built-in artifact filenames include the installer tag. Because the CLI cache
+key includes the physical file URL, installing a new formal or branch build
+invalidates the previously extracted built-in workspace. The installed tgz is
+read-only; user edits happen only in the materialized workspace under
+`~/.lynxtron-go/showcases/`.
+
+`@lynxtron-examples/hello-lynxtron` is the offline starter that exercises this
+mode. It is not an in-memory Fiddle template and is not uploaded as a standalone
+Release asset.
 
 The format and decision matrix are enforced by the CLI release-format tests:
 
@@ -495,6 +578,10 @@ Before submitting a showcase:
 - [ ] `pnpm run build` produces a runnable `dist/desktop/`
 - [ ] `lynxtron ./dist/desktop` launches successfully
 - [ ] `node scripts/pack-showcases.mjs` produces tarballs with `.lynxtron-release.json` and `dist_precompiled/`, without `dist/` or `output/`
+- [ ] Public showcase packing does not produce a Hello artifact; `node scripts/pack-showcases.mjs --builtin --out lynxtron-go/resources/builtin-showcases` produces exactly one versioned Hello tgz
+- [ ] The built-in Hello tgz contains `.lynxtron-release.json` and `dist_precompiled/desktop/main.lynx.bundle`
+- [ ] The built-in Hello tgz references a published config version and its Rspack config does not import workspace-only package subpaths
+- [ ] Project run matrix passes: unchanged case uses `dist_precompiled`; modified case, corrupt/missing artifact, custom, and modified custom build and run from `dist`
 - [ ] `showcase` field in `package.json` has description and tags
 - [ ] `lynx.config.ts` uses `@lynxtron-examples/config`
 - [ ] No HTML elements — only Lynx built-in elements (`<view>`, `<text>`, etc.)

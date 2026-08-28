@@ -22,7 +22,7 @@ export interface TreeNode {
 // ── Constants ──────────────────────────────────────────────────────────────
 
 export const HIDDEN = new Set([
-  '.git', 'node_modules', '.DS_Store', 'dist', 'build', '__pycache__',
+  '.git', 'node_modules', '.DS_Store', 'dist', 'dist_precompiled', 'build', '__pycache__',
   '.yarn', 'out', 'output', '.next', 'coverage',
 ]);
 
@@ -82,6 +82,8 @@ export interface ShowcaseEntry {
   targets?: ShowcaseTarget[];
   url: string;  // preview: file:///path/to.tgz, remote: https://github.com/.../tree/...
   path?: string;
+  /** Built into the installer rather than uploaded as a standalone Release asset. */
+  distribution?: 'release' | 'builtin';
   /** file:// URL resolved from the runtime resource root. */
   thumbnail?: string | null;
 }
@@ -118,6 +120,7 @@ export const FIDDLE_CATALOG: FiddleCatalog =
 
 /** The showcase that hosts every ported fiddle. */
 export const FIDDLE_SHOWCASE_NAME = '@lynxtron-examples/electron-fiddles';
+export const HELLO_SHOWCASE_NAME = '@lynxtron-examples/hello-lynxtron';
 
 declare const __SHOWCASE_REGISTRY__: ShowcaseEntry[];
 declare const __SHOWCASE_PREVIEW__: boolean;

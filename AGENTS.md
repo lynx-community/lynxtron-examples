@@ -246,11 +246,20 @@ scripts/
 ### Preload Showcase API
 ```typescript
 showcase.fetch(url)       // fetch from URL (GitHub or file:// tarball)
-showcase.run(path)        // spawn independent lynxtron process
+showcase.runProject(path) // classify, build when required, and launch a complete project
 showcase.list()           // list downloaded showcases
 showcase.isShowcase(dir)  // check package.json for showcase field
-showcase.isBuilt(dir)     // check dist/desktop/main.js exists
+showcase.createCustomProject(files?) // copy the built-in starter into an editable project
 ```
+
+Only a source-matched, fully verified released showcase may run from
+`dist_precompiled`. Every other project uses the source build path; `dist/`
+never participates in project classification.
+
+Source builds use only the system `node`/`npm` resolved from `PATH`. Do not
+scan nvm/fnm/Volta installations or use Lynxtron in Node mode. Validate the
+resolved version against `@lynx-js/lynxtron`'s published `engines.node`; Go
+must not define a second compatibility range.
 
 ## Creating a Showcase
 

@@ -15,6 +15,7 @@ import {
   exampleArtifactApi,
   SHOWCASE_REGISTRY,
   FIDDLE_SHOWCASE_NAME,
+  HELLO_SHOWCASE_NAME,
   FIDDLE_CATALOG,
   SHOWCASE_LOCAL_WORKSPACE,
   appendOutput,
@@ -2180,32 +2181,11 @@ export function App(props: { onRender?: () => void } = {}) {
       setStatus(`[runShowcaseEntry] showcasePath resolved: ${showcasePath}`);
       if (!showcasePath) return;
       
-      log(`[runShowcaseEntry] Checking if built: ${showcasePath}`);
-      const isBuilt = api.isBuilt(showcasePath);
-      console.log('[runShowcaseEntry] isBuilt:', isBuilt);
-      log(`[runShowcaseEntry] isBuilt: ${isBuilt}`);
-      const needsSourceBuild = !isBuilt || !!api.needsSourceRun?.(showcasePath);
-      if (needsSourceBuild) {
-        const why = isBuilt ? 'Published source differs from the available build' : 'Precompiled artifact unavailable';
-        showOutput('info', `${why} — building locally...`);
-        appendProcessLine('command', `${why}; fallback to npm start`);
-        setStatus('Building locally...');
-        const pid = await api.start(showcasePath);
-        setRunningPid(pid);
-        showOutput('info', `Local build & launch started (pid ${pid})`);
-        appendProcessLine('command', `Local build & launch (pid ${pid})`);
-        setStatus(`Running local build (pid ${pid})`);
-        return;
-      }
-      
-      showOutput('info', `Launching showcase: ${showcasePath}`);
-      setStatus('Launching showcase...');
-      log(`[runShowcaseEntry] Calling api.run...`);
-      const pid = api.run(showcasePath);
-      console.log('[runShowcaseEntry] api.run returned pid:', pid);
-      log(`[runShowcaseEntry] api.run returned pid: ${pid}`);
+      showOutput('info', `Preparing project: ${showcasePath}`);
+      setStatus('Classifying and launching project...');
+      const pid = await api.runProject(showcasePath);
       setRunningPid(pid);
-      showOutput('info', `Showcase launched (pid ${pid})`);
+      showOutput('info', `Project launched (pid ${pid})`);
       appendProcessLine('command', `Launched (pid ${pid})`);
       setStatus(`Running (pid ${pid})`);
     } catch (e: any) {
@@ -2419,42 +2399,12 @@ export function App(props: { onRender?: () => void } = {}) {
         return;
       }
 
-      const shouldRunFromSource =
-        !api.isBuilt(target.rootPath) || !!api.needsSourceRun?.(target.rootPath);
-      if (shouldRunFromSource) {
-        if (!api.start) {
-          showOutput('error', 'Showcase source run API not available');
-          setStatus('Run unavailable');
-          return;
-        }
-
-        if (api.needsInstall?.(target.rootPath)) {
-          showOutput('info', `Installing dependencies: ${target.rootPath}`);
-          setStatus('Installing dependencies...');
-        }
-
-        if (!api.needsInstall?.(target.rootPath)) {
-          setStatus('Launching run...');
-        }
-        showOutput('info', `Launching run from source: ${target.rootPath}`);
-        try {
-          const pid = await api.start(target.rootPath);
-          setRunningPid(pid);
-          showOutput('info', `Run command started (pid ${pid})`);
-          setStatus(`Run starting (pid ${pid})`);
-        } catch (e: any) {
-          showOutput('error', `Run failed: ${e.message}`);
-          setStatus('Run failed');
-        }
-        return;
-      }
-
-      showOutput('info', `Launching run: ${target.rootPath}`);
-      setStatus('Launching run...');
+      showOutput('info', `Preparing project: ${target.rootPath}`);
+      setStatus('Classifying and launching project...');
       try {
-        const pid = api.run(target.rootPath);
+        const pid = await api.runProject(target.rootPath);
         setRunningPid(pid);
-        showOutput('info', `Run launched (pid ${pid})`);
+        showOutput('info', `Project launched (pid ${pid})`);
         setStatus(`Run running (pid ${pid})`);
       } catch (e: any) {
         showOutput('error', `Run failed: ${e.message}`);
@@ -2819,7 +2769,11 @@ export function App(props: { onRender?: () => void } = {}) {
     <Fiddle
       rootPath={currentRootPath}
       onOpenGallery={() => setGalleryOpen(true)}
-      onRunShowcase={(entry) => { void runShowcaseEntry(entry); }}
+      onOpenHelloShowcase={() => {
+        const entry = SHOWCASE_REGISTRY.find(item => item.name === HELLO_SHOWCASE_NAME);
+        if (entry) openShowcaseInFiddle(entry);
+        else showOutput('error', 'Built-in Hello showcase is unavailable');
+      }}
       pendingShowcaseTemplate={pendingShowcaseTemplate}
       onShowcaseTemplateConsumed={() => setPendingShowcaseTemplate(null)}
       pendingFiddleOpen={pendingFiddleOpen}

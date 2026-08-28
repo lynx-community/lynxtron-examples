@@ -82,4 +82,13 @@ describe('resolveShowcaseUrl', () => {
       name: 'floating-clock',
     });
   });
+
+  it('restores the bare name from a versioned built-in installer artifact', () => {
+    const url = 'file:///Applications/Lynxtron%20Go.app/Contents/Resources/builtin-showcases/lynxtron-examples-hello-lynxtron-0.1.6-64b8f7.tgz';
+    expect(resolveShowcaseUrl(url)).toEqual({
+      type: 'local',
+      filePath: '/Applications/Lynxtron Go.app/Contents/Resources/builtin-showcases/lynxtron-examples-hello-lynxtron-0.1.6-64b8f7.tgz',
+      name: 'hello-lynxtron',
+    });
+  });
 });

@@ -1,7 +1,7 @@
 import { foundationApi, type ShowcaseEntry } from '../../store';
 import { resolveShowcaseWorkspacePath } from '../../shared/showcase-workspace';
 import { detectLanguage } from '../../syntax';
-import { isSafeRelativePath, type FiddleSnapshot, type FiddleFile, type EditorId } from '../state/FiddleState';
+import { isSafeRelativePath, type FiddleSnapshot, type FiddleFile, type EditorId, type FiddleSource } from '../state/FiddleState';
 
 // Opening a showcase in the Fiddle = Electron Fiddle's "load from the web":
 // download/extract the package to a workspace, surface its source files in
@@ -16,13 +16,26 @@ export async function resolveShowcaseWorkspace(entry: ShowcaseEntry): Promise<st
 }
 
 const CODE_FILE = /\.(cjs|mjs|js|jsx|ts|tsx|css|scss|less|json|html)$/;
-const SKIP_DIRS = new Set(['node_modules', 'dist', 'output', 'build', '.git', '.rspeedy', 'coverage']);
+const SKIP_DIRS = new Set([
+  'node_modules',
+  'dist',
+  'dist_precompiled',
+  'output',
+  'build',
+  '.git',
+  '.rspeedy',
+  'coverage',
+]);
 const SKIP_FILES = new Set(['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'tsconfig.tsbuildinfo']);
 const MAX_FILES = 14;
 const MAX_FILE_BYTES = 120 * 1024;
 
 /** Collect the showcase's source files (root + up to 2 levels) into a snapshot. */
-export function loadShowcaseFiddle(entry: ShowcaseEntry, workspaceRoot: string): FiddleSnapshot | null {
+export function loadProjectFiddle(
+  title: string,
+  workspaceRoot: string,
+  source: FiddleSource,
+): FiddleSnapshot | null {
   const fs = foundationApi()?.fs;
   if (!fs) return null;
 
@@ -75,11 +88,27 @@ export function loadShowcaseFiddle(entry: ShowcaseEntry, workspaceRoot: string):
   }
 
   return {
-    source: { kind: 'showcase', ref: workspaceRoot },
+    source,
     files,
     activeEditorId: collected[0]?.rel ?? null,
-    title: entry.name,
+    title,
   };
+}
+
+export function loadShowcaseFiddle(entry: ShowcaseEntry, workspaceRoot: string): FiddleSnapshot | null {
+  return loadProjectFiddle(entry.name, workspaceRoot, { kind: 'showcase', ref: workspaceRoot });
+}
+
+/** Map the retired five-file fiddle format onto the standard Lynx project. */
+export function projectOverlayForFiles(values: Record<string, string>): Record<string, string> {
+  if (Object.keys(values).some(name => name.startsWith('src/'))) return values;
+  const overlay: Record<string, string> = {};
+  if (values['main.js']) overlay['src/main/desktop/main.ts'] = values['main.js'];
+  if (values['renderer.js']) overlay['src/app/index.tsx'] = values['renderer.js'];
+  if (values['styles.css'] != null) overlay['src/app/App.css'] = values['styles.css'];
+  if (values['preload.js']) overlay['src/main/desktop/preload.ts'] = values['preload.js'];
+  if (values['package.json']) overlay['package.json'] = values['package.json'];
+  return overlay;
 }
 
 /**
@@ -105,7 +134,7 @@ export function loadSingleFiddle(
     fs.join?.(workspaceRoot, 'fiddles', fiddle.upstream) ??
     `${workspaceRoot}/fiddles/${fiddle.upstream}`;
 
-  const snap = loadShowcaseFiddle(entry, dir);
+  const snap = loadProjectFiddle(entry.name, dir, { kind: 'showcase', ref: dir });
   if (!snap) return null;
   return {
     ...snap,

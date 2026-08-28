@@ -12,7 +12,8 @@
       ],
       "targets": [
         "desktop"
-      ]
+      ],
+      "distribution": "release"
     },
     {
       "name": "@lynxtron-examples/counter",
@@ -24,7 +25,8 @@
       ],
       "targets": [
         "desktop"
-      ]
+      ],
+      "distribution": "release"
     },
     {
       "name": "@lynxtron-examples/cross-platform-notes",
@@ -39,7 +41,8 @@
       "targets": [
         "desktop",
         "web"
-      ]
+      ],
+      "distribution": "release"
     },
     {
       "name": "@lynxtron-examples/electron-fiddles",
@@ -53,7 +56,8 @@
       ],
       "targets": [
         "desktop"
-      ]
+      ],
+      "distribution": "release"
     },
     {
       "name": "@lynxtron-examples/file-explorer",
@@ -67,7 +71,8 @@
       ],
       "targets": [
         "desktop"
-      ]
+      ],
+      "distribution": "release"
     },
     {
       "name": "@lynxtron-examples/floating-clock",
@@ -79,7 +84,22 @@
       ],
       "targets": [
         "desktop"
-      ]
+      ],
+      "distribution": "release"
+    },
+    {
+      "name": "@lynxtron-examples/hello-lynxtron",
+      "description": "Minimal LynxWindow and ReactLynx starter",
+      "path": "showcases/hello-lynxtron",
+      "thumbnail": null,
+      "tags": [
+        "beginner",
+        "builtin"
+      ],
+      "targets": [
+        "desktop"
+      ],
+      "distribution": "builtin"
     },
     {
       "name": "@lynxtron-examples/native-texture-canvas",
@@ -94,7 +114,8 @@
       ],
       "targets": [
         "desktop"
-      ]
+      ],
+      "distribution": "release"
     },
     {
       "name": "@lynxtron-examples/pc-mouse-cursor",
@@ -109,7 +130,8 @@
       "targets": [
         "desktop",
         "web"
-      ]
+      ],
+      "distribution": "release"
     },
     {
       "name": "@lynxtron-examples/system-monitor",
@@ -123,7 +145,8 @@
       ],
       "targets": [
         "desktop"
-      ]
+      ],
+      "distribution": "release"
     },
     {
       "name": "@lynxtron-examples/todolist",
@@ -139,7 +162,8 @@
       ],
       "targets": [
         "desktop"
-      ]
+      ],
+      "distribution": "release"
     },
     {
       "name": "lynxtron-go",
@@ -152,7 +176,8 @@
       ],
       "targets": [
         "desktop"
-      ]
+      ],
+      "distribution": "release"
     }
   ]
 }

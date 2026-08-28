@@ -19,6 +19,7 @@ export default defineConfig({
     path: path.resolve(__dirname, 'dist/desktop/'),
     filename: '[name].js',
   },
+  externals: { '@lynx-js/lynxtron': 'commonjs lynxtron' },
   module: {
     rules: [
       {

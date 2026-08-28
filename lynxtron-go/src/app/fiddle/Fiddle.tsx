@@ -13,13 +13,12 @@ import { HistoryDialog } from './history/HistoryDialog';
 import './history/HistoryDialog.css';
 import { ToasterHost, AppToaster } from './bp';
 import { useFiddle } from './state/useFiddle';
-import { materializeFiddle } from './runner/materialize';
 import { pickSaveFolder, writeFiddleToFolder } from './runner/save';
 import { useRunner } from './runner/useRunner';
-import { spawnRuntimeForWorkspace } from './runner/spawnRuntime';
+import { resolveLocalRuntimeExecutable } from './runner/spawnRuntime';
 import { loadGistFiddle, parseGistId, publishGistFiddle } from './gist/gist-loader';
 import { loadLocalFiddle } from './runner/open';
-import { resolveShowcaseWorkspace, loadShowcaseFiddle, loadSingleFiddle, writeFiddleToWorkspace } from './runner/showcase-open';
+import { resolveShowcaseWorkspace, loadProjectFiddle, loadShowcaseFiddle, loadSingleFiddle, projectOverlayForFiles, writeFiddleToWorkspace } from './runner/showcase-open';
 import { showcaseApi, appendFiddleOutput as appendOutput, type ShowcaseEntry, foundationApi, getExposed } from '../store';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './dev-preset';
 import { applyEditorThemeAll, setThemeSetting } from './theme';
@@ -32,8 +31,9 @@ import { PlatformOverlay } from '../components/shared/PlatformOverlay';
 export interface FiddleProps {
   rootPath: string | null;
   onOpenGallery: () => void;
+  /** Open the installer-bundled Hello showcase through the normal showcase path. */
+  onOpenHelloShowcase: () => void;
   onCloseGallery?: () => void;
-  onRunShowcase?: (entry: ShowcaseEntry) => void;
   lynxtronVersion?: string;
   /** Showcase handed over by the gallery's Open — consumed once on mount/change. */
   pendingShowcaseTemplate?: ShowcaseEntry | null;
@@ -72,6 +72,7 @@ export interface FiddlePaletteSource {
 export function Fiddle(props: FiddleProps) {
   const fiddle = useFiddle();
   const runner = useRunner();
+  const initialStarterRequested = useRef(false);
   const [isConsoleShowing, setConsoleShowing] = useState(true);
   const devBoot = isDevMode() ? DEV_PRESET : null;
   const [templatePickerOpen, setTemplatePickerOpen] = useState(devBoot?.openSurface === 'templates');
@@ -80,8 +81,13 @@ export function Fiddle(props: FiddleProps) {
   const [versionsOpen, setVersionsOpen] = useState(devBoot?.openSurface === 'versions');
   const [tourOpen, setTourOpen] = useState(devBoot?.openSurface === 'tour');
   const [historyOpen, setHistoryOpen] = useState(devBoot?.openSurface === 'history');
-  const [currentShowcase, setCurrentShowcase] = useState<ShowcaseEntry | null>(null);
   const [mainRegionHeight, setMainRegionHeight] = useState(0);
+
+  useEffect(() => {
+    if (initialStarterRequested.current || fiddle.restoredSession || fiddle.snap.files.size > 0) return;
+    initialStarterRequested.current = true;
+    props.onOpenHelloShowcase();
+  }, [fiddle.restoredSession, fiddle.snap.files.size, props.onOpenHelloShowcase]);
 
   const handleMainRegionLayout = useCallback((e: any) => {
     const height = e?.detail?.height;
@@ -111,6 +117,23 @@ export function Fiddle(props: FiddleProps) {
     const match = localVersions.find((v: any) => v.name === selectedLocalName);
     return match?.folder ?? null;
   }, [selectedLocalName]);
+
+  const createBlankProject = useCallback(() => {
+    setTemplatePickerOpen(false);
+    appendOutput('info', '[Lynxtron Go] Creating project from the built-in starter…');
+    void (async () => {
+      try {
+        const projectRoot = await showcaseApi()?.createCustomProject?.();
+        if (!projectRoot) throw new Error('Built-in starter is unavailable.');
+        const snap = loadProjectFiddle('Untitled Project', projectRoot, { kind: 'blank', ref: projectRoot });
+        if (!snap) throw new Error(`Starter source is empty: ${projectRoot}`);
+        fiddle.loadSnapshot(snap);
+        appendOutput('info', `[Lynxtron Go] Created editable project at ${projectRoot}`);
+      } catch (e: any) {
+        appendOutput('error', `[Lynxtron Go] New project failed: ${e?.message ?? String(e)}`);
+      }
+    })();
+  }, [fiddle.loadSnapshot]);
 
   useEffect(() => {
     if (DEV_PRESET?.suppressTour && isDevMode()) return;
@@ -267,82 +290,43 @@ export function Fiddle(props: FiddleProps) {
       props.onRunFiddleSource(loadedFiddleId);
       return;
     }
-    // Showcase fiddle: write edits back into the downloaded workspace, then
-    // run it. Prebuilt + clean → spawn directly. Otherwise prefer the
-    // showcase's `start` script (build && launch — always surfaces a window)
-    // over `dev`: dev pipelines are watch/HMR flows whose window launch is
-    // gated on dev-server readiness and silently hangs under port collisions.
-    if (fiddle.snap.source.kind === 'showcase' && fiddle.snap.source.ref) {
-      const workspaceRoot = fiddle.snap.source.ref;
-      const values = fiddle.values();
-      if (!writeFiddleToWorkspace(workspaceRoot, values)) {
-        appendOutput('error', `[Lynxtron Go] Failed to write edits into ${workspaceRoot}`);
-        return;
-      }
-      // Run just wrote the buffers to disk — they ARE the saved content now.
-      // (Without this, one edited Run left the dirty flag latched forever.)
-      fiddle.markSaved();
-      const built = (() => { try { return !!showcaseApi()?.isBuilt?.(workspaceRoot); } catch (_) { return false; } })();
-      // The preload's mtime check is the single authority on rebuild-needed:
-      // writeFiddleToWorkspace skips unchanged files precisely so that edits
-      // (and only edits) bump source mtimes. No parallel dirty heuristic.
-      const sourceNewer = (() => {
-        try { return !!showcaseApi()?.needsSourceRun?.(workspaceRoot); } catch (_) { return false; }
-      })();
-      if (built && !sourceNewer) {
-        const pid = runner.start(workspaceRoot);
-        if (pid) appendOutput('info', `[Lynxtron Go] Run showcase: pid=${pid} ${workspaceRoot}`);
-        else appendOutput('error', '[Lynxtron Go] Showcase run failed to spawn.');
-      } else {
-        const hasStart = (() => {
-          try {
-            const pkg = JSON.parse(foundationApi()?.fs?.readFile?.(workspaceRoot + '/package.json') ?? '{}');
-            return typeof pkg?.scripts?.start === 'string';
-          } catch (_) { return false; }
-        })();
-        const why = built ? 'Source newer than build' : 'Not built';
-        if (hasStart) {
-          appendOutput('info', `[Lynxtron Go] ${why} — build & launch (npm start)…`);
-          void runner.startBuildRun(workspaceRoot).then(pid => {
-            if (pid) appendOutput('info', `[Lynxtron Go] Build & launch: pid=${pid} ${workspaceRoot}`);
-            else appendOutput('error', '[Lynxtron Go] Build & launch failed to start.');
-          });
-        } else {
-          appendOutput('info', `[Lynxtron Go] ${why} — no start script; running dev pipeline…`);
-          void runner.startDev(workspaceRoot).then(pid => {
-            if (pid) appendOutput('info', `[Lynxtron Go] Dev run: pid=${pid} ${workspaceRoot}`);
-            else appendOutput('error', '[Lynxtron Go] Dev run failed to start.');
-          });
+    void (async () => {
+      try {
+        let projectRoot = fiddle.snap.source.ref ?? null;
+        const values = fiddle.values();
+        if (!projectRoot) {
+          projectRoot = await showcaseApi()?.createCustomProject?.(projectOverlayForFiles(values)) ?? null;
+          if (!projectRoot) throw new Error('Could not create a complete project workspace.');
+          const snap = loadProjectFiddle(
+            fiddle.snap.title,
+            projectRoot,
+            { ...fiddle.snap.source, ref: projectRoot },
+          );
+          if (!snap) throw new Error(`Created project has no editable source: ${projectRoot}`);
+          fiddle.loadSnapshot(snap);
+        } else if (!writeFiddleToWorkspace(projectRoot, values)) {
+          throw new Error(`Failed to write edits into ${projectRoot}`);
         }
+        fiddle.markSaved();
+
+        const runtimeExecutable = resolveLocalRuntimeExecutable(resolveLocalVersionFolder());
+        const pid = await runner.runProject(projectRoot, runtimeExecutable ?? undefined);
+        if (pid) {
+          appendOutput('info', `[Lynxtron Go] Run${selectedLocalName ? ` [${selectedLocalName}]` : ''}: pid=${pid} ${projectRoot}`);
+        } else {
+          appendOutput('error', '[Lynxtron Go] Run failed to spawn.');
+        }
+      } catch (e: any) {
+        appendOutput('error', `[Lynxtron Go] Run failed: ${e?.message ?? String(e)}`);
       }
-      return;
-    }
-    if (currentShowcase && props.onRunShowcase) {
-      props.onRunShowcase(currentShowcase);
-      return;
-    }
-    const workspace = materializeFiddle(fiddle.snap, fiddle.values());
-    if (!workspace) {
-      appendOutput('error', '[Lynxtron Go] Run: failed to materialize workspace.');
-      return;
-    }
-    const localFolder = resolveLocalVersionFolder();
-    if (localFolder) {
-      const result = spawnRuntimeForWorkspace(workspace, localFolder);
-      if (result.ok) appendOutput('info', `[Lynxtron Go] Run [${selectedLocalName}]: pid=${result.pid}`);
-      else appendOutput('error', `[Lynxtron Go] Run failed: ${result.error ?? 'unknown'}`);
-      return;
-    }
-    const pid = runner.start(workspace);
-    if (pid) appendOutput('info', `[Lynxtron Go] Run: pid=${pid} workspace=${workspace}`);
-    else appendOutput('error', '[Lynxtron Go] Run failed to spawn.');
-  }, [currentShowcase, props.onRunShowcase, props.onRunFiddleSource, fiddle, runner, resolveLocalVersionFolder, selectedLocalName]);
+    })();
+  }, [props.onRunFiddleSource, fiddle, runner, resolveLocalVersionFolder, selectedLocalName]);
 
   const handleSave = useCallback(async () => {
     // A showcase fiddle already has a workspace on disk — ⌘S writes back to
     // it (the old IDE's save semantics). Folder-prompt saving remains for
     // template/gist fiddles that have no home yet.
-    if (fiddle.snap.source.kind === 'showcase' && fiddle.snap.source.ref) {
+    if (fiddle.snap.source.ref) {
       const workspaceRoot = fiddle.snap.source.ref;
       const ok = writeFiddleToWorkspace(workspaceRoot, fiddle.values());
       if (ok) {
@@ -381,7 +365,7 @@ export function Fiddle(props: FiddleProps) {
       setSettingsOpen(true);
       return;
     }
-    const existingGistId = fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.ref ?? null : null;
+    const existingGistId = fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.gistId ?? null : null;
     appendOutput('info', existingGistId ? `[Lynxtron Go] Updating gist ${existingGistId}…` : `[Lynxtron Go] Publishing new gist…`);
     try {
       const result = await publishGistFiddle(
@@ -412,7 +396,6 @@ export function Fiddle(props: FiddleProps) {
   // download/extract the package, then surface its source in the mosaic.
   // Run executes the workspace (see handleRun's showcase branch).
   const handlePickShowcase = useCallback((entry: ShowcaseEntry) => {
-    setCurrentShowcase(entry);
     setTemplatePickerOpen(false);
     appendOutput('info', `[Lynxtron Go] Fetching showcase "${entry.name}"…`);
     AppToaster.show({ message: `Downloading ${entry.name}…`, intent: 'primary', icon: 'cloud-download' });
@@ -448,7 +431,6 @@ export function Fiddle(props: FiddleProps) {
   // Electron Fiddle shows a fiddle.
   const handleOpenSingleFiddle = useCallback(
     (req: { entry: ShowcaseEntry; id: string; title: string; upstream: string }) => {
-      setCurrentShowcase(req.entry);
       setTemplatePickerOpen(false);
       appendOutput('info', `[Lynxtron Go] Opening ${req.id}…`);
       void (async () => {
@@ -499,7 +481,19 @@ export function Fiddle(props: FiddleProps) {
     }
     appendOutput('info', `[Lynxtron Go] Loading gist ${id}…`);
     void loadGistFiddle(id)
-      .then(snap => { fiddle.loadSnapshot(snap); appendOutput('info', `[Lynxtron Go] Loaded gist ${id}.`); })
+      .then(async gistSnap => {
+        const values = Object.fromEntries([...gistSnap.files].map(([name, file]) => [name, file.currentText]));
+        const projectRoot = await showcaseApi()?.createCustomProject?.(projectOverlayForFiles(values));
+        if (!projectRoot) throw new Error('Could not create a project for this gist.');
+        const snap = loadProjectFiddle(
+          gistSnap.title,
+          projectRoot,
+          { kind: 'gist', ref: projectRoot, gistId: id },
+        );
+        if (!snap) throw new Error(`Created gist project is empty: ${projectRoot}`);
+        fiddle.loadSnapshot(snap);
+        appendOutput('info', `[Lynxtron Go] Loaded gist ${id}.`);
+      })
       .catch(e => appendOutput('error', `[Lynxtron Go] Gist load failed: ${e?.message ?? String(e)}`));
   }, [fiddle]);
 
@@ -659,7 +653,7 @@ export function Fiddle(props: FiddleProps) {
         overflowOpen={overflowOpen}
         onToggleOverflow={() => setOverflowOpen(v => !v)}
         currentVersion={currentVersion}
-        gistId={fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.ref ?? null : null}
+        gistId={fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.gistId ?? null : null}
         isConsoleShowing={isConsoleShowing}
         title={fiddle.snap.title}
         isEdited={fiddle.isEdited}
@@ -728,8 +722,8 @@ export function Fiddle(props: FiddleProps) {
       </view>
       {templatePickerOpen && (
         <TemplatePicker
-          onPickBlank={() => { fiddle.loadTemplate('blank'); setCurrentShowcase(null); setTemplatePickerOpen(false); }}
-          onPickHelloLynxtron={() => { fiddle.loadTemplate('hello-lynxtron'); setCurrentShowcase(null); setTemplatePickerOpen(false); }}
+          onPickBlank={createBlankProject}
+          onPickHelloLynxtron={() => { setTemplatePickerOpen(false); props.onOpenHelloShowcase(); }}
           onBrowseShowcases={() => { setTemplatePickerOpen(false); props.onOpenGallery(); }}
           onCancel={() => setTemplatePickerOpen(false)}
         />
@@ -746,14 +740,23 @@ export function Fiddle(props: FiddleProps) {
       <WelcomeTour isOpen={tourOpen} onClose={closeTour} />
       <HistoryDialog
         isOpen={historyOpen}
-        gistId={fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.ref ?? null : null}
+        gistId={fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.gistId ?? null : null}
         onClose={() => setHistoryOpen(false)}
         onCheckout={(sha) => {
-          const gistId = fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.ref : null;
+          const gistId = fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.gistId : null;
           if (!gistId) return;
           appendOutput('info', `[Lynxtron Go] Checkout gist ${gistId} @ ${sha.slice(0, 7)}…`);
           void loadGistFiddle(gistId, sha)
-            .then(snap => {
+            .then(async gistSnap => {
+              const values = Object.fromEntries([...gistSnap.files].map(([name, file]) => [name, file.currentText]));
+              const projectRoot = await showcaseApi()?.createCustomProject?.(projectOverlayForFiles(values));
+              if (!projectRoot) throw new Error('Could not create a project for this gist revision.');
+              const snap = loadProjectFiddle(
+                gistSnap.title,
+                projectRoot,
+                { kind: 'gist', ref: projectRoot, gistId },
+              );
+              if (!snap) throw new Error(`Created gist project is empty: ${projectRoot}`);
               fiddle.loadSnapshot(snap);
               appendOutput('info', `[Lynxtron Go] Loaded revision ${sha.slice(0, 7)}.`);
               AppToaster.show({

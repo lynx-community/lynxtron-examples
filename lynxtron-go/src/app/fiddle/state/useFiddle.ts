@@ -10,9 +10,6 @@ import {
 import { arrayBufferToBase64, bytesToBase64 } from '../../shared/native-bridge-encoding';
 import type { DiagnosticsMsg } from '../../../extension-host/types';
 import {
-  emptyFiddle,
-  helloLynxtronFiddle,
-  blankFiddle,
   isFiddleEdited,
   serializeFiddle,
   visibleEditorIds,
@@ -73,8 +70,8 @@ export interface UseFiddleResult {
   toggleEditor: (id: EditorId) => void;
   resetLayout: () => void;
   markSaved: () => void;
-  resetToTemplate: () => void;
-  loadTemplate: (kind: 'blank' | 'hello-lynxtron') => void;
+  /** False only for a fresh install/session; Fiddle then opens built-in Hello. */
+  restoredSession: boolean;
   loadSnapshot: (snap: FiddleSnapshot) => void;
   flushAll: () => void;
   /** Push a file's state text, highlight, and diagnostics into its native editor. */
@@ -107,9 +104,19 @@ function pushHighlight(fileId: EditorId, text: string, language: any) {
  * panes), and the content/highlight poll loop over every visible editor.
  */
 export function useFiddle(): UseFiddleResult {
-  // Restore the previous session on boot (upstream keeps your fiddle as the
-  // app's persistent workspace state); fall back to the default template.
-  const [snap, setSnap] = useState<FiddleSnapshot>(() => restoreLastSession() ?? emptyFiddle());
+  const restoredAtBoot = useRef<boolean | null>(null);
+  // There is no independent in-memory template anymore. A fresh session uses
+  // an inert placeholder until Fiddle opens the installer-bundled Hello case.
+  const [snap, setSnap] = useState<FiddleSnapshot>(() => {
+    const restored = restoreLastSession();
+    restoredAtBoot.current = !!restored;
+    return restored ?? {
+      source: { kind: 'template' },
+      files: new Map(),
+      activeEditorId: null,
+      title: 'Loading starter…',
+    };
+  });
   const snapRef = useRef(snap);
   snapRef.current = snap;
   const highlightTimers = useRef<Map<EditorId, any>>(new Map());
@@ -573,12 +580,6 @@ export function useFiddle(): UseFiddleResult {
     pushAll(fresh);
   }, [clearPaneDiagnostics, pushAll]);
 
-  const resetToTemplate = useCallback(() => loadFresh(emptyFiddle()), [loadFresh]);
-
-  const loadTemplate = useCallback((kind: 'blank' | 'hello-lynxtron') => {
-    loadFresh(kind === 'blank' ? blankFiddle() : helloLynxtronFiddle());
-  }, [loadFresh]);
-
   const loadSnapshot = useCallback((fresh: FiddleSnapshot) => loadFresh(fresh), [loadFresh]);
 
   /** Serialize with live native text folded in synchronously (for run/save/publish).
@@ -662,6 +663,7 @@ export function useFiddle(): UseFiddleResult {
 
   return {
     snap,
+    restoredSession: restoredAtBoot.current === true,
     isEdited: isFiddleEdited(snap),
     selectEditor,
     showEditor,
@@ -669,8 +671,6 @@ export function useFiddle(): UseFiddleResult {
     toggleEditor,
     resetLayout,
     markSaved,
-    resetToTemplate,
-    loadTemplate,
     loadSnapshot,
     flushAll,
     pushContent,

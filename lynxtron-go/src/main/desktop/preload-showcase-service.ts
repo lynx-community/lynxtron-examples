@@ -2,22 +2,25 @@ import { execFileSync, fork, spawn, type ChildProcess } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
+import * as tar from 'tar';
 import {
   buildShowcaseInstallEnv,
   formatShowcaseInstallNodeCompatibilityError,
   getShowcaseDependencyStatus as computeShowcaseDependencyStatus,
   getShowcaseTargets,
   hasShowcaseScript,
-  hasShowcaseSourceChangesSinceBuild,
   hasShowcaseWebSourceChangesSinceBuild,
   isNodeVersionSatisfied,
-  SHOWCASE_INSTALL_NODE_RANGE,
 } from './showcase-install';
 import { readInstallState, writeInstallState } from './preload-config-store';
 import type { DebugLogger } from './preload-log';
-import { getRuntimeRequire, resolveLynxtronExecutablePath } from './preload-lynxtron-runtime';
+import { getAppResourcesPath, getRuntimeRequire, resolveLynxtronExecutablePath } from './preload-lynxtron-runtime';
 import { resolveMaterializedShowcasePath } from './showcase-cache';
-import { resolveShowcaseRunTarget } from '@lynxtron-examples/cli/dist/showcase-release.js';
+import {
+  resolveShowcaseRunTarget,
+  verifyShowcaseRelease,
+} from '@lynxtron-examples/cli/dist/showcase-release.js';
 
 type RunningShowcaseRecord = Map<number, ChildProcess>;
 type ShowcaseProcessOutputLevel = 'info' | 'warn' | 'error';
@@ -30,12 +33,159 @@ export interface ShowcaseProcessOutputEntry {
 const INSTALL_TIMEOUT_MS = 300000;
 const PROCESS_OUTPUT_TAIL_LIMIT = 4000;
 const PROCESS_OUTPUT_BUFFER_LIMIT = 1000;
+const BUILTIN_SHOWCASE_URL_PREFIX = 'builtin-showcase://';
+const BUILTIN_SHOWCASE_FILE_PREFIX = 'lynxtron-examples-';
 
 // eslint-disable-next-line no-control-regex
 const ANSI_RE = /\x1B\[[\x30-\x3F]*[\x20-\x2F]*[\x40-\x7E]|\x1B[PX^_][\s\S]*?\x1B\\|\x1B[^[\]()#;?PX^_]/g;
 
 function resolveCliPath(): string {
   return getRuntimeRequire().resolve('@lynxtron-examples/cli/dist/index.js');
+}
+
+export type ProjectRunPlan =
+  | { kind: 'precompiled'; path: string; reason: string }
+  | { kind: 'source'; path: string; reason: string; projectKind: 'showcase' | 'custom' };
+
+export function isShowcaseProject(projectRoot: string): boolean {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf-8'));
+    return !!pkg?.showcase;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Only a registered showcase with a verified, source-matched release artifact
+ * may take the precompiled short path. Every other project uses the normal
+ * source-build path; an existing dist/ directory is only build output and is
+ * deliberately not part of this classification.
+ */
+export function resolveProjectRunPlan(projectRoot: string): ProjectRunPlan {
+  const sourcePath = path.join(projectRoot, 'dist', 'desktop');
+  if (!isShowcaseProject(projectRoot)) {
+    return {
+      kind: 'source',
+      path: sourcePath,
+      reason: 'project is not a released showcase',
+      projectKind: 'custom',
+    };
+  }
+
+  const verification = verifyShowcaseRelease(projectRoot);
+  const desktop = verification.status === 'verified'
+    ? verification.manifest.artifact.targets.desktop
+    : undefined;
+  if (verification.status === 'verified' && desktop) {
+    return {
+      kind: 'precompiled',
+      path: path.join(projectRoot, verification.manifest.artifact.root, desktop.root),
+      reason: 'showcase source and precompiled artifact match the release manifest',
+    };
+  }
+
+  return {
+    kind: 'source',
+    path: sourcePath,
+    reason: verification.status === 'verified'
+      ? 'verified showcase release has no desktop artifact'
+      : verification.reason,
+    projectKind: 'showcase',
+  };
+}
+
+function builtinShowcaseRoots(): string[] {
+  const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
+  const detectedResourcesPath = getAppResourcesPath();
+  return Array.from(new Set([
+    ...(resourcesPath ? [path.join(resourcesPath, 'builtin-showcases')] : []),
+    ...(detectedResourcesPath ? [path.join(detectedResourcesPath, 'builtin-showcases')] : []),
+    // Lynxtron 0.0.15 does not expose process.resourcesPath to preload. When
+    // __dirname is Resources/app.asar, the external resource folder is beside it.
+    path.join(path.dirname(__dirname), 'builtin-showcases'),
+    path.join(__dirname, 'builtin-showcases'),
+  ]));
+}
+
+/**
+ * Turn the stable URL baked into the Lynx bundle into the versioned tgz that
+ * ships beside app.asar. The physical filename is part of the CLI cache key,
+ * so a new installer tag cannot reuse an older extracted built-in workspace.
+ */
+export function resolveBuiltinShowcaseSourceUrl(
+  sourceUrl: string,
+  searchRoots: string[] = builtinShowcaseRoots(),
+): string {
+  if (!sourceUrl.startsWith(BUILTIN_SHOWCASE_URL_PREFIX)) return sourceUrl;
+
+  const parsed = new URL(sourceUrl);
+  const name = `${parsed.hostname}${parsed.pathname}`.replace(/^\/+|\/+$/g, '');
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) {
+    throw new Error(`Invalid built-in showcase URL: ${sourceUrl}`);
+  }
+
+  const filenamePrefix = `${BUILTIN_SHOWCASE_FILE_PREFIX}${name}-`;
+  for (const root of searchRoots) {
+    if (!fs.existsSync(root)) continue;
+    const matches = fs.readdirSync(root)
+      .filter(file => file.startsWith(filenamePrefix) && file.endsWith('.tgz'))
+      .sort();
+    if (matches.length > 1) {
+      throw new Error(`Multiple built-in artifacts found for ${name} in ${root}: ${matches.join(', ')}`);
+    }
+    if (matches.length === 1) return pathToFileURL(path.join(root, matches[0])).href;
+  }
+
+  throw new Error(`Built-in showcase artifact not found for ${name}`);
+}
+
+/** Extract the canonical starter and turn it into an ordinary editable project. */
+export async function createCustomProjectFromArchive(
+  archivePath: string,
+  projectsRoot: string,
+  files: Record<string, string> = {},
+): Promise<string> {
+  fs.mkdirSync(projectsRoot, { recursive: true });
+  const projectRoot = fs.mkdtempSync(path.join(projectsRoot, 'project-'));
+  await tar.x({ file: archivePath, cwd: projectRoot, strip: 1 });
+
+  for (const name of [
+    '.lynxtron-release.json', 'dist_precompiled', 'dist', 'output',
+    'node_modules', '.lynxtron-go-cache.json',
+  ]) {
+    fs.rmSync(path.join(projectRoot, name), { recursive: true, force: true });
+  }
+  const packagePath = path.join(projectRoot, 'package.json');
+  const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf-8'));
+  let overlayPackage: any = null;
+  if (typeof files['package.json'] === 'string') {
+    try { overlayPackage = JSON.parse(files['package.json']); } catch (_) {}
+  }
+  delete pkg.showcase;
+  delete pkg.repository;
+  pkg.name = `lynxtron-project-${path.basename(projectRoot).replace(/^project-/, '')}`;
+  pkg.version = '0.0.0';
+  pkg.private = true;
+  if (overlayPackage) {
+    if (typeof overlayPackage.name === 'string' && overlayPackage.name) pkg.name = overlayPackage.name;
+    pkg.dependencies = { ...(pkg.dependencies ?? {}), ...(overlayPackage.dependencies ?? {}) };
+    pkg.devDependencies = { ...(pkg.devDependencies ?? {}), ...(overlayPackage.devDependencies ?? {}) };
+    if (typeof overlayPackage?.scripts?.build === 'string') {
+      pkg.scripts = { ...(pkg.scripts ?? {}), ...overlayPackage.scripts };
+    }
+  }
+  fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
+
+  for (const [relativePath, contents] of Object.entries(files)) {
+    if (relativePath === 'package.json' || !relativePath || path.isAbsolute(relativePath)) continue;
+    const target = path.resolve(projectRoot, relativePath);
+    const relative = path.relative(projectRoot, target);
+    if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) continue;
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, contents);
+  }
+  return projectRoot;
 }
 
 function openExternalUrl(url: string, dbg: DebugLogger) {
@@ -206,8 +356,7 @@ function getShowcaseDependencyStatus(showcasePath: string, dbg: DebugLogger) {
   return status;
 }
 
-function readInstallNodeVersion(env: NodeJS.ProcessEnv): string | null {
-  const nodeCommand = process.platform === 'win32' ? 'node.exe' : 'node';
+function readNodeVersion(nodeCommand: string, env: NodeJS.ProcessEnv): string | null {
   try {
     return execFileSync(nodeCommand, ['--version'], {
       env,
@@ -219,14 +368,70 @@ function readInstallNodeVersion(env: NodeJS.ProcessEnv): string | null {
   }
 }
 
-function assertCompatibleInstallNode(env: NodeJS.ProcessEnv) {
-  const nodeVersion = readInstallNodeVersion(env);
-  if (!nodeVersion) {
-    throw new Error('Node.js was not detected. Install Node.js (including npm), then retry.');
+function readDeclaredNodeRange(packageJsonPath: string): string | null {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    return typeof pkg?.engines?.node === 'string' && pkg.engines.node.trim()
+      ? pkg.engines.node.trim()
+      : null;
+  } catch {
+    return null;
   }
-  if (!isNodeVersionSatisfied(nodeVersion, SHOWCASE_INSTALL_NODE_RANGE)) {
-    throw new Error(formatShowcaseInstallNodeCompatibilityError(nodeVersion));
+}
+
+/** Read the compatibility contract from Lynxtron itself; Go owns no range. */
+export function resolveLynxtronNodeRange(projectRoot: string): string | null {
+  const localPackage = path.join(projectRoot, 'node_modules', '@lynx-js', 'lynxtron', 'package.json');
+  if (fs.existsSync(localPackage)) return readDeclaredNodeRange(localPackage);
+
+  const runtimeRequire = getRuntimeRequire();
+  try {
+    return readDeclaredNodeRange(runtimeRequire.resolve('@lynx-js/lynxtron/package.json'));
+  } catch {}
+
+  try {
+    let current = path.dirname(runtimeRequire.resolve('@lynx-js/lynxtron'));
+    while (true) {
+      const packagePath = path.join(current, 'package.json');
+      if (fs.existsSync(packagePath)) {
+        const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf-8'));
+        if (pkg?.name === '@lynx-js/lynxtron') {
+          return typeof pkg?.engines?.node === 'string' && pkg.engines.node.trim()
+            ? pkg.engines.node.trim()
+            : null;
+        }
+      }
+      const parent = path.dirname(current);
+      if (parent === current) return null;
+      current = parent;
+    }
+  } catch {
+    return null;
   }
+}
+
+export function resolveSystemNodeEnv(
+  projectRoot: string,
+  baseEnv: NodeJS.ProcessEnv,
+  dbg?: DebugLogger,
+  outputBuffer?: ShowcaseProcessOutputEntry[],
+): NodeJS.ProcessEnv {
+  const nodeCommand = process.platform === 'win32' ? 'node.exe' : 'node';
+  const version = readNodeVersion(nodeCommand, baseEnv);
+  if (!version) {
+    throw new Error('System Node.js was not detected on PATH. Install Node.js (including npm), restart Lynxtron Go, then retry.');
+  }
+  const declaredRange = resolveLynxtronNodeRange(projectRoot);
+  if (declaredRange && !isNodeVersionSatisfied(version, declaredRange)) {
+    throw new Error(formatShowcaseInstallNodeCompatibilityError(version, declaredRange));
+  }
+
+  const message = declaredRange
+    ? `using system Node ${version} resolved from PATH (@lynx-js/lynxtron declares ${declaredRange})`
+    : `using system Node ${version} resolved from PATH (@lynx-js/lynxtron declares no engines.node range)`;
+  dbg?.(`project.node: ${message}`);
+  if (outputBuffer) emitOutputLine(outputBuffer, 'project.node', 'info', message);
+  return { ...baseEnv };
 }
 
 async function ensureShowcaseDependencies(
@@ -234,6 +439,8 @@ async function ensureShowcaseDependencies(
   dbg: DebugLogger,
   force = false,
   outputBuffer?: ShowcaseProcessOutputEntry[],
+  outputSource = 'showcase.install',
+  baseEnv: NodeJS.ProcessEnv = showcaseSpawnEnv(showcasePath),
 ) {
   const status = getShowcaseDependencyStatus(showcasePath, dbg);
   if (!force && !status.needsInstall) {
@@ -241,15 +448,19 @@ async function ensureShowcaseDependencies(
   }
 
   const commandText = `${status.installPlan.command} ${status.installPlan.args.join(' ')}`;
-  const installEnv = buildShowcaseInstallEnv(status.installPlan.userConfigPath);
-  assertCompatibleInstallNode(installEnv);
+  const installEnv = resolveSystemNodeEnv(
+    showcasePath,
+    buildShowcaseInstallEnv(status.installPlan.userConfigPath, baseEnv),
+    dbg,
+    outputBuffer,
+  );
   dbg(
     `showcase.install: cwd=${status.installPlan.cwd} reason=${force ? 'forced' : status.reason} command=${commandText}`
     + (status.installPlan.userConfigPath ? ` userconfig=${status.installPlan.userConfigPath}` : '')
   );
   try {
     if (outputBuffer) {
-      emitCommandStart(outputBuffer, 'showcase.install', status.installPlan.cwd, status.installPlan.command, status.installPlan.args);
+      emitCommandStart(outputBuffer, outputSource, status.installPlan.cwd, status.installPlan.command, status.installPlan.args);
     }
     await runInstallCommand({
       command: status.installPlan.command,
@@ -257,6 +468,7 @@ async function ensureShowcaseDependencies(
       cwd: status.installPlan.cwd,
       env: installEnv,
       outputBuffer,
+      outputSource,
     });
   } catch (error: any) {
     const stdout = formatProcessOutput(error?.stdout);
@@ -276,7 +488,7 @@ async function ensureShowcaseDependencies(
   installState[status.resolvedShowcasePath] = status.fingerprint;
   writeInstallState(installState, dbg);
   if (outputBuffer) {
-    emitOutputLine(outputBuffer, 'showcase.install', 'info', 'dependencies installed');
+    emitOutputLine(outputBuffer, outputSource, 'info', 'dependencies installed');
   }
   return true;
 }
@@ -300,12 +512,27 @@ function showcaseSpawnEnv(showcasePath: string): NodeJS.ProcessEnv {
     : { ...process.env };
 }
 
+export function projectLaunchEnv(
+  projectRoot: string,
+  baseEnv: NodeJS.ProcessEnv = process.env,
+): NodeJS.ProcessEnv {
+  return {
+    ...baseEnv,
+    ...(isSelfHostTarget(projectRoot) ? { LYNXTRON_FIDDLE_SELF_HOST: '1' } : {}),
+    // Lynxtron otherwise routes a second launch to an existing default host
+    // window and may discard the project argv entirely.
+    LYNXTRON_ALLOW_MULTI: '1',
+  };
+}
+
 function runInstallCommand(options: {
   command: string;
   args: string[];
   cwd: string;
   env: NodeJS.ProcessEnv;
   outputBuffer?: ShowcaseProcessOutputEntry[];
+  outputSource?: string;
+  timeoutMs?: number;
 }): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(options.command, options.args, {
@@ -315,7 +542,7 @@ function runInstallCommand(options: {
       detached: true,
     });
     if (options.outputBuffer) {
-      attachProcessOutput(child, 'showcase.install', options.outputBuffer);
+      attachProcessOutput(child, options.outputSource ?? 'showcase.install', options.outputBuffer);
     }
     let stdout = '';
     let stderr = '';
@@ -332,15 +559,16 @@ function runInstallCommand(options: {
         resolve();
       }
     };
+    const timeoutMs = options.timeoutMs ?? INSTALL_TIMEOUT_MS;
     const timer = setTimeout(() => {
       try {
         child.kill();
       } catch (_) {}
-      finish(Object.assign(new Error(`Command timed out after ${INSTALL_TIMEOUT_MS}ms: ${options.command} ${options.args.join(' ')}`), {
+      finish(Object.assign(new Error(`Command timed out after ${timeoutMs}ms: ${options.command} ${options.args.join(' ')}`), {
         stdout,
         stderr,
       }));
-    }, INSTALL_TIMEOUT_MS);
+    }, timeoutMs);
     child.stdout?.on('data', (chunk: Buffer) => {
       stdout = appendProcessOutputTail(stdout, chunk);
     });
@@ -460,17 +688,17 @@ export interface ShowcaseService {
     readProcessOutput: () => ShowcaseProcessOutputEntry[];
     isRunning: (pid: number) => boolean;
     stop: (pid: number) => boolean;
-    run: (showcasePath: string) => number;
+    /** Classify, build when required, and launch any complete Lynx project. */
+    runProject: (projectRoot: string, runtimeExecutable?: string) => Promise<number>;
+    /** Create a complete editable project from the installer-bundled starter. */
+    createCustomProject: (files?: Record<string, string>) => Promise<string>;
     /** Build (if needed) and launch ONE fiddle of a fiddle-collection showcase. */
     runFiddle: (showcasePath: string, fiddleId: string) => Promise<number>;
-    start: (showcasePath: string) => Promise<number>;
     dev: (showcasePath: string) => Promise<number>;
     list: () => Array<{ name: string; description: string; local: boolean }>;
     isShowcase: (dirPath: string) => boolean;
-    isBuilt: (dirPath: string) => boolean;
     getTargets: (showcasePath: string) => Array<'desktop' | 'web'>;
     isWebBuilt: (showcasePath: string) => boolean;
-    needsSourceRun: (showcasePath: string) => boolean;
     needsWebSourceRun: (showcasePath: string) => boolean;
     needsInstall: (showcasePath: string) => boolean;
     installDependencies: (showcasePath: string) => Promise<boolean>;
@@ -485,25 +713,124 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
   const runningShowcases: RunningShowcaseRecord = new Map();
   const processOutputBuffer: ShowcaseProcessOutputEntry[] = [];
 
+  const launchProjectTarget = (
+    projectRoot: string,
+    targetPath: string,
+    source: 'project.launch' | 'showcase.precompiled',
+    runtimeExecutable?: string,
+  ): number => {
+    const mainJsPath = path.join(targetPath, 'main.js');
+    if (!fs.existsSync(mainJsPath)) {
+      throw new Error(`Desktop output is missing main.js: ${targetPath}`);
+    }
+    const executable = runtimeExecutable || resolveLynxtronExecutablePath(dbg);
+    if (!fs.existsSync(executable)) {
+      throw new Error(`Lynxtron runtime not found: ${executable}`);
+    }
+    emitCommandStart(processOutputBuffer, source, projectRoot, executable, [targetPath]);
+    const child = spawn(executable, [targetPath], {
+      cwd: projectRoot,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      detached: true,
+      env: projectLaunchEnv(projectRoot),
+    });
+    attachProcessOutput(child, source, processOutputBuffer);
+    return trackRunningShowcase(source, child, `project=${projectRoot} target=${targetPath}`, runningShowcases, dbg);
+  };
+
+  const runSourceProject = async (
+    projectRoot: string,
+    reason: string,
+    runtimeExecutable?: string,
+  ): Promise<number> => {
+    const pkgPath = path.join(projectRoot, 'package.json');
+    if (!fs.existsSync(pkgPath)) throw new Error(`Project package.json not found: ${pkgPath}`);
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    if (typeof pkg?.scripts?.build !== 'string' || !pkg.scripts.build.trim()) {
+      throw new Error('Source project package.json must define a build script.');
+    }
+
+    emitOutputLine(processOutputBuffer, 'project.classify', 'info', `source build: ${reason}`);
+    const buildEnv = resolveSystemNodeEnv(projectRoot, showcaseSpawnEnv(projectRoot), dbg, processOutputBuffer);
+    await ensureShowcaseDependencies(
+      projectRoot,
+      dbg,
+      false,
+      processOutputBuffer,
+      'project.install',
+      buildEnv,
+    );
+
+    const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+    emitCommandStart(processOutputBuffer, 'project.build', projectRoot, npmCommand, ['run', 'build']);
+    await runInstallCommand({
+      command: npmCommand,
+      args: ['run', 'build'],
+      cwd: projectRoot,
+      env: buildEnv,
+      outputBuffer: processOutputBuffer,
+      outputSource: 'project.build',
+    });
+
+    const desktopPath = path.join(projectRoot, 'dist', 'desktop');
+    for (const requiredFile of ['main.js', 'main.lynx.bundle', 'package.json']) {
+      if (!fs.existsSync(path.join(desktopPath, requiredFile))) {
+        throw new Error(`Source build did not produce dist/desktop/${requiredFile}`);
+      }
+    }
+    return launchProjectTarget(projectRoot, desktopPath, 'project.launch', runtimeExecutable);
+  };
+
+  const runProject = async (projectRoot: string, runtimeExecutable?: string): Promise<number> => {
+    const resolvedRoot = path.resolve(projectRoot);
+    const plan = resolveProjectRunPlan(resolvedRoot);
+    dbg(`project.run: root=${resolvedRoot} kind=${plan.kind} reason=${plan.reason}`);
+    if (plan.kind === 'precompiled') {
+      emitOutputLine(processOutputBuffer, 'project.classify', 'info', `precompiled showcase: ${plan.reason}`);
+      return launchProjectTarget(resolvedRoot, plan.path, 'showcase.precompiled', runtimeExecutable);
+    }
+    return runSourceProject(resolvedRoot, plan.reason, runtimeExecutable);
+  };
+
+  const createCustomProject = async (files: Record<string, string> = {}): Promise<string> => {
+    const sourceUrl = resolveBuiltinShowcaseSourceUrl('builtin-showcase://hello-lynxtron');
+    if (!sourceUrl.startsWith('file:')) {
+      throw new Error(`Built-in starter did not resolve to a local package: ${sourceUrl}`);
+    }
+    const archivePath = fileURLToPath(sourceUrl);
+    const projectsRoot = path.join(os.homedir(), '.lynxtron-go', 'projects');
+    const projectRoot = await createCustomProjectFromArchive(archivePath, projectsRoot, files);
+    dbg(`project.create: root=${projectRoot} starter=${archivePath} overlays=${Object.keys(files).length}`);
+    return projectRoot;
+  };
+
   return {
     bridge: {
-      materializedPath: (name: string, sourceUrl?: string): string | null =>
-        resolveMaterializedShowcasePath(
-          path.join(os.homedir(), '.lynxtron-go'),
-          name,
-          sourceUrl,
-        ),
+      materializedPath: (name: string, sourceUrl?: string): string | null => {
+        try {
+          return resolveMaterializedShowcasePath(
+            path.join(os.homedir(), '.lynxtron-go'),
+            name,
+            sourceUrl ? resolveBuiltinShowcaseSourceUrl(sourceUrl) : undefined,
+          );
+        } catch (error: any) {
+          dbg(`showcase.materializedPath error: ${error?.message || String(error)}`);
+          return null;
+        }
+      },
       fetch: async (url: string): Promise<string> => {
         try {
           dbg(`showcase.fetch enter url=${url}`);
+          const sourceUrl = resolveBuiltinShowcaseSourceUrl(url);
+          if (sourceUrl !== url) dbg(`showcase.fetch resolved built-in url=${sourceUrl}`);
           const cliPath = resolveCliPath();
           const appRoot = path.resolve(__dirname, '..', '..');
           const lynxtronExecutable = resolveLynxtronExecutablePath(dbg);
           const workspacePath = path.join(os.homedir(), '.lynxtron-go');
-          dbg(`showcase.fetch: cliPath=${cliPath} url=${url} ws=${workspacePath}`);
+          dbg(`showcase.fetch: cliPath=${cliPath} url=${sourceUrl} ws=${workspacePath}`);
           let result: string;
           try {
-            const args = [cliPath, 'fetch', url];
+            const args = [cliPath, 'fetch', sourceUrl];
             emitCommandStart(processOutputBuffer, 'showcase.fetch', appRoot, lynxtronExecutable, args);
             const output = await runBufferedCommand({
               command: lynxtronExecutable,
@@ -572,6 +899,9 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
         return ok;
       },
 
+      runProject,
+      createCustomProject,
+
       // A fiddle collection (showcases/electron-fiddles) is not one app: every
       // fiddle assembles into its own standalone project and runs as its own
       // process. Launching one therefore means assembling+building that project
@@ -606,66 +936,10 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
           cwd: showcasePath,
           stdio: ['ignore', 'pipe', 'pipe'],
           detached: true,
-          env: showcaseSpawnEnv(showcasePath),
+          env: projectLaunchEnv(showcasePath),
         });
         attachProcessOutput(child, 'showcase.runFiddle', processOutputBuffer);
         return trackRunningShowcase('showcase.runFiddle', child, `fiddle=${fiddleId}`, runningShowcases, dbg);
-      },
-
-      run: (showcasePath: string): number => {
-        dbg(`showcase.run called with showcasePath: ${showcasePath}`);
-        try {
-          const runTarget = resolveShowcaseRunTarget(showcasePath, 'desktop');
-          if (runTarget.kind === 'missing') {
-            throw new Error(`Showcase not built: ${runTarget.reason}`);
-          }
-          const distDesktop = runTarget.path;
-          dbg(`showcase.run: distDesktop=${distDesktop}`);
-          const mainJsPath = path.join(distDesktop, 'main.js');
-          dbg(`showcase.run: checking main.js at ${mainJsPath} exists: ${fs.existsSync(mainJsPath)}`);
-          if (!fs.existsSync(mainJsPath)) throw new Error(`Showcase not built: ${runTarget.reason}`);
-          dbg(`showcase.run: calling resolveLynxtronExecutablePath...`);
-          const lynxtronExecutable = resolveLynxtronExecutablePath(dbg);
-          dbg(`showcase.run: lynxtronExecutable=${lynxtronExecutable}`);
-          dbg(`showcase.run: checking if executable exists: ${fs.existsSync(lynxtronExecutable)}`);
-          emitCommandStart(processOutputBuffer, 'showcase.run', showcasePath, lynxtronExecutable, [distDesktop]);
-          dbg(`showcase.run: spawning process...`);
-          const child = spawn(lynxtronExecutable, [distDesktop], {
-            cwd: showcasePath,
-            stdio: ['ignore', 'pipe', 'pipe'],
-            detached: true,
-            env: showcaseSpawnEnv(showcasePath),
-          });
-          dbg(`showcase.run: process spawned, pid: ${child.pid}`);
-          attachProcessOutput(child, 'showcase.run', processOutputBuffer);
-          const pid = trackRunningShowcase('showcase.run', child, `path=${distDesktop}`, runningShowcases, dbg);
-          dbg(`showcase.run: returning pid: ${pid}`);
-          return pid;
-        } catch (error: any) {
-          dbg(`showcase.run error: ${error.message}`);
-          dbg(`showcase.run stack: ${error.stack}`);
-          throw error;
-        }
-      },
-
-      start: async (showcasePath: string): Promise<number> => {
-        try {
-          await ensureShowcaseDependencies(showcasePath, dbg, false, processOutputBuffer);
-          const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-          dbg(`showcase.start: cwd=${showcasePath} command=${npmCommand} start`);
-          emitCommandStart(processOutputBuffer, 'showcase.start', showcasePath, npmCommand, ['start']);
-          const child = spawn(npmCommand, ['start'], {
-            cwd: showcasePath,
-            stdio: ['ignore', 'pipe', 'pipe'],
-            detached: true,
-            env: showcaseSpawnEnv(showcasePath),
-          });
-          attachProcessOutput(child, 'showcase.start', processOutputBuffer);
-          return trackRunningShowcase('showcase.start', child, `cwd=${showcasePath}`, runningShowcases, dbg);
-        } catch (error: any) {
-          dbg(`showcase.start error: ${error.message}`);
-          throw error;
-        }
       },
 
       dev: async (showcasePath: string): Promise<number> => {
@@ -717,16 +991,9 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
         }
       },
 
-      isBuilt: (dirPath: string): boolean => resolveShowcaseRunTarget(dirPath, 'desktop').kind !== 'missing',
-
       getTargets: (showcasePath: string): Array<'desktop' | 'web'> => getShowcaseTargets(showcasePath),
 
       isWebBuilt: (showcasePath: string): boolean => resolveShowcaseRunTarget(showcasePath, 'web').kind !== 'missing',
-
-      needsSourceRun: (showcasePath: string): boolean => {
-        const target = resolveShowcaseRunTarget(showcasePath, 'desktop');
-        return target.kind !== 'precompiled' && hasShowcaseSourceChangesSinceBuild(showcasePath);
-      },
 
       needsWebSourceRun: (showcasePath: string): boolean => {
         const target = resolveShowcaseRunTarget(showcasePath, 'web');

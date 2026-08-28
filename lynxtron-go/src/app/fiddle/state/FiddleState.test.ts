@@ -1,16 +1,40 @@
 import { describe, it, expect } from 'vitest';
 import {
-  helloLynxtronFiddle,
-  blankFiddle,
   toPersisted,
   fromPersisted,
-  visibleEditorIds, isSafeRelativePath } from './FiddleState';
+  visibleEditorIds, isSafeRelativePath,
+  languageForId,
+  type FiddleSnapshot,
+} from './FiddleState';
 import { DEFAULT_EDITORS } from '../types';
 import { diagnosticUriForFiddleFile } from './fiddleDiagnostics';
 
+function projectSnapshot(): FiddleSnapshot {
+  const contents: Record<string, string> = {
+    [DEFAULT_EDITORS.MAIN]: '// main',
+    [DEFAULT_EDITORS.RENDERER]: '// renderer',
+    [DEFAULT_EDITORS.PRELOAD]: '',
+    [DEFAULT_EDITORS.CSS]: '',
+    [DEFAULT_EDITORS.PACKAGE]: '{"scripts":{"build":"build"}}',
+  };
+  return {
+    source: { kind: 'local', ref: '/workspace/project' },
+    title: 'Project',
+    activeEditorId: DEFAULT_EDITORS.MAIN,
+    files: new Map(Object.entries(contents).map(([id, content]) => [id, {
+      id,
+      savedContent: content,
+      currentText: content,
+      language: languageForId(id),
+      isDirty: false,
+      visible: id === DEFAULT_EDITORS.MAIN || id === DEFAULT_EDITORS.RENDERER,
+    }])),
+  };
+}
+
 describe('fiddle session persistence', () => {
-  it('round-trips the default template', () => {
-    const snap = helloLynxtronFiddle();
+  it('round-trips a project session', () => {
+    const snap = projectSnapshot();
     const restored = fromPersisted(JSON.parse(JSON.stringify(toPersisted(snap))));
     expect(restored).not.toBeNull();
     expect(restored!.title).toBe(snap.title);
@@ -26,7 +50,7 @@ describe('fiddle session persistence', () => {
   });
 
   it('preserves visibility and unsaved edits', () => {
-    const snap = blankFiddle();
+    const snap = projectSnapshot();
     const main = snap.files.get(DEFAULT_EDITORS.MAIN)!;
     snap.files.set(DEFAULT_EDITORS.MAIN, { ...main, currentText: main.currentText + '\n// edited', visible: false });
     const restored = fromPersisted(toPersisted(snap))!;
@@ -45,7 +69,7 @@ describe('fiddle session persistence', () => {
   });
 
   it('keeps default hidden files hidden (styles.css / package.json)', () => {
-    const snap = helloLynxtronFiddle();
+    const snap = projectSnapshot();
     expect(visibleEditorIds(snap)).not.toContain(DEFAULT_EDITORS.CSS);
     expect(visibleEditorIds(snap)).not.toContain(DEFAULT_EDITORS.PACKAGE);
     expect(visibleEditorIds(snap)).toContain(DEFAULT_EDITORS.MAIN);
@@ -74,20 +98,21 @@ describe('diagnosticUriForFiddleFile', () => {
   };
 
   it('uses the real workspace path for showcases', () => {
-    const snap = helloLynxtronFiddle();
+    const snap = projectSnapshot();
     snap.source = { kind: 'showcase', ref: '/workspace/example' };
     expect(diagnosticUriForFiddleFile(snap, 'src/app/App.tsx', pathApi))
       .toBe('/workspace/example/src/app/App.tsx');
   });
 
-  it('uses a stable virtual path for in-memory templates', () => {
-    const snap = helloLynxtronFiddle();
+  it('uses a stable virtual path for a legacy in-memory session', () => {
+    const snap = projectSnapshot();
+    snap.source = { kind: 'blank' };
     expect(diagnosticUriForFiddleFile(snap, 'renderer.js', pathApi))
-      .toBe('/tmp/lynxtron-fiddle-diagnostics/template-hello-lynxtron/renderer.js');
+      .toBe('/tmp/lynxtron-fiddle-diagnostics/blank-Project/renderer.js');
   });
 
   it('rejects paths that could escape the diagnostics root', () => {
-    const snap = blankFiddle();
+    const snap = projectSnapshot();
     expect(diagnosticUriForFiddleFile(snap, '../outside.ts', pathApi)).toBeNull();
     expect(diagnosticUriForFiddleFile(snap, '/absolute.ts', pathApi)).toBeNull();
   });

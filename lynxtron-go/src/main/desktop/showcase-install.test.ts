@@ -18,7 +18,6 @@ import {
   hasShowcaseWebSourceChangesSinceBuild,
   isShowcaseWebBuilt,
   isNodeVersionSatisfied,
-  SHOWCASE_INSTALL_NODE_RANGE,
 } from './showcase-install';
 
 function writeJson(filePath: string, value: unknown) {
@@ -317,21 +316,9 @@ describe('showcase install helpers', () => {
     expect(isNodeVersionSatisfied('23.0.0', '>=22 <23')).toBe(false);
   });
 
-  it('rejects only Node versions affected by the legacy extract-zip stream regression', () => {
-    expect(isNodeVersionSatisfied('22.0.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(true);
-    expect(isNodeVersionSatisfied('24.15.99', SHOWCASE_INSTALL_NODE_RANGE)).toBe(true);
-    expect(isNodeVersionSatisfied('24.16.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(false);
-    expect(isNodeVersionSatisfied('24.17.99', SHOWCASE_INSTALL_NODE_RANGE)).toBe(false);
-    expect(isNodeVersionSatisfied('24.18.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(true);
-    expect(isNodeVersionSatisfied('25.9.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(true);
-    expect(isNodeVersionSatisfied('26.0.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(true);
-    expect(isNodeVersionSatisfied('26.1.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(false);
-    expect(isNodeVersionSatisfied('26.7.0', SHOWCASE_INSTALL_NODE_RANGE)).toBe(false);
-  });
-
-  it('formats an actionable showcase installer compatibility error', () => {
-    expect(formatShowcaseInstallNodeCompatibilityError('26.7.0'))
-      .toBe(`Node.js version 26.7.0 is incompatible with the Lynxtron showcase installer. Use a Node.js version matching ${SHOWCASE_INSTALL_NODE_RANGE}, then retry.`);
+  it('formats the Node range declared by the installed Lynxtron package', () => {
+    expect(formatShowcaseInstallNodeCompatibilityError('26.7.0', '>=16 <26'))
+      .toBe('The system node resolved from PATH is version 26.7.0, but @lynx-js/lynxtron declares Node.js >=16 <26. Activate a matching Node.js version in your shell, restart Lynxtron Go, then retry.');
   });
 
   it('formats a user-facing node version mismatch error', () => {
