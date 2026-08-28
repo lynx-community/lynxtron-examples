@@ -6,6 +6,7 @@ import { searchNpm, parseDependencies, addDependency, removeDependency, type Npm
 import { fileIcon } from '../../store';
 import { DEFAULT_EDITORS } from '../types';
 import type { FiddleFile } from '../state/FiddleState';
+import { buildCompactFileTree, type FileTreeNode } from './file-tree';
 import './FiddleSidebar.css';
 
 // Upstream sidebar-file-tree validation: supported editor extensions only,
@@ -42,6 +43,7 @@ export interface FiddleSidebarProps {
  */
 export function FiddleSidebar(props: FiddleSidebarProps) {
   const editors = Array.from(props.files.values()).sort((a, b) => a.id.localeCompare(b.id));
+  const editorTree = buildCompactFileTree(editors.map(editor => editor.id));
   const [moduleQuery, setModuleQuery] = useState('');
   const [searchResults, setSearchResults] = useState<NpmSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -50,6 +52,7 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
   // the native editors never need to detach for either flow.
   const [addingName, setAddingName] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
   const addError = addingName && addingName.trim()
     ? validateNewFileName(addingName.trim(), editors.map(e => e.id))
     : null;
@@ -110,6 +113,121 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packageJson, props.onSetFileContent]);
 
+  const toggleFolder = useCallback((path: string) => {
+    setCollapsedFolders(previous => {
+      const next = new Set(previous);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  }, []);
+
+  const renderEditorNode = (node: FileTreeNode, depth: number): any => {
+    const indent = 10 + depth * 14;
+    if (node.kind === 'folder') {
+      const collapsed = collapsedFolders.has(node.path);
+      return (
+        <view key={`folder:${node.path}`} className="FiddleSidebar-TreeGroup">
+          <view
+            className="FiddleSidebar-FolderRow"
+            style={{ paddingLeft: `${indent}px` }}
+            bindtap={() => toggleFolder(node.path)}
+          >
+            <Icon
+              icon={collapsed ? 'chevron-right' : 'chevron-down'}
+              size={10}
+              className="FiddleSidebar-FolderChevron"
+            />
+            <Icon
+              icon={collapsed ? 'folder-close' : 'folder-open'}
+              size={13}
+              className="FiddleSidebar-TreeFolderIcon"
+            />
+            <text className="FiddleSidebar-FolderName" text-maxline="1">{node.name}</text>
+          </view>
+          {collapsed ? null : node.children.map(child => renderEditorNode(child, depth + 1))}
+        </view>
+      );
+    }
+
+    const f = props.files.get(node.id);
+    if (!f) return null;
+    const isActive = f.id === props.activeEditorId;
+    const canDelete = f.id !== DEFAULT_EDITORS.MAIN && f.id !== DEFAULT_EDITORS.PACKAGE;
+    const cls = 'FiddleSidebar-Item'
+      + (isActive ? ' FiddleSidebar-Item--active' : '')
+      + (f.isDirty ? ' FiddleSidebar-Item--dirty' : '');
+
+    if (renaming?.id === f.id) {
+      return (
+        <view
+          key={f.id}
+          className="FiddleSidebar-AddRow FiddleSidebar-AddRow--tree"
+          style={{ marginLeft: `${indent + 10}px` }}
+        >
+          <view className="FiddleSidebar-AddRowInput">
+            <text className="FiddleSidebar-ItemGlyph">{fileIcon(renaming.name || f.id)}</text>
+            <InputGroup
+              fill
+              placeholder={f.id}
+              value={renaming.name}
+              onChange={(v) => setRenaming(r => (r ? { ...r, name: v } : r))}
+              onSubmit={commitRename}
+            />
+            <view className="FiddleSidebar-EyeBtn" catchtap={() => commitRename(renaming.name)}>
+              <Icon icon="tick" size={14} color="#9feafa" />
+            </view>
+            <view className="FiddleSidebar-EyeBtn" catchtap={() => setRenaming(null)}>
+              <Icon icon="cross" size={14} color="#a7b6c2" />
+            </view>
+          </view>
+          {renameError ? <text className="FiddleSidebar-AddRowError">{renameError}</text> : null}
+        </view>
+      );
+    }
+
+    return (
+      <view
+        key={f.id}
+        className={cls}
+        style={{ paddingLeft: `${indent + 16}px` }}
+        bindtap={() => props.onSelectEditor(f.id)}
+      >
+        <text className="FiddleSidebar-ItemGlyph">{fileIcon(f.id)}</text>
+        <view className="FiddleSidebar-ItemLabel">
+          <text className="FiddleSidebar-ItemName" text-maxline="1">{node.name}</text>
+        </view>
+        {f.isDirty ? <text className="FiddleSidebar-Dot">●</text> : null}
+        <view className="FiddleSidebar-RowActions">
+          {isActive ? (
+            <view className="FiddleSidebar-ActiveActions">
+              {f.id !== DEFAULT_EDITORS.PACKAGE ? (
+                <view
+                  className="FiddleSidebar-EyeBtn"
+                  catchtap={() => setRenaming({ id: f.id, name: f.id })}
+                >
+                  <Icon icon="edit" size={12} color="#8ac7d6" />
+                </view>
+              ) : null}
+              {canDelete ? (
+                <view className="FiddleSidebar-EyeBtn" catchtap={() => props.onRemoveFile(f.id)}>
+                  <Icon icon="trash" size={12} color="#df3434" />
+                </view>
+              ) : null}
+            </view>
+          ) : null}
+          <view className="FiddleSidebar-EyeBtn" catchtap={() => props.onToggleEditor(f.id)}>
+            <Icon
+              icon={f.visible ? 'eye-open' : 'eye-off'}
+              size={14}
+              color={f.visible ? '#dcdcdc' : '#5c5f71'}
+            />
+          </view>
+        </view>
+      </view>
+    );
+  };
+
   return (
     <view className="FiddleSidebar">
       {/* Editors and Modules are two panels sharing one column, and the line
@@ -132,97 +250,7 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
         </view>
       </view>
       <scroll-view className="FiddleSidebar-List" scroll-orientation="vertical">
-        {editors.map(f => {
-          const isActive = f.id === props.activeEditorId;
-          const canDelete = f.id !== DEFAULT_EDITORS.MAIN && f.id !== DEFAULT_EDITORS.PACKAGE;
-          const cls = 'FiddleSidebar-Item'
-            + (isActive ? ' FiddleSidebar-Item--active' : '')
-            + (f.isDirty ? ' FiddleSidebar-Item--dirty' : '');
-          if (renaming?.id === f.id) {
-            return (
-              <view key={f.id} className="FiddleSidebar-AddRow">
-                <view className="FiddleSidebar-AddRowInput">
-                  {/* Of the name being typed, not of the file as it stands: rename
-                      main.js to main.css and the glyph turns over before you commit,
-                      which is the cheapest possible confirmation that the extension
-                      landed the way you meant it to. */}
-                  <text className="FiddleSidebar-ItemGlyph">{fileIcon(renaming.name || f.id)}</text>
-                  <InputGroup
-                    fill
-                    placeholder={f.id}
-                    value={renaming.name}
-                    onChange={(v) => setRenaming(r => (r ? { ...r, name: v } : r))}
-                    onSubmit={commitRename}
-                  />
-                  <view className="FiddleSidebar-EyeBtn" catchtap={() => commitRename(renaming.name)}>
-                    <Icon icon="tick" size={14} color="#9feafa" />
-                  </view>
-                  <view className="FiddleSidebar-EyeBtn" catchtap={() => setRenaming(null)}>
-                    <Icon icon="cross" size={14} color="#a7b6c2" />
-                  </view>
-                </view>
-                {renameError ? (
-                  <text className="FiddleSidebar-AddRowError">{renameError}</text>
-                ) : null}
-              </view>
-            );
-          }
-          return (
-            <view
-              key={f.id}
-              className={cls}
-              bindtap={() => props.onSelectEditor(f.id)}
-            >
-              {/* The same glyph Quick Open uses for the same file. Two file
-                  lists in one app were speaking two icon languages — a tinted
-                  monochrome document here, an emoji there — and the one you
-                  reach for by keyboard is not the one you reach for by eye, so
-                  the mismatch showed up every time you used both. One list,
-                  one language; `fileIcon` is the single map. */}
-              <text className="FiddleSidebar-ItemGlyph">{fileIcon(f.id)}</text>
-              <view className="FiddleSidebar-ItemLabel">
-                <text className="FiddleSidebar-ItemName" text-maxline="1">{f.id}</text>
-              </view>
-              {f.isDirty ? <text className="FiddleSidebar-Dot">●</text> : null}
-              {/* rename/delete only on the active row — upstream uses a
-                  right-click context menu, which Lynx doesn't deliver, and
-                  CSS :hover display-flips leave stale paint behind (icons
-                  ghost over the eye toggle after unhover) */}
-              <view className="FiddleSidebar-RowActions">
-                {isActive ? (
-                  <view className="FiddleSidebar-ActiveActions">
-                    {f.id !== DEFAULT_EDITORS.PACKAGE ? (
-                      <view
-                        className="FiddleSidebar-EyeBtn"
-                        catchtap={() => setRenaming({ id: f.id, name: f.id })}
-                      >
-                        <Icon icon="edit" size={12} color="#8ac7d6" />
-                      </view>
-                    ) : null}
-                    {canDelete ? (
-                      <view
-                        className="FiddleSidebar-EyeBtn"
-                        catchtap={() => props.onRemoveFile(f.id)}
-                      >
-                        <Icon icon="trash" size={12} color="#df3434" />
-                      </view>
-                    ) : null}
-                  </view>
-                ) : null}
-                <view
-                  className="FiddleSidebar-EyeBtn"
-                  catchtap={() => props.onToggleEditor(f.id)}
-                >
-                  <Icon
-                    icon={f.visible ? 'eye-open' : 'eye-off'}
-                    size={14}
-                    color={f.visible ? '#dcdcdc' : '#5c5f71'}
-                  />
-                </view>
-              </view>
-            </view>
-          );
-        })}
+        {editorTree.map(node => renderEditorNode(node, 0))}
         {addingName != null ? (
           <view className="FiddleSidebar-AddRow">
             <view className="FiddleSidebar-AddRowInput">
