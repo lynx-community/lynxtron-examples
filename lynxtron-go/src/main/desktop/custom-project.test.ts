@@ -4,6 +4,7 @@ import os from 'os';
 import path from 'path';
 import * as tar from 'tar';
 import { createCustomProjectFromArchive, isShowcaseProject } from './preload-showcase-service';
+import { BLANK_PROJECT_FILES } from '../../app/fiddle/runner/blank-project';
 
 const roots: string[] = [];
 
@@ -54,5 +55,34 @@ describe('custom project starter', () => {
     });
     expect(pkg.showcase).toBeUndefined();
     expect(pkg.repository).toBeUndefined();
+  });
+
+  it('keeps the complete starter but replaces the Hello renderer for Blank', async () => {
+    const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'lynxtron-blank-fixture-'));
+    const projects = fs.mkdtempSync(path.join(os.tmpdir(), 'lynxtron-blank-projects-'));
+    roots.push(fixture, projects);
+    const packageDir = path.join(fixture, 'package');
+    fs.mkdirSync(path.join(packageDir, 'src', 'app'), { recursive: true });
+    fs.writeFileSync(path.join(packageDir, 'package.json'), JSON.stringify({
+      name: '@lynxtron-examples/hello-lynxtron',
+      scripts: { build: 'starter-build' },
+    }));
+    fs.writeFileSync(path.join(packageDir, 'lynx.config.ts'), 'export default {};');
+    fs.writeFileSync(path.join(packageDir, 'src', 'app', 'App.tsx'), '<text>Hello, Lynxtron!</text>');
+    const archive = path.join(fixture, 'starter.tgz');
+    await tar.c({ gzip: true, cwd: fixture, file: archive }, ['package']);
+
+    const project = await createCustomProjectFromArchive(
+      archive,
+      projects,
+      BLANK_PROJECT_FILES,
+    );
+
+    const app = fs.readFileSync(path.join(project, 'src', 'app', 'App.tsx'), 'utf8');
+    expect(app).toBe(BLANK_PROJECT_FILES['src/app/App.tsx']);
+    expect(app).not.toContain('Hello, Lynxtron!');
+    expect(fs.existsSync(path.join(project, 'lynx.config.ts'))).toBe(true);
+    expect(JSON.parse(fs.readFileSync(path.join(project, 'package.json'), 'utf8')).scripts.build)
+      .toBe('starter-build');
   });
 });

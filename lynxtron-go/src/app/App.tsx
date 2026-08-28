@@ -2778,6 +2778,10 @@ export function App(props: { onRender?: () => void } = {}) {
       onShowcaseTemplateConsumed={() => setPendingShowcaseTemplate(null)}
       pendingFiddleOpen={pendingFiddleOpen}
       onFiddleOpenConsumed={() => setPendingFiddleOpen(null)}
+      onCancelPendingOpen={() => {
+        setPendingShowcaseTemplate(null);
+        setPendingFiddleOpen(null);
+      }}
       onRunFiddleSource={(id) => {
         const entry = SHOWCASE_REGISTRY.find(e => e.name === FIDDLE_SHOWCASE_NAME);
         if (entry) void runFiddleEntry(entry, id);

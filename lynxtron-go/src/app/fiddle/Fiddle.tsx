@@ -19,6 +19,8 @@ import { resolveLocalRuntimeExecutable } from './runner/spawnRuntime';
 import { loadGistFiddle, parseGistId, publishGistFiddle } from './gist/gist-loader';
 import { loadLocalFiddle } from './runner/open';
 import { resolveShowcaseWorkspace, loadProjectFiddle, loadShowcaseFiddle, loadSingleFiddle, projectOverlayForFiles, writeFiddleToWorkspace } from './runner/showcase-open';
+import { createLatestOpenRequestGate } from './runner/latest-open-request';
+import { BLANK_PROJECT_FILES } from './runner/blank-project';
 import { showcaseApi, appendFiddleOutput as appendOutput, type ShowcaseEntry, foundationApi, getExposed } from '../store';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './dev-preset';
 import { applyEditorThemeAll, setThemeSetting } from './theme';
@@ -41,6 +43,8 @@ export interface FiddleProps {
   /** Open ONE fiddle of a fiddle-collection showcase — its own files only. */
   pendingFiddleOpen?: { entry: ShowcaseEntry; id: string; title: string; upstream: string } | null;
   onFiddleOpenConsumed?: () => void;
+  /** Cancel App-level opens requested before a direct Fiddle selection. */
+  onCancelPendingOpen?: () => void;
   /** Build + launch the single fiddle currently loaded. */
   onRunFiddleSource?: (fiddleId: string) => void;
   /** An App-level platform overlay is active; close any competing Fiddle dialog. */
@@ -73,6 +77,7 @@ export function Fiddle(props: FiddleProps) {
   const fiddle = useFiddle();
   const runner = useRunner();
   const initialStarterRequested = useRef(false);
+  const openRequests = useRef(createLatestOpenRequestGate());
   const [isConsoleShowing, setConsoleShowing] = useState(true);
   const devBoot = isDevMode() ? DEV_PRESET : null;
   const [templatePickerOpen, setTemplatePickerOpen] = useState(devBoot?.openSurface === 'templates');
@@ -119,21 +124,25 @@ export function Fiddle(props: FiddleProps) {
   }, [selectedLocalName]);
 
   const createBlankProject = useCallback(() => {
+    props.onCancelPendingOpen?.();
+    const requestId = openRequests.current.begin();
     setTemplatePickerOpen(false);
     appendOutput('info', '[Lynxtron Go] Creating project from the built-in starter…');
     void (async () => {
       try {
-        const projectRoot = await showcaseApi()?.createCustomProject?.();
+        const projectRoot = await showcaseApi()?.createCustomProject?.(BLANK_PROJECT_FILES);
+        if (!openRequests.current.isCurrent(requestId)) return;
         if (!projectRoot) throw new Error('Built-in starter is unavailable.');
         const snap = loadProjectFiddle('Untitled Project', projectRoot, { kind: 'blank', ref: projectRoot });
         if (!snap) throw new Error(`Starter source is empty: ${projectRoot}`);
         fiddle.loadSnapshot(snap);
         appendOutput('info', `[Lynxtron Go] Created editable project at ${projectRoot}`);
       } catch (e: any) {
+        if (!openRequests.current.isCurrent(requestId)) return;
         appendOutput('error', `[Lynxtron Go] New project failed: ${e?.message ?? String(e)}`);
       }
     })();
-  }, [fiddle.loadSnapshot]);
+  }, [fiddle.loadSnapshot, props.onCancelPendingOpen]);
 
   useEffect(() => {
     if (DEV_PRESET?.suppressTour && isDevMode()) return;
@@ -213,6 +222,8 @@ export function Fiddle(props: FiddleProps) {
   }, [props.galleryOpen, props.onOpenGallery, props.onCloseGallery]);
 
   const handleOpenFolder = useCallback((path: string) => {
+    props.onCancelPendingOpen?.();
+    openRequests.current.begin();
     const snap = loadLocalFiddle(path);
     if (!snap) {
       AppToaster.show({ message: `No fiddle files found in ${path}`, intent: 'warning', icon: 'warning-sign' });
@@ -396,12 +407,17 @@ export function Fiddle(props: FiddleProps) {
   // download/extract the package, then surface its source in the mosaic.
   // Run executes the workspace (see handleRun's showcase branch).
   const handlePickShowcase = useCallback((entry: ShowcaseEntry) => {
+    const requestId = openRequests.current.begin();
     setTemplatePickerOpen(false);
     appendOutput('info', `[Lynxtron Go] Fetching showcase "${entry.name}"…`);
     AppToaster.show({ message: `Downloading ${entry.name}…`, intent: 'primary', icon: 'cloud-download' });
     void (async () => {
       try {
         const workspaceRoot = await resolveShowcaseWorkspace(entry);
+        if (!openRequests.current.isCurrent(requestId)) {
+          appendOutput('info', `[Lynxtron Go] Ignored stale showcase open: ${entry.name}`);
+          return;
+        }
         if (!workspaceRoot) {
           appendOutput('error', `[Lynxtron Go] Could not fetch showcase "${entry.name}".`);
           AppToaster.show({ message: `Fetch failed: ${entry.name}`, intent: 'danger', icon: 'error', timeout: 6000 });
@@ -417,6 +433,7 @@ export function Fiddle(props: FiddleProps) {
         appendOutput('info', `[Lynxtron Go] Opened "${entry.name}" (${snap.files.size} files) from ${workspaceRoot}`);
         AppToaster.show({ message: `Opened ${entry.name} — hit Run to launch it`, intent: 'success', icon: 'tick' });
       } catch (e: any) {
+        if (!openRequests.current.isCurrent(requestId)) return;
         appendOutput('error', `[Lynxtron Go] Showcase open failed: ${e?.message ?? String(e)}`);
         AppToaster.show({ message: `Open failed: ${e?.message ?? 'unknown'}`, intent: 'danger', icon: 'error', timeout: 6000 });
       }
@@ -431,11 +448,13 @@ export function Fiddle(props: FiddleProps) {
   // Electron Fiddle shows a fiddle.
   const handleOpenSingleFiddle = useCallback(
     (req: { entry: ShowcaseEntry; id: string; title: string; upstream: string }) => {
+      const requestId = openRequests.current.begin();
       setTemplatePickerOpen(false);
       appendOutput('info', `[Lynxtron Go] Opening ${req.id}…`);
       void (async () => {
         try {
           const workspaceRoot = await resolveShowcaseWorkspace(req.entry);
+          if (!openRequests.current.isCurrent(requestId)) return;
           if (!workspaceRoot) {
             appendOutput('error', `[Lynxtron Go] Could not fetch "${req.entry.name}".`);
             return;
@@ -449,6 +468,7 @@ export function Fiddle(props: FiddleProps) {
           appendOutput('info', `[Lynxtron Go] Opened ${req.id} (${snap.files.size} files)`);
           AppToaster.show({ message: `Opened ${req.title} — hit Run`, intent: 'success', icon: 'tick' });
         } catch (e: any) {
+          if (!openRequests.current.isCurrent(requestId)) return;
           appendOutput('error', `[Lynxtron Go] Open ${req.id} failed: ${e?.message ?? String(e)}`);
         }
       })();
@@ -479,11 +499,15 @@ export function Fiddle(props: FiddleProps) {
       appendOutput('warn', `[Lynxtron Go] Not a recognizable gist id/url: ${input}`);
       return;
     }
+    props.onCancelPendingOpen?.();
+    const requestId = openRequests.current.begin();
     appendOutput('info', `[Lynxtron Go] Loading gist ${id}…`);
     void loadGistFiddle(id)
       .then(async gistSnap => {
+        if (!openRequests.current.isCurrent(requestId)) return;
         const values = Object.fromEntries([...gistSnap.files].map(([name, file]) => [name, file.currentText]));
         const projectRoot = await showcaseApi()?.createCustomProject?.(projectOverlayForFiles(values));
+        if (!openRequests.current.isCurrent(requestId)) return;
         if (!projectRoot) throw new Error('Could not create a project for this gist.');
         const snap = loadProjectFiddle(
           gistSnap.title,
@@ -494,7 +518,10 @@ export function Fiddle(props: FiddleProps) {
         fiddle.loadSnapshot(snap);
         appendOutput('info', `[Lynxtron Go] Loaded gist ${id}.`);
       })
-      .catch(e => appendOutput('error', `[Lynxtron Go] Gist load failed: ${e?.message ?? String(e)}`));
+      .catch(e => {
+        if (!openRequests.current.isCurrent(requestId)) return;
+        appendOutput('error', `[Lynxtron Go] Gist load failed: ${e?.message ?? String(e)}`);
+      });
   }, [fiddle]);
 
   // App-menu events (main.ts buildAppMenu sends `fiddle:*` global events —
@@ -509,6 +536,9 @@ export function Fiddle(props: FiddleProps) {
   const menuHandlersRef = useRef<Record<string, (data?: any) => void>>({});
   menuHandlersRef.current = {
     'fiddle:newFiddle': () => setTemplatePickerOpen(true),
+    // Dev automation drives these direct actions to cover async-open races.
+    'fiddle:newBlank': () => createBlankProject(),
+    'fiddle:openHello': () => props.onOpenHelloShowcase(),
     'fiddle:openFolder': (data: any) => { const p = data?.path; if (typeof p === 'string' && p) handleOpenFolder(p); },
     'fiddle:save': () => { void handleSave(); },
     'fiddle:publish': () => { void handlePublishGist(); },
