@@ -34,14 +34,27 @@ export function EditorPane(props: EditorPaneProps) {
   const nudged = useRef(false);
   const nudgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // On remount (see index.tsx / fiddle:remount), delay emitting the
+  // <scintilla-view> for one render pass so the process-global
+  // ScintillaRegistry sees a real "unmounted → remounted" transition for this
+  // editor id — issuing the element in the very first pass, alongside a
+  // freshly-destroyed prior ScintillaView with the same id, leaves the new
+  // view registered but visually blank on first paint.
+  const [mountEditor, setMountEditor] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMountEditor(true), 0);
+    return () => clearTimeout(t);
+  }, []);
+
   // Push content when this pane (re)mounts. ScintillaRegistry buffers
   // setText/setStyles issued before the native view registers, so this is
   // safe in both orders.
   useEffect(() => {
+    if (!mountEditor) return;
     props.pushContent(file.id);
     applyEditorTheme(file.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [file.id]);
+  }, [file.id, mountEditor]);
   // The nudge below must not fire into an unmounted pane's editor id.
   useEffect(() => () => { if (nudgeTimer.current) clearTimeout(nudgeTimer.current); }, []);
 
