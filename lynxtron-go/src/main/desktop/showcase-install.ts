@@ -309,8 +309,9 @@ function describeNodeVersionRange(range: string): string {
   return trimmed;
 }
 
-// Published showcase source fallback runs with the user's standard Node/npm
-// installation. Make a missing or incompatible Node installation actionable.
+// Published showcase source fallback runs Node via Lynxtron itself, not the
+// system install — so a Node version mismatch is a Lynxtron build to update,
+// never a nudge to install a different Node.
 export function formatNodeVersionRequirementError(
   requirement: NodeVersionRequirement,
   currentVersion: string | null,
