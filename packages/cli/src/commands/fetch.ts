@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as tar from 'tar';
 import { execSync, type ExecSyncOptions } from 'child_process';
+import { createRequire } from 'module';
 import {
   writeShowcaseCacheMetadata,
 } from '../showcase-cache.js';
@@ -45,6 +46,25 @@ const NON_INTERACTIVE_ENV = { CI: 'true', npm_config_confirm_modules_purge: 'fal
  */
 const NPM_SOURCE_INSTALL_FLAGS = '--include=dev --no-package-lock --registry=https://registry.npmjs.org/';
 
+/**
+ * Lynxtron, like Electron, patches the public `fs` module so `.asar` files can
+ * be traversed as virtual directories. That is useful for reading packaged app
+ * resources, but it makes a recursive cache deletion fail when a fetched
+ * showcase's node_modules contains a real `default_app.asar` file: `rmSync`
+ * traverses the archive and eventually tries to `rmdir` the file itself.
+ *
+ * `original-fs` is provided by the Lynxtron runtime and bypasses that virtual
+ * filesystem. Ordinary Node does not provide it, so the standalone CLI keeps
+ * using the standard implementation.
+ */
+function physicalFilesystem(): typeof fs {
+  try {
+    return createRequire(import.meta.url)('original-fs') as typeof fs;
+  } catch (_) {
+    return fs;
+  }
+}
+
 function execCapture(command: string, options: ExecSyncOptions = {}): void {
   try {
     execSync(command, {
@@ -78,10 +98,11 @@ function installSourceShowcase(destDir: string, npmCacheDir: string): void {
 
 
 export function clearFetchDestination(destDir: string): void {
-  if (fs.existsSync(destDir)) {
-    fs.rmSync(destDir, { recursive: true, force: true });
+  const physicalFs = physicalFilesystem();
+  if (physicalFs.existsSync(destDir)) {
+    physicalFs.rmSync(destDir, { recursive: true, force: true });
   }
-  fs.mkdirSync(path.dirname(destDir), { recursive: true });
+  physicalFs.mkdirSync(path.dirname(destDir), { recursive: true });
 }
 
 export async function fetch(url: string, workspaceRoot: string): Promise<void> {
