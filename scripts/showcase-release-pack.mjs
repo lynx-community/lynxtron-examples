@@ -3,7 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { mkdtemp, rename, rm } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { moveFile } from './move-file.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -34,7 +35,7 @@ export async function finalizeShowcaseTarball(tarballPath, localDistPath) {
     prepareShowcasePackageForRelease(packageRoot, localDistPath);
 
     await tar.c({ gzip: true, file: rewrittenTarball, cwd: temporaryRoot }, ['package']);
-    await rename(rewrittenTarball, tarballPath);
+    await moveFile(rewrittenTarball, tarballPath);
   } finally {
     await rm(temporaryRoot, { recursive: true, force: true });
   }
