@@ -241,7 +241,6 @@
   position: absolute;
   left: 8px;
   color: var(--bp-text-muted);
-  pointer-events: none;
 }
 .bp3-input-group .bp3-input-icon ~ .bp3-input { padding-left: 26px; }
 .bp3-input-group .bp3-input-action { position: absolute; right: 4px; top: 3px; }
@@ -255,7 +254,6 @@
   align-items: center;
   justify-content: center;
   z-index: 100;
-  pointer-events: auto;
 }
 /* Dialogs speak the same chrome as the palette and the version popover: a panel
    on the chrome tone behind a hairline, lifted by its shadow rather than by a
@@ -604,7 +602,6 @@
   flex-direction: column;
   gap: 8px;
   z-index: 200;
-  pointer-events: none;
 }
 .bp3-toast {
   display: flex;
@@ -620,7 +617,6 @@
     0 0 0 1px rgba(16,22,26,0.2),
     0 2px 4px rgba(16,22,26,0.4),
     0 8px 24px rgba(16,22,26,0.4);
-  pointer-events: auto;
 }
 .bp3-toast.bp3-intent-primary { background-color: var(--surface-raised); }
 .bp3-toast.bp3-intent-success { background-color: #0f9960; }
@@ -709,7 +705,6 @@
   position: absolute;
   display: flex;
   flex-direction: row;
-  pointer-events: none;
 }
 .bp3-tooltip-frame--end {
   justify-content: flex-end;

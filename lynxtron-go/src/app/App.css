@@ -173,7 +173,6 @@
   /* Above the Fiddle's bp3 dialogs (z 100/200) — they'd bleed through. */
   z-index: 300;
   display: flex;
-  pointer-events: auto;
   flex-direction: column;
   /* The app's own ground, not a hardcoded blue-black. #0b1220 was a colour
      from nowhere in this palette, and it is what made the legacy-IDE gallery

@@ -15,7 +15,7 @@ export function LoadingOverlay({ visible, message }: LoadingOverlayProps) {
 
   return (
     <PlatformOverlay priority={160}>
-      <view className="LoadingOverlay" catchtap={() => {}}>
+      <view event-through={false} className="LoadingOverlay" catchtap={() => {}}>
         <view className="LoadingOverlayContent">
           <view className="LoadingOverlaySpinner" />
           {message ? <text className="LoadingOverlayMessage">{message}</text> : null}

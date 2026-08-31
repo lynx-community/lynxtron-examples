@@ -63,7 +63,6 @@
   align-items: center;
   justify-content: center;
   column-gap: 7px;
-  pointer-events: none;
 }
 
 /* ── Spacing scale ────────────────────────────────────────────────────────
@@ -323,7 +322,6 @@
   /* Not transparent: Lynx skips fully transparent views in hit-testing, so a
      clear backdrop would never receive the dismiss tap. */
   background-color: rgba(0, 0, 0, 0.001);
-  pointer-events: auto;
   z-index: 500;
 }
 /* Anchored to the shell, not the bar — Fiddle renders it into the platform
@@ -333,7 +331,6 @@
   position: absolute;
   top: 54px;
   right: 12px;
-  pointer-events: auto;
   z-index: 501;
   /* Sized by its content, deliberately. Two stacked min-widths (210 here, 180
      on .bp3-menu) reserved space the items never filled, and

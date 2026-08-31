@@ -11,7 +11,6 @@
   justify-content: center;
   background-color: rgba(15, 23, 42, 0.48);
   cursor: wait;
-  pointer-events: auto;
   box-sizing: border-box;
 }
 

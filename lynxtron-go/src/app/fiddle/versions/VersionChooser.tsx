@@ -115,8 +115,8 @@ export function VersionChooser(props: VersionChooserProps) {
           Anchored, like the commands overflow beside it, so the bar has one
           kind of list-popover rather than two. */}
       <PlatformOverlay priority={120}>
-        <view className="Version-Backdrop" bindtap={props.onClose} />
-        <view className={'Version-Panel' + (props.isMac ? ' Version-Panel--mac' : '')}>
+        <view event-through={false} className="Version-Backdrop" bindtap={props.onClose} />
+        <view event-through={false} className={'Version-Panel' + (props.isMac ? ' Version-Panel--mac' : '')}>
           <scroll-view className="Version-Scroll" scroll-orientation="vertical">
             <text className="Version-SectionLabel">Bundled</text>
             <view

@@ -53,6 +53,7 @@ export interface IconProps {
   className?: string;
   size?: number;
   color?: string;
+  eventThrough?: boolean;
 }
 
 export function Icon(props: IconProps) {
@@ -91,10 +92,18 @@ export function Icon(props: IconProps) {
   // as tofu. A fresh text node resolves the now-registered family correctly.
   if (useFont) {
     return (
-      <text className={cls} style={{ ...textStyle, fontFamily: ICON_FONT_FAMILY }}>
+      <text
+        event-through={props.eventThrough ?? false}
+        className={cls}
+        style={{ ...textStyle, fontFamily: ICON_FONT_FAMILY }}
+      >
         {ICON_CODEPOINTS[props.icon]}
       </text>
     );
   }
-  return <text className={cls} style={textStyle}>{GLYPH[props.icon] ?? '?'}</text>;
+  return (
+    <text event-through={props.eventThrough ?? false} className={cls} style={textStyle}>
+      {GLYPH[props.icon] ?? '?'}
+    </text>
+  );
 }

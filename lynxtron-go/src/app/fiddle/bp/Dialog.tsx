@@ -16,7 +16,7 @@ export function Dialog(props: DialogProps) {
   const style = props.width ? { width: props.width + 'px' } as any : undefined;
   return (
     <PlatformOverlay priority={100}>
-      <view className="bp3-dialog-overlay">
+      <view event-through={false} className="bp3-dialog-overlay">
         <view className="bp3-dialog" style={style}>
         <view className="bp3-dialog-header">
           <text className="bp3-dialog-title">{props.title}</text>

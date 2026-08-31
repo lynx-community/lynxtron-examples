@@ -12,7 +12,6 @@
      hit testing when it has no registered overlay children. */
   background-color: rgba(0, 0, 0, 0);
   z-index: 1000;
-  pointer-events: none;
 }
 
 .PlatformOverlayHost.is-empty {
@@ -20,5 +19,4 @@
 }
 
 .PlatformOverlayEntry {
-  pointer-events: none;
 }

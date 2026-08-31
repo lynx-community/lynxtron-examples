@@ -119,8 +119,9 @@ export function Tooltip(props: TooltipProps) {
     >
       {props.children}
       {rect ? (
-        <PlatformOverlay priority={600}>
+        <PlatformOverlay priority={600} eventThrough>
           <view
+            event-through={true}
             className={'bp3-tooltip-frame' + (align === 'end' ? ' bp3-tooltip-frame--end' : '')}
             style={frameStyle}
           >

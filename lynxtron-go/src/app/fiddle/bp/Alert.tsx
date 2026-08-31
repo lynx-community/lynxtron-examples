@@ -20,7 +20,7 @@ export function Alert(props: AlertProps) {
   const showCancel = typeof props.onCancel === 'function';
   return (
     <PlatformOverlay priority={100}>
-      <view className="bp3-dialog-overlay">
+      <view event-through={false} className="bp3-dialog-overlay">
         <view className="bp3-alert">
         {props.icon ? (
           <view className="bp3-alert-icon">

@@ -15,7 +15,6 @@
   flex-direction: column;
   align-items: center;
   background-color: rgba(0, 0, 0, 0.1);
-  pointer-events: auto;
   /* Above the gallery overlay (300) and the Fiddle's dialogs (100/200): the
      palette is opened from any of them and must never appear behind one. The
      shared cover-view host also gives this subtree a platform overlay slice, so it
