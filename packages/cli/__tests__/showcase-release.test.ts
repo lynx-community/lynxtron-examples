@@ -133,4 +133,17 @@ describe('showcase release format', () => {
     expect(fs.existsSync(path.join(root, SHOWCASE_RELEASE_MANIFEST_FILE))).toBe(true);
     expect(verifyShowcaseRelease(root).status).toBe('verified');
   });
+
+  it('rejects published showcase scripts that require pnpm', () => {
+    const root = makeShowcase();
+    writeFile(root, 'package.json', JSON.stringify({
+      name: 'counter',
+      showcase: {},
+      scripts: { build: 'pnpm run build:native && rspeedy build' },
+    }));
+    writeDesktop(root, 'dist', 'pack-time local');
+
+    expect(() => prepareShowcasePackageForRelease(root, path.join(root, 'dist')))
+      .toThrow('Published showcase script "build" must not require pnpm');
+  });
 });

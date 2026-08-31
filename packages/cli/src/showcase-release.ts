@@ -19,6 +19,7 @@ const SOURCE_EXCLUDED_ROOT_ENTRIES = new Set([
 
 const DESKTOP_REQUIRED_FILES = ['main.js', 'main.lynx.bundle', 'package.json'] as const;
 const WEB_REQUIRED_FILES = ['index.html'] as const;
+const PNPM_COMMAND_PATTERN = /(^|[^a-z0-9_.-])pnpm(?:\.cmd)?(?=$|[^a-z0-9_.-])/i;
 
 export interface ShowcaseReleaseTarget {
   root: string;
@@ -192,12 +193,27 @@ export function writeShowcaseReleaseManifest(showcasePath: string): ShowcaseRele
   return manifest;
 }
 
+function assertPortableReleaseScripts(showcasePath: string): void {
+  const packagePath = path.join(showcasePath, 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf-8')) as {
+    scripts?: Record<string, unknown>;
+  };
+  for (const [name, command] of Object.entries(packageJson.scripts ?? {})) {
+    if (typeof command === 'string' && PNPM_COMMAND_PATTERN.test(command)) {
+      throw new Error(
+        `Published showcase script "${name}" must not require pnpm; use npm instead: ${command}`,
+      );
+    }
+  }
+}
+
 /**
  * Convert an extracted npm package into the public Release layout.
  * package.json has already been normalized by pnpm at this point, so the
  * resulting source hash is exactly the hash consumers will recompute.
  */
 export function finalizeShowcasePackageRoot(showcasePath: string): ShowcaseReleaseManifest {
+  assertPortableReleaseScripts(showcasePath);
   fs.rmSync(path.join(showcasePath, SHOWCASE_LOCAL_BUILD_ROOT), { recursive: true, force: true });
   fs.rmSync(path.join(showcasePath, 'output'), { recursive: true, force: true });
   return writeShowcaseReleaseManifest(showcasePath);
