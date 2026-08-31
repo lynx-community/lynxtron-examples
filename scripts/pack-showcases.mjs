@@ -19,10 +19,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { mkdir, readFile, readdir, rename } from 'node:fs/promises';
+import { mkdir, readFile, readdir } from 'node:fs/promises';
 import {
   finalizeShowcaseTarball,
 } from './showcase-release-pack.mjs';
+import { moveFile } from './move-file.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -166,7 +167,7 @@ async function renamePackedTarball(showcaseDir) {
     throw new Error(`Expected tarball not found: ${src}`);
   }
   if (fs.existsSync(dest)) fs.rmSync(dest);
-  await rename(src, dest);
+  await moveFile(src, dest);
   return dest;
 }
 

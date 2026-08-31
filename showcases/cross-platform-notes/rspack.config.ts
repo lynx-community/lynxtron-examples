@@ -74,7 +74,10 @@ const desktopConfig = defineConfig({
     path: path.resolve(__dirname, 'dist/desktop/'),
     filename: '[name].js',
   },
-  externals: { '@lynx-js/lynxtron': 'commonjs lynxtron' },
+  externals: {
+    '@lynx-js/lynxtron': 'commonjs lynxtron',
+    '@lynx-js/lynxtron/context-bridge': 'commonjs lynxtron',
+  },
   module: { rules: [sharedTsRule] },
   plugins: [
     new rspack.CopyRspackPlugin({

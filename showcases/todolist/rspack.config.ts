@@ -110,6 +110,7 @@ export default defineConfig({
   },
   externals: {
     '@lynx-js/lynxtron': 'commonjs lynxtron',
+    '@lynx-js/lynxtron/context-bridge': 'commonjs lynxtron',
     sqlite3: 'commonjs sqlite3',
   },
   module: {
