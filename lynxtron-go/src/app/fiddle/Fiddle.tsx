@@ -21,7 +21,18 @@ import { loadLocalFiddle } from './runner/open';
 import { resolveShowcaseWorkspace, loadProjectFiddle, loadShowcaseFiddle, loadSingleFiddle, projectOverlayForFiles, writeFiddleToWorkspace } from './runner/showcase-open';
 import { createLatestOpenRequestGate } from './runner/latest-open-request';
 import { BLANK_PROJECT_FILES } from './runner/blank-project';
-import { showcaseApi, appendFiddleOutput as appendOutput, type ShowcaseEntry, foundationApi, getExposed } from '../store';
+import {
+  showcaseApi,
+  appendFiddleOutput as appendOutput,
+  type ShowcaseEntry,
+  foundationApi,
+  getExposed,
+  SHOWCASE_REGISTRY,
+} from '../store';
+import {
+  findShowcaseEntryForWorkspace,
+  resolveCurrentShowcaseWorkspacePath,
+} from '../shared/showcase-workspace';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './dev-preset';
 import { applyEditorThemeAll, setThemeSetting } from './theme';
 import './Fiddle.css';
@@ -87,12 +98,49 @@ export function Fiddle(props: FiddleProps) {
   const [tourOpen, setTourOpen] = useState(devBoot?.openSurface === 'tour');
   const [historyOpen, setHistoryOpen] = useState(devBoot?.openSurface === 'history');
   const [mainRegionHeight, setMainRegionHeight] = useState(0);
+  const restoredShowcaseChecked = useRef(false);
+
+  const refreshCurrentShowcase = useCallback(async () => {
+    const source = fiddle.snap.source;
+    if (source.kind !== 'showcase' || source.fiddleId || !source.ref) {
+      return { projectRoot: source.ref ?? null, updated: false };
+    }
+    const entry = findShowcaseEntryForWorkspace(source.ref, SHOWCASE_REGISTRY);
+    if (!entry) return { projectRoot: source.ref, updated: false };
+
+    let updated = false;
+    const projectRoot = await resolveCurrentShowcaseWorkspacePath(
+      source.ref,
+      SHOWCASE_REGISTRY,
+      {
+        onFetchStart: current => {
+          updated = true;
+          appendOutput('info', `[Lynxtron Go] Updating showcase from ${current.url}`);
+        },
+      },
+    );
+    if (!projectRoot || !updated) return { projectRoot, updated };
+
+    const snapshot = loadShowcaseFiddle(entry, projectRoot);
+    if (!snapshot) throw new Error(`Updated showcase has no editable source: ${projectRoot}`);
+    fiddle.loadSnapshot(snapshot);
+    appendOutput('info', `[Lynxtron Go] Updated showcase "${entry.name}"`);
+    return { projectRoot, updated: true };
+  }, [fiddle.loadSnapshot, fiddle.snap.source]);
 
   useEffect(() => {
     if (initialStarterRequested.current || fiddle.restoredSession || fiddle.snap.files.size > 0) return;
     initialStarterRequested.current = true;
     props.onOpenHelloShowcase();
   }, [fiddle.restoredSession, fiddle.snap.files.size, props.onOpenHelloShowcase]);
+
+  useEffect(() => {
+    if (restoredShowcaseChecked.current || !fiddle.restoredSession) return;
+    restoredShowcaseChecked.current = true;
+    void refreshCurrentShowcase().catch((error: any) => {
+      appendOutput('error', `[Lynxtron Go] Showcase update failed: ${error?.message ?? String(error)}`);
+    });
+  }, [fiddle.restoredSession, refreshCurrentShowcase]);
 
   const handleMainRegionLayout = useCallback((e: any) => {
     const height = e?.detail?.height;
@@ -304,7 +352,14 @@ export function Fiddle(props: FiddleProps) {
     void (async () => {
       try {
         let projectRoot = fiddle.snap.source.ref ?? null;
-        const values = fiddle.values();
+        let values = fiddle.values();
+        let updated = false;
+        if (fiddle.snap.source.kind === 'showcase' && !loadedFiddleId) {
+          const refreshed = await refreshCurrentShowcase();
+          projectRoot = refreshed.projectRoot;
+          updated = refreshed.updated;
+          if (updated) values = {};
+        }
         if (!projectRoot) {
           projectRoot = await showcaseApi()?.createCustomProject?.(projectOverlayForFiles(values)) ?? null;
           if (!projectRoot) throw new Error('Could not create a complete project workspace.');
@@ -315,7 +370,7 @@ export function Fiddle(props: FiddleProps) {
           );
           if (!snap) throw new Error(`Created project has no editable source: ${projectRoot}`);
           fiddle.loadSnapshot(snap);
-        } else if (!writeFiddleToWorkspace(projectRoot, values)) {
+        } else if (!updated && !writeFiddleToWorkspace(projectRoot, values)) {
           throw new Error(`Failed to write edits into ${projectRoot}`);
         }
         fiddle.markSaved();
@@ -331,7 +386,7 @@ export function Fiddle(props: FiddleProps) {
         appendOutput('error', `[Lynxtron Go] Run failed: ${e?.message ?? String(e)}`);
       }
     })();
-  }, [props.onRunFiddleSource, fiddle, runner, resolveLocalVersionFolder, selectedLocalName]);
+  }, [props.onRunFiddleSource, fiddle, refreshCurrentShowcase, runner, resolveLocalVersionFolder, selectedLocalName]);
 
   const handleSave = useCallback(async () => {
     // A showcase fiddle already has a workspace on disk — ⌘S writes back to

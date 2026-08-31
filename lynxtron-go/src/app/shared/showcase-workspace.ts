@@ -26,6 +26,20 @@ export interface ResolveShowcaseWorkspaceHooks {
   onReuse?: (entry: ShowcaseEntry, path: string) => void;
 }
 
+function bareShowcaseName(name: string): string {
+  const normalized = name.replace(/[\\/]+$/, '');
+  return normalized.slice(Math.max(normalized.lastIndexOf('/'), normalized.lastIndexOf('\\')) + 1);
+}
+
+/** Resolve legacy path-only sessions and current named sessions to one registry identity. */
+export function findShowcaseEntryForWorkspace(
+  rootPath: string,
+  registry: ShowcaseEntry[],
+): ShowcaseEntry | null {
+  const workspaceName = bareShowcaseName(rootPath);
+  return registry.find(entry => bareShowcaseName(entry.name) === workspaceName) ?? null;
+}
+
 export async function resolveShowcaseWorkspacePath(
   entry: ShowcaseEntry,
   hooks: ResolveShowcaseWorkspaceHooks = {},
@@ -53,4 +67,18 @@ export async function resolveShowcaseWorkspacePath(
   hooks.onFetchStart?.(entry);
   const fetched = await fetchFn(entry.url);
   return fetched || null;
+}
+
+/**
+ * Revalidate a persisted or currently open showcase against the registry used
+ * by this app build. Unregistered projects remain ordinary local workspaces.
+ */
+export async function resolveCurrentShowcaseWorkspacePath(
+  rootPath: string,
+  registry: ShowcaseEntry[],
+  hooks: ResolveShowcaseWorkspaceHooks = {},
+): Promise<string | null> {
+  const entry = findShowcaseEntryForWorkspace(rootPath, registry);
+  if (!entry) return rootPath;
+  return resolveShowcaseWorkspacePath(entry, hooks);
 }

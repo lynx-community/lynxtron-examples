@@ -66,7 +66,10 @@ import { registerStatusBarItem } from './components/StatusBar/statusbar-registry
 import { QuickPicker } from './components/QuickPicker/QuickPicker';
 import { GalleryHome } from './components/Gallery/GalleryHome';
 import { Fiddle, type FiddlePaletteSource } from './fiddle/Fiddle';
-import { resolveShowcaseWorkspacePath } from './shared/showcase-workspace';
+import {
+  resolveCurrentShowcaseWorkspacePath,
+  resolveShowcaseWorkspacePath,
+} from './shared/showcase-workspace';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './fiddle/dev-preset';
 import { isDarkTheme } from './fiddle/theme';
 import { LoadingOverlay } from './components/shared/LoadingOverlay';
@@ -668,7 +671,10 @@ export function App(props: { onRender?: () => void } = {}) {
   }, []);
 
   // ── Open folder ────────────────────────────────────────────────────────────
-  const openFolder = useCallback((folderPath: string, source: 'folder' | 'showcase' = 'folder') => {
+  const openFolder = useCallback((
+    folderPath: string,
+    source: 'folder' | 'showcase' = 'folder',
+  ) => {
     console.log('[IDE] openFolder called with:', folderPath);
     log(`[IDE] openFolder: ${folderPath}`);
     try {
@@ -1344,10 +1350,29 @@ export function App(props: { onRender?: () => void } = {}) {
     setPickerOpen(true);
   }, []);
 
-  const handleResumeWorkspace = useCallback(() => {
+  const handleResumeWorkspace = useCallback(async () => {
     if (!lastWorkspaceSession) return;
-    openFolder(lastWorkspaceSession.rootPath, lastWorkspaceSession.kind);
-  }, [lastWorkspaceSession, openFolder]);
+    if (lastWorkspaceSession.kind === 'folder') {
+      openFolder(lastWorkspaceSession.rootPath, 'folder');
+      return;
+    }
+    const resolved = await resolveCurrentShowcaseWorkspacePath(
+      lastWorkspaceSession.rootPath,
+      SHOWCASE_REGISTRY,
+      {
+        onFetchStart: current => {
+          showOutput('info', `Updating showcase: ${current.url}`);
+          setStatus('Updating showcase...');
+        },
+      },
+    );
+    if (!resolved) {
+      showOutput('error', 'Could not update the saved showcase workspace.');
+      setStatus('Showcase update failed');
+      return;
+    }
+    openFolder(resolved, 'showcase');
+  }, [lastWorkspaceSession, openFolder, showOutput]);
 
   // Register StatusBar items
   useEffect(() => {
@@ -2384,7 +2409,8 @@ export function App(props: { onRender?: () => void } = {}) {
   }, [openShowcaseInFiddle]);
 
   const handleRunCurrentWorkspace = useCallback(async () => {
-    const target = resolveWorkspaceRunTarget(workspaceSessionRef.current);
+    const activeSession = workspaceSessionRef.current;
+    const target = resolveWorkspaceRunTarget(activeSession);
     if (target.kind === 'none') {
       showOutput('error', target.reason);
       setStatus(target.reason);
@@ -2399,10 +2425,33 @@ export function App(props: { onRender?: () => void } = {}) {
         return;
       }
 
-      showOutput('info', `Preparing project: ${target.rootPath}`);
+      let updated = false;
+      const resolvedRoot = activeSession?.kind === 'showcase'
+        ? await resolveCurrentShowcaseWorkspacePath(
+          target.rootPath,
+          SHOWCASE_REGISTRY,
+          {
+            onFetchStart: current => {
+              updated = true;
+              showOutput('info', `Updating showcase: ${current.url}`);
+              setStatus('Updating showcase...');
+            },
+          },
+        )
+        : target.rootPath;
+      if (!resolvedRoot) {
+        showOutput('error', 'Could not update the showcase workspace.');
+        setStatus('Showcase update failed');
+        return;
+      }
+      if (updated) {
+        openFolder(resolvedRoot, 'showcase');
+      }
+
+      showOutput('info', `Preparing project: ${resolvedRoot}`);
       setStatus('Classifying and launching project...');
       try {
-        const pid = await api.runProject(target.rootPath);
+        const pid = await api.runProject(resolvedRoot);
         setRunningPid(pid);
         showOutput('info', `Project launched (pid ${pid})`);
         setStatus(`Run running (pid ${pid})`);
@@ -2430,7 +2479,7 @@ export function App(props: { onRender?: () => void } = {}) {
       showOutput('error', `Example run failed: ${e.message}`);
       setStatus('Example run failed');
     }
-  }, [showOutput]);
+  }, [openFolder, showOutput]);
 
   const handleRunCurrentWorkspaceOnWeb = useCallback(() => {
     const session = workspaceSessionRef.current;

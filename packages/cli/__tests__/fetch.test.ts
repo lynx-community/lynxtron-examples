@@ -10,7 +10,6 @@ import { clearFetchDestination, fetch } from '../src/commands/fetch';
 import {
   createShowcaseCacheKey,
   readShowcaseCacheMetadata,
-  restorePreservedShowcaseCache,
   writeShowcaseCacheMetadata,
 } from '../src/showcase-cache';
 import { writeShowcaseReleaseManifest } from '../src/showcase-release';
@@ -50,29 +49,16 @@ describe('fetch command', () => {
     expect(fs.existsSync(path.join(root, 'showcases'))).toBe(true);
   });
 
-  it('preserves a legacy workspace when a versioned cache replaces it', () => {
-    const root = makeTempDir('lynxtron-fetch-preserve-');
+  it('replaces a legacy workspace without retaining a backup', () => {
+    const root = makeTempDir('lynxtron-fetch-replace-');
     const destDir = path.join(root, 'showcases', 'floating-clock');
     fs.mkdirSync(destDir, { recursive: true });
-    fs.writeFileSync(path.join(destDir, 'user-edit.ts'), '// keep me\n', 'utf-8');
+    fs.writeFileSync(path.join(destDir, 'stale.ts'), '// stale\n', 'utf-8');
 
-    const backupPath = clearFetchDestination(
-      destDir,
-      'https://example.com/releases/v2/floating-clock.tgz',
-    );
+    clearFetchDestination(destDir);
 
     expect(fs.existsSync(destDir)).toBe(false);
-    expect(backupPath).not.toBeNull();
-    const backups = fs.readdirSync(path.join(root, 'showcase-backups'));
-    expect(backups).toHaveLength(1);
-    expect(fs.readFileSync(
-      path.join(root, 'showcase-backups', backups[0], 'user-edit.ts'),
-      'utf-8',
-    )).toBe('// keep me\n');
-
-    restorePreservedShowcaseCache(destDir, backupPath!);
-    expect(fs.readFileSync(path.join(destDir, 'user-edit.ts'), 'utf-8')).toBe('// keep me\n');
-    expect(fs.existsSync(backupPath!)).toBe(false);
+    expect(fs.existsSync(path.join(root, 'showcase-backups'))).toBe(false);
   });
 
   it('replaces a cache in place when its source URL still matches', () => {
@@ -83,7 +69,7 @@ describe('fetch command', () => {
     fs.writeFileSync(path.join(destDir, 'stale.txt'), 'stale', 'utf-8');
     writeShowcaseCacheMetadata(destDir, sourceUrl);
 
-    clearFetchDestination(destDir, sourceUrl);
+    clearFetchDestination(destDir);
 
     expect(fs.existsSync(destDir)).toBe(false);
     expect(fs.existsSync(path.join(root, 'showcase-backups'))).toBe(false);

@@ -8,8 +8,6 @@ import * as path from 'path';
 import * as tar from 'tar';
 import { execSync, type ExecSyncOptions } from 'child_process';
 import {
-  preserveMismatchedShowcaseCache,
-  restorePreservedShowcaseCache,
   writeShowcaseCacheMetadata,
 } from '../showcase-cache.js';
 import {
@@ -79,19 +77,11 @@ function installSourceShowcase(destDir: string, npmCacheDir: string): void {
 }
 
 
-export function clearFetchDestination(destDir: string, sourceUrl?: string): string | null {
-  let backupPath: string | null = null;
-  if (sourceUrl) {
-    backupPath = preserveMismatchedShowcaseCache(destDir, sourceUrl);
-    if (backupPath) {
-      log(`Preserved previous showcase workspace at ${backupPath}`);
-    }
-  }
+export function clearFetchDestination(destDir: string): void {
   if (fs.existsSync(destDir)) {
     fs.rmSync(destDir, { recursive: true, force: true });
   }
   fs.mkdirSync(path.dirname(destDir), { recursive: true });
-  return backupPath;
 }
 
 export async function fetch(url: string, workspaceRoot: string): Promise<void> {
@@ -106,7 +96,7 @@ export async function fetch(url: string, workspaceRoot: string): Promise<void> {
   const destination = resolved.type === 'external'
     ? manager.getExternalPath(resolved.name)
     : manager.getShowcasePath(resolved.name);
-  const backupPath = clearFetchDestination(destination, url);
+  clearFetchDestination(destination);
 
   emit({ type: 'fetch-start', name: resolved.name });
 
@@ -127,10 +117,6 @@ export async function fetch(url: string, workspaceRoot: string): Promise<void> {
       path: destination,
     });
   } catch (err) {
-    if (backupPath) {
-      restorePreservedShowcaseCache(destination, backupPath);
-      log(`Restored previous showcase workspace after fetch failure: ${destination}`);
-    }
     const message = err instanceof Error ? err.message : String(err);
     emit({ type: 'fetch-error', name: resolved.name, error: message });
     throw err;
