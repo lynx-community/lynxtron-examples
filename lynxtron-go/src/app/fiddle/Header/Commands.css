@@ -10,6 +10,7 @@
 .commands-trafficlights {
   width: 80px;
   height: 100%;
+  margin-left: 10px;
   flex-shrink: 0;
 }
 
@@ -19,7 +20,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 28px;
+  height: 100%;
   flex-wrap: nowrap;
   column-gap: 10px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -27,33 +28,24 @@
   position: relative;
   -x-app-region: drag;
 }
-/* no-drag IS supported (used by lynxtron's own browser-demo), just
-   undocumented — controls must not be swallowed by the drag region. */
+
+/* One full-size drag surface, with interactive controls punched out. */
 .commands .bp3-button,
+.commands .bp3-tooltip-anchor,
 .commands .bp3-input-group,
 .commands .bp3-input {
   -x-app-region: no-drag;
 }
 .commands-drag {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  cursor: default;
-}
-
-/* ── Title band ───────────────────────────────────────────────────────────
-   Fill the actual flexible corridor between the two control clusters. Fixed
-   symmetric insets made the corridor only 60px wide at the 800px window
-   minimum even though flex layout left 117px available; the title ellipsised
-   while 79px sat unused beside it. */
-.commands-titlebar {
-  width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   column-gap: 7px;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  cursor: default;
 }
 
 /* ── Spacing scale ────────────────────────────────────────────────────────
@@ -79,6 +71,9 @@
   align-items: center;
   flex-shrink: 0;
   column-gap: 10px;
+}
+.commands-right {
+  margin-right: 10px;
 }
 /* Grouped, not fused. Square boxes at 2px read as one set and still separate
    under the pointer, because each box is wider than its glyph. */
