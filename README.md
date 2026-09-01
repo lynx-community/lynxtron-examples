@@ -78,7 +78,8 @@ This will:
 3. Build Lynxtron Go with `LYNXTRON_PREVIEW=1` (bakes `file://` tarball URLs)
 4. Launch Lynxtron Go desktop app
 
-In the app: **Cmd+P → type `>` → "Open Showcase"** to see the showcase list.
+In the app, open the Gallery from the folder button in the command bar. The
+command palette also exposes showcase commands through **Cmd+P → `>`**.
 
 ```bash
 # Build only (don't launch)
