@@ -1,7 +1,12 @@
 # Language Services Architecture
 
-> **Status**: Design document -- not yet implemented
-> **Scope**: Real-time syntax highlighting, diagnostics, reference tracking, multi-language LSP integration.
+> **Archived design (historical):** this document predates the current
+> implementation and is not an API contract. TypeScript/JavaScript and
+> CSS/SCSS/Less diagnostics are implemented, while completion, clangd, and
+> pyright remain future work. See [the current architecture](../ARCHITECTURE.md).
+>
+> **Original scope:** real-time syntax highlighting, diagnostics, reference
+> tracking, and multi-language LSP integration.
 
 ---
 

@@ -31,7 +31,9 @@ This repo relies on root-level pnpm settings to keep Lynxtron binaries installab
 
 - `engines.node` requires Node.js `>=22`
 - `packageManager` is pinned to `pnpm@10.15.1`
-- `pnpm.onlyBuiltDependencies` allows `@lynx-js/lynxtron` and `@lynx-js/lynxtron-builder` to run install scripts
+- `pnpm-workspace.yaml` allows `@lynx-js/lynxtron`,
+  `@lynx-js/lynxtron-builder`, and required native dependencies to run install
+  scripts
 
 After `pnpm install`, verify that no required build scripts were skipped:
 
@@ -93,7 +95,7 @@ mkdir -p showcases/my-app/src/main/desktop
 ```
 
 **Fields:**
-- `showcase.description` — shown in Lynxtron GO's showcase list
+- `showcase.description` — shown in Lynxtron Go's showcase list
 - `showcase.tags` — used for filtering (`beginner`, `advanced`, `animation`, etc.)
 - `showcase.minToolchainVersion` — minimum `@lynxtron-examples/*` version required
 - `showcase.distribution` — omit for a GitHub Release asset; use `"builtin"`
@@ -172,7 +174,7 @@ app.whenReady().then(() => {
 
 Each showcase slice must ship with its own self-contained `tsconfig.json`.
 
-Do not use `extends` that points outside the showcase package, for example `../../../tsconfig.app.json`. Lynxtron GO unpacks showcases into standalone workspaces under `~/.lynxtron-go/showcases/<name>`, so package-external `extends` paths will break diagnostics there even if they work inside this monorepo.
+Do not use `extends` that points outside the showcase package, for example `../../../tsconfig.app.json`. Lynxtron Go unpacks showcases into standalone workspaces under `~/.lynxtron-go/showcases/<name>`, so package-external `extends` paths will break diagnostics there even if they work inside this monorepo.
 
 `src/app/tsconfig.json`:
 
@@ -469,7 +471,7 @@ To test the dist distribution flow locally, use the local registry script.
 This validates the same product promise that preview is meant to protect:
 
 - showcases are packed with verified `dist_precompiled/` artifacts
-- Lynxtron GO can consume them
+- Lynxtron Go can consume them
 - the user does not need to manually rebuild showcase source code just to preview them
 
 Use the local registry script for that flow:
@@ -524,9 +526,9 @@ Merging that PR triggers publishing:
 - **npm** — the public `@lynxtron-examples/*` packages are published to the npm
   registry via `changeset publish` using npm **OIDC trusted publishing** (no
   long-lived `NPM_TOKEN`). `@lynxtron-examples/cli` is `private: true` — it is
-  bundled inside Lynxtron GO at build time and is not published to npm.
+  bundled inside Lynxtron Go at build time and is not published to npm.
 - **GitHub Release** — a `lynxtron-go-v<version>` release is created with:
-  - Lynxtron GO installers: `*.dmg` (macOS) and `*-Setup.exe` (Windows), built via
+  - Lynxtron Go installers: `*.dmg` (macOS) and `*-Setup.exe` (Windows), built via
     `lynxtron-builder`.
   - Every publishable showcase (a package with `showcase` metadata) packed as a
     `.tgz` containing source, `.lynxtron-release.json`, and `dist_precompiled/`.
@@ -545,7 +547,7 @@ to have an OIDC trusted publisher configured, pointing at this repository's
 # Pack every publishable showcase into dist/showcase-artifacts/*.tgz
 node scripts/pack-showcases.mjs
 
-# Build the Lynxtron GO installer for the current platform
+# Build the Lynxtron Go installer for the current platform
 pnpm --dir lynxtron-go run pack        # macOS dmg
 pnpm --dir lynxtron-go run pack:win    # Windows nsis
 ```
@@ -567,7 +569,7 @@ Core Lynx dependencies (`@lynx-js/*`) and build tools (`@lynxtron-examples/confi
 ## Showcase Metadata
 
 The `showcase` field in `package.json` is used for:
-- **Lynxtron GO UI** — name, description, tags shown in the showcase list
+- **Lynxtron Go UI** — name, description, tags shown in the showcase list
 - **Registry generation** — `pnpm run generate-registry` reads this field to produce `showcase-registry.json`
 - **Compatibility checks** — `minToolchainVersion` is compared against the user's workspace
 

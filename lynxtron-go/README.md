@@ -1,6 +1,7 @@
 # Lynxtron Go
 
-A code editor built on Lynxtron (Lynx + Node.js), using Scintilla as the native editor engine.
+A desktop project editor and showcase runner built on Lynxtron (Lynx + Node.js),
+using Scintilla as the native editor engine.
 
 ## Tech Stack
 
@@ -10,40 +11,34 @@ A code editor built on Lynxtron (Lynx + Node.js), using Scintilla as the native 
 - **Build**: Rspack + RSpeedy (frontend), CMake (native extension)
 - **Language**: TypeScript (UI/main), C++/Objective-C (native)
 
-## Implemented Features
+## Highlights
 
-| Feature | Status |
-|---------|--------|
-| Scintilla native editor | ✅ |
-| Open folder (sidebar + ⌘⇧O) | ✅ |
-| Persistent workspace (auto-restore last folder) | ✅ |
-| File tree with expand/collapse | ✅ |
-| File icons by extension | ✅ |
-| Multi-tab editing | ✅ |
-| File open / switch / close | ✅ |
-| Save file (⌘S) | ✅ |
-| Syntax highlighting via Prism.js (TS/TSX/JS/JSX/CSS/SCSS/Less/JSON/Python/C++) | ✅ |
-| Real-time syntax highlighting while typing (SCN_MODIFIED + 50ms debounce) | ✅ |
-| Extension Host process (TypeScript + CSS/SCSS/Less language services) | ✅ |
-| Language services: TS/JS/JSX/TSX diagnostics via TypeScript Compiler API | ✅ |
-| Language services: CSS/SCSS/Less diagnostics via vscode-css-languageservice | ✅ (⚠️ ICU issue) |
-| Diagnostic squiggle indicators (error/warning/info) via Scintilla Indicator API | 🔧 (implemented, E2E pending) |
-| App menu (File / Edit / View) | ✅ |
-| Quick file picker (⌘P) | ✅ (under test) |
-| Status bar (language, save state) | ✅ |
-| Window screenshot API (includes native NSView) | ✅ |
+- Create, edit, save, build, and run complete Lynxtron projects.
+- Browse the baked-in showcase Gallery and open editable project sources.
+- Edit multiple files in native Scintilla panes with a collapsible project tree.
+- Use a folder-oriented workspace IDE with tabs, search, terminal, output, and
+  problems panels.
+- Get real-time syntax styling plus TypeScript/JavaScript and CSS-family
+  diagnostics from the Extension Host.
+- Import and publish complete projects through GitHub Gists.
+- Choose Lynxtron runtimes, configure launch flags, and inspect process output.
+- Build macOS and Windows installers with bundled runtime and starter assets.
 
 ## Prerequisites
 
 - NodeJS >= 22
-- [LynxDevTool](https://github.com/lynx-family/lynx-devtool/releases/) >= 0.1.1
 - pnpm 10.x
+
+[LynxDevTool](https://github.com/lynx-family/lynx-devtool/releases/) is optional
+and only required for runtime inspection and debugging.
 
 ## Usage Guide
 
+Run commands from the monorepo root.
+
 ### Install Dependencies
 
-```bash
+```sh
 pnpm install
 ```
 
@@ -51,53 +46,43 @@ If pnpm reports ignored build scripts for `@lynx-js/lynxtron` or `@lynx-js/lynxt
 
 ### Development
 
-- **Desktop (Lynxtron)**
-  ```bash
-  npm run dev
-  ```
+```sh
+# Start the renderer and desktop host watchers
+pnpm --dir lynxtron-go dev
+
+# Launch the already-built desktop host with the inspector enabled
+pnpm --dir lynxtron-go run run-dev
+```
 
 ### Build & Start
 
-- **Build for Production**
-  ```bash
-  npm run build
-  ```
+```sh
+# Build all Lynxtron Go assets
+pnpm --dir lynxtron-go build
 
-- **Start Desktop**
-  ```bash
-  npm start
-  ```
+# Build and launch the desktop app
+pnpm --dir lynxtron-go start
 
-- **Start Web**
-  ```bash
-  npm run start:web
-  ```
+# Validate without launching
+pnpm --dir lynxtron-go run typecheck
+pnpm --dir lynxtron-go test
+```
 
 ### Application Packaging
 
-- **Package for macOS (x64)**
-  ```bash
-  npm run pack:mac:x64
-  ```
+```sh
+# Package for the current macOS architecture
+pnpm --dir lynxtron-go pack
 
-- **Package for macOS (arm64)**
-  ```bash
-  npm run pack:mac:arm64
-  ```
-
-- **Package for macOS (Universal)**
-  ```bash
-  npm run pack:mac:universal
-  ```
-
-- **Package for Windows (ia32)**
-  ```bash
-  npm run pack:win
-  ```
+# Package the Windows x64 installer
+pnpm --dir lynxtron-go run pack:win
+```
 
 ## Debugging
 
-For detailed debugging strategies, including how to debug the Renderer, Main Process, and Native Modules, please refer to [Debug Strategy](docs/DEBUG_STRATEGY.md).
+Use `pnpm --dir lynxtron-go run debug:detached` for a detached native-debug
+session. See the [documentation index](docs/README.md) for current architecture
+and archived design documents.
 
 ## AI Assistant Integration (MCP)
 

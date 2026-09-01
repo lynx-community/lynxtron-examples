@@ -1,6 +1,8 @@
 # Lynxtron Showcases
 
-A monorepo of Lynxtron showcase apps. **Lynxtron GO** is a playground app (like Electron Fiddle) that can fetch, edit, build, and run any showcase in this repository.
+A monorepo of Lynxtron showcase apps. **Lynxtron Go** is a project editor and
+showcase runner that can fetch, edit, build, and run any showcase in this
+repository.
 
 ## Repository Structure
 
@@ -11,7 +13,7 @@ lynxtron-show-cases/
     cli/            @lynxtron-examples/cli     — CLI for fetching, building, running showcases
   showcases/
     counter/        minimal counter example (full Lynxtron app)
-  lynxtron-go/      Lynxtron GO playground app (IDE shell)
+  lynxtron-go/      Lynxtron Go project editor and showcase runner
   scripts/
     preview.sh          one-command preview flow
     local-registry.sh   local npm registry for testing
@@ -26,11 +28,11 @@ lynxtron-show-cases/
 
 ## Install Notes
 
-The repo pins runtime and toolchain expectations in root `package.json`:
+The repo pins runtime and toolchain expectations in root configuration:
 
-- `engines.node` requires Node.js `>=22`
-- `packageManager` is `pnpm@10.15.1`
-- `pnpm.onlyBuiltDependencies` allows `@lynx-js/lynxtron` and `@lynx-js/lynxtron-builder` to run their install scripts
+- root `package.json` requires Node.js `>=22` and pins `pnpm@10.15.1`;
+- `pnpm-workspace.yaml` allows the Lynxtron runtime, builder, and required
+  native dependencies to run their install scripts.
 
 After `pnpm install`, check whether pnpm skipped any build scripts:
 
@@ -64,7 +66,7 @@ pnpm test
 
 ## Preview Mode (Development)
 
-One command to pack all showcases, start a local npm registry, build Lynxtron GO in preview mode, and launch:
+One command to pack all showcases, start a local npm registry, build Lynxtron Go in preview mode, and launch:
 
 ```bash
 pnpm preview
@@ -73,10 +75,11 @@ pnpm preview
 This will:
 1. Build each showcase and pack its source plus verified `dist_precompiled/` artifact
 2. Start a local Verdaccio registry and publish `@lynxtron-examples/*` packages
-3. Build Lynxtron GO with `LYNXTRON_PREVIEW=1` (bakes `file://` tarball URLs)
-4. Launch Lynxtron GO desktop app
+3. Build Lynxtron Go with `LYNXTRON_PREVIEW=1` (bakes `file://` tarball URLs)
+4. Launch Lynxtron Go desktop app
 
-In the app: **Cmd+P → type `>` → "Open Showcase"** to see the showcase list.
+In the app, open the Gallery from the folder button in the command bar. The
+command palette also exposes showcase commands through **Cmd+P → `>`**.
 
 ```bash
 # Build only (don't launch)
@@ -115,7 +118,7 @@ lynxtron-examples run counter
 lynxtron-examples list
 ```
 
-## Lynxtron GO Commands
+## Lynxtron Go Commands
 
 Open the command palette with **Cmd+P → type `>`**:
 
@@ -148,8 +151,9 @@ test and release a showcase.
 
 Key design decisions:
 - **Full Lynxtron apps**: Each showcase includes host process + Lynx UI, runs as independent desktop window
-- **Thin Launcher**: CLI handles all logic; Lynxtron GO is a UI shell
+- **Host-owned execution**: preload services and the CLI install, verify, build,
+  cache, and launch projects outside the Lynx renderer
 - **Baked-in registry**: Showcase list injected at build time; preview uses `file://` tarballs, release uses GitHub URLs
 - **Unified URL model**: Zero code difference between preview and production
 - **Shared toolchain**: Core Lynx SDK and build tools managed at workspace level
-- **NDJSON protocol**: CLI communicates with Lynxtron GO via newline-delimited JSON on stdout
+- **NDJSON protocol**: CLI communicates with Lynxtron Go via newline-delimited JSON on stdout
