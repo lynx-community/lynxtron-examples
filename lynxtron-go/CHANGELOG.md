@@ -1,5 +1,25 @@
 # lynxtron-go
 
+## 0.1.7
+
+### Patch Changes
+
+- eae08c1: Build release installers with packed showcase asset URLs and the application version, and install source-only showcase fallbacks with npm including devDependencies so build commands can resolve executable dependencies such as cross-env.
+- eae08c1: Run release showcases from their prebuilt tarball artifacts, install build-time devDependencies when edited source must be rebuilt, explicitly enable selectable Terminal text, and disable desktop mouse-drag scrolling in shared Lynx page config.
+- f73f938: Render console logs in one text node so selections can continue across lines.
+- c258755: Render Fiddle editor files as a collapsible directory tree with compact single-folder paths, and keep Console logs scrolled to the latest output.
+- c6e04b4: Fix cover-view overlays so they composite above the native surface and stop blocking input. QuickPicker, dialogs, toaster, tooltips and loading overlays now route through the single platform overlay host above the native cover-view, and an event-through path lets purely visual overlays pass input through to the layers beneath them. Bumps lynxtron and related packages to 0.0.17-dev, including the lynxtron-rebuild headers patch the version needs on Windows.
+- d8005ce: Key downloaded showcase caches by their baked source URL so a new installer refreshes stale workspaces, while preserving mismatched editable workspaces in a backup directory. Publish source-bound precompiled artifacts under `dist_precompiled`, verify their source and artifact tree hashes before use, and fall back to a local `dist` build when verification fails or the source was edited.
+
+  Package Hello Lynxtron as a standard source-bound showcase artifact inside the installer, route it through the same fetch/cache/verification/build fallback as every other showcase, and remove the separate in-memory Hello template without publishing an additional Release asset.
+
+- ee03075: Fix View → Reload so it preserves editor content instead of coming back blank. The host now runs the persistNow → persistDone handshake and then triggers a UI-side remount (LynxWindow has no reload() and re-issuing loadFile is a no-op), so cold-start restoreLastSession picks up the flush that just landed. Editor mismatch error now correctly blames Lynxtron's embedded Node instead of the system install.
+- 5478f33: Fix keyboard shortcuts (e.g. Ctrl+C) being stuck in the Scintilla editor on Windows. Clicking the native Scintilla child HWND takes the Win32 keyboard focus, and a later click on the Lynx renderer surface did not reliably reclaim it, so shortcuts kept firing in the editor while the user was selecting text in a Lynx log/output. The parent window now restores focus on Lynx-surface pointer-down before Lynx handles the event, so the ensuing interaction owns the keyboard event stream too.
+- Updated dependencies [eae08c1]
+- Updated dependencies [eae08c1]
+- Updated dependencies [d8005ce]
+  - @lynxtron-examples/cli@0.0.8
+
 ## 0.1.6
 
 ### Patch Changes

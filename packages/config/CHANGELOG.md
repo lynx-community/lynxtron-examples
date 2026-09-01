@@ -1,5 +1,11 @@
 # @lynxtron-examples/config
 
+## 0.0.9
+
+### Patch Changes
+
+- eae08c1: Run release showcases from their prebuilt tarball artifacts, install build-time devDependencies when edited source must be rebuilt, explicitly enable selectable Terminal text, and disable desktop mouse-drag scrolling in shared Lynx page config.
+
 ## 0.0.8
 
 ### Patch Changes

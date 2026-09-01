@@ -1,5 +1,15 @@
 # @lynxtron-examples/cli
 
+## 0.0.8
+
+### Patch Changes
+
+- eae08c1: Build release installers with packed showcase asset URLs and the application version, and install source-only showcase fallbacks with npm including devDependencies so build commands can resolve executable dependencies such as cross-env.
+- eae08c1: Run release showcases from their prebuilt tarball artifacts, install build-time devDependencies when edited source must be rebuilt, explicitly enable selectable Terminal text, and disable desktop mouse-drag scrolling in shared Lynx page config.
+- d8005ce: Key downloaded showcase caches by their baked source URL so a new installer refreshes stale workspaces, while preserving mismatched editable workspaces in a backup directory. Publish source-bound precompiled artifacts under `dist_precompiled`, verify their source and artifact tree hashes before use, and fall back to a local `dist` build when verification fails or the source was edited.
+
+  Package Hello Lynxtron as a standard source-bound showcase artifact inside the installer, route it through the same fetch/cache/verification/build fallback as every other showcase, and remove the separate in-memory Hello template without publishing an additional Release asset.
+
 ## 0.0.7
 
 ### Patch Changes
