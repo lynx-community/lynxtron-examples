@@ -17,7 +17,7 @@ on:
           not exist yet, it will be created automatically. When left
           empty, the tag defaults to `lynxtron-go-v<version>` on `main`
           (tracking Changesets patch bumps), or
-          `lynxtron-go-v<version>-<sha6>` on any other branch.
+          `lynxtron-go-v<version>-dev.<sha6>` on any other branch.
         required: false
         type: string
 
@@ -58,21 +58,28 @@ jobs:
         id: tag
         shell: bash
         run: |
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            prerelease=false
+          else
+            prerelease=true
+          fi
+
           if [ -n "${{ inputs.tag }}" ]; then
             tag="${{ inputs.tag }}"
           else
             version=$(node -p "require('./lynxtron-go/package.json').version")
             # main: v<version> (stable, tracks Changesets patch bumps)
-            # other branches: v<version>-<sha6> (pre-release; disambiguates
+            # other branches: v<version>-dev.<sha6> (pre-release; disambiguates
             # per-commit builds so they don't clobber the stable Release)
             if [ "$GITHUB_REF" = "refs/heads/main" ]; then
               tag="lynxtron-go-v${version}"
             else
               sha6=$(printf '%s' "$GITHUB_SHA" | cut -c1-6)
-              tag="lynxtron-go-v${version}-${sha6}"
+              tag="lynxtron-go-v${version}-dev.${sha6}"
             fi
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
 
       - name: Import macOS signing certificate
         if: runner.os == 'macOS'
@@ -146,6 +153,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
+          prerelease: ${{ steps.tag.outputs.prerelease }}
           fail_on_unmatched_files: false
           files: |
             lynxtron-go/dist/*.dmg
