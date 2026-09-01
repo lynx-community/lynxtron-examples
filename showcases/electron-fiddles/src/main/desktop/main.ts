@@ -1,4 +1,4 @@
-import { app, LynxWindow, lynxBridge } from '@lynx-js/lynxtron';
+import { app, devtool, LynxWindow, lynxBridge } from '@lynx-js/lynxtron';
 import path from 'node:path';
 import fs from 'node:fs';
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -51,6 +51,7 @@ function launchFiddle(id: string): void {
 }
 
 app.whenReady().then(() => {
+  try { devtool.setDevToolEnabled(true); } catch (e) { console.warn('devtool.setDevToolEnabled failed:', e); }
   const home = new LynxWindow({
     width: 960,
     height: 720,

@@ -1,4 +1,4 @@
-import { app, LynxWindow, lynxBridge } from '@lynx-js/lynxtron';
+import { app, devtool, LynxWindow, lynxBridge } from '@lynx-js/lynxtron';
 import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 import path from 'path';
@@ -25,6 +25,7 @@ function resolveDbPath(): string {
 }
 
 app.whenReady().then(() => {
+  try { devtool.setDevToolEnabled(true); } catch (e) { console.warn('devtool.setDevToolEnabled failed:', e); }
   const dbPath = resolveDbPath();
   const db = new sqlite3.Database(dbPath);
   db.serialize();

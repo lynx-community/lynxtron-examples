@@ -1,4 +1,4 @@
-import { app, LynxWindow } from '@lynx-js/lynxtron';
+import { app, devtool, LynxWindow } from '@lynx-js/lynxtron';
 import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
 import path from 'path';
 import { DESKTOP_BUNDLE_PATH } from './vendorPaths';
@@ -16,6 +16,7 @@ function createDesktopWindow(): LynxWindow {
 
 function bootstrapDesktopHost(): void {
   app.whenReady().then(() => {
+    try { devtool.setDevToolEnabled(true); } catch (e) { console.warn('devtool.setDevToolEnabled failed:', e); }
     const window = createDesktopWindow();
     window.show();
     window.loadFile(DESKTOP_BUNDLE_PATH);

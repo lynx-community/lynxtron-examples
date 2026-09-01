@@ -45,7 +45,7 @@ function prepareOpenCodeConfig(): { configDir: string; computerUseBin: string; o
 }
 
 app.whenReady().then(async () => {
-  if (process.env.CODEX_DEMO_DEVTOOLS === '1') devtool.setDevToolEnabled(true);
+  try { devtool.setDevToolEnabled(true); } catch (e) { console.warn('devtool.setDevToolEnabled failed:', e); }
   const w = new LynxWindow({
     width: 1280,
     height: 720,
