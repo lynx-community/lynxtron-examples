@@ -51,6 +51,9 @@ const isPreviewMode = showcaseSourceMode === 'local-registry' || showcaseSourceM
 const isLocalRegistry = showcaseSourceMode === 'local-registry';
 const isLocalWorkspace = showcaseSourceMode === 'local-workspace';
 const isReleaseArtifacts = showcaseSourceMode === 'release-artifacts';
+// Internal Gallery entries stay compiled and can be enabled for development
+// builds without changing the renderer source. Product builds leave them off.
+const galleryInternalShowcases = process.env.LYNXTRON_GALLERY_INTERNAL_SHOWCASES === '1';
 const registryPath = path.resolve(monorepoRoot, 'showcase-registry.json');
 
 // Thumbnails are staged into the app's own bundle rather than linked at their
@@ -239,6 +242,7 @@ export default defineConfig({
       __FIDDLE_CATALOG__: JSON.stringify(bakedFiddles),
       __SHOWCASE_PREVIEW__: JSON.stringify(isPreviewMode),
       __SHOWCASE_LOCAL_WORKSPACE__: JSON.stringify(isLocalWorkspace),
+      __GALLERY_INTERNAL_SHOWCASES__: JSON.stringify(galleryInternalShowcases),
       __BRAND_MARK_URL__: JSON.stringify(BRAND_MARK_URL),
       __BRAND_MARK_ON_DARK_URL__: JSON.stringify(BRAND_MARK_ON_DARK_URL),
     },

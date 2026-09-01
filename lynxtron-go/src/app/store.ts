@@ -125,6 +125,7 @@ export const HELLO_SHOWCASE_NAME = '@lynxtron-examples/hello-lynxtron';
 declare const __SHOWCASE_REGISTRY__: ShowcaseEntry[];
 declare const __SHOWCASE_PREVIEW__: boolean;
 declare const __SHOWCASE_LOCAL_WORKSPACE__: boolean;
+declare const __GALLERY_INTERNAL_SHOWCASES__: boolean;
 
 const BAKED_SHOWCASE_REGISTRY: ShowcaseEntry[] =
   typeof __SHOWCASE_REGISTRY__ !== 'undefined' ? __SHOWCASE_REGISTRY__ : [];
@@ -136,6 +137,9 @@ export const SHOWCASE_PREVIEW: boolean =
   typeof __SHOWCASE_PREVIEW__ !== 'undefined' ? __SHOWCASE_PREVIEW__ : false;
 export const SHOWCASE_LOCAL_WORKSPACE: boolean =
   typeof __SHOWCASE_LOCAL_WORKSPACE__ !== 'undefined' ? __SHOWCASE_LOCAL_WORKSPACE__ : false;
+/** Build-time switch for internal cards/cases on the Gallery surface only. */
+export const GALLERY_INTERNAL_SHOWCASES: boolean =
+  typeof __GALLERY_INTERNAL_SHOWCASES__ !== 'undefined' ? __GALLERY_INTERNAL_SHOWCASES__ : false;
 
 /**
  * file:// URLs of the Lynxtron mark beside app.asar; empty under vitest.
