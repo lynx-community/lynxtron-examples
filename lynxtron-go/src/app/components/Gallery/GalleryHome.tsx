@@ -3,13 +3,14 @@ import { Button } from '../../fiddle/bp';
 import { Tooltip } from '../../fiddle/bp/Tooltip';
 import {
   FIDDLE_CATALOG,
-  FIDDLE_SHOWCASE_NAME,
+  GALLERY_INTERNAL_SHOWCASES,
   SHOWCASE_LOCAL_WORKSPACE,
   SHOWCASE_PREVIEW,
   SHOWCASE_REGISTRY,
   type FiddleEntry,
   type ShowcaseEntry,
 } from '../../store';
+import { resolveGalleryShowcases } from './gallery-visibility';
 
 interface GalleryHomeProps {
   onBack: () => void;
@@ -185,10 +186,10 @@ export function GalleryHome({
 }: GalleryHomeProps) {
   // The Electron-fiddles showcase gets its own section below, so it does not
   // also take a slot in the featured grid.
-  const fiddleShowcase = SHOWCASE_REGISTRY.find(e => e.name === FIDDLE_SHOWCASE_NAME);
-  const featured = fiddleShowcase
-    ? SHOWCASE_REGISTRY.filter(e => e.name !== FIDDLE_SHOWCASE_NAME)
-    : SHOWCASE_REGISTRY;
+  const { featured, fiddleShowcase } = resolveGalleryShowcases(
+    SHOWCASE_REGISTRY,
+    GALLERY_INTERNAL_SHOWCASES,
+  );
   // The collection card is one of the cards under this rule, so the count has
   // to include it — a header that disagrees with what is under it is worse
   // than no header.
