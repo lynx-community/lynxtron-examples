@@ -75,6 +75,15 @@ const desktopConfig = defineConfig({
     rules: [sharedTsRule],
   },
   plugins: [
+    // Prevent bundlers from baking the build machine's absolute `import.meta.url`
+    // (e.g. `file:///Users/runner/...`) into the CommonJS output. The `@lynx-js/lynxtron`
+    // ESM shim calls `createRequire(import.meta.url)`, which crashes on other machines
+    // (especially cross-OS). `__filename` is a valid absolute path at runtime and is
+    // resolved against the shipped `main.js` instead. Desktop target only — the web
+    // bundle has no `__filename` global and does not import the lynxtron shim.
+    new rspack.DefinePlugin({
+      'import.meta.url': '__filename',
+    }),
     new rspack.CopyRspackPlugin({
       patterns: [
         { from: './package.json', to: 'package.json' },
