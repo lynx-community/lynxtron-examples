@@ -27,9 +27,9 @@ export interface TemplatePickerProps {
 export function TemplatePicker(props: TemplatePickerProps) {
   return (
     <PlatformOverlay priority={100}>
-      <view className="TemplatePicker-Overlay" bindtap={props.onCancel} />
-      <view className="TemplatePicker-Wrap">
-        <view className="TemplatePicker">
+      <view event-through={false} className="TemplatePicker-Overlay" bindtap={props.onCancel} />
+      <view event-through={true} className="TemplatePicker-Wrap">
+        <view event-through={false} className="TemplatePicker">
           <view className="TemplatePicker-Header">
             <text className="TemplatePicker-Title">New Fiddle</text>
             <Button icon="cross" minimal onClick={props.onCancel} />

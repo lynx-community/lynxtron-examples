@@ -65,7 +65,7 @@ export function Commands(props: CommandsProps) {
       {/* Centred on the WINDOW, not between the clusters: absolutely positioned
           across the whole bar, so the midpoint is geometric and stays correct
           whatever the clusters do. Capped at 40% so it can never reach them. */}
-      <view className="commands-titlebar">
+      <view event-through={true} className="commands-titlebar">
         <text className="commands-title" text-maxline="1">{props.title}</text>
         {props.isEdited ? <view className="commands-dirty" /> : null}
       </view>

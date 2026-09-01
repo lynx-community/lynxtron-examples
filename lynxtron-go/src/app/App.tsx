@@ -2783,7 +2783,7 @@ export function App(props: { onRender?: () => void } = {}) {
   // Legacy IDE has no Fiddle shell to host the gallery — full overlay fallback.
   const galleryOverlay = showLegacyIde && isGalleryOpen ? (
     <PlatformOverlay priority={300}>
-      <view className="GalleryOverlay">
+      <view event-through={false} className="GalleryOverlay">
         <GalleryHome {...galleryProps} standalone />
       </view>
     </PlatformOverlay>

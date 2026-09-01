@@ -688,8 +688,8 @@ export function Fiddle(props: FiddleProps) {
           of its own. */}
       {overflowOpen ? (
         <PlatformOverlay priority={120}>
-          <view className="commands-overflow-backdrop" bindtap={() => setOverflowOpen(false)} />
-          <view className="commands-overflow">
+          <view event-through={false} className="commands-overflow-backdrop" bindtap={() => setOverflowOpen(false)} />
+          <view event-through={false} className="commands-overflow">
             <Menu>
               <MenuItem
                 icon="add"
@@ -793,7 +793,7 @@ export function Fiddle(props: FiddleProps) {
                 A cover-view here made the entire window deaf to input, so the
                 only exit sat in the one place that could not be clicked. */}
             {props.galleryOpen && props.gallery ? (
-              <view className="FiddleGalleryLayer">{props.gallery}</view>
+              <view event-through={false} className="FiddleGalleryLayer">{props.gallery}</view>
             ) : null}
           </view>
           <Outputs

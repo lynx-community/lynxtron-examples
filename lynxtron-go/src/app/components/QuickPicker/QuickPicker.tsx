@@ -180,7 +180,7 @@ export function QuickPicker({
 
   return (
     <PlatformOverlay priority={400}>
-      <view className="PickerOverlay" bindtap={onClose} global-bindkeydown={handleKeyDown}>
+      <view event-through={false} className="PickerOverlay" bindtap={onClose} global-bindkeydown={handleKeyDown}>
         <view className="PickerModal" catchtap={() => {}}>
         <input
           id="picker-query"

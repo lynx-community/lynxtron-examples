@@ -56,11 +56,11 @@ export function ToasterHost() {
   if (toasts.length === 0) return null;
   return (
     <PlatformOverlay priority={200}>
-      <view className="bp3-toast-container">
+      <view event-through={true} className="bp3-toast-container">
         {toasts.map(t => {
           const cls = 'bp3-toast' + (t.intent && t.intent !== 'none' ? ' bp3-intent-' + t.intent : '');
           return (
-            <view key={t.id} className={cls}>
+            <view key={t.id} event-through={false} className={cls}>
               {t.icon ? <Icon icon={t.icon} className="bp3-toast-icon" /> : null}
               <text className="bp3-toast-message">{t.message}</text>
               <view className="bp3-toast-close" bindtap={() => dismiss(t.id)}>

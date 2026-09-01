@@ -26,7 +26,7 @@ export function InputGroup(props: InputGroupProps) {
 
   return (
     <view className={cls}>
-      {props.leftIcon ? <Icon icon={props.leftIcon} className="bp3-input-icon" /> : null}
+      {props.leftIcon ? <Icon icon={props.leftIcon} className="bp3-input-icon" eventThrough /> : null}
       <input
         className="bp3-input"
         value={props.value ?? ''}

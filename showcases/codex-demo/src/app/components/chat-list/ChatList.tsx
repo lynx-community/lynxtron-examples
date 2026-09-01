@@ -824,7 +824,10 @@ export const ChatList = forwardRef<ChatListHandle, ChatListProps>(function ChatL
         diagnostics={{ onFlow: onDiagnostic }}
         onListSignal={handleListSignal}
       />
-      <view className={`chat-list-loader ${loaderVisible ? 'chat-list-loader--visible' : ''}`}>
+      <view
+        event-through={true}
+        className={`chat-list-loader ${loaderVisible ? 'chat-list-loader--visible' : ''}`}
+      >
         <view className="chat-list-loader-content">
           <LoadingSpinner size="small" label="Loading earlier messages…" />
         </view>
