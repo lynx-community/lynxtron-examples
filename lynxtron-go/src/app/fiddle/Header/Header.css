@@ -12,7 +12,7 @@
      of extra frame between the bar and the first pane. */
   display: flex;
   align-items: center;
-  padding: 10px;
+  padding: 0;
   flex-shrink: 0;
   overflow: hidden;
   width: 100%;

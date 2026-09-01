@@ -144,10 +144,8 @@ export function Commands(props: CommandsProps) {
           clusters actually leave avoids fixed symmetric insets wasting room
           when those clusters have different widths. */}
       <view className="commands-drag">
-        <view event-through={true} className="commands-titlebar">
-          <text className="commands-title" text-maxline="1">{props.title}</text>
-          {props.isEdited ? <view className="commands-dirty" /> : null}
-        </view>
+        <text className="commands-title" text-maxline="1">{props.title}</text>
+        {props.isEdited ? <view className="commands-dirty" /> : null}
       </view>
       <view className="commands-right">
         {/* The field and both verbs that act on it are ONE group. Load lived
