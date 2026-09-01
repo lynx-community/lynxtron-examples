@@ -161,6 +161,10 @@
   background-color: var(--brand-hover);
   background-image: linear-gradient(to bottom, var(--brand), var(--brand-hover));
 }
+.commands-run-spinner .bp3-spinner-ring {
+  border-color: rgba(0, 0, 0, 0.24);
+  border-top-color: var(--brand-ink);
+}
 /* Icons carry the verb, not the emphasis — a step lighter than the label so
    the row reads as text with marks beside it rather than a wall of glyphs. */
 .commands .bp3-button .bp3-icon {

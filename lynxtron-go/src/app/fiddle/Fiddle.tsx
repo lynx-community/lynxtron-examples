@@ -57,7 +57,7 @@ export interface FiddleProps {
   /** Cancel App-level opens requested before a direct Fiddle selection. */
   onCancelPendingOpen?: () => void;
   /** Build + launch the single fiddle currently loaded. */
-  onRunFiddleSource?: (fiddleId: string) => void;
+  onRunFiddleSource?: (fiddleId: string) => Promise<void> | void;
   /** An App-level platform overlay is active; close any competing Fiddle dialog. */
   overlayActive?: boolean;
   /** Gallery page rendered INSIDE the shell (covers the sidebar+editors
@@ -66,6 +66,8 @@ export interface FiddleProps {
   gallery?: any;
   /** A run launched from the gallery — surfaced in the shared console. */
   externalRunPid?: number | null;
+  /** App-owned download/build/spawn work that has not produced a PID yet. */
+  externalRunLoading?: boolean;
   onStopExternalRun?: () => void;
   /** Theme setting changed — App re-reads config and swaps the UI class. */
   onThemeChange?: () => void;
@@ -99,6 +101,18 @@ export function Fiddle(props: FiddleProps) {
   const [historyOpen, setHistoryOpen] = useState(devBoot?.openSurface === 'history');
   const [mainRegionHeight, setMainRegionHeight] = useState(0);
   const restoredShowcaseChecked = useRef(false);
+  const pendingRunOperationsRef = useRef(0);
+  const [hasPendingRunOperation, setHasPendingRunOperation] = useState(false);
+
+  const beginRunOperation = useCallback(() => {
+    pendingRunOperationsRef.current += 1;
+    setHasPendingRunOperation(true);
+  }, []);
+
+  const endRunOperation = useCallback(() => {
+    pendingRunOperationsRef.current = Math.max(0, pendingRunOperationsRef.current - 1);
+    setHasPendingRunOperation(pendingRunOperationsRef.current > 0);
+  }, []);
 
   const refreshCurrentShowcase = useCallback(async () => {
     const source = fiddle.snap.source;
@@ -137,10 +151,13 @@ export function Fiddle(props: FiddleProps) {
   useEffect(() => {
     if (restoredShowcaseChecked.current || !fiddle.restoredSession) return;
     restoredShowcaseChecked.current = true;
-    void refreshCurrentShowcase().catch((error: any) => {
-      appendOutput('error', `[Lynxtron Go] Showcase update failed: ${error?.message ?? String(error)}`);
-    });
-  }, [fiddle.restoredSession, refreshCurrentShowcase]);
+    beginRunOperation();
+    void refreshCurrentShowcase()
+      .catch((error: any) => {
+        appendOutput('error', `[Lynxtron Go] Showcase update failed: ${error?.message ?? String(error)}`);
+      })
+      .finally(endRunOperation);
+  }, [beginRunOperation, endRunOperation, fiddle.restoredSession, refreshCurrentShowcase]);
 
   const handleMainRegionLayout = useCallback((e: any) => {
     const height = e?.detail?.height;
@@ -332,25 +349,32 @@ export function Fiddle(props: FiddleProps) {
       appendOutput('info', ok ? `[Lynxtron Go] Stopped pid=${runner.pid}` : `[Lynxtron Go] Stop failed`);
       return;
     }
-    // A single loaded fiddle builds and runs ITSELF, not its collection.
-    //
-    // This MUST come before the showcase branch below: a loaded fiddle also has
-    // `kind: 'showcase'` with a `ref`, so that branch swallows it and tries to
-    // treat the fiddle's source folder as a showcase workspace — which meant
-    // `npm install` inside fiddles/native-ui/dialogs/open-file-or-directory.
-    const loadedFiddleId = fiddle.snap.source.fiddleId;
-    if (loadedFiddleId && props.onRunFiddleSource) {
-      const fiddleDir = fiddle.snap.source.ref;
-      // Save edits first — the assembler copies from this folder.
-      if (fiddleDir) {
-        writeFiddleToWorkspace(fiddleDir, fiddle.values());
-        fiddle.markSaved();
-      }
-      props.onRunFiddleSource(loadedFiddleId);
+    if (props.externalRunPid != null) {
+      props.onStopExternalRun?.();
       return;
     }
+    if (pendingRunOperationsRef.current > 0 || props.externalRunLoading) return;
+    beginRunOperation();
     void (async () => {
       try {
+        // A single loaded fiddle builds and runs ITSELF, not its collection.
+        //
+        // This MUST come before the showcase branch below: a loaded fiddle also has
+        // `kind: 'showcase'` with a `ref`, so that branch swallows it and tries to
+        // treat the fiddle's source folder as a showcase workspace — which meant
+        // `npm install` inside fiddles/native-ui/dialogs/open-file-or-directory.
+        const loadedFiddleId = fiddle.snap.source.fiddleId;
+        if (loadedFiddleId && props.onRunFiddleSource) {
+          const fiddleDir = fiddle.snap.source.ref;
+          // Save edits first — the assembler copies from this folder.
+          if (fiddleDir) {
+            writeFiddleToWorkspace(fiddleDir, fiddle.values());
+            fiddle.markSaved();
+          }
+          await props.onRunFiddleSource(loadedFiddleId);
+          return;
+        }
+
         let projectRoot = fiddle.snap.source.ref ?? null;
         let values = fiddle.values();
         let updated = false;
@@ -384,9 +408,11 @@ export function Fiddle(props: FiddleProps) {
         }
       } catch (e: any) {
         appendOutput('error', `[Lynxtron Go] Run failed: ${e?.message ?? String(e)}`);
+      } finally {
+        endRunOperation();
       }
     })();
-  }, [props.onRunFiddleSource, fiddle, refreshCurrentShowcase, runner, resolveLocalVersionFolder, selectedLocalName]);
+  }, [beginRunOperation, endRunOperation, props.externalRunLoading, props.externalRunPid, props.onRunFiddleSource, props.onStopExternalRun, fiddle, refreshCurrentShowcase, runner, resolveLocalVersionFolder, selectedLocalName]);
 
   const handleSave = useCallback(async () => {
     // A showcase fiddle already has a workspace on disk — ⌘S writes back to
@@ -466,6 +492,7 @@ export function Fiddle(props: FiddleProps) {
     setTemplatePickerOpen(false);
     appendOutput('info', `[Lynxtron Go] Fetching showcase "${entry.name}"…`);
     AppToaster.show({ message: `Downloading ${entry.name}…`, intent: 'primary', icon: 'cloud-download' });
+    beginRunOperation();
     void (async () => {
       try {
         const workspaceRoot = await resolveShowcaseWorkspace(entry);
@@ -491,10 +518,12 @@ export function Fiddle(props: FiddleProps) {
         if (!openRequests.current.isCurrent(requestId)) return;
         appendOutput('error', `[Lynxtron Go] Showcase open failed: ${e?.message ?? String(e)}`);
         AppToaster.show({ message: `Open failed: ${e?.message ?? 'unknown'}`, intent: 'danger', icon: 'error', timeout: 6000 });
+      } finally {
+        endRunOperation();
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fiddle.loadSnapshot]);
+  }, [beginRunOperation, endRunOperation, fiddle.loadSnapshot]);
 
   // Gallery "Open" hands its showcase over via props — consume it through the
   // same download→mosaic chain as the TemplatePicker. Declared after
@@ -506,6 +535,7 @@ export function Fiddle(props: FiddleProps) {
       const requestId = openRequests.current.begin();
       setTemplatePickerOpen(false);
       appendOutput('info', `[Lynxtron Go] Opening ${req.id}…`);
+      beginRunOperation();
       void (async () => {
         try {
           const workspaceRoot = await resolveShowcaseWorkspace(req.entry);
@@ -525,10 +555,12 @@ export function Fiddle(props: FiddleProps) {
         } catch (e: any) {
           if (!openRequests.current.isCurrent(requestId)) return;
           appendOutput('error', `[Lynxtron Go] Open ${req.id} failed: ${e?.message ?? String(e)}`);
+        } finally {
+          endRunOperation();
         }
       })();
     },
-    [fiddle],
+    [beginRunOperation, endRunOperation, fiddle],
   );
 
   useEffect(() => {
@@ -557,6 +589,7 @@ export function Fiddle(props: FiddleProps) {
     props.onCancelPendingOpen?.();
     const requestId = openRequests.current.begin();
     appendOutput('info', `[Lynxtron Go] Loading gist ${id}…`);
+    beginRunOperation();
     void loadGistFiddle(id)
       .then(async gistSnap => {
         if (!openRequests.current.isCurrent(requestId)) return;
@@ -576,8 +609,9 @@ export function Fiddle(props: FiddleProps) {
       .catch(e => {
         if (!openRequests.current.isCurrent(requestId)) return;
         appendOutput('error', `[Lynxtron Go] Gist load failed: ${e?.message ?? String(e)}`);
-      });
-  }, [fiddle]);
+      })
+      .finally(endRunOperation);
+  }, [beginRunOperation, endRunOperation, fiddle]);
 
   // App-menu events (main.ts buildAppMenu sends `fiddle:*` global events —
   // mirrors upstream's ipcMainManager.send flow). NOTE: declared after the
@@ -598,7 +632,10 @@ export function Fiddle(props: FiddleProps) {
     'fiddle:save': () => { void handleSave(); },
     'fiddle:publish': () => { void handlePublishGist(); },
     'fiddle:run': () => handleRun(),
-    'fiddle:stop': () => { if (runner.isRunning) runner.stop(); },
+    'fiddle:stop': () => {
+      if (runner.isRunning) runner.stop();
+      else if (props.externalRunPid != null) props.onStopExternalRun?.();
+    },
     'fiddle:toggleConsole': () => setConsoleShowing(v => !v),
     // The gallery is the largest surface in the app and had no automation
     // entry, so it could only ever be checked by hand.
@@ -742,7 +779,11 @@ export function Fiddle(props: FiddleProps) {
         isConsoleShowing={isConsoleShowing}
         title={fiddle.snap.title}
         isEdited={fiddle.isEdited}
-        isRunning={runner.isRunning}
+        isRunning={runner.isRunning || props.externalRunPid != null}
+        isRunLoading={
+          !(runner.isRunning || props.externalRunPid != null)
+          && (hasPendingRunOperation || !!props.externalRunLoading)
+        }
       />
       <view className="FiddleBody">
         {/* Console at the BOTTOM (deliberate upstream divergence: app-wide

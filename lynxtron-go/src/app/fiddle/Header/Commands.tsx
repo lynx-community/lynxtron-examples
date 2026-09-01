@@ -1,7 +1,8 @@
 import { useState } from '@lynx-js/react';
 import { BRAND_MARK_ON_DARK_URL, BRAND_MARK_URL, getExposed } from '../../store';
-import { Button, ControlGroup, InputGroup } from '../bp';
+import { Button, ControlGroup, InputGroup, Spinner } from '../bp';
 import { Tooltip } from '../bp/Tooltip';
+import { resolveRunControlState } from './run-control';
 import './Commands.css';
 
 export interface CommandsProps {
@@ -32,6 +33,7 @@ export interface CommandsProps {
   currentVersion: string;
   gistId: string | null;
   isRunning: boolean;
+  isRunLoading: boolean;
   title: string;
 }
 
@@ -52,6 +54,7 @@ export function Commands(props: CommandsProps) {
   // belong to the page underneath"). View/app controls stay live. The Run
   // button stays reachable while a fiddle run is active so Stop still works.
   const gallery = !!props.galleryOpen;
+  const runState = resolveRunControlState(props.isRunning, props.isRunLoading);
 
   const isMac = (() => { try { return getExposed()?.platform === 'darwin'; } catch (_) { return false; } })();
 
@@ -90,13 +93,15 @@ export function Commands(props: CommandsProps) {
             because the mark cannot mean stop. */}
         <Button
           className="commands-run"
-          iconNode={!props.isRunning && BRAND_MARK_URL
-            ? <image className="commands-run-mark" src={BRAND_MARK_URL} />
-            : undefined}
-          icon={props.isRunning ? 'stop' : undefined}
-          text={props.isRunning ? 'Stop' : 'Run'}
-          intent={props.isRunning ? 'danger' : 'primary'}
-          disabled={gallery && !props.isRunning}
+          iconNode={runState === 'loading'
+            ? <Spinner className="commands-run-spinner" size={13} />
+            : runState === 'idle' && BRAND_MARK_URL
+              ? <image className="commands-run-mark" src={BRAND_MARK_URL} />
+              : undefined}
+          icon={runState === 'running' ? 'stop' : undefined}
+          text={runState === 'running' ? 'Stop' : runState === 'loading' ? 'Loading…' : 'Run'}
+          intent={runState === 'running' ? 'danger' : 'primary'}
+          disabled={runState === 'loading' || (gallery && runState !== 'running')}
           onClick={props.onRun}
         />
         {/* A field, not a button. Search reads as somewhere you type, so it

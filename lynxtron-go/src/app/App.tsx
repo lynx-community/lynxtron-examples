@@ -2833,7 +2833,7 @@ export function App(props: { onRender?: () => void } = {}) {
       }}
       onRunFiddleSource={(id) => {
         const entry = SHOWCASE_REGISTRY.find(e => e.name === FIDDLE_SHOWCASE_NAME);
-        if (entry) void runFiddleEntry(entry, id);
+        if (entry) return runFiddleEntry(entry, id);
       }}
       // Quick Open (Cmd+P) is an App-level platform overlay just like the gallery.
       // Keep this signal so an app-level surface closes any Fiddle-owned dialog
@@ -2843,6 +2843,7 @@ export function App(props: { onRender?: () => void } = {}) {
       gallery={galleryNode}
       onCloseGallery={() => setGalleryOpen(false)}
       externalRunPid={runningPid}
+      externalRunLoading={!!showcaseLoading}
       onStopExternalRun={stopGalleryRun}
       onThemeChange={() => setUiThemeDark(isDarkTheme())}
       onPaletteSourceChange={setFiddlePalette}
