@@ -405,7 +405,10 @@
 .bp3-spinner.bp3-intent-success .bp3-spinner-ring { border-top-color: #0f9960; }
 .bp3-spinner.bp3-intent-warning .bp3-spinner-ring { border-top-color: #d9822b; }
 .bp3-spinner.bp3-intent-danger .bp3-spinner-ring { border-top-color: #db3737; }
-@keyframes bp3-spin { to { transform: rotate(360deg); } }
+@keyframes bp3-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
 /* ── Menu ─────────────────────────────────────────────────────────────── */
 .bp3-menu {

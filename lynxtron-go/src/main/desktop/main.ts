@@ -902,6 +902,11 @@ if (!hasSingleInstanceLock) {
     const w = new LynxWindow({
       width: 1200,
       height: 800,
+      // Below this size the editor panes stop being useful. The commands bar
+      // keeps its title inside a collision-free ellipsis corridor, so the
+      // window remains fully operable at its minimum.
+      minWidth: 800,
+      minHeight: 600,
       // The ground under everything, including the native editors. Dark is the
       // boot default; the UI corrects it via setWindowBackground once it knows
       // which theme resolved. Without this the window comes up white and the
