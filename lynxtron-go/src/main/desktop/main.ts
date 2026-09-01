@@ -443,7 +443,7 @@ async function prepareRemoteNativeExtension(
 
 // Build application menu with IDE keyboard shortcuts.
 // The app menu mirrors upstream Electron Fiddle's menu (src/main/menu.ts):
-// File (New Fiddle / Open / Save / Publish to Gist), Edit roles, View, Tasks
+// File (New Project / Open / Save / Publish to Gist), Edit roles, View, Tasks
 // (Run / Stop), Help. Items send `fiddle:*` global events consumed by
 // Fiddle.tsx via GlobalEventEmitter.
 /**
@@ -651,7 +651,7 @@ function buildAppMenu(
     : [
         {
           id: 'newFiddle',
-          label: 'New Fiddle',
+          label: 'New Project',
           accelerator: 'CmdOrCtrl+N',
           registerAccelerator: true,
           click: () => sendCmd('newFiddle'),
@@ -663,7 +663,7 @@ function buildAppMenu(
           // → loadLocalFiddle). Distinct from "Open Folder in IDE…" below,
           // which opens a workspace in its own window — the two used to be
           // "Open..." and "Open Folder…", which said nothing about either.
-          label: 'Open Fiddle Folder…',
+          label: 'Open Project Folder…',
           accelerator: 'CmdOrCtrl+O',
           registerAccelerator: true,
           click: async () => {
@@ -801,14 +801,14 @@ function buildAppMenu(
     submenu: [
       {
         id: 'run',
-        label: 'Run Fiddle',
+        label: 'Run Project',
         accelerator: 'CmdOrCtrl+R',
         registerAccelerator: true,
         click: () => sendCmd('run'),
       },
       {
         id: 'stop',
-        label: 'Stop Fiddle',
+        label: 'Stop Project',
         accelerator: 'CmdOrCtrl+Shift+R',
         registerAccelerator: true,
         click: () => sendCmd('stop'),
@@ -1139,8 +1139,8 @@ if (!hasSingleInstanceLock) {
         } else if (name === 'saveFolder') {
           const result = await dialog.showOpenDialog({
             properties: ['openDirectory', 'createDirectory'],
-            title: 'Save Fiddle to Folder',
-            buttonLabel: 'Save Fiddle Here',
+            title: 'Save Project to Folder',
+            buttonLabel: 'Save Project Here',
           });
           if (!result.canceled && result.filePaths.length > 0) {
             callback.sendReply({ path: result.filePaths[0] });

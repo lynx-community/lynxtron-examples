@@ -40,7 +40,7 @@ export async function publishGistFiddle(
     files[storageName] = { content };
   }
   if (Object.keys(files).length === 0) {
-    throw new Error('Cannot publish an empty fiddle (all files are empty).');
+    throw new Error('Cannot publish an empty project (all files are empty).');
   }
   if (Object.keys(paths).length > 0) {
     files[PROJECT_PATH_MANIFEST] = {

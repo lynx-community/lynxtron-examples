@@ -291,7 +291,7 @@ export function Fiddle(props: FiddleProps) {
     openRequests.current.begin();
     const snap = loadLocalFiddle(path);
     if (!snap) {
-      AppToaster.show({ message: `No fiddle files found in ${path}`, intent: 'warning', icon: 'warning-sign' });
+      AppToaster.show({ message: `No Lynxtron Go project files found in ${path}`, intent: 'warning', icon: 'warning-sign' });
       return;
     }
     fiddle.loadSnapshot(snap);
@@ -730,14 +730,14 @@ export function Fiddle(props: FiddleProps) {
             <Menu>
               <MenuItem
                 icon="add"
-                text="New Fiddle"
+                text="New Project"
                 label={isMacPlatform ? '\u2318N' : 'Ctrl+N'}
                 disabled={!!props.galleryOpen}
                 onClick={() => { setOverflowOpen(false); setTemplatePickerOpen(true); }}
               />
               <MenuItem
                 icon="floppy-disk"
-                text="Save Fiddle"
+                text="Save Project"
                 label={isMacPlatform ? '\u2318S' : 'Ctrl+S'}
                 disabled={!!props.galleryOpen}
                 onClick={() => { setOverflowOpen(false); void handleSave(); }}

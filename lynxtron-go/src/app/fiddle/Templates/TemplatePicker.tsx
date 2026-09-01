@@ -11,7 +11,7 @@ export interface TemplatePickerProps {
 }
 
 /**
- * New Fiddle.
+ * New Project.
  *
  * This dialog used to carry a second copy of the showcase registry: the same
  * eleven entries the gallery renders, in a weaker card with no thumbnail, no
@@ -31,7 +31,7 @@ export function TemplatePicker(props: TemplatePickerProps) {
       <view event-through={true} className="TemplatePicker-Wrap">
         <view event-through={false} className="TemplatePicker">
           <view className="TemplatePicker-Header">
-            <text className="TemplatePicker-Title">New Fiddle</text>
+            <text className="TemplatePicker-Title">New Project</text>
             <Button icon="cross" minimal onClick={props.onCancel} />
           </view>
           <view className="TemplatePicker-Body">

@@ -183,7 +183,7 @@ export function Commands(props: CommandsProps) {
           </Tooltip>
         </view>
         <Tooltip
-          content={props.gistId ? 'Update the gist this fiddle came from' : 'Publish these files as a GitHub gist'}
+          content={props.gistId ? 'Update the gist this project came from' : 'Publish these files as a GitHub gist'}
           align="end"
         >
           <Button icon="upload" minimal disabled={gallery} onClick={props.onPublishGist} />
