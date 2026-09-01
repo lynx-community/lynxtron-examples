@@ -40,7 +40,7 @@ export function TemplatePicker(props: TemplatePickerProps) {
                 <Icon icon="document" size={13} className="TemplatePicker-CardIcon" />
                 <text className="TemplatePicker-CardTitle">Blank</text>
               </view>
-              <text className="TemplatePicker-CardDesc">Empty main + renderer + package.json</text>
+              <text className="TemplatePicker-CardDesc">Complete Lynxtron project with an empty renderer</text>
             </view>
             <view className="TemplatePicker-Card" bindtap={props.onPickHelloLynxtron}>
               <view className="TemplatePicker-CardTitleRow">

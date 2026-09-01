@@ -112,7 +112,13 @@ function buildShowcaseRegistry() {
 
     return registry.showcases.map((s: any) => {
       let url = '';
-      if (isLocalRegistry) {
+      if (s.distribution === 'builtin') {
+        // Built-in showcases use the exact same packed artifact format as
+        // Release assets. The preload maps this stable logical URL to the
+        // versioned tgz shipped beside app.asar before invoking CLI fetch.
+        const bareName = String(s.name).split('/').pop();
+        url = `builtin-showcase://${bareName}`;
+      } else if (isLocalRegistry) {
         // Preview: point to local pre-packed tarball
         // Convention: showcases/<name>/<name>-<version>.tgz
         const showcaseDir = path.resolve(monorepoRoot, s.path);
@@ -136,6 +142,7 @@ function buildShowcaseRegistry() {
         targets: Array.isArray(s.targets) ? s.targets : ['desktop'],
         path: s.path || undefined,
         url,
+        distribution: s.distribution === 'builtin' ? 'builtin' : 'release',
         thumbnail: resolveThumbnailUrl(s.thumbnail ?? null),
       };
     });

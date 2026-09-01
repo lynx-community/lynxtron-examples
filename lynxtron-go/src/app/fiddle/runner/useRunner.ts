@@ -6,11 +6,7 @@ export interface RunnerState {
   isRunning: boolean;
   startMs: number | null;
   runCount: number;
-  start: (workspace: string) => number | null;
-  /** Build then launch (installs deps + `npm start`) — always surfaces a window. */
-  startBuildRun: (workspace: string) => Promise<number | null>;
-  /** Run via the showcase dev pipeline (installs deps + `npm run dev`). */
-  startDev: (workspace: string) => Promise<number | null>;
+  runProject: (projectRoot: string, runtimeExecutable?: string) => Promise<number | null>;
   stop: () => boolean;
 }
 
@@ -33,42 +29,21 @@ export function useRunner(): RunnerState {
     return () => { if (pollRef.current) clearTimeout(pollRef.current); };
   }, [pid]);
 
-  const start = useCallback((workspace: string) => {
+  const runProject = useCallback(async (projectRoot: string, runtimeExecutable?: string) => {
     try {
-      const nextPid = showcaseApi()?.run?.(workspace);
+      const nextPid = await showcaseApi()?.runProject?.(projectRoot, runtimeExecutable);
       if (typeof nextPid === 'number' && nextPid > 0) {
         setPid(nextPid);
         setStartMs(Date.now());
         setRunCount(c => c + 1);
         return nextPid;
       }
-    } catch (_) {}
-    return null;
-  }, []);
-
-  const startBuildRun = useCallback(async (workspace: string) => {
-    try {
-      const nextPid = await showcaseApi()?.start?.(workspace);
-      if (typeof nextPid === 'number' && nextPid > 0) {
-        setPid(nextPid);
-        setStartMs(Date.now());
-        setRunCount(c => c + 1);
-        return nextPid;
-      }
-    } catch (_) {}
-    return null;
-  }, []);
-
-  const startDev = useCallback(async (workspace: string) => {
-    try {
-      const nextPid = await showcaseApi()?.dev?.(workspace);
-      if (typeof nextPid === 'number' && nextPid > 0) {
-        setPid(nextPid);
-        setStartMs(Date.now());
-        setRunCount(c => c + 1);
-        return nextPid;
-      }
-    } catch (_) {}
+    } catch (error) {
+      // Preserve the native cause (Node version, install/build failure, missing
+      // output, spawn error). Returning null reduced all of them to the same
+      // misleading "failed to spawn" message.
+      throw error;
+    }
     return null;
   }, []);
 
@@ -79,5 +54,5 @@ export function useRunner(): RunnerState {
     return ok;
   }, [pid]);
 
-  return { pid, isRunning: pid != null, startMs, runCount, start, startBuildRun, startDev, stop };
+  return { pid, isRunning: pid != null, startMs, runCount, runProject, stop };
 }

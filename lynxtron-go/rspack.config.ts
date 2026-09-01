@@ -46,6 +46,10 @@ const desktopConfig = defineConfig({
   output: {
     path: path.resolve(__dirname, 'dist/desktop/'),
     filename: '[name].js',
+    // Copied resources such as versioned built-in showcase artifacts must not
+    // accumulate across builds. A stale tgz would make runtime selection
+    // ambiguous after switching installer tags or branches.
+    clean: true,
   },
   module: {
     rules: [
@@ -86,6 +90,10 @@ const desktopConfig = defineConfig({
         // file:// only.
         { from: './resources/lynxtron.png', to: 'brand/lynxtron.png' },
         { from: './src/assets/lynxtron-on-dark.png', to: 'brand/lynxtron-on-dark.png' },
+        // Standard showcase artifacts bundled with the installer for offline
+        // starters. They stay as tgz files so CLI fetch/cache/verification is
+        // identical to a downloaded Release artifact.
+        { from: './resources/builtin-showcases/', to: 'builtin-showcases/' },
         // Keep only the Scintilla extension runtime closure in dist/desktop.
         ...scintillaRuntimePatterns,
         // Keep appPackage dependencies physically present under dist/desktop/node_modules
@@ -115,6 +123,7 @@ const desktopConfig = defineConfig({
     '@lynx-js/lynxtron': 'commonjs @lynx-js/lynxtron',
     '@lynx-js/lynxtron/context-bridge': 'commonjs @lynx-js/lynxtron/context-bridge',
     '@lynxtron-examples/cli/dist/index.js': 'commonjs @lynxtron-examples/cli/dist/index.js',
+    '@lynxtron-examples/cli/dist/showcase-release.js': 'commonjs @lynxtron-examples/cli/dist/showcase-release.js',
     'typescript': 'commonjs typescript',
     'vscode-css-languageservice': 'commonjs vscode-css-languageservice',
     'vscode-languageserver-types': 'commonjs vscode-languageserver-types',

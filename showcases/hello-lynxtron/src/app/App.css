@@ -1,0 +1,16 @@
+.hello {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  align-items: center;
+  justify-content: center;
+  background-color: #20232d;
+}
+
+.hello-title {
+  color: #f5f8fa;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+}

@@ -15,6 +15,7 @@ import {
   exampleArtifactApi,
   SHOWCASE_REGISTRY,
   FIDDLE_SHOWCASE_NAME,
+  HELLO_SHOWCASE_NAME,
   FIDDLE_CATALOG,
   SHOWCASE_LOCAL_WORKSPACE,
   appendOutput,
@@ -65,7 +66,10 @@ import { registerStatusBarItem } from './components/StatusBar/statusbar-registry
 import { QuickPicker } from './components/QuickPicker/QuickPicker';
 import { GalleryHome } from './components/Gallery/GalleryHome';
 import { Fiddle, type FiddlePaletteSource } from './fiddle/Fiddle';
-import { resolveShowcaseWorkspacePath } from './shared/showcase-workspace';
+import {
+  resolveCurrentShowcaseWorkspacePath,
+  resolveShowcaseWorkspacePath,
+} from './shared/showcase-workspace';
 import { DEV_PRESET, isDevMode, drainCommandFile } from './fiddle/dev-preset';
 import { isDarkTheme } from './fiddle/theme';
 import { LoadingOverlay } from './components/shared/LoadingOverlay';
@@ -667,7 +671,10 @@ export function App(props: { onRender?: () => void } = {}) {
   }, []);
 
   // ── Open folder ────────────────────────────────────────────────────────────
-  const openFolder = useCallback((folderPath: string, source: 'folder' | 'showcase' = 'folder') => {
+  const openFolder = useCallback((
+    folderPath: string,
+    source: 'folder' | 'showcase' = 'folder',
+  ) => {
     console.log('[IDE] openFolder called with:', folderPath);
     log(`[IDE] openFolder: ${folderPath}`);
     try {
@@ -1343,10 +1350,29 @@ export function App(props: { onRender?: () => void } = {}) {
     setPickerOpen(true);
   }, []);
 
-  const handleResumeWorkspace = useCallback(() => {
+  const handleResumeWorkspace = useCallback(async () => {
     if (!lastWorkspaceSession) return;
-    openFolder(lastWorkspaceSession.rootPath, lastWorkspaceSession.kind);
-  }, [lastWorkspaceSession, openFolder]);
+    if (lastWorkspaceSession.kind === 'folder') {
+      openFolder(lastWorkspaceSession.rootPath, 'folder');
+      return;
+    }
+    const resolved = await resolveCurrentShowcaseWorkspacePath(
+      lastWorkspaceSession.rootPath,
+      SHOWCASE_REGISTRY,
+      {
+        onFetchStart: current => {
+          showOutput('info', `Updating showcase: ${current.url}`);
+          setStatus('Updating showcase...');
+        },
+      },
+    );
+    if (!resolved) {
+      showOutput('error', 'Could not update the saved showcase workspace.');
+      setStatus('Showcase update failed');
+      return;
+    }
+    openFolder(resolved, 'showcase');
+  }, [lastWorkspaceSession, openFolder, showOutput]);
 
   // Register StatusBar items
   useEffect(() => {
@@ -2180,25 +2206,11 @@ export function App(props: { onRender?: () => void } = {}) {
       setStatus(`[runShowcaseEntry] showcasePath resolved: ${showcasePath}`);
       if (!showcasePath) return;
       
-      log(`[runShowcaseEntry] Checking if built: ${showcasePath}`);
-      const isBuilt = api.isBuilt(showcasePath);
-      console.log('[runShowcaseEntry] isBuilt:', isBuilt);
-      log(`[runShowcaseEntry] isBuilt: ${isBuilt}`);
-      if (!isBuilt) {
-        showOutput('error', 'Showcase not built — dist/desktop/main.js not found');
-        appendProcessLine('stderr', 'Not built — dist/desktop/main.js not found. Open it in Lynxtron Go and Run to build from source.');
-        setStatus('Not built');
-        return;
-      }
-      
-      showOutput('info', `Launching showcase: ${showcasePath}`);
-      setStatus('Launching showcase...');
-      log(`[runShowcaseEntry] Calling api.run...`);
-      const pid = api.run(showcasePath);
-      console.log('[runShowcaseEntry] api.run returned pid:', pid);
-      log(`[runShowcaseEntry] api.run returned pid: ${pid}`);
+      showOutput('info', `Preparing project: ${showcasePath}`);
+      setStatus('Classifying and launching project...');
+      const pid = await api.runProject(showcasePath);
       setRunningPid(pid);
-      showOutput('info', `Showcase launched (pid ${pid})`);
+      showOutput('info', `Project launched (pid ${pid})`);
       appendProcessLine('command', `Launched (pid ${pid})`);
       setStatus(`Running (pid ${pid})`);
     } catch (e: any) {
@@ -2397,7 +2409,8 @@ export function App(props: { onRender?: () => void } = {}) {
   }, [openShowcaseInFiddle]);
 
   const handleRunCurrentWorkspace = useCallback(async () => {
-    const target = resolveWorkspaceRunTarget(workspaceSessionRef.current);
+    const activeSession = workspaceSessionRef.current;
+    const target = resolveWorkspaceRunTarget(activeSession);
     if (target.kind === 'none') {
       showOutput('error', target.reason);
       setStatus(target.reason);
@@ -2412,42 +2425,35 @@ export function App(props: { onRender?: () => void } = {}) {
         return;
       }
 
-      const shouldRunFromSource =
-        !api.isBuilt(target.rootPath) || !!api.needsSourceRun?.(target.rootPath);
-      if (shouldRunFromSource) {
-        if (!api.start) {
-          showOutput('error', 'Showcase source run API not available');
-          setStatus('Run unavailable');
-          return;
-        }
-
-        if (api.needsInstall?.(target.rootPath)) {
-          showOutput('info', `Installing dependencies: ${target.rootPath}`);
-          setStatus('Installing dependencies...');
-        }
-
-        if (!api.needsInstall?.(target.rootPath)) {
-          setStatus('Launching run...');
-        }
-        showOutput('info', `Launching run from source: ${target.rootPath}`);
-        try {
-          const pid = await api.start(target.rootPath);
-          setRunningPid(pid);
-          showOutput('info', `Run command started (pid ${pid})`);
-          setStatus(`Run starting (pid ${pid})`);
-        } catch (e: any) {
-          showOutput('error', `Run failed: ${e.message}`);
-          setStatus('Run failed');
-        }
+      let updated = false;
+      const resolvedRoot = activeSession?.kind === 'showcase'
+        ? await resolveCurrentShowcaseWorkspacePath(
+          target.rootPath,
+          SHOWCASE_REGISTRY,
+          {
+            onFetchStart: current => {
+              updated = true;
+              showOutput('info', `Updating showcase: ${current.url}`);
+              setStatus('Updating showcase...');
+            },
+          },
+        )
+        : target.rootPath;
+      if (!resolvedRoot) {
+        showOutput('error', 'Could not update the showcase workspace.');
+        setStatus('Showcase update failed');
         return;
       }
+      if (updated) {
+        openFolder(resolvedRoot, 'showcase');
+      }
 
-      showOutput('info', `Launching run: ${target.rootPath}`);
-      setStatus('Launching run...');
+      showOutput('info', `Preparing project: ${resolvedRoot}`);
+      setStatus('Classifying and launching project...');
       try {
-        const pid = api.run(target.rootPath);
+        const pid = await api.runProject(resolvedRoot);
         setRunningPid(pid);
-        showOutput('info', `Run launched (pid ${pid})`);
+        showOutput('info', `Project launched (pid ${pid})`);
         setStatus(`Run running (pid ${pid})`);
       } catch (e: any) {
         showOutput('error', `Run failed: ${e.message}`);
@@ -2473,7 +2479,7 @@ export function App(props: { onRender?: () => void } = {}) {
       showOutput('error', `Example run failed: ${e.message}`);
       setStatus('Example run failed');
     }
-  }, [showOutput]);
+  }, [openFolder, showOutput]);
 
   const handleRunCurrentWorkspaceOnWeb = useCallback(() => {
     const session = workspaceSessionRef.current;
@@ -2812,11 +2818,19 @@ export function App(props: { onRender?: () => void } = {}) {
     <Fiddle
       rootPath={currentRootPath}
       onOpenGallery={() => setGalleryOpen(true)}
-      onRunShowcase={(entry) => { void runShowcaseEntry(entry); }}
+      onOpenHelloShowcase={() => {
+        const entry = SHOWCASE_REGISTRY.find(item => item.name === HELLO_SHOWCASE_NAME);
+        if (entry) openShowcaseInFiddle(entry);
+        else showOutput('error', 'Built-in Hello showcase is unavailable');
+      }}
       pendingShowcaseTemplate={pendingShowcaseTemplate}
       onShowcaseTemplateConsumed={() => setPendingShowcaseTemplate(null)}
       pendingFiddleOpen={pendingFiddleOpen}
       onFiddleOpenConsumed={() => setPendingFiddleOpen(null)}
+      onCancelPendingOpen={() => {
+        setPendingShowcaseTemplate(null);
+        setPendingFiddleOpen(null);
+      }}
       onRunFiddleSource={(id) => {
         const entry = SHOWCASE_REGISTRY.find(e => e.name === FIDDLE_SHOWCASE_NAME);
         if (entry) void runFiddleEntry(entry, id);

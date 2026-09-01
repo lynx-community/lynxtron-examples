@@ -18,6 +18,7 @@ export default defineConfig({
     filename: '[name].js',
     clean: true,
   },
+  externals: { '@lynx-js/lynxtron': 'commonjs lynxtron' },
   module: {
     rules: [
       {

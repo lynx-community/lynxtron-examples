@@ -1,48 +1,18 @@
-import { getExposed, showcaseApi, appendFiddleOutput as appendOutput, foundationApi } from '../../store';
-
-export interface SpawnRuntimeResult {
-  ok: boolean;
-  pid: number | null;
-  error?: string;
-}
+import { foundationApi } from '../../store';
 
 /**
- * Spawn Lynxtron for `<workspace>/dist/desktop` — if `localVersionFolder` is set,
- * shell out to that folder's `lynxtron.app/Contents/MacOS/lynxtron` via foundation.exec.
- * Otherwise fall back to the bundled runtime via `showcaseApi.run`.
+ * Resolve a user-selected local Lynxtron executable. Project classification,
+ * build, output validation, process logging and spawning stay in runProject.
  */
-export function spawnRuntimeForWorkspace(
-  workspace: string,
-  localVersionFolder: string | null,
-): SpawnRuntimeResult {
-  if (localVersionFolder) {
-    const fs = foundationApi()?.fs;
-    const exec = foundationApi()?.exec;
-    if (!fs || !exec) return { ok: false, pid: null, error: 'Preload bridge unavailable' };
-    const executable = fs.join(localVersionFolder, 'dist', 'lynxtron.app', 'Contents', 'MacOS', 'lynxtron');
-    if (!fs.exists?.(executable)) {
-      const fallback = fs.join(localVersionFolder, 'lynxtron.app', 'Contents', 'MacOS', 'lynxtron');
-      if (!fs.exists?.(fallback)) {
-        return { ok: false, pid: null, error: `Executable not found at ${executable}` };
-      }
-    }
-    const distDesktop = fs.join(workspace, 'dist', 'desktop');
-    const handle = exec.runAsync?.(executable, [distDesktop], {
-      env: { LYNXTRON_ALLOW_MULTI: '1' },
-      onLine: (stream: string, line: string) => {
-        appendOutput(stream === 'stderr' ? 'error' : 'info', line);
-      },
-      onExit: (code: number | null) => {
-        appendOutput('info', `[LocalRuntime] exit code=${code}`);
-      },
-    });
-    return { ok: !!handle?.pid, pid: handle?.pid ?? null };
-  }
-
-  try {
-    const pid = showcaseApi()?.run?.(workspace);
-    return { ok: typeof pid === 'number' && pid > 0, pid: pid ?? null };
-  } catch (e: any) {
-    return { ok: false, pid: null, error: e?.message ?? String(e) };
-  }
+export function resolveLocalRuntimeExecutable(localVersionFolder: string | null): string | null {
+  if (!localVersionFolder) return null;
+  const fs = foundationApi()?.fs;
+  if (!fs) throw new Error('Preload bridge unavailable');
+  const candidates = [
+    fs.join(localVersionFolder, 'dist', 'lynxtron.app', 'Contents', 'MacOS', 'lynxtron'),
+    fs.join(localVersionFolder, 'lynxtron.app', 'Contents', 'MacOS', 'lynxtron'),
+  ];
+  const executable = candidates.find((candidate: string) => fs.exists?.(candidate));
+  if (!executable) throw new Error(`Lynxtron executable not found under ${localVersionFolder}`);
+  return executable;
 }

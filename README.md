@@ -71,7 +71,7 @@ pnpm preview
 ```
 
 This will:
-1. Build & `npm pack` each showcase in `showcases/`
+1. Build each showcase and pack its source plus verified `dist_precompiled/` artifact
 2. Start a local Verdaccio registry and publish `@lynxtron-examples/*` packages
 3. Build Lynxtron GO with `LYNXTRON_PREVIEW=1` (bakes `file://` tarball URLs)
 4. Launch Lynxtron GO desktop app

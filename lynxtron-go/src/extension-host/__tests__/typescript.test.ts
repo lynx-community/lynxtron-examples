@@ -4,7 +4,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { TypeScriptLanguageService } from '../language-server/typescript';
-import { HELLO_LYNXTRON } from '../../app/fiddle/state/FiddleState';
 
 // Use a fake file path that looks like an absolute path but doesn't exist on disk.
 // The LanguageServiceHost falls back gracefully for missing lib files when
@@ -16,6 +15,8 @@ const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(TEST_DIR, '../../../..');
 const SHOWCASE_COUNTER_APP = path.join(REPO_ROOT, 'showcases/counter/src/app/App.tsx');
 const SHOWCASE_COUNTER_DESKTOP_MAIN = path.join(REPO_ROOT, 'showcases/counter/src/main/desktop/main.ts');
+const SHOWCASE_HELLO_APP = path.join(REPO_ROOT, 'showcases/hello-lynxtron/src/app/App.tsx');
+const SHOWCASE_HELLO_DESKTOP_MAIN = path.join(REPO_ROOT, 'showcases/hello-lynxtron/src/main/desktop/main.ts');
 const SHOWCASE_BENCHMARK_RSPACK_CONFIG = path.join(REPO_ROOT, 'showcases/benchmark/rspack.config.ts');
 const SHOWCASE_CROSS_PLATFORM_NOTES_LYNX_CONFIG = path.join(REPO_ROOT, 'showcases/cross-platform-notes/lynx.config.ts');
 const GO_DESKTOP_MAIN = path.join(REPO_ROOT, 'lynxtron-go/src/main/desktop/main.ts');
@@ -116,21 +117,19 @@ const greet = (name: string): string => {
     ]));
   });
 
-  it('uses the desktop Lynxtron fallback for the default in-memory main file', () => {
-    const mainPath = '/tmp/lynxtron-fiddle-diagnostics/template-hello-lynxtron/main.js';
-    svc.updateFile(mainPath, HELLO_LYNXTRON['main.js'], 1);
+  it('resolves Lynxtron types for the standard built-in Hello host', () => {
+    svc.updateFile(SHOWCASE_HELLO_DESKTOP_MAIN, fs.readFileSync(SHOWCASE_HELLO_DESKTOP_MAIN, 'utf8'), 1);
 
-    const markers = svc.getDiagnostics(mainPath);
+    const markers = svc.getDiagnostics(SHOWCASE_HELLO_DESKTOP_MAIN);
 
-    expect(markers.some(m => m.code === 2307 && m.message.includes("'lynxtron'"))).toBe(false);
+    expect(markers.some(m => m.code === 2307 && m.message.includes("'@lynx-js/lynxtron'"))).toBe(false);
     expect(markers.filter(m => m.severity === 'error')).toHaveLength(0);
   });
 
-  it('uses Lynx JSX types for the default in-memory renderer file', () => {
-    const rendererPath = '/tmp/lynxtron-fiddle-diagnostics/template-hello-lynxtron/renderer.js';
-    svc.updateFile(rendererPath, HELLO_LYNXTRON['renderer.js'], 1);
+  it('uses Lynx JSX types for the standard built-in Hello app', () => {
+    svc.updateFile(SHOWCASE_HELLO_APP, fs.readFileSync(SHOWCASE_HELLO_APP, 'utf8'), 1);
 
-    const markers = svc.getDiagnostics(rendererPath);
+    const markers = svc.getDiagnostics(SHOWCASE_HELLO_APP);
 
     expect(markers.some(m => m.code === 2307 && m.message.includes("'@lynx-js/react'"))).toBe(false);
     expect(markers.some(m => m.code === 2875 || m.code === 7026)).toBe(false);

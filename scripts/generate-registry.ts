@@ -14,6 +14,7 @@ interface RegistryEntry {
   thumbnail: string | null;
   tags: string[];
   targets: string[];
+  distribution: 'release' | 'builtin';
 }
 
 const THUMBNAIL_CANDIDATES = [
@@ -86,6 +87,7 @@ for (const name of fs.readdirSync(showcasesDir)) {
     thumbnail: buildRegistryThumbnail(`showcases/${name}`, path.join(showcasesDir, name), meta.thumbnail),
     tags: meta.tags ?? [],
     targets: resolveTargets(path.join(showcasesDir, name), pkg),
+    distribution: meta.distribution === 'builtin' ? 'builtin' : 'release',
   });
 }
 
@@ -103,6 +105,7 @@ if (fs.existsSync(lynxtronGoPkgPath)) {
       thumbnail: buildRegistryThumbnail('lynxtron-go', showcaseDir, meta.thumbnail),
       tags: meta.tags ?? [],
       targets: resolveTargets(showcaseDir, pkg),
+      distribution: 'release',
     });
   }
 }

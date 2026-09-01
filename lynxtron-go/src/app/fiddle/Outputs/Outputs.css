@@ -65,10 +65,31 @@
   font-size: 13px;
   line-height: 1.5;
   font-weight: 400;
-  color: var(--bp-text-muted);
   white-space: pre-wrap;
   cursor: text;
 }
+.Outputs-Entry {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+.Outputs-Timestamp {
+  color: var(--bp-text-muted);
+  font-family: monospace;
+  font-size: 11px;
+  cursor: text;
+}
+.Outputs-Message {
+  color: var(--bp-text-muted);
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: pre-wrap;
+  cursor: text;
+}
+.Outputs-Message--stderr { color: var(--log-error); }
+.Outputs-Message--command { color: var(--log-info); }
 
 .Outputs-StopText {
   font-size: 11px;

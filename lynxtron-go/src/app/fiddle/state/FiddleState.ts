@@ -16,6 +16,8 @@ export interface FiddleFile {
 export interface FiddleSource {
   kind: 'blank' | 'template' | 'showcase' | 'gist' | 'local';
   ref?: string;
+  /** GitHub identity is separate from ref, which is always a local project root. */
+  gistId?: string;
   /**
    * Set when `ref` is ONE fiddle inside a fiddle-collection showcase rather
    * than a whole showcase. Run then builds and launches just that fiddle —
@@ -47,80 +49,10 @@ export function languageForId(id: EditorId): Language {
   return LANG_BY_ID[id] ?? detectLanguage(id);
 }
 
-export const HELLO_LYNXTRON: Record<EditorId, string> = {
-  [DEFAULT_EDITORS.MAIN]: `// Main process — Lynxtron entry
-const { app, LynxWindow } = require('lynxtron');
-
-app.whenReady().then(() => {
-  const win = new LynxWindow({ width: 800, height: 600 });
-  // A LynxWindow renders a compiled Lynx bundle — renderer.js is built
-  // into main.lynx.bundle by rspeedy. There is no HTML page in Lynxtron.
-  win.loadFile('main.lynx.bundle');
-});
-`,
-  [DEFAULT_EDITORS.RENDERER]: `// Renderer (Lynx UI) — ReactLynx entry
-import { root } from '@lynx-js/react';
-import './styles.css';
-
-function App() {
-  return (
-    <view className="hello">
-      <text className="hello-title">Hello, Lynxtron!</text>
-    </view>
-  );
-}
-
-root.render(<App />);
-`,
-  [DEFAULT_EDITORS.PRELOAD]: `// Preload script
-// Runs in the Lynx bundle context before your app code.
-`,
-  [DEFAULT_EDITORS.CSS]: `.hello {
-  padding: 24px;
-}
-
-.hello-title {
-  font-size: 24px;
-}
-`,
-  [DEFAULT_EDITORS.PACKAGE]: `{
-  "name": "my-lynxtron-fiddle",
-  "productName": "My Lynxtron App",
-  "version": "1.0.0",
-  "main": "main.js",
-  "dependencies": {}
-}
-`,
-};
-
-export const BLANK_TEMPLATE: Record<EditorId, string> = {
-  [DEFAULT_EDITORS.MAIN]: `const { app, LynxWindow } = require('lynxtron');\n\napp.whenReady().then(() => {\n  new LynxWindow({ width: 800, height: 600 });\n});\n`,
-  [DEFAULT_EDITORS.RENDERER]: `import { root } from '@lynx-js/react';\nroot.render(<view />);\n`,
-  [DEFAULT_EDITORS.PRELOAD]: ``,
-  [DEFAULT_EDITORS.CSS]: ``,
-  [DEFAULT_EDITORS.PACKAGE]: `{\n  "name": "blank-fiddle",\n  "version": "1.0.0",\n  "main": "main.js"\n}\n`,
-};
-
 // Upstream default mosaic shows main/renderer/html/preload; styles.css and
 // package.json start hidden (their default content is "boring" — see
 // upstream addFile()'s getEmptyContent check).
 const HIDDEN_BY_DEFAULT = new Set<string>([DEFAULT_EDITORS.CSS, DEFAULT_EDITORS.PACKAGE]);
-
-function fromRecord(record: Record<EditorId, string>, source: FiddleSource, title: string): FiddleSnapshot {
-  const files = new Map<EditorId, FiddleFile>();
-  for (const id of Object.values(DEFAULT_EDITORS)) {
-    const content = record[id] ?? '';
-    files.set(id, {
-      id,
-      savedContent: content,
-      currentText: content,
-      language: languageForId(id),
-      isDirty: false,
-      visible: !HIDDEN_BY_DEFAULT.has(id) && content.length > 0,
-    });
-  }
-  return { source, files, activeEditorId: DEFAULT_EDITORS.MAIN, title };
-}
 
 /** Visible editor ids in mosaic order (upstream compareEditors sort happens in Editors). */
 export function visibleEditorIds(snap: FiddleSnapshot): EditorId[] {
@@ -211,19 +143,6 @@ export function fromPersisted(p: PersistedSession): FiddleSnapshot | null {
     activeEditorId: p.activeEditorId ?? files.keys().next().value ?? null,
     title: p.title || 'Untitled Fiddle',
   };
-}
-
-export function helloLynxtronFiddle(): FiddleSnapshot {
-  return fromRecord(HELLO_LYNXTRON, { kind: 'template', ref: 'hello-lynxtron' }, 'Hello Lynxtron');
-}
-
-export function blankFiddle(): FiddleSnapshot {
-  return fromRecord(BLANK_TEMPLATE, { kind: 'blank' }, 'Untitled Fiddle');
-}
-
-/** @deprecated use helloLynxtronFiddle() */
-export function emptyFiddle(): FiddleSnapshot {
-  return helloLynxtronFiddle();
 }
 
 export function isFiddleEdited(snap: FiddleSnapshot): boolean {

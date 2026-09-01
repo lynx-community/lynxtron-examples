@@ -7,6 +7,20 @@ import * as tar from 'tar';
 import { execFileSync } from 'child_process';
 import { pathToFileURL } from 'url';
 import { clearFetchDestination, fetch } from '../src/commands/fetch';
+import {
+  createShowcaseCacheKey,
+  readShowcaseCacheMetadata,
+  writeShowcaseCacheMetadata,
+} from '../src/showcase-cache';
+import { writeShowcaseReleaseManifest } from '../src/showcase-release';
+
+function writePrecompiledDesktop(packageDir: string, marker: string): void {
+  const desktop = path.join(packageDir, 'dist_precompiled', 'desktop');
+  fs.mkdirSync(desktop, { recursive: true });
+  fs.writeFileSync(path.join(desktop, 'main.js'), `// ${marker}\n`, 'utf-8');
+  fs.writeFileSync(path.join(desktop, 'main.lynx.bundle'), `${marker} bundle\n`, 'utf-8');
+  fs.writeFileSync(path.join(desktop, 'package.json'), JSON.stringify({ main: 'main.js' }), 'utf-8');
+}
 
 describe('fetch command', () => {
   const tmpDirs: string[] = [];
@@ -35,6 +49,32 @@ describe('fetch command', () => {
     expect(fs.existsSync(path.join(root, 'showcases'))).toBe(true);
   });
 
+  it('replaces a legacy workspace without retaining a backup', () => {
+    const root = makeTempDir('lynxtron-fetch-replace-');
+    const destDir = path.join(root, 'showcases', 'floating-clock');
+    fs.mkdirSync(destDir, { recursive: true });
+    fs.writeFileSync(path.join(destDir, 'stale.ts'), '// stale\n', 'utf-8');
+
+    clearFetchDestination(destDir);
+
+    expect(fs.existsSync(destDir)).toBe(false);
+    expect(fs.existsSync(path.join(root, 'showcase-backups'))).toBe(false);
+  });
+
+  it('replaces a cache in place when its source URL still matches', () => {
+    const root = makeTempDir('lynxtron-fetch-reuse-');
+    const destDir = path.join(root, 'showcases', 'floating-clock');
+    const sourceUrl = 'https://example.com/releases/v2/floating-clock.tgz';
+    fs.mkdirSync(destDir, { recursive: true });
+    fs.writeFileSync(path.join(destDir, 'stale.txt'), 'stale', 'utf-8');
+    writeShowcaseCacheMetadata(destDir, sourceUrl);
+
+    clearFetchDestination(destDir);
+
+    expect(fs.existsSync(destDir)).toBe(false);
+    expect(fs.existsSync(path.join(root, 'showcase-backups'))).toBe(false);
+  });
+
   it('clears stale target contents before extracting a local tarball', async () => {
     const workspaceRoot = makeTempDir('lynxtron-fetch-ws-');
     const packageRoot = makeTempDir('lynxtron-fetch-pkg-');
@@ -42,13 +82,15 @@ describe('fetch command', () => {
     const tarPath = path.join(packageRoot, 'counter-0.0.1.tgz');
     const destDir = path.join(workspaceRoot, 'showcases', 'counter');
 
-    fs.mkdirSync(path.join(packageDir, 'dist', 'desktop'), { recursive: true });
+    fs.mkdirSync(path.join(packageDir, 'src'), { recursive: true });
     fs.writeFileSync(
       path.join(packageDir, 'package.json'),
       JSON.stringify({ name: 'counter', version: '0.0.1', private: true }, null, 2),
       'utf-8',
     );
-    fs.writeFileSync(path.join(packageDir, 'dist', 'desktop', 'main.js'), '// built output\n', 'utf-8');
+    fs.writeFileSync(path.join(packageDir, 'src', 'index.tsx'), '// source\n', 'utf-8');
+    writePrecompiledDesktop(packageDir, 'built output');
+    writeShowcaseReleaseManifest(packageDir);
     await tar.c({ gzip: true, file: tarPath, cwd: packageRoot }, ['package']);
 
     fs.mkdirSync(destDir, { recursive: true });
@@ -58,7 +100,8 @@ describe('fetch command', () => {
 
     expect(fs.existsSync(path.join(destDir, 'stale.txt'))).toBe(false);
     expect(fs.existsSync(path.join(destDir, 'package.json'))).toBe(true);
-    expect(fs.existsSync(path.join(destDir, 'dist', 'desktop', 'main.js'))).toBe(true);
+    expect(fs.existsSync(path.join(destDir, 'dist'))).toBe(false);
+    expect(fs.existsSync(path.join(destDir, 'dist_precompiled', 'desktop', 'main.js'))).toBe(true);
   });
 
   it('downloads a packed release artifact and runs it without installing', async () => {
@@ -67,7 +110,7 @@ describe('fetch command', () => {
     const packageDir = path.join(packageRoot, 'package');
     const tarPath = path.join(packageRoot, 'floating-clock.tgz');
 
-    fs.mkdirSync(path.join(packageDir, 'dist', 'desktop'), { recursive: true });
+    fs.mkdirSync(path.join(packageDir, 'src'), { recursive: true });
     fs.writeFileSync(
       path.join(packageDir, 'package.json'),
       JSON.stringify({
@@ -77,7 +120,9 @@ describe('fetch command', () => {
       }),
       'utf-8',
     );
-    fs.writeFileSync(path.join(packageDir, 'dist', 'desktop', 'main.js'), '// packed build\n', 'utf-8');
+    fs.writeFileSync(path.join(packageDir, 'src', 'index.tsx'), '// source\n', 'utf-8');
+    writePrecompiledDesktop(packageDir, 'packed build');
+    writeShowcaseReleaseManifest(packageDir);
     await tar.c({ gzip: true, file: tarPath, cwd: packageRoot }, ['package']);
 
     const server = http.createServer((request, response) => {
@@ -99,9 +144,13 @@ describe('fetch command', () => {
       const url = `http://127.0.0.1:${address.port}/lynxtron-examples-floating-clock.tgz`;
       await fetch(url, workspaceRoot);
       const destDir = path.join(workspaceRoot, 'showcases', 'floating-clock');
-      expect(fs.readFileSync(path.join(destDir, 'dist', 'desktop', 'main.js'), 'utf-8'))
+      expect(fs.readFileSync(path.join(destDir, 'dist_precompiled', 'desktop', 'main.js'), 'utf-8'))
         .toBe('// packed build\n');
       expect(fs.existsSync(path.join(destDir, 'node_modules'))).toBe(false);
+      expect(readShowcaseCacheMetadata(destDir)).toEqual({
+        schemaVersion: 1,
+        cacheKey: createShowcaseCacheKey(url),
+      });
     } finally {
       await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
     }

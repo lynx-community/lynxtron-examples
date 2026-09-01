@@ -7,6 +7,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as tar from 'tar';
 import { execSync, type ExecSyncOptions } from 'child_process';
+import { createRequire } from 'module';
+import {
+  writeShowcaseCacheMetadata,
+} from '../showcase-cache.js';
+import {
+  SHOWCASE_LOCAL_BUILD_ROOT,
+  verifyShowcaseRelease,
+} from '../showcase-release.js';
 
 // execSync with stdio:'pipe' hides stderr, so callers only see
 // "Command failed: <cmd>" with no diagnosis. Wrap it to re-throw an Error
@@ -37,6 +45,25 @@ const NON_INTERACTIVE_ENV = { CI: 'true', npm_config_confirm_modules_purge: 'fal
  * npm configuration. No lockfile belongs to a fetched cache directory.
  */
 const NPM_SOURCE_INSTALL_FLAGS = '--include=dev --no-package-lock --registry=https://registry.npmjs.org/';
+
+/**
+ * Lynxtron, like Electron, patches the public `fs` module so `.asar` files can
+ * be traversed as virtual directories. That is useful for reading packaged app
+ * resources, but it makes a recursive cache deletion fail when a fetched
+ * showcase's node_modules contains a real `default_app.asar` file: `rmSync`
+ * traverses the archive and eventually tries to `rmdir` the file itself.
+ *
+ * `original-fs` is provided by the Lynxtron runtime and bypasses that virtual
+ * filesystem. Ordinary Node does not provide it, so the standalone CLI keeps
+ * using the standard implementation.
+ */
+function physicalFilesystem(): typeof fs {
+  try {
+    return createRequire(import.meta.url)('original-fs') as typeof fs;
+  } catch (_) {
+    return fs;
+  }
+}
 
 function execCapture(command: string, options: ExecSyncOptions = {}): void {
   try {
@@ -71,16 +98,26 @@ function installSourceShowcase(destDir: string, npmCacheDir: string): void {
 
 
 export function clearFetchDestination(destDir: string): void {
-  if (fs.existsSync(destDir)) {
-    fs.rmSync(destDir, { recursive: true, force: true });
+  const physicalFs = physicalFilesystem();
+  if (physicalFs.existsSync(destDir)) {
+    physicalFs.rmSync(destDir, { recursive: true, force: true });
   }
-  fs.mkdirSync(path.dirname(destDir), { recursive: true });
+  physicalFs.mkdirSync(path.dirname(destDir), { recursive: true });
 }
 
 export async function fetch(url: string, workspaceRoot: string): Promise<void> {
   const resolved = resolveShowcaseUrl(url);
   const manager = new WorkspaceManager(workspaceRoot);
   await manager.init();
+
+  if (resolved.type === 'local' && !fs.existsSync(resolved.filePath)) {
+    throw new Error(`Local tarball not found: ${resolved.filePath}`);
+  }
+
+  const destination = resolved.type === 'external'
+    ? manager.getExternalPath(resolved.name)
+    : manager.getShowcasePath(resolved.name);
+  clearFetchDestination(destination);
 
   emit({ type: 'fetch-start', name: resolved.name });
 
@@ -94,13 +131,11 @@ export async function fetch(url: string, workspaceRoot: string): Promise<void> {
     } else {
       await fetchExternal(resolved, manager);
     }
+    writeShowcaseCacheMetadata(destination, url);
     emit({
       type: 'fetch-success',
       name: resolved.name,
-      path:
-        resolved.type === 'external'
-          ? manager.getExternalPath(resolved.name)
-          : manager.getShowcasePath(resolved.name),
+      path: destination,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -117,14 +152,9 @@ async function fetchLocalTarball(
 ): Promise<void> {
   const { filePath, name } = resolved;
 
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`Local tarball not found: ${filePath}`);
-  }
-
   log(`Extracting local tarball: ${filePath}`);
 
   const destDir = manager.getShowcasePath(name);
-  clearFetchDestination(destDir);
   fs.mkdirSync(destDir, { recursive: true });
   await extractPackedShowcase(filePath, destDir);
   await preparePackedShowcase(name, destDir, manager);
@@ -146,14 +176,18 @@ async function preparePackedShowcase(
   manager: WorkspaceManager,
 ): Promise<void> {
 
-  // Local tarballs from npm pack contain built dist/ — no install needed.
-  // If the tarball has dist/desktop/main.js, it's ready to run directly.
-  const hasBuiltDist = fs.existsSync(path.join(destDir, 'dist', 'desktop', 'main.js'));
-  if (hasBuiltDist) {
-    log(`Built dist found — skipping install (ready to run)`);
+  // A Release tarball keeps immutable, verified output in dist_precompiled/.
+  // dist/ is reserved for a build performed from the extracted/editable source
+  // and must never be accepted as proof that the downloaded artifact is valid.
+  const release = verifyShowcaseRelease(destDir);
+  if (release.status === 'verified') {
+    log('Verified release source and precompiled artifact — skipping install');
   } else {
-    // Source-only tarball — needs install + build
-    log(`No built dist — running npm install with devDependencies...`);
+    // Old, incomplete, corrupt, or source-modified packages fall back to the
+    // ordinary local source path. Remove any packed dist/ so it cannot be
+    // mistaken for a local build produced from this source snapshot.
+    fs.rmSync(path.join(destDir, SHOWCASE_LOCAL_BUILD_ROOT), { recursive: true, force: true });
+    log(`Precompiled artifact unavailable (${release.reason}) — installing for local build fallback...`);
     try {
       await manager.rewriteWorkspaceRefs(name);
     } catch (_) {}
@@ -170,7 +204,6 @@ async function fetchRemoteTarball(
   const { url, name } = resolved;
   const destDir = manager.getShowcasePath(name);
   const tmpTar = path.join(manager.getRootPath(), `${name}.download.tgz`);
-  clearFetchDestination(destDir);
   fs.mkdirSync(destDir, { recursive: true });
 
   log(`Downloading packed showcase: ${url}`);
@@ -191,7 +224,6 @@ async function fetchRepoShowcase(
 ): Promise<void> {
   const tarballUrl = `https://api.github.com/repos/${resolved.owner}/${resolved.repo}/tarball/${resolved.ref}`;
   const destDir = manager.getShowcasePath(resolved.name);
-  clearFetchDestination(destDir);
 
   log(`Downloading ${resolved.path} from ${resolved.owner}/${resolved.repo}...`);
 
@@ -234,7 +266,6 @@ async function fetchExternal(
   manager: WorkspaceManager
 ): Promise<void> {
   const destDir = manager.getExternalPath(resolved.name);
-  clearFetchDestination(destDir);
 
   log(`Cloning ${resolved.url}...`);
   execCapture(`git clone --depth 1 ${resolved.url} ${destDir}`);

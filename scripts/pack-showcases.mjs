@@ -1,23 +1,29 @@
 #!/usr/bin/env node
 // Build every publishable showcase and pack it into a `.tgz` under a single
-// output directory, ready to be uploaded as GitHub Release assets. A workspace
-// under showcases/ is publishable only when its package.json contains
-// `showcase` metadata; standalone cases such as codex-demo intentionally omit
-// that metadata and must not be built or packed here.
+// output directory, ready to be uploaded as GitHub Release assets. Showcases
+// with `showcase.distribution: "builtin"` are excluded from that public set;
+// `--builtin` selects only those packages for embedding in the installer.
+// Standalone cases such as codex-demo intentionally omit showcase metadata and
+// are never built or packed here.
 //
 // This is the CI-facing counterpart to `scripts/preview.mjs`: preview packs
 // tarballs next to each showcase and serves them via a local registry, whereas
 // this script collects every tarball into one folder so the release workflow
 // can glob-upload them in one step.
 //
-// Usage: node scripts/pack-showcases.mjs [--out <dir>]
+// Usage: node scripts/pack-showcases.mjs [--builtin] [--out <dir>]
+//   --builtin  Pack only installer-bundled showcases; public mode excludes them.
 //   --out  Output directory for the packed tarballs.
 //          Defaults to dist/showcase-artifacts.
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { mkdir, readFile, readdir, rename } from 'node:fs/promises';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { mkdir, readFile, readdir } from 'node:fs/promises';
+import {
+  finalizeShowcaseTarball,
+} from './showcase-release-pack.mjs';
+import { moveFile } from './move-file.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,6 +38,7 @@ function parseOutDir() {
 }
 
 const outDir = parseOutDir();
+const builtinOnly = process.argv.includes('--builtin');
 
 function log(message) {
   console.log(`[pack-showcases] ${message}`);
@@ -96,6 +103,7 @@ async function buildAndPackShowcase(dir) {
   const name = path.basename(dir);
   log(`Building ${name} desktop target...`);
   await run('pnpm', ['run', 'build'], { cwd: dir });
+  assertPortableDesktopOutput(dir);
 
   if (await hasWebTarget(dir)) {
     log(`Building ${name} web target...`);
@@ -104,28 +112,72 @@ async function buildAndPackShowcase(dir) {
 
   log(`Packing ${name} -> ${outDir}`);
   await run('pnpm', ['pack', '--pack-destination', outDir], { cwd: dir });
-  await stripVersionSuffix(dir);
+  const tarballPath = await renamePackedTarball(dir);
+  await finalizeShowcaseTarball(tarballPath, path.join(dir, 'dist'));
+}
+
+function assertPortableDesktopOutput(showcaseDir) {
+  const desktopDir = path.join(showcaseDir, 'dist', 'desktop');
+  if (!fs.existsSync(desktopDir)) return;
+  const pending = [desktopDir];
+  while (pending.length) {
+    const current = pending.pop();
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const absolutePath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        pending.push(absolutePath);
+        continue;
+      }
+      if (!entry.name.endsWith('.js')) continue;
+      const contents = fs.readFileSync(absolutePath, 'utf8');
+      if (contents.includes(rootDir) || contents.includes(pathToFileURL(rootDir).href)) {
+        throw new Error(
+          `${path.relative(rootDir, absolutePath)} contains the build workspace path; `
+          + 'externalize @lynx-js/lynxtron as commonjs lynxtron',
+        );
+      }
+    }
+  }
 }
 
 // `pnpm pack` names the tarball `<scope>-<name>-<version>.tgz` with no way to
-// override it, but release assets should not include the version (installer
-// download URLs stay stable and assets don't collide with the release tag).
-// Rename the just-packed tarball for this showcase to drop the version part.
-async function stripVersionSuffix(showcaseDir) {
+// override it. Public assets drop that version so their Release URLs stay
+// stable; built-in assets use the installer identity so cache keys rotate.
+async function renamePackedTarball(showcaseDir) {
   const pkg = await readJson(path.join(showcaseDir, 'package.json'));
   const scopeless = pkg.name.replace(/^@/, '').replace('/', '-');
   const src = path.join(outDir, `${scopeless}-${pkg.version}.tgz`);
-  const dest = path.join(outDir, `${scopeless}.tgz`);
+  // Built-in artifacts are cache-keyed by their installed filename. Include
+  // the installer tag (or app version for local builds), so upgrading the app
+  // cannot accidentally reuse an older extracted built-in showcase.
+  const appVersion = (await readJson(path.join(rootDir, 'lynxtron-go', 'package.json'))).version;
+  const rawIdentity = (process.env.LYNXTRON_RELEASE_TAG || `lynxtron-go-v${appVersion}`)
+    .replace(/^lynxtron-go-v/, '');
+  // Keep a semver prefix so the CLI can recover the bare package name, even
+  // when workflow_dispatch supplied a custom tag rather than the default one.
+  const installerIdentity = (rawIdentity.startsWith(appVersion)
+    ? rawIdentity
+    : `${appVersion}-${rawIdentity}`)
+    .replace(/[^a-zA-Z0-9.+-]/g, '-');
+  const destName = builtinOnly
+    ? `${scopeless}-${installerIdentity}.tgz`
+    : `${scopeless}.tgz`;
+  const dest = path.join(outDir, destName);
   if (!fs.existsSync(src)) {
-    log(`WARN expected tarball not found: ${src}`);
-    return;
+    throw new Error(`Expected tarball not found: ${src}`);
   }
   if (fs.existsSync(dest)) fs.rmSync(dest);
-  await rename(src, dest);
+  await moveFile(src, dest);
+  return dest;
 }
 
 async function main() {
   await mkdir(outDir, { recursive: true });
+  if (builtinOnly) {
+    for (const file of await readdir(outDir)) {
+      if (file.endsWith('.tgz')) fs.rmSync(path.join(outDir, file));
+    }
+  }
 
   log('=== Build workspace tooling ===');
   await run('pnpm', [
@@ -138,17 +190,32 @@ async function main() {
   ]);
 
   log('=== Pack showcases ===');
+  const excludedBuiltinArtifactPrefixes = [];
   for (const dir of await listPackageDirs(path.join(rootDir, 'showcases'))) {
     const pkg = await readJson(path.join(dir, 'package.json'));
     if (!pkg.showcase) {
       log(`Skipping ${path.basename(dir)} (no "showcase" metadata in package.json)`);
       continue;
     }
+    const isBuiltin = pkg.showcase.distribution === 'builtin';
+    if (isBuiltin) excludedBuiltinArtifactPrefixes.push(pkg.name.replace(/^@/, '').replace('/', '-'));
+    if (builtinOnly !== isBuiltin) {
+      log(`Skipping ${path.basename(dir)} (${isBuiltin ? 'installer built-in' : 'published release'} showcase)`);
+      continue;
+    }
     await buildAndPackShowcase(dir);
   }
 
   const tarballs = (await readdir(outDir)).filter((f) => f.endsWith('.tgz')).sort();
-  log(`Packed ${tarballs.length} showcase tarball(s):`);
+  if (!builtinOnly) {
+    const leakedBuiltin = tarballs.find(file => excludedBuiltinArtifactPrefixes.some(prefix =>
+      file === `${prefix}.tgz` || file.startsWith(`${prefix}-`)
+    ));
+    if (leakedBuiltin) {
+      throw new Error(`Built-in showcase artifact must not be published: ${leakedBuiltin}`);
+    }
+  }
+  log(`Packed ${tarballs.length} ${builtinOnly ? 'built-in' : 'release'} showcase tarball(s):`);
   for (const tgz of tarballs) {
     log(`  - ${tgz}`);
   }
