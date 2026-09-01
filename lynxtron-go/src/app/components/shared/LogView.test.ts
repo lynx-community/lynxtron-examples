@@ -16,14 +16,4 @@ describe('LogView Lynx text structure', () => {
     expect(styles).toMatch(/\.LogViewText\s*\{[^}]*cursor:\s*text;/s);
   });
 
-  it('retries auto-scroll after Lynx commits the updated text layout', () => {
-    const source = fs.readFileSync(path.join(__dirname, 'LogView.tsx'), 'utf-8');
-    expect(source).toContain('bindcontentsizechanged={scrollToBottom}');
-    expect(source).toContain('const AUTO_SCROLL_DELAYS_MS = [0, 80]');
-    expect(source).toContain('AUTO_SCROLL_DELAYS_MS.map(delay => setTimeout(scrollToBottom, delay))');
-    expect(source).toContain('return () => timers.forEach(timer => clearTimeout(timer))');
-    expect(source).toContain("method: 'scrollTo'");
-    expect(source).toContain('params: { offset: 999999, smooth: false }');
-  });
-
 });

@@ -10,6 +10,9 @@ import {
 import { Tag, Spinner } from '../bp';
 import './Outputs.css';
 
+const OUTPUTS_SCROLL_ID = 'fiddle-console-scroll';
+const AUTO_SCROLL_DELAYS_MS = [0, 80];
+
 export interface OutputsProps {
   runningPid: number | null;
   runStartMs: number | null;
@@ -77,6 +80,28 @@ export function Outputs(props: OutputsProps) {
   const uptimeMs = props.runningPid != null && props.runStartMs != null
     ? nowMs - props.runStartMs
     : null;
+
+  const scrollToBottom = useCallback(() => {
+    try {
+      lynx.createSelectorQuery()
+        .select(`#${OUTPUTS_SCROLL_ID}`)
+        .invoke({
+          method: 'scrollTo',
+          params: { offset: 999999, smooth: false },
+          success: () => {},
+          fail: () => {},
+        })
+        .exec();
+    } catch (_) {}
+  }, []);
+
+  useEffect(() => {
+    const timers = AUTO_SCROLL_DELAYS_MS.map(delay => (
+      setTimeout(scrollToBottom, delay)
+    ));
+    return () => timers.forEach(timer => clearTimeout(timer));
+  }, [entries, scrollToBottom]);
+
   return (
     <view className="Outputs">
       <view className="Outputs-Header">
@@ -112,7 +137,12 @@ export function Outputs(props: OutputsProps) {
           </view>
         </view>
       </view>
-      <scroll-view className="Outputs-Body" scroll-orientation="vertical">
+      <scroll-view
+        id={OUTPUTS_SCROLL_ID}
+        className="Outputs-Body"
+        scroll-orientation="vertical"
+        bindcontentsizechanged={scrollToBottom}
+      >
         <text
           className={entries.length === 0 ? 'Outputs-Log Outputs-IdleHint' : 'Outputs-Log'}
           text-selection={true}
