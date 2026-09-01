@@ -1,7 +1,8 @@
 import { useState } from '@lynx-js/react';
 import { BRAND_MARK_ON_DARK_URL, BRAND_MARK_URL, getExposed } from '../../store';
-import { Button, ControlGroup, InputGroup } from '../bp';
+import { Button, ControlGroup, InputGroup, Spinner } from '../bp';
 import { Tooltip } from '../bp/Tooltip';
+import { resolveRunControlState } from './run-control';
 import './Commands.css';
 
 export interface CommandsProps {
@@ -32,11 +33,12 @@ export interface CommandsProps {
   currentVersion: string;
   gistId: string | null;
   isRunning: boolean;
+  isRunLoading: boolean;
   title: string;
 }
 
 // Left cluster is the verbs — settings, version, run, console, gallery, and
-// the palette. Centre is the window title (and the drag region). Right is the
+// the palette. Centre is the flexible window title/drag region. Right is the
 // gist round trip, plus an overflow for the entry points that already live in
 // the app menu with accelerators.
 //
@@ -52,6 +54,7 @@ export function Commands(props: CommandsProps) {
   // belong to the page underneath"). View/app controls stay live. The Run
   // button stays reachable while a fiddle run is active so Stop still works.
   const gallery = !!props.galleryOpen;
+  const runState = resolveRunControlState(props.isRunning, props.isRunLoading);
 
   const isMac = (() => { try { return getExposed()?.platform === 'darwin'; } catch (_) { return false; } })();
 
@@ -62,13 +65,6 @@ export function Commands(props: CommandsProps) {
           gap is a flex item the bar drops when the main process reports the
           window went fullscreen. */}
       {isMac && !props.fullScreen ? <view className="commands-trafficlights" /> : null}
-      {/* Centred on the WINDOW, not between the clusters: absolutely positioned
-          across the whole bar, so the midpoint is geometric and stays correct
-          whatever the clusters do. Capped at 40% so it can never reach them. */}
-      <view event-through={true} className="commands-titlebar">
-        <text className="commands-title" text-maxline="1">{props.title}</text>
-        {props.isEdited ? <view className="commands-dirty" /> : null}
-      </view>
       <view className="commands-left">
         {/* Text and a chevron, nothing else. A mark here competed with the one
             on Run for the same glance, and this control is a value you are
@@ -90,13 +86,15 @@ export function Commands(props: CommandsProps) {
             because the mark cannot mean stop. */}
         <Button
           className="commands-run"
-          iconNode={!props.isRunning && BRAND_MARK_URL
-            ? <image className="commands-run-mark" src={BRAND_MARK_URL} />
-            : undefined}
-          icon={props.isRunning ? 'stop' : undefined}
-          text={props.isRunning ? 'Stop' : 'Run'}
-          intent={props.isRunning ? 'danger' : 'primary'}
-          disabled={gallery && !props.isRunning}
+          iconNode={runState === 'loading'
+            ? <Spinner className="commands-run-spinner" size={13} />
+            : runState === 'idle' && BRAND_MARK_URL
+              ? <image className="commands-run-mark" src={BRAND_MARK_URL} />
+              : undefined}
+          icon={runState === 'running' ? 'stop' : undefined}
+          text={runState === 'running' ? 'Stop' : runState === 'loading' ? 'Loading…' : 'Run'}
+          intent={runState === 'running' ? 'danger' : 'primary'}
+          disabled={runState === 'loading' || (gallery && runState !== 'running')}
           onClick={props.onRun}
         />
         {/* A field, not a button. Search reads as somewhere you type, so it
@@ -141,15 +139,16 @@ export function Commands(props: CommandsProps) {
           </Tooltip>
         </view>
       </view>
-      {/* hiddenInset window: the flexible middle of the header is the drag
-          region (-x-app-region: drag) — controls live outside it, so the
-          undocumented no-drag value is never needed. */}
-      {/* An empty spacer. It pushes the two clusters apart and carries the
-          window-drag region; it no longer holds the title, because a title
-          centred in the LEFTOVER space is centred on nothing — the two clusters
-          are different widths, so it landed wherever they left it and had to be
-          dragged back with a hand-tuned margin. */}
-      <view className="commands-drag" />
+      {/* hiddenInset window: the flexible middle is both the drag region and
+          the title's real collision-free corridor. Using the space the two
+          clusters actually leave avoids fixed symmetric insets wasting room
+          when those clusters have different widths. */}
+      <view className="commands-drag">
+        <view event-through={true} className="commands-titlebar">
+          <text className="commands-title" text-maxline="1">{props.title}</text>
+          {props.isEdited ? <view className="commands-dirty" /> : null}
+        </view>
+      </view>
       <view className="commands-right">
         {/* The field and both verbs that act on it are ONE group. Load lived
             inside the address group and Publish outside it, so two buttons

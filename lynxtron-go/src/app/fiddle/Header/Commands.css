@@ -42,22 +42,13 @@
 }
 
 /* ── Title band ───────────────────────────────────────────────────────────
-   Absolutely positioned across the bar so its centre IS the window's centre.
-   Everything else in this file is a flex item; this one deliberately is not,
-   because a flex item can only ever be centred in whatever space its siblings
-   leave, and the two clusters are not the same width. That is what the old
-   `margin-right: 24px` was compensating for — a correction that had to be
-   re-tuned every time a control moved.
-   Capped at 40%: centred, that spans 30–70% of the bar, and both clusters end
-   well outside it. It sits before the clusters in source order, so if a very
-   narrow window ever did overlap, the controls paint over the title rather
-   than the other way round. */
+   Fill the actual flexible corridor between the two control clusters. Fixed
+   symmetric insets made the corridor only 60px wide at the 800px window
+   minimum even though flex layout left 117px available; the title ellipsised
+   while 79px sat unused beside it. */
 .commands-titlebar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -161,6 +152,10 @@
   background-color: var(--brand-hover);
   background-image: linear-gradient(to bottom, var(--brand), var(--brand-hover));
 }
+.commands-run-spinner .bp3-spinner-ring {
+  border-color: rgba(0, 0, 0, 0.24);
+  border-top-color: var(--brand-ink);
+}
 /* Icons carry the verb, not the emphasis — a step lighter than the label so
    the row reads as text with marks beside it rather than a wall of glyphs. */
 .commands .bp3-button .bp3-icon {
@@ -213,10 +208,8 @@
   /* No margin: the band centres the title and its dot as one pair, and a
      margin here would push the dot away from the name it belongs to — which
      is exactly what it was doing. */
-  max-width: 40%;
+  max-width: 100%;
 }
-/* The traffic-light offset fudge is gone: geometric centring does not need
-   correcting for what sits beside it. */
 /* ONE width, always. Upstream animates the address bar between two widths
    (empty 300px / filled 420px), which means the field grows out from under the
    caret the instant you type the first character — the text you are entering

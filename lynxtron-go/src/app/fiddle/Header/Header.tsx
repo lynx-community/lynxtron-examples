@@ -24,6 +24,7 @@ export interface HeaderProps {
   title: string;
   isEdited: boolean;
   isRunning: boolean;
+  isRunLoading: boolean;
 }
 
 export function Header(props: HeaderProps) {
@@ -50,6 +51,7 @@ export function Header(props: HeaderProps) {
         currentVersion={props.currentVersion}
         gistId={props.gistId}
         isRunning={props.isRunning}
+        isRunLoading={props.isRunLoading}
         title={props.galleryOpen ? 'Gallery' : props.title}
         isEdited={!props.galleryOpen && props.isEdited}
       />
