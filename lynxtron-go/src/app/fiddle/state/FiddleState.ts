@@ -141,7 +141,7 @@ export function fromPersisted(p: PersistedSession): FiddleSnapshot | null {
     source: p.source ?? { kind: 'local' },
     files,
     activeEditorId: p.activeEditorId ?? files.keys().next().value ?? null,
-    title: p.title || 'Untitled Fiddle',
+    title: p.title || 'Untitled Project',
   };
 }
 

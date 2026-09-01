@@ -22,7 +22,7 @@ const STEPS: Step[] = [
     body: 'Click New to pick a starter — Blank, Hello Lynxtron, or one of the showcases from the registry.',
   },
   {
-    title: 'Run your fiddle',
+    title: 'Run your Lynxtron Go project',
     body: 'Press Run to spawn a fresh Lynxtron process against your current files. Console output streams into the top pane.',
   },
   {

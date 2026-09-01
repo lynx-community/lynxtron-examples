@@ -1,4 +1,4 @@
-/** Renderer overlay applied to the complete built-in starter for New Fiddle → Blank. */
+/** Renderer overlay applied to the complete built-in starter for New Project → Blank. */
 export const BLANK_PROJECT_FILES: Record<string, string> = {
   'src/app/App.tsx': `import './App.css';
 

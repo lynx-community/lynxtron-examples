@@ -120,7 +120,7 @@ export function Settings(props: SettingsProps) {
               <FormGroup label="Keyboard accelerators">
                 <Checkbox
                   checked={state.blockAccelerators}
-                  label="Block accelerators from reaching the fiddle process"
+                  label="Block accelerators from reaching the launched Lynxtron app"
                   onChange={(v) => update('blockAccelerators', v)}
                 />
               </FormGroup>
@@ -189,7 +189,7 @@ export function Settings(props: SettingsProps) {
                 />
               </FormGroup>
               <Callout intent="warning" icon="warning-sign" title="Custom flags are not validated">
-                Bad flags may crash the fiddle process on launch. Check the console for spawn errors.
+                Bad flags may crash the launched Lynxtron app. Check the console for spawn errors.
               </Callout>
             </>
           )}
@@ -204,7 +204,7 @@ export function Settings(props: SettingsProps) {
                   Create a GitHub token with the "gist" scope to publish and load private gists.
                 </Callout>
               )}
-              <FormGroup label="Personal access token" helperText="Token is stored locally in fiddle.githubToken.">
+              <FormGroup label="Personal access token" helperText="Token is stored locally on this device.">
                 <InputGroup
                   fill
                   value={state.githubToken}

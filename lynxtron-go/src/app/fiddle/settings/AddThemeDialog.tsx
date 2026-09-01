@@ -23,7 +23,7 @@ export function AddThemeDialog(props: AddThemeDialogProps) {
           onChange={setName}
         />
       </FormGroup>
-      <FormGroup label="Path to theme JSON" helperText="A Fiddle-format theme file with token → color mappings.">
+      <FormGroup label="Path to theme JSON" helperText="A Lynxtron Go theme file with token → color mappings.">
         <InputGroup
           fill
           placeholder="/path/to/theme.json"

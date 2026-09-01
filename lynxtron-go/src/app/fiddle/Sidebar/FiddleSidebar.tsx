@@ -15,7 +15,7 @@ const VALID_EXT = /\.(cjs|js|mjs|html|css|json|jsx|ts|tsx)$/;
 
 
 export function validateNewFileName(name: string, existing: string[]): string | null {
-  if (!isSafeRelativePath(name)) return 'Path must stay inside the fiddle';
+  if (!isSafeRelativePath(name)) return 'Path must stay inside the project';
   if (!VALID_EXT.test(name)) return 'Unsupported file extension';
   if (name === 'package.json') return 'package.json is reserved';
   if (existing.includes(name)) return 'File already exists';
