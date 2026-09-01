@@ -153,8 +153,8 @@ verification, so nobody later "fixes" it back.
   - `release-installers.yml` — **manual only** (`workflow_dispatch`); builds mac dmg + win exe
     + showcase `.tgz` and attaches them to a Release (created on demand if the tag does
     not exist yet). Tag defaults to `lynxtron-go-v<version>` on `main` (tracks Changesets
-    patch bumps in `lynxtron-go/package.json`) and `lynxtron-go-v<version>-<sha6>` on any
-    other branch (per-commit pre-release, does not clobber the stable Release).
+    patch bumps in `lynxtron-go/package.json`) and `lynxtron-go-v<version>-dev.<sha6>` on
+    any other branch (per-commit GitHub Pre-release, does not clobber the stable Release).
     Runs independently of `release.yml` so installer/asset failures don't block npm publish
     and vice-versa.
 - Showcases and `lynxtron-go` are `private` but still versioned/changelogged
