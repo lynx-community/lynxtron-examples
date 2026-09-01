@@ -1,6 +1,6 @@
 {
   "name": "@lynxtron-examples/native-texture-canvas",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "main.js",
   "private": true,
   "repository": {
