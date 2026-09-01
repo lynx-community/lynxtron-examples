@@ -64,16 +64,16 @@ importers:
         version: 2.31.0(@types/node@22.20.0)
       app-builder-lib:
         specifier: 26.13.0
-        version: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)
+        version: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
       dmg-builder:
         specifier: 26.13.0
-        version: 26.13.0(electron-builder-squirrel-windows@26.13.0)
+        version: 26.13.0(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
       electron-builder-squirrel-windows:
         specifier: 26.13.0
-        version: 26.13.0(dmg-builder@26.13.0)
+        version: 26.13.0(dmg-builder@26.13.0)(supports-color@8.1.1)
       verdaccio:
         specifier: 6.3.2
-        version: 6.3.2(encoding@0.1.13)(typanion@3.14.0)
+        version: 6.3.2(encoding@0.1.13)(supports-color@8.1.1)(typanion@3.14.0)
 
   lynxtron-go:
     dependencies:
@@ -82,7 +82,7 @@ importers:
         version: 4.0.1
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
       '@lynxtron-examples/cli':
         specifier: workspace:*
         version: link:../packages/cli
@@ -128,13 +128,13 @@ importers:
     devDependencies:
       '@lynx-js/config-rsbuild-plugin':
         specifier: 'catalog:'
-        version: 0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2))
+        version: 0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3)))
       '@lynx-js/lynx-core':
         specifier: latest
         version: 0.1.4
       '@lynx-js/lynxtron-builder':
         specifier: 'catalog:'
-        version: 0.0.17-dev(electron-builder-squirrel-windows@26.13.0)
+        version: 0.0.17-dev(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
         version: 0.0.17-dev(@rsbuild/core@2.1.7(core-js@3.47.0))
@@ -146,7 +146,7 @@ importers:
         version: 0.18.1(@lynx-js/lynx-core@0.1.4)(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(tslib@2.8.1)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/type-config':
         specifier: 'catalog:'
         version: 4.1.3
@@ -176,7 +176,7 @@ importers:
         version: 1.26.6
       app-builder-lib:
         specifier: 26.13.0
-        version: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)
+        version: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
       compressing:
         specifier: ^1.10.0
         version: 1.10.5
@@ -188,19 +188,19 @@ importers:
         version: 10.1.0
       dmg-builder:
         specifier: 26.13.0
-        version: 26.13.0(electron-builder-squirrel-windows@26.13.0)
+        version: 26.13.0(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
       electron-builder-squirrel-windows:
         specifier: 26.13.0
-        version: 26.13.0(dmg-builder@26.13.0)
+        version: 26.13.0(dmg-builder@26.13.0)(supports-color@8.1.1)
       jsdom:
         specifier: ^26.1.0
-        version: 26.1.0
+        version: 26.1.0(supports-color@8.1.1)
       patch-package:
         specifier: ^6.4.7
         version: 6.5.1
       vitest:
         specifier: ^3.2.4
-        version: 3.2.6(@types/debug@4.1.13)(@types/node@22.20.0)(jiti@2.7.0)(jsdom@26.1.0)(terser@5.48.0)
+        version: 3.2.6(@types/debug@4.1.13)(@types/node@22.20.0)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(supports-color@8.1.1)(terser@5.48.0)
 
   lynxtron-go/scintilla-extension:
     dependencies:
@@ -210,10 +210,10 @@ importers:
     devDependencies:
       '@lynx-js/lynx-library-headers':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
       cmake-js:
         specifier: ^7.3.0
-        version: 7.4.0
+        version: 7.4.0(supports-color@8.1.1)
 
   packages/cli:
     dependencies:
@@ -229,19 +229,19 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.2.4
-        version: 3.2.6(@types/debug@4.1.13)(@types/node@22.20.0)(jiti@2.7.0)(jsdom@26.1.0)(terser@5.48.0)
+        version: 3.2.6(@types/debug@4.1.13)(@types/node@22.20.0)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(supports-color@8.1.1)(terser@5.48.0)
 
   packages/config:
     dependencies:
       '@lynx-js/config-rsbuild-plugin':
         specifier: 'catalog:'
-        version: 0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15)))
+        version: 0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3)))
       '@lynx-js/react-rsbuild-plugin':
         specifier: 'catalog:'
         version: 0.18.1(@lynx-js/lynx-core@0.1.4)(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(tslib@2.8.1)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15))
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/type-config':
         specifier: 'catalog:'
         version: 4.1.3
@@ -254,7 +254,7 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
@@ -264,7 +264,7 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -291,7 +291,7 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
       markdown-it:
         specifier: 14.3.0
         version: 14.3.0
@@ -310,7 +310,7 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -340,13 +340,13 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^3.2.4
-        version: 3.2.6(@types/debug@4.1.13)(@types/node@22.20.0)(jiti@2.7.0)(jsdom@26.1.0)(terser@5.48.0)
+        version: 3.2.6(@types/debug@4.1.13)(@types/node@22.20.0)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(supports-color@8.1.1)(terser@5.48.0)
 
   showcases/counter:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
@@ -356,7 +356,7 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -383,7 +383,7 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
@@ -393,7 +393,7 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -423,7 +423,7 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
@@ -436,7 +436,7 @@ importers:
         version: 0.18.1(@lynx-js/lynx-core@0.1.4)(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(tslib@2.8.1)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -466,7 +466,7 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
@@ -476,7 +476,7 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -503,7 +503,7 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
@@ -513,7 +513,7 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -540,17 +540,17 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.15
+        version: 0.0.17-dev(supports-color@8.1.1)
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.15(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.17-dev(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -577,11 +577,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
     devDependencies:
       '@lynx-js/lynx-library-headers':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
         version: 0.0.17-dev(@rsbuild/core@2.1.7(core-js@3.47.0))
@@ -590,7 +590,7 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -605,7 +605,7 @@ importers:
         version: 2.1.7(@swc/helpers@0.5.23)
       cmake-js:
         specifier: ^7.3.0
-        version: 7.4.0
+        version: 7.4.0(supports-color@8.1.1)
       concurrently:
         specifier: 'catalog:'
         version: 8.2.2
@@ -623,7 +623,7 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
@@ -633,7 +633,7 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -660,7 +660,7 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
@@ -670,7 +670,7 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -697,7 +697,7 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.17-dev
+        version: 0.0.17-dev(supports-color@8.1.1)
       sqlite3:
         specifier: ^6.0.1
         version: 6.0.1
@@ -713,7 +713,7 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -737,7 +737,7 @@ importers:
         version: 10.1.0
       node-gyp:
         specifier: ^11.1.0
-        version: 11.5.0
+        version: 11.5.0(supports-color@8.1.1)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -6136,32 +6136,32 @@ snapshots:
       fs-extra: 9.1.0
       minimist: 1.2.8
 
-  '@electron/get@3.1.0':
+  '@electron/get@3.1.0(supports-color@8.1.1)':
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       env-paths: 2.2.1
       fs-extra: 8.1.0
       got: 11.8.6
       progress: 2.0.3
       semver: 6.3.1
-      sumchecker: 3.0.1
+      sumchecker: 3.0.1(supports-color@8.1.1)
     optionalDependencies:
       global-agent: 3.0.0
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/notarize@2.5.0':
+  '@electron/notarize@2.5.0(supports-color@8.1.1)':
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       fs-extra: 9.1.0
       promise-retry: 2.0.1
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/osx-sign@1.3.3':
+  '@electron/osx-sign@1.3.3(supports-color@8.1.1)':
     dependencies:
       compare-version: 0.1.2
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       fs-extra: 10.1.0
       isbinaryfile: 4.0.10
       minimist: 1.2.8
@@ -6169,29 +6169,29 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/rebuild@4.0.3':
+  '@electron/rebuild@4.0.3(supports-color@8.1.1)':
     dependencies:
       '@malept/cross-spawn-promise': 2.0.0
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       detect-libc: 2.1.2
       got: 11.8.6
       graceful-fs: 4.2.11
       node-abi: 4.31.0
       node-api-version: 0.2.1
-      node-gyp: 11.5.0
+      node-gyp: 11.5.0(supports-color@8.1.1)
       ora: 5.4.1
-      read-binary-file-arch: 1.0.6
+      read-binary-file-arch: 1.0.6(supports-color@8.1.1)
       semver: 7.8.5
       tar: 7.5.16
       yargs: 17.7.3
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/universal@1.5.1':
+  '@electron/universal@1.5.1(supports-color@8.1.1)':
     dependencies:
       '@electron/asar': 3.4.1
       '@malept/cross-spawn-promise': 1.1.1
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       dir-compare: 3.3.0
       fs-extra: 9.1.0
       minimatch: 3.1.5
@@ -6199,11 +6199,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/universal@2.0.3':
+  '@electron/universal@2.0.3(supports-color@8.1.1)':
     dependencies:
       '@electron/asar': 3.4.1
       '@malept/cross-spawn-promise': 2.0.0
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       dir-compare: 4.2.0
       fs-extra: 11.3.5
       minimatch: 9.0.9
@@ -6211,10 +6211,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron/windows-sign@1.2.2':
+  '@electron/windows-sign@1.2.2(supports-color@8.1.1)':
     dependencies:
       cross-dirname: 0.1.0
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       fs-extra: 11.3.5
       minimist: 1.2.8
       postject: 1.0.0-alpha.6
@@ -6512,17 +6512,12 @@ snapshots:
     dependencies:
       '@lynx-js/webpack-runtime-globals': 0.0.7
 
-  '@lynx-js/config-rsbuild-plugin@0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15)))':
+  '@lynx-js/config-rsbuild-plugin@0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3)))':
     dependencies:
-      '@lynx-js/rspeedy': 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15))
+      '@lynx-js/rspeedy': 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@lynx-js/type-config': 4.1.1
 
-  '@lynx-js/config-rsbuild-plugin@0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2))':
-    dependencies:
-      '@lynx-js/rspeedy': 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
-      '@lynx-js/type-config': 4.1.1
-
-  '@lynx-js/css-extract-webpack-plugin@0.10.0(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))':
+  '@lynx-js/css-extract-webpack-plugin@0.10.0(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))':
     dependencies:
       '@lynx-js/template-webpack-plugin': 0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)
 
@@ -6540,18 +6535,18 @@ snapshots:
 
   '@lynx-js/lynx-core@0.1.4': {}
 
-  '@lynx-js/lynx-library-headers@0.0.17-dev':
+  '@lynx-js/lynx-library-headers@0.0.17-dev(supports-color@8.1.1)':
     dependencies:
-      '@lynx-js/lynxtron': 0.0.17-dev
+      '@lynx-js/lynxtron': 0.0.17-dev(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
-  '@lynx-js/lynxtron-builder@0.0.17-dev(electron-builder-squirrel-windows@26.13.0)':
+  '@lynx-js/lynxtron-builder@0.0.17-dev(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)':
     dependencies:
-      '@electron/universal': 1.5.1
-      app-builder-lib: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)
-      dmg-builder: 26.13.0(electron-builder-squirrel-windows@26.13.0)
-      electron-builder: 26.13.0(electron-builder-squirrel-windows@26.13.0)
+      '@electron/universal': 1.5.1(supports-color@8.1.1)
+      app-builder-lib: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
+      dmg-builder: 26.13.0(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
+      electron-builder: 26.13.0(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
       js-yaml: 4.2.0
       patch-package: 6.5.1
     transitivePeerDependencies:
@@ -6569,25 +6564,25 @@ snapshots:
       node-fetch: 3.3.2
       node-gyp: 12.4.0
 
-  '@lynx-js/lynxtron@0.0.17-dev':
+  '@lynx-js/lynxtron@0.0.17-dev(supports-color@8.1.1)':
     dependencies:
-      extract-zip: 2.0.1
+      extract-zip: 2.0.1(supports-color@8.1.1)
       node-fetch: 3.3.2
     transitivePeerDependencies:
       - supports-color
 
   '@lynx-js/react-alias-rsbuild-plugin@0.18.1': {}
 
-  '@lynx-js/react-refresh-webpack-plugin@0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)))':
+  '@lynx-js/react-refresh-webpack-plugin@0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1)))':
     dependencies:
-      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))
+      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))
 
   '@lynx-js/react-rsbuild-plugin@0.18.1(@lynx-js/lynx-core@0.1.4)(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(tslib@2.8.1)':
     dependencies:
-      '@lynx-js/css-extract-webpack-plugin': 0.10.0(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))
+      '@lynx-js/css-extract-webpack-plugin': 0.10.0(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))
       '@lynx-js/react-alias-rsbuild-plugin': 0.18.1
-      '@lynx-js/react-refresh-webpack-plugin': 0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)))
-      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))
+      '@lynx-js/react-refresh-webpack-plugin': 0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1)))
+      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))
       '@lynx-js/runtime-wrapper-webpack-plugin': 0.2.3
       '@lynx-js/template-webpack-plugin': 0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)
       '@lynx-js/use-sync-external-store': 1.5.0(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))
@@ -6599,7 +6594,7 @@ snapshots:
       - '@lynx-js/lynx-core'
       - tslib
 
-  '@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))':
+  '@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))':
     dependencies:
       '@lynx-js/debug-metadata': 0.1.0
       '@lynx-js/template-webpack-plugin': 0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)
@@ -6615,7 +6610,7 @@ snapshots:
     optionalDependencies:
       '@lynx-js/types': 4.1.0
 
-  '@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15))':
+  '@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(csso@5.0.5)(esbuild@0.27.7)(supports-color@8.1.1)(typescript@5.9.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))':
     dependencies:
       '@lynx-js/cache-events-webpack-plugin': 0.2.0
       '@lynx-js/chunk-loading-webpack-plugin': 0.4.1
@@ -6624,38 +6619,8 @@ snapshots:
       '@lynx-js/webpack-dev-transport': 0.3.0
       '@lynx-js/websocket': 0.0.4
       '@rsbuild/core': 2.1.7(core-js@3.47.0)
-      '@rsbuild/plugin-css-minimizer': 2.0.1(@rsbuild/core@2.1.7(core-js@3.47.0))(webpack@5.107.2(postcss@8.5.15))
-      '@rsdoctor/rspack-plugin': 1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-    optionalDependencies:
-      typescript: 5.9.3
-    transitivePeerDependencies:
-      - '@emnapi/core'
-      - '@emnapi/runtime'
-      - '@module-federation/runtime-tools'
-      - '@parcel/css'
-      - '@rspack/core'
-      - '@swc/css'
-      - bufferutil
-      - clean-css
-      - core-js
-      - csso
-      - esbuild
-      - lightningcss
-      - supports-color
-      - utf-8-validate
-      - webpack
-
-  '@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)':
-    dependencies:
-      '@lynx-js/cache-events-webpack-plugin': 0.2.0
-      '@lynx-js/chunk-loading-webpack-plugin': 0.4.1
-      '@lynx-js/debug-metadata-rsbuild-plugin': 0.2.1
-      '@lynx-js/web-rsbuild-server-middleware': 0.23.0
-      '@lynx-js/webpack-dev-transport': 0.3.0
-      '@lynx-js/websocket': 0.0.4
-      '@rsbuild/core': 2.1.7(core-js@3.47.0)
-      '@rsbuild/plugin-css-minimizer': 2.0.1(@rsbuild/core@2.1.7(core-js@3.47.0))(webpack@5.107.2)
-      '@rsdoctor/rspack-plugin': 1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
+      '@rsbuild/plugin-css-minimizer': 2.0.1(@rsbuild/core@2.1.7(core-js@3.47.0))(csso@5.0.5)(esbuild@0.27.7)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
+      '@rsdoctor/rspack-plugin': 1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(supports-color@8.1.1)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
     optionalDependencies:
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -6762,9 +6727,9 @@ snapshots:
     dependencies:
       cross-spawn: 7.0.6
 
-  '@malept/flatpak-bundler@0.4.0':
+  '@malept/flatpak-bundler@0.4.0(supports-color@8.1.1)':
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       fs-extra: 9.1.0
       lodash: 4.18.1
       tmp-promise: 3.0.3
@@ -6808,13 +6773,13 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
-  '@npmcli/agent@3.0.0':
+  '@npmcli/agent@3.0.0(supports-color@8.1.1)':
     dependencies:
       agent-base: 7.1.4
-      http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
+      http-proxy-agent: 7.0.2(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6(supports-color@8.1.1)
       lru-cache: 10.4.3
-      socks-proxy-agent: 8.0.5
+      socks-proxy-agent: 8.0.5(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -6943,24 +6908,9 @@ snapshots:
     optionalDependencies:
       '@rsbuild/core': 2.1.7(core-js@3.47.0)
 
-  '@rsbuild/plugin-css-minimizer@2.0.1(@rsbuild/core@2.1.7(core-js@3.47.0))(webpack@5.107.2(postcss@8.5.15))':
+  '@rsbuild/plugin-css-minimizer@2.0.1(@rsbuild/core@2.1.7(core-js@3.47.0))(csso@5.0.5)(esbuild@0.27.7)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))':
     dependencies:
-      css-minimizer-webpack-plugin: 8.0.0(webpack@5.107.2(postcss@8.5.15))
-      reduce-configs: 1.1.2
-    optionalDependencies:
-      '@rsbuild/core': 2.1.7(core-js@3.47.0)
-    transitivePeerDependencies:
-      - '@parcel/css'
-      - '@swc/css'
-      - clean-css
-      - csso
-      - esbuild
-      - lightningcss
-      - webpack
-
-  '@rsbuild/plugin-css-minimizer@2.0.1(@rsbuild/core@2.1.7(core-js@3.47.0))(webpack@5.107.2)':
-    dependencies:
-      css-minimizer-webpack-plugin: 8.0.0(webpack@5.107.2)
+      css-minimizer-webpack-plugin: 8.0.0(csso@5.0.5)(esbuild@0.27.7)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       reduce-configs: 1.1.2
     optionalDependencies:
       '@rsbuild/core': 2.1.7(core-js@3.47.0)
@@ -6988,13 +6938,13 @@ snapshots:
 
   '@rsdoctor/client@1.6.1': {}
 
-  '@rsdoctor/core@1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))':
+  '@rsdoctor/core@1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(supports-color@8.1.1)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))':
     dependencies:
       '@rsbuild/plugin-check-syntax': 1.6.1(@rsbuild/core@2.1.7(core-js@3.47.0))
-      '@rsdoctor/graph': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-      '@rsdoctor/sdk': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
+      '@rsdoctor/graph': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
+      '@rsdoctor/sdk': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(supports-color@8.1.1)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
+      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
+      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@rspack/resolver': 0.2.8(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)
       browserslist-load-config: 1.0.3
       es-toolkit: 1.50.0
@@ -7012,34 +6962,10 @@ snapshots:
       - utf-8-validate
       - webpack
 
-  '@rsdoctor/core@1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)':
+  '@rsdoctor/graph@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))':
     dependencies:
-      '@rsbuild/plugin-check-syntax': 1.6.1(@rsbuild/core@2.1.7(core-js@3.47.0))
-      '@rsdoctor/graph': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      '@rsdoctor/sdk': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      '@rspack/resolver': 0.2.8(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)
-      browserslist-load-config: 1.0.3
-      es-toolkit: 1.50.0
-      filesize: 11.0.17
-      fs-extra: 11.3.5
-      semver: 7.8.5
-      source-map: 0.7.6
-    transitivePeerDependencies:
-      - '@emnapi/core'
-      - '@emnapi/runtime'
-      - '@rsbuild/core'
-      - '@rspack/core'
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-      - webpack
-
-  '@rsdoctor/graph@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))':
-    dependencies:
-      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
+      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
+      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       es-toolkit: 1.50.0
       path-browserify: 1.0.1
       source-map: 0.7.6
@@ -7047,24 +6973,13 @@ snapshots:
       - '@rspack/core'
       - webpack
 
-  '@rsdoctor/graph@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)':
+  '@rsdoctor/rspack-plugin@1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(supports-color@8.1.1)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))':
     dependencies:
-      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      es-toolkit: 1.50.0
-      path-browserify: 1.0.1
-      source-map: 0.7.6
-    transitivePeerDependencies:
-      - '@rspack/core'
-      - webpack
-
-  '@rsdoctor/rspack-plugin@1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))':
-    dependencies:
-      '@rsdoctor/core': 1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-      '@rsdoctor/graph': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-      '@rsdoctor/sdk': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
+      '@rsdoctor/core': 1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(supports-color@8.1.1)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
+      '@rsdoctor/graph': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
+      '@rsdoctor/sdk': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(supports-color@8.1.1)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
+      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
+      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
     optionalDependencies:
       '@rspack/core': 2.1.7(@swc/helpers@0.5.23)
     transitivePeerDependencies:
@@ -7076,33 +6991,15 @@ snapshots:
       - utf-8-validate
       - webpack
 
-  '@rsdoctor/rspack-plugin@1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)':
-    dependencies:
-      '@rsdoctor/core': 1.6.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rsbuild/core@2.1.7(core-js@3.47.0))(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      '@rsdoctor/graph': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      '@rsdoctor/sdk': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-    optionalDependencies:
-      '@rspack/core': 2.1.7(@swc/helpers@0.5.23)
-    transitivePeerDependencies:
-      - '@emnapi/core'
-      - '@emnapi/runtime'
-      - '@rsbuild/core'
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-      - webpack
-
-  '@rsdoctor/sdk@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))':
+  '@rsdoctor/sdk@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(supports-color@8.1.1)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))':
     dependencies:
       '@rsdoctor/client': 1.6.1
-      '@rsdoctor/graph': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
+      '@rsdoctor/graph': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
+      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
+      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       launch-editor: 2.14.1
       safer-buffer: 2.1.2
-      socket.io: 4.8.1
+      socket.io: 4.8.1(supports-color@8.1.1)
       tapable: 2.3.3
     transitivePeerDependencies:
       - '@rspack/core'
@@ -7111,24 +7008,7 @@ snapshots:
       - utf-8-validate
       - webpack
 
-  '@rsdoctor/sdk@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)':
-    dependencies:
-      '@rsdoctor/client': 1.6.1
-      '@rsdoctor/graph': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      '@rsdoctor/utils': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
-      launch-editor: 2.14.1
-      safer-buffer: 2.1.2
-      socket.io: 4.8.1
-      tapable: 2.3.3
-    transitivePeerDependencies:
-      - '@rspack/core'
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-      - webpack
-
-  '@rsdoctor/types@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))':
+  '@rsdoctor/types@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))':
     dependencies:
       '@types/connect': 3.4.38
       '@types/estree': 1.0.5
@@ -7136,43 +7016,12 @@ snapshots:
       source-map: 0.7.6
     optionalDependencies:
       '@rspack/core': 2.1.7(@swc/helpers@0.5.23)
-      webpack: 5.107.2(postcss@8.5.15)
+      webpack: 5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3)
 
-  '@rsdoctor/types@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)':
-    dependencies:
-      '@types/connect': 3.4.38
-      '@types/estree': 1.0.5
-      '@types/tapable': 2.3.0
-      source-map: 0.7.6
-    optionalDependencies:
-      '@rspack/core': 2.1.7(@swc/helpers@0.5.23)
-      webpack: 5.107.2
-
-  '@rsdoctor/utils@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))':
+  '@rsdoctor/utils@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))':
     dependencies:
       '@babel/code-frame': 7.26.2
-      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(postcss@8.5.15))
-      '@types/estree': 1.0.5
-      acorn: 8.17.0
-      acorn-import-attributes: 1.9.5(acorn@8.17.0)
-      acorn-walk: 8.3.5
-      deep-eql: 4.1.4
-      envinfo: 7.21.0
-      fs-extra: 11.3.5
-      get-port: 5.1.1
-      json-stream-stringify: 3.0.1
-      lines-and-columns: 2.0.4
-      picocolors: 1.1.1
-      rslog: 2.1.3
-      strip-ansi: 7.2.0
-    transitivePeerDependencies:
-      - '@rspack/core'
-      - webpack
-
-  '@rsdoctor/utils@1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)':
-    dependencies:
-      '@babel/code-frame': 7.26.2
-      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2)
+      '@rsdoctor/types': 1.6.1(@rspack/core@2.1.7(@swc/helpers@0.5.23))(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       '@types/estree': 1.0.5
       acorn: 8.17.0
       acorn-import-attributes: 1.9.5(acorn@8.17.0)
@@ -7450,22 +7299,22 @@ snapshots:
 
   '@ungap/structured-clone@1.3.3': {}
 
-  '@verdaccio/auth@8.0.0-next-8.33':
+  '@verdaccio/auth@8.0.0-next-8.33(supports-color@8.1.1)':
     dependencies:
-      '@verdaccio/config': 8.0.0-next-8.33
+      '@verdaccio/config': 8.0.0-next-8.33(supports-color@8.1.1)
       '@verdaccio/core': 8.0.0-next-8.33
-      '@verdaccio/loaders': 8.0.0-next-8.23
-      '@verdaccio/signature': 8.0.0-next-8.25
-      debug: 4.4.3
+      '@verdaccio/loaders': 8.0.0-next-8.23(supports-color@8.1.1)
+      '@verdaccio/signature': 8.0.0-next-8.25(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@8.1.1)
       lodash: 4.17.23
-      verdaccio-htpasswd: 13.0.0-next-8.33
+      verdaccio-htpasswd: 13.0.0-next-8.33(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
-  '@verdaccio/config@8.0.0-next-8.33':
+  '@verdaccio/config@8.0.0-next-8.33(supports-color@8.1.1)':
     dependencies:
       '@verdaccio/core': 8.0.0-next-8.33
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       js-yaml: 4.1.1
       lodash: 4.17.23
     transitivePeerDependencies:
@@ -7497,43 +7346,43 @@ snapshots:
     dependencies:
       lockfile: 1.0.4
 
-  '@verdaccio/hooks@8.0.0-next-8.33':
+  '@verdaccio/hooks@8.0.0-next-8.33(supports-color@8.1.1)':
     dependencies:
       '@verdaccio/core': 8.0.0-next-8.33
-      '@verdaccio/logger': 8.0.0-next-8.33
-      debug: 4.4.3
+      '@verdaccio/logger': 8.0.0-next-8.33(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@8.1.1)
       got-cjs: 12.5.4
       handlebars: 4.7.8
     transitivePeerDependencies:
       - supports-color
 
-  '@verdaccio/loaders@8.0.0-next-8.23':
+  '@verdaccio/loaders@8.0.0-next-8.23(supports-color@8.1.1)':
     dependencies:
       '@verdaccio/core': 8.0.0-next-8.33
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       lodash: 4.17.23
     transitivePeerDependencies:
       - supports-color
 
-  '@verdaccio/local-storage-legacy@11.1.1':
+  '@verdaccio/local-storage-legacy@11.1.1(supports-color@8.1.1)':
     dependencies:
       '@verdaccio/core': 8.0.0-next-8.21
       '@verdaccio/file-locking': 10.3.1
       '@verdaccio/streams': 10.2.1
       async: 3.2.6
-      debug: 4.4.1
+      debug: 4.4.1(supports-color@8.1.1)
       lodash: 4.17.21
       lowdb: 1.0.0
       mkdirp: 1.0.4
     transitivePeerDependencies:
       - supports-color
 
-  '@verdaccio/logger-commons@8.0.0-next-8.33':
+  '@verdaccio/logger-commons@8.0.0-next-8.33(supports-color@8.1.1)':
     dependencies:
       '@verdaccio/core': 8.0.0-next-8.33
       '@verdaccio/logger-prettify': 8.0.0-next-8.4
       colorette: 2.0.20
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -7546,20 +7395,20 @@ snapshots:
       pino-abstract-transport: 1.2.0
       sonic-boom: 3.8.1
 
-  '@verdaccio/logger@8.0.0-next-8.33':
+  '@verdaccio/logger@8.0.0-next-8.33(supports-color@8.1.1)':
     dependencies:
-      '@verdaccio/logger-commons': 8.0.0-next-8.33
+      '@verdaccio/logger-commons': 8.0.0-next-8.33(supports-color@8.1.1)
       pino: 9.14.0
     transitivePeerDependencies:
       - supports-color
 
-  '@verdaccio/middleware@8.0.0-next-8.33':
+  '@verdaccio/middleware@8.0.0-next-8.33(supports-color@8.1.1)':
     dependencies:
-      '@verdaccio/config': 8.0.0-next-8.33
+      '@verdaccio/config': 8.0.0-next-8.33(supports-color@8.1.1)
       '@verdaccio/core': 8.0.0-next-8.33
-      '@verdaccio/url': 13.0.0-next-8.33
-      debug: 4.4.3
-      express: 4.22.1
+      '@verdaccio/url': 13.0.0-next-8.33(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@8.1.1)
+      express: 4.22.1(supports-color@8.1.1)
       express-rate-limit: 5.5.1
       lodash: 4.17.23
       lru-cache: 7.18.3
@@ -7568,22 +7417,22 @@ snapshots:
 
   '@verdaccio/search-indexer@8.0.0-next-8.5': {}
 
-  '@verdaccio/signature@8.0.0-next-8.25':
+  '@verdaccio/signature@8.0.0-next-8.25(supports-color@8.1.1)':
     dependencies:
-      '@verdaccio/config': 8.0.0-next-8.33
+      '@verdaccio/config': 8.0.0-next-8.33(supports-color@8.1.1)
       '@verdaccio/core': 8.0.0-next-8.33
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       jsonwebtoken: 9.0.3
     transitivePeerDependencies:
       - supports-color
 
   '@verdaccio/streams@10.2.1': {}
 
-  '@verdaccio/tarball@13.0.0-next-8.33':
+  '@verdaccio/tarball@13.0.0-next-8.33(supports-color@8.1.1)':
     dependencies:
       '@verdaccio/core': 8.0.0-next-8.33
-      '@verdaccio/url': 13.0.0-next-8.33
-      debug: 4.4.3
+      '@verdaccio/url': 13.0.0-next-8.33(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@8.1.1)
       gunzip-maybe: 1.4.2
       tar-stream: 3.1.7
     transitivePeerDependencies:
@@ -7593,10 +7442,10 @@ snapshots:
 
   '@verdaccio/ui-theme@8.0.0-next-8.30': {}
 
-  '@verdaccio/url@13.0.0-next-8.33':
+  '@verdaccio/url@13.0.0-next-8.33(supports-color@8.1.1)':
     dependencies:
       '@verdaccio/core': 8.0.0-next-8.33
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       validator: 13.15.26
     transitivePeerDependencies:
       - supports-color
@@ -7769,9 +7618,9 @@ snapshots:
 
   acorn@8.17.0: {}
 
-  agent-base@6.0.2:
+  agent-base@6.0.2(supports-color@8.1.1):
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -7839,32 +7688,32 @@ snapshots:
 
   app-builder-bin@5.0.0-alpha.12: {}
 
-  app-builder-lib@26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0):
+  app-builder-lib@26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1):
     dependencies:
       '@develar/schema-utils': 2.6.5
       '@electron/asar': 3.4.1
       '@electron/fuses': 1.8.0
-      '@electron/get': 3.1.0
-      '@electron/notarize': 2.5.0
-      '@electron/osx-sign': 1.3.3
-      '@electron/rebuild': 4.0.3
-      '@electron/universal': 2.0.3
-      '@malept/flatpak-bundler': 0.4.0
+      '@electron/get': 3.1.0(supports-color@8.1.1)
+      '@electron/notarize': 2.5.0(supports-color@8.1.1)
+      '@electron/osx-sign': 1.3.3(supports-color@8.1.1)
+      '@electron/rebuild': 4.0.3(supports-color@8.1.1)
+      '@electron/universal': 2.0.3(supports-color@8.1.1)
+      '@malept/flatpak-bundler': 0.4.0(supports-color@8.1.1)
       '@peculiar/webcrypto': 1.7.1
       '@types/fs-extra': 9.0.13
       asn1js: 3.0.10
       async-exit-hook: 2.0.1
-      builder-util: 26.13.0
-      builder-util-runtime: 9.6.3
+      builder-util: 26.13.0(supports-color@8.1.1)
+      builder-util-runtime: 9.6.3(supports-color@8.1.1)
       chromium-pickle-js: 0.2.0
       ci-info: 4.3.1
-      debug: 4.4.3
-      dmg-builder: 26.13.0(electron-builder-squirrel-windows@26.13.0)
+      debug: 4.4.3(supports-color@8.1.1)
+      dmg-builder: 26.13.0(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
       dotenv: 16.6.1
       dotenv-expand: 11.0.7
       ejs: 3.1.10
-      electron-builder-squirrel-windows: 26.13.0(dmg-builder@26.13.0)
-      electron-publish: 26.13.0
+      electron-builder-squirrel-windows: 26.13.0(dmg-builder@26.13.0)(supports-color@8.1.1)
+      electron-publish: 26.13.0(supports-color@8.1.1)
       fs-extra: 10.1.0
       hosted-git-info: 4.1.0
       isbinaryfile: 5.0.7
@@ -7957,11 +7806,11 @@ snapshots:
 
   aws4@1.13.2: {}
 
-  axios@1.18.0(debug@4.4.3):
+  axios@1.18.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
-      follow-redirects: 1.16.0(debug@4.4.3)
+      follow-redirects: 1.16.0(debug@4.4.3(supports-color@8.1.1))
       form-data: 4.0.6
-      https-proxy-agent: 5.0.1
+      https-proxy-agent: 5.0.1(supports-color@8.1.1)
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
@@ -8012,11 +7861,11 @@ snapshots:
 
   bluebird@3.7.2: {}
 
-  body-parser@1.20.5:
+  body-parser@1.20.5(supports-color@8.1.1):
     dependencies:
       bytes: 3.1.2
       content-type: 1.0.5
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@8.1.1)
       depd: 2.0.0
       destroy: 1.2.0
       http-errors: 2.0.1
@@ -8096,25 +7945,25 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
-  builder-util-runtime@9.6.3:
+  builder-util-runtime@9.6.3(supports-color@8.1.1):
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       sax: 1.6.0
     transitivePeerDependencies:
       - supports-color
 
-  builder-util@26.13.0:
+  builder-util@26.13.0(supports-color@8.1.1):
     dependencies:
       7zip-bin: 5.2.0
       '@types/debug': 4.1.13
       app-builder-bin: 5.0.0-alpha.12
-      builder-util-runtime: 9.6.3
+      builder-util-runtime: 9.6.3(supports-color@8.1.1)
       chalk: 4.1.2
       cross-spawn: 7.0.6
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       fs-extra: 10.1.0
-      http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
+      http-proxy-agent: 7.0.2(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6(supports-color@8.1.1)
       js-yaml: 4.2.0
       sanitize-filename: 1.6.4
       source-map-support: 0.5.21
@@ -8270,10 +8119,10 @@ snapshots:
 
   clone@1.0.4: {}
 
-  cmake-js@7.4.0:
+  cmake-js@7.4.0(supports-color@8.1.1):
     dependencies:
-      axios: 1.18.0(debug@4.4.3)
-      debug: 4.4.3
+      axios: 1.18.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@8.1.1)
       fs-extra: 11.3.5
       memory-stream: 1.0.0
       node-api-headers: 1.9.0
@@ -8328,11 +8177,11 @@ snapshots:
       tar-stream: 1.6.2
       yazl: 2.5.1
 
-  compression@1.8.1:
+  compression@1.8.1(supports-color@8.1.1):
     dependencies:
       bytes: 3.1.2
       compressible: 2.0.18
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@8.1.1)
       negotiator: 0.6.4
       on-headers: 1.1.0
       safe-buffer: 5.2.1
@@ -8409,7 +8258,7 @@ snapshots:
     dependencies:
       postcss: 8.5.15
 
-  css-minimizer-webpack-plugin@8.0.0(webpack@5.107.2(postcss@8.5.15)):
+  css-minimizer-webpack-plugin@8.0.0(csso@5.0.5)(esbuild@0.27.7)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       cssnano: 7.1.9(postcss@8.5.15)
@@ -8417,17 +8266,10 @@ snapshots:
       postcss: 8.5.15
       schema-utils: 4.3.3
       serialize-javascript: 7.0.7
-      webpack: 5.107.2(postcss@8.5.15)
-
-  css-minimizer-webpack-plugin@8.0.0(webpack@5.107.2):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      cssnano: 7.1.9(postcss@8.5.15)
-      jest-worker: 30.4.1
-      postcss: 8.5.15
-      schema-utils: 4.3.3
-      serialize-javascript: 7.0.7
-      webpack: 5.107.2
+      webpack: 5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3)
+    optionalDependencies:
+      csso: 5.0.5
+      esbuild: 0.27.7
 
   css-select@5.2.2:
     dependencies:
@@ -8545,21 +8387,29 @@ snapshots:
 
   dayjs@1.11.13: {}
 
-  debug@2.6.9:
+  debug@2.6.9(supports-color@8.1.1):
     dependencies:
       ms: 2.0.0
+    optionalDependencies:
+      supports-color: 8.1.1
 
-  debug@4.3.7:
+  debug@4.3.7(supports-color@8.1.1):
     dependencies:
       ms: 2.1.3
+    optionalDependencies:
+      supports-color: 8.1.1
 
-  debug@4.4.1:
+  debug@4.4.1(supports-color@8.1.1):
     dependencies:
       ms: 2.1.3
+    optionalDependencies:
+      supports-color: 8.1.1
 
-  debug@4.4.3:
+  debug@4.4.3(supports-color@8.1.1):
     dependencies:
       ms: 2.1.3
+    optionalDependencies:
+      supports-color: 8.1.1
 
   decimal.js@10.6.0: {}
 
@@ -8624,10 +8474,10 @@ snapshots:
     dependencies:
       path-type: 4.0.0
 
-  dmg-builder@26.13.0(electron-builder-squirrel-windows@26.13.0):
+  dmg-builder@26.13.0(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1):
     dependencies:
-      app-builder-lib: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)
-      builder-util: 26.13.0
+      app-builder-lib: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
+      builder-util: 26.13.0(supports-color@8.1.1)
       fs-extra: 10.1.0
       iconv-lite: 0.6.3
       js-yaml: 4.2.0
@@ -8713,23 +8563,23 @@ snapshots:
     dependencies:
       jake: 10.9.4
 
-  electron-builder-squirrel-windows@26.13.0(dmg-builder@26.13.0):
+  electron-builder-squirrel-windows@26.13.0(dmg-builder@26.13.0)(supports-color@8.1.1):
     dependencies:
-      app-builder-lib: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)
-      builder-util: 26.13.0
-      electron-winstaller: 5.4.0
+      app-builder-lib: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
+      builder-util: 26.13.0(supports-color@8.1.1)
+      electron-winstaller: 5.4.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - dmg-builder
       - supports-color
 
-  electron-builder@26.13.0(electron-builder-squirrel-windows@26.13.0):
+  electron-builder@26.13.0(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1):
     dependencies:
-      app-builder-lib: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)
-      builder-util: 26.13.0
-      builder-util-runtime: 9.6.3
+      app-builder-lib: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
+      builder-util: 26.13.0(supports-color@8.1.1)
+      builder-util-runtime: 9.6.3(supports-color@8.1.1)
       chalk: 4.1.2
       ci-info: 4.4.0
-      dmg-builder: 26.13.0(electron-builder-squirrel-windows@26.13.0)
+      dmg-builder: 26.13.0(electron-builder-squirrel-windows@26.13.0)(supports-color@8.1.1)
       fs-extra: 10.1.0
       lazy-val: 1.0.5
       simple-update-notifier: 2.0.0
@@ -8738,12 +8588,12 @@ snapshots:
       - electron-builder-squirrel-windows
       - supports-color
 
-  electron-publish@26.13.0:
+  electron-publish@26.13.0(supports-color@8.1.1):
     dependencies:
       '@types/fs-extra': 9.0.13
       aws4: 1.13.2
-      builder-util: 26.13.0
-      builder-util-runtime: 9.6.3
+      builder-util: 26.13.0(supports-color@8.1.1)
+      builder-util-runtime: 9.6.3(supports-color@8.1.1)
       chalk: 4.1.2
       form-data: 4.0.6
       fs-extra: 10.1.0
@@ -8754,15 +8604,15 @@ snapshots:
 
   electron-to-chromium@1.5.376: {}
 
-  electron-winstaller@5.4.0:
+  electron-winstaller@5.4.0(supports-color@8.1.1):
     dependencies:
       '@electron/asar': 3.4.1
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       fs-extra: 7.0.1
       lodash: 4.18.1
       temp: 0.9.4
     optionalDependencies:
-      '@electron/windows-sign': 1.2.2
+      '@electron/windows-sign': 1.2.2(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -8783,7 +8633,7 @@ snapshots:
 
   engine.io-parser@5.2.3: {}
 
-  engine.io@6.6.9:
+  engine.io@6.6.9(supports-color@8.1.1):
     dependencies:
       '@types/cors': 2.8.19
       '@types/node': 22.20.0
@@ -8792,7 +8642,7 @@ snapshots:
       base64id: 2.0.0
       cookie: 0.7.2
       cors: 2.8.6
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       engine.io-parser: 5.2.3
       ws: 8.21.0
     transitivePeerDependencies:
@@ -8993,21 +8843,21 @@ snapshots:
 
   express-rate-limit@5.5.1: {}
 
-  express@4.22.1:
+  express@4.22.1(supports-color@8.1.1):
     dependencies:
       accepts: 1.3.8
       array-flatten: 1.1.1
-      body-parser: 1.20.5
+      body-parser: 1.20.5(supports-color@8.1.1)
       content-disposition: 0.5.4
       content-type: 1.0.5
       cookie: 0.7.2
       cookie-signature: 1.0.7
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@8.1.1)
       depd: 2.0.0
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
-      finalhandler: 1.3.2
+      finalhandler: 1.3.2(supports-color@8.1.1)
       fresh: 0.5.2
       http-errors: 2.0.1
       merge-descriptors: 1.0.3
@@ -9019,8 +8869,8 @@ snapshots:
       qs: 6.14.2
       range-parser: 1.2.1
       safe-buffer: 5.2.1
-      send: 0.19.2
-      serve-static: 1.16.3
+      send: 0.19.2(supports-color@8.1.1)
+      serve-static: 1.16.3(supports-color@8.1.1)
       setprototypeof: 1.2.0
       statuses: 2.0.2
       type-is: 1.6.18
@@ -9033,9 +8883,9 @@ snapshots:
 
   extendable-error@0.1.7: {}
 
-  extract-zip@2.0.1:
+  extract-zip@2.0.1(supports-color@8.1.1):
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
@@ -9097,9 +8947,9 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
-  finalhandler@1.3.2:
+  finalhandler@1.3.2(supports-color@8.1.1):
     dependencies:
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@8.1.1)
       encodeurl: 2.0.0
       escape-html: 1.0.3
       on-finished: 2.4.1
@@ -9120,9 +8970,9 @@ snapshots:
 
   flushwritable@1.0.0: {}
 
-  follow-redirects@1.16.0(debug@4.4.3):
+  follow-redirects@1.16.0(debug@4.4.3(supports-color@8.1.1)):
     optionalDependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
 
   for-each@0.3.5:
     dependencies:
@@ -9436,10 +9286,10 @@ snapshots:
       statuses: 2.0.2
       toidentifier: 1.0.1
 
-  http-proxy-agent@7.0.2:
+  http-proxy-agent@7.0.2(supports-color@8.1.1):
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -9461,17 +9311,17 @@ snapshots:
       quick-lru: 5.1.1
       resolve-alpn: 1.2.1
 
-  https-proxy-agent@5.0.1:
+  https-proxy-agent@5.0.1(supports-color@8.1.1):
     dependencies:
-      agent-base: 6.0.2
-      debug: 4.4.3
+      agent-base: 6.0.2(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@7.0.6:
+  https-proxy-agent@7.0.6(supports-color@8.1.1):
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -9746,14 +9596,14 @@ snapshots:
 
   jsbn@0.1.1: {}
 
-  jsdom@26.1.0:
+  jsdom@26.1.0(supports-color@8.1.1):
     dependencies:
       cssstyle: 4.6.0
       data-urls: 5.0.0
       decimal.js: 10.6.0
       html-encoding-sniffer: 4.0.0
-      http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
+      http-proxy-agent: 7.0.2(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6(supports-color@8.1.1)
       is-potential-custom-element-name: 1.0.1
       nwsapi: 2.2.24
       parse5: 7.3.0
@@ -9918,9 +9768,9 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  make-fetch-happen@14.0.3:
+  make-fetch-happen@14.0.3(supports-color@8.1.1):
     dependencies:
-      '@npmcli/agent': 3.0.0
+      '@npmcli/agent': 3.0.0(supports-color@8.1.1)
       cacache: 19.0.1
       http-cache-semantics: 4.2.0
       minipass: 7.1.3
@@ -10144,12 +9994,12 @@ snapshots:
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
 
-  node-gyp@11.5.0:
+  node-gyp@11.5.0(supports-color@8.1.1):
     dependencies:
       env-paths: 2.2.1
       exponential-backoff: 3.1.3
       graceful-fs: 4.2.11
-      make-fetch-happen: 14.0.3
+      make-fetch-happen: 14.0.3(supports-color@8.1.1)
       nopt: 8.1.0
       proc-log: 5.0.0
       semver: 7.8.5
@@ -10693,9 +10543,9 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  read-binary-file-arch@1.0.6:
+  read-binary-file-arch@1.0.6(supports-color@8.1.1):
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -10906,9 +10756,9 @@ snapshots:
 
   semver@7.8.5: {}
 
-  send@0.19.2:
+  send@0.19.2(supports-color@8.1.1):
     dependencies:
-      debug: 2.6.9
+      debug: 2.6.9(supports-color@8.1.1)
       depd: 2.0.0
       destroy: 1.2.0
       encodeurl: 2.0.0
@@ -10931,12 +10781,12 @@ snapshots:
 
   serialize-javascript@7.0.7: {}
 
-  serve-static@1.16.3:
+  serve-static@1.16.3(supports-color@8.1.1):
     dependencies:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       parseurl: 1.3.3
-      send: 0.19.2
+      send: 0.19.2(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -11039,40 +10889,40 @@ snapshots:
 
   smart-buffer@4.2.0: {}
 
-  socket.io-adapter@2.5.8:
+  socket.io-adapter@2.5.8(supports-color@8.1.1):
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
 
-  socket.io-parser@4.2.6:
+  socket.io-parser@4.2.6(supports-color@8.1.1):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
-  socket.io@4.8.1:
+  socket.io@4.8.1(supports-color@8.1.1):
     dependencies:
       accepts: 1.3.8
       base64id: 2.0.0
       cors: 2.8.6
-      debug: 4.3.7
-      engine.io: 6.6.9
-      socket.io-adapter: 2.5.8
-      socket.io-parser: 4.2.6
+      debug: 4.3.7(supports-color@8.1.1)
+      engine.io: 6.6.9(supports-color@8.1.1)
+      socket.io-adapter: 2.5.8(supports-color@8.1.1)
+      socket.io-parser: 4.2.6(supports-color@8.1.1)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
 
-  socks-proxy-agent@8.0.5:
+  socks-proxy-agent@8.0.5(supports-color@8.1.1):
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       socks: 2.8.9
     transitivePeerDependencies:
       - supports-color
@@ -11242,9 +11092,9 @@ snapshots:
       postcss: 8.5.15
       postcss-selector-parser: 7.1.4
 
-  sumchecker@3.0.1:
+  sumchecker@3.0.1(supports-color@8.1.1):
     dependencies:
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -11333,23 +11183,19 @@ snapshots:
 
   term-size@2.2.1: {}
 
-  terser-webpack-plugin@5.6.1(postcss@8.5.15)(webpack@5.107.2(postcss@8.5.15)):
+  terser-webpack-plugin@5.6.1(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       terser: 5.48.0
-      webpack: 5.107.2(postcss@8.5.15)
+      webpack: 5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3)
     optionalDependencies:
+      cssnano: 7.1.9(postcss@8.5.15)
+      csso: 5.0.5
+      esbuild: 0.27.7
       postcss: 8.5.15
-
-  terser-webpack-plugin@5.6.1(webpack@5.107.2):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.31
-      jest-worker: 27.5.1
-      schema-utils: 4.3.3
-      terser: 5.48.0
-      webpack: 5.107.2
+      uglify-js: 3.19.3
 
   terser@5.48.0:
     dependencies:
@@ -11581,61 +11427,61 @@ snapshots:
 
   vary@1.1.2: {}
 
-  verdaccio-audit@13.0.0-next-8.33(encoding@0.1.13):
+  verdaccio-audit@13.0.0-next-8.33(encoding@0.1.13)(supports-color@8.1.1):
     dependencies:
-      '@verdaccio/config': 8.0.0-next-8.33
+      '@verdaccio/config': 8.0.0-next-8.33(supports-color@8.1.1)
       '@verdaccio/core': 8.0.0-next-8.33
-      express: 4.22.1
-      https-proxy-agent: 5.0.1
+      express: 4.22.1(supports-color@8.1.1)
+      https-proxy-agent: 5.0.1(supports-color@8.1.1)
       node-fetch: 2.6.7(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  verdaccio-htpasswd@13.0.0-next-8.33:
+  verdaccio-htpasswd@13.0.0-next-8.33(supports-color@8.1.1):
     dependencies:
       '@verdaccio/core': 8.0.0-next-8.33
       '@verdaccio/file-locking': 13.0.0-next-8.6
       apache-md5: 1.1.8
       bcryptjs: 2.4.3
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       http-errors: 2.0.1
       unix-crypt-td-js: 1.1.4
     transitivePeerDependencies:
       - supports-color
 
-  verdaccio@6.3.2(encoding@0.1.13)(typanion@3.14.0):
+  verdaccio@6.3.2(encoding@0.1.13)(supports-color@8.1.1)(typanion@3.14.0):
     dependencies:
       '@cypress/request': 3.0.10
-      '@verdaccio/auth': 8.0.0-next-8.33
-      '@verdaccio/config': 8.0.0-next-8.33
+      '@verdaccio/auth': 8.0.0-next-8.33(supports-color@8.1.1)
+      '@verdaccio/config': 8.0.0-next-8.33(supports-color@8.1.1)
       '@verdaccio/core': 8.0.0-next-8.33
-      '@verdaccio/hooks': 8.0.0-next-8.33
-      '@verdaccio/loaders': 8.0.0-next-8.23
-      '@verdaccio/local-storage-legacy': 11.1.1
-      '@verdaccio/logger': 8.0.0-next-8.33
-      '@verdaccio/middleware': 8.0.0-next-8.33
+      '@verdaccio/hooks': 8.0.0-next-8.33(supports-color@8.1.1)
+      '@verdaccio/loaders': 8.0.0-next-8.23(supports-color@8.1.1)
+      '@verdaccio/local-storage-legacy': 11.1.1(supports-color@8.1.1)
+      '@verdaccio/logger': 8.0.0-next-8.33(supports-color@8.1.1)
+      '@verdaccio/middleware': 8.0.0-next-8.33(supports-color@8.1.1)
       '@verdaccio/search-indexer': 8.0.0-next-8.5
-      '@verdaccio/signature': 8.0.0-next-8.25
+      '@verdaccio/signature': 8.0.0-next-8.25(supports-color@8.1.1)
       '@verdaccio/streams': 10.2.1
-      '@verdaccio/tarball': 13.0.0-next-8.33
+      '@verdaccio/tarball': 13.0.0-next-8.33(supports-color@8.1.1)
       '@verdaccio/ui-theme': 8.0.0-next-8.30
-      '@verdaccio/url': 13.0.0-next-8.33
+      '@verdaccio/url': 13.0.0-next-8.33(supports-color@8.1.1)
       '@verdaccio/utils': 8.1.0-next-8.33
       JSONStream: 1.3.5
       async: 3.2.6
       clipanion: 4.0.0-rc.4(typanion@3.14.0)
-      compression: 1.8.1
+      compression: 1.8.1(supports-color@8.1.1)
       cors: 2.8.6
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       envinfo: 7.21.0
-      express: 4.22.1
+      express: 4.22.1(supports-color@8.1.1)
       lodash: 4.17.23
       lru-cache: 7.18.3
       mime: 3.0.0
       semver: 7.7.4
-      verdaccio-audit: 13.0.0-next-8.33(encoding@0.1.13)
-      verdaccio-htpasswd: 13.0.0-next-8.33
+      verdaccio-audit: 13.0.0-next-8.33(encoding@0.1.13)(supports-color@8.1.1)
+      verdaccio-htpasswd: 13.0.0-next-8.33(supports-color@8.1.1)
     transitivePeerDependencies:
       - bare-abort-controller
       - encoding
@@ -11656,10 +11502,10 @@ snapshots:
       extsprintf: 1.4.1
     optional: true
 
-  vite-node@3.2.4(@types/node@22.20.0)(jiti@2.7.0)(terser@5.48.0):
+  vite-node@3.2.4(@types/node@22.20.0)(jiti@2.7.0)(supports-color@8.1.1)(terser@5.48.0):
     dependencies:
       cac: 6.7.14
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       es-module-lexer: 1.7.0
       pathe: 2.0.3
       vite: 7.3.5(@types/node@22.20.0)(jiti@2.7.0)(terser@5.48.0)
@@ -11691,7 +11537,7 @@ snapshots:
       jiti: 2.7.0
       terser: 5.48.0
 
-  vitest@3.2.6(@types/debug@4.1.13)(@types/node@22.20.0)(jiti@2.7.0)(jsdom@26.1.0)(terser@5.48.0):
+  vitest@3.2.6(@types/debug@4.1.13)(@types/node@22.20.0)(jiti@2.7.0)(jsdom@26.1.0(supports-color@8.1.1))(supports-color@8.1.1)(terser@5.48.0):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.6
@@ -11702,7 +11548,7 @@ snapshots:
       '@vitest/spy': 3.2.6
       '@vitest/utils': 3.2.6
       chai: 5.3.3
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@8.1.1)
       expect-type: 1.3.0
       magic-string: 0.30.21
       pathe: 2.0.3
@@ -11714,12 +11560,12 @@ snapshots:
       tinypool: 1.1.1
       tinyrainbow: 2.0.0
       vite: 7.3.5(@types/node@22.20.0)(jiti@2.7.0)(terser@5.48.0)
-      vite-node: 3.2.4(@types/node@22.20.0)(jiti@2.7.0)(terser@5.48.0)
+      vite-node: 3.2.4(@types/node@22.20.0)(jiti@2.7.0)(supports-color@8.1.1)(terser@5.48.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/debug': 4.1.13
       '@types/node': 22.20.0
-      jsdom: 26.1.0
+      jsdom: 26.1.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - jiti
       - less
@@ -11779,7 +11625,7 @@ snapshots:
 
   webpack-sources@3.5.0: {}
 
-  webpack@5.107.2:
+  webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3):
     dependencies:
       '@types/estree': 1.0.9
       '@types/json-schema': 7.0.15
@@ -11801,46 +11647,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(webpack@5.107.2)
-      watchpack: 2.5.2
-      webpack-sources: 3.5.0
-    transitivePeerDependencies:
-      - '@minify-html/node'
-      - '@swc/core'
-      - '@swc/css'
-      - '@swc/html'
-      - clean-css
-      - cssnano
-      - csso
-      - esbuild
-      - html-minifier-terser
-      - lightningcss
-      - postcss
-      - uglify-js
-
-  webpack@5.107.2(postcss@8.5.15):
-    dependencies:
-      '@types/estree': 1.0.9
-      '@types/json-schema': 7.0.15
-      '@webassemblyjs/ast': 1.14.1
-      '@webassemblyjs/wasm-edit': 1.14.1
-      '@webassemblyjs/wasm-parser': 1.14.1
-      acorn: 8.17.0
-      acorn-import-phases: 1.0.4(acorn@8.17.0)
-      browserslist: 4.28.2
-      chrome-trace-event: 1.0.4
-      enhanced-resolve: 5.24.0
-      es-module-lexer: 2.1.0
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      loader-runner: 4.3.2
-      mime-db: 1.54.0
-      neo-async: 2.6.2
-      schema-utils: 4.3.3
-      tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(postcss@8.5.15)(webpack@5.107.2(postcss@8.5.15))
+      terser-webpack-plugin: 5.6.1(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3)(webpack@5.107.2(cssnano@7.1.9(postcss@8.5.15))(csso@5.0.5)(esbuild@0.27.7)(postcss@8.5.15)(uglify-js@3.19.3))
       watchpack: 2.5.2
       webpack-sources: 3.5.0
     transitivePeerDependencies:
