@@ -1,5 +1,11 @@
 # Customizable Layout Architecture
 
+> **Archived design (historical):** this proposal mixes implemented primitives
+> with unimplemented layout-tree and drag-and-drop ideas. `SplitContainer`,
+> Activity Bar, Panel Registry, and the bottom panel exist; arbitrary panel
+> movement and a serializable layout tree do not. See
+> [the current architecture](../ARCHITECTURE.md).
+
 ## 1. 设计目标
 
 - 用户可自由拖动分隔条调整各区域宽高

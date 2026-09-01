@@ -1,84 +1,71 @@
-# Lynxtron Shell Demo
+# Lynxtron Go
+
+基于 Lynxtron（Lynx + Node.js）的桌面项目编辑器和 Showcase 运行环境，原生代码编辑器由 Scintilla 提供。
 
 ## 技术栈
 
 - `lynx`
 - `lynxtron`
-- `Typscript`
+- `TypeScript`
 - `React`
-- `Rspack` + `Electron-Builder` (JS 压缩与应用打包)
+- `RSpeedy` + `Rspack`
+- `lynxtron-builder`（桌面安装包）
 
 ## 特性
 
-- 一键运行、调试、打包
-- 支持类型增强语言 Typescript
-- 完善的工程化体验
-- 支持通过 `electron-builder` 打包为各平台应用
+- Gallery、项目编辑、构建和独立运行
+- 原生 Scintilla 多编辑器布局
+- TypeScript、JavaScript、CSS、SCSS 和 Less 诊断
+- GitHub Gist 导入与发布
+- macOS 和 Windows 安装包
 
 ## 环境准备
 
 - NodeJS >= 22
-- TypeScript
-- [LynxDevTool](https://github.com/lynx-family/lynx-devtool/releases/) >= 0.1.1
+- pnpm 10.x
+
+[LynxDevTool](https://github.com/lynx-family/lynx-devtool/releases/) 仅在运行时检查和调试时需要。
 
 ## 使用指南
 
 ### 安装依赖
 
-```bash
-npm install
+```sh
+pnpm install
 ```
 
 ### 开发模式
 
-- **桌面端 (Desktop)**
-  ```bash
-  npm run dev
-  ```
+```sh
+# 启动 Lynx UI 和桌面 Host 的监听构建
+pnpm --dir lynxtron-go dev
+
+# 启动已经构建的桌面 Host，并开启 Inspector
+pnpm --dir lynxtron-go run run-dev
+```
 
 ### 构建与启动
 
-- **生产环境构建**
-  ```bash
-  npm run build
-  ```
+```sh
+# 完整构建
+pnpm --dir lynxtron-go build
 
-- **启动桌面端**
-  ```bash
-  npm start
-  ```
+# 构建并启动桌面应用
+pnpm --dir lynxtron-go start
 
-- **启动 Web 端**
-  ```bash
-  npm run start:web
-  ```
+# 类型检查和测试
+pnpm --dir lynxtron-go run typecheck
+pnpm --dir lynxtron-go test
+```
 
 ### 应用打包
 
-使用以下命令为不同平台打包应用。
+```sh
+# 当前 macOS 架构
+pnpm --dir lynxtron-go pack
 
-- **打包 macOS (x64) 架构**
+# Windows x64 安装包
+pnpm --dir lynxtron-go run pack:win
+```
 
-  ```bash
-  npm run pack:mac:x64
-  ```
-
-- **打包 macOS (arm64) 架构**
-
-  ```bash
-  npm run pack:mac:arm64
-  ```
-
-- **打包 macOS (Universal) 通用版本**
-
-  此命令会构建一个同时支持 x64 和 arm64 架构的 macOS 通用应用。
-
-  ```bash
-  npm run pack:mac:universal
-  ```
-
-- **打包 Windows (ia32) 架构**
-
-  ```bash
-  npm run pack:win
-  ```
+当前架构和历史设计文档见 [文档索引](docs/README.md)。
