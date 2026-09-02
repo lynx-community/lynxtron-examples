@@ -1,5 +1,13 @@
 # lynxtron-go
 
+## 0.1.8
+
+### Patch Changes
+
+- 7eb56ac: Make the full Lynxtron Go title bar draggable while keeping interactive controls clickable.
+- 00d7404: Keep the Electron Fiddles collection, its collection cases, and the built-in Hello Lynxtron starter hidden from the Lynxtron Go Gallery by default behind the `LYNXTRON_GALLERY_INTERNAL_SHOWCASES=1` build switch.
+- cfebee3: Rename product-facing Fiddle copy to Lynxtron Go project language while preserving Electron Fiddles collection terminology and internal compatibility identifiers.
+
 ## 0.1.7
 
 ### Patch Changes
