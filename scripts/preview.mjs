@@ -25,6 +25,8 @@ const registryUrl = `http://localhost:${registryPort}`;
 const registryAuthTokenArg = `--//localhost:${registryPort}/:_authToken=preview`;
 const tempRoot = process.env.NPM_CACHE_DIR || os.tmpdir();
 const npmCacheDir = path.join(tempRoot, 'npm-cache-lynxtron-examples');
+const previewHomeDir = path.join(tempRoot, 'lynxtron-preview-home');
+const previewWorkspaceDir = path.join(previewHomeDir, '.lynxtron-go');
 const registryDir = path.join(os.tmpdir(), 'verdaccio-lynxtron');
 const registryPidFile = path.join(os.tmpdir(), 'verdaccio-lynxtron.pid');
 
@@ -41,6 +43,15 @@ function command(name) {
     return name;
   }
   return `${name}.cmd`;
+}
+
+function makePreviewEnv(overrides = {}) {
+  return {
+    ...process.env,
+    HOME: previewHomeDir,
+    USERPROFILE: previewHomeDir,
+    ...overrides,
+  };
 }
 
 function run(name, args, options = {}) {
@@ -357,22 +368,20 @@ async function main() {
   await publishWorkspacePackages();
   log(`Registry running at ${registryUrl}`);
 
-  const lynxtronWorkspace = path.join(os.homedir(), '.lynxtron-go');
-  await mkdir(lynxtronWorkspace, { recursive: true });
-  log(`Writing .npmrc to ${lynxtronWorkspace} (registry=${registryUrl})`);
-  await writeFile(path.join(lynxtronWorkspace, '.npmrc'), `registry=${registryUrl}\n`);
+  await mkdir(previewWorkspaceDir, { recursive: true });
+  log(`Writing .npmrc to ${previewWorkspaceDir} (registry=${registryUrl})`);
+  await writeFile(path.join(previewWorkspaceDir, '.npmrc'), `registry=${registryUrl}\n`);
 
   log('=== Step 3: Build Lynxtron GO (preview mode) ===');
   await rm(path.join(lynxtronGoDir, 'output', 'bundle'), { recursive: true, force: true });
   await rm(path.join(lynxtronGoDir, 'dist', 'desktop'), { recursive: true, force: true });
   await run('pnpm', ['run', 'build'], {
     cwd: lynxtronGoDir,
-    env: {
-      ...process.env,
+    env: makePreviewEnv({
       // Preview should validate packed tarballs via local-registry / file:// URLs.
       LYNXTRON_PREVIEW: '1',
       LYNXTRON_SHOWCASE_SOURCE: 'local-registry',
-    },
+    }),
   });
 
   if (noLaunch) {
@@ -384,7 +393,10 @@ async function main() {
   log('=== Step 4: Launching Lynxtron GO ===');
   killLingeringLynxtronInstances();
   log('Press Ctrl+C to stop.');
-  await run('npx', ['lynxtron', './dist/desktop'], { cwd: lynxtronGoDir });
+  await run('npx', ['lynxtron', './dist/desktop'], {
+    cwd: lynxtronGoDir,
+    env: makePreviewEnv(),
+  });
 }
 
 // Lynxtron uses Chromium's singleInstanceLock. If a previous `pnpm preview`

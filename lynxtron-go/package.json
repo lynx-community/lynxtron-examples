@@ -15,9 +15,9 @@
     "*.svg"
   ],
   "scripts": {
-    "build:cli": "pnpm --dir ../packages/cli run build",
+    "build:cli": "npm --prefix ../packages/cli run build",
     "build:builtin-showcases": "node ../scripts/pack-showcases.mjs --builtin --out lynxtron-go/resources/builtin-showcases",
-    "build:scintilla-extension": "pnpm --dir ./scintilla-extension run build",
+    "build:scintilla-extension": "npm --prefix ./scintilla-extension run build",
     "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
     "run-dev": "lynxtron ./dist/desktop --inspect=9222",
     "debug:detached": "node scripts/start_debug.js",
