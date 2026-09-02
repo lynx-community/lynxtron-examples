@@ -1,9 +1,10 @@
-import { app, LynxWindow } from '@lynx-js/lynxtron';
+import { app, devtool, LynxWindow } from '@lynx-js/lynxtron';
 import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
 import path from 'path';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 
 app.whenReady().then(() => {
+  try { devtool.setDevToolEnabled(true); } catch (e) { console.warn('devtool.setDevToolEnabled failed:', e); }
   const w = new LynxWindow({
     width: 1280,
     height: 860,

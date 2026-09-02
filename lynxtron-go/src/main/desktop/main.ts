@@ -21,7 +21,7 @@ import {
   type HostDeepLinkPayload,
 } from '../../shared/deep-link';
 
-const { app, LynxWindow, dialog, Menu } =
+const { app, LynxWindow, dialog, Menu, devtool } =
   require('lynxtron') as typeof import('@lynx-js/lynxtron');
 
 function getAppResourceLocation() {
@@ -889,6 +889,12 @@ if (!hasSingleInstanceLock) {
   registerDeepLinkLifecycle();
   app.whenReady().then(() => {
     registerDeepLinkProtocolClient();
+
+    try {
+      devtool.setDevToolEnabled(true);
+    } catch (e) {
+      console.warn('[PC_Host] devtool.setDevToolEnabled failed:', e);
+    }
 
     // Dev only: a fixed position keeps automated verification (screenshots/
     // clicks) stable, and self-hosted children cascade so they don't cover

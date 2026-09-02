@@ -23,11 +23,11 @@ allowBuilds:
   open-computer-use: true
 
 catalog:
-  '@lynx-js/lynxtron': 0.0.17-dev
-  '@lynx-js/lynxtron-builder': 0.0.17-dev
-  '@lynx-js/lynxtron-dev-plugins': 0.0.17-dev
-  '@lynx-js/lynx-library-headers': 0.0.17-dev
-  '@lynx-js/lynxtron-rebuild': 0.0.17-dev
+  '@lynx-js/lynxtron': 0.0.17-alpha.1-dev
+  '@lynx-js/lynxtron-builder': 0.0.17-alpha.1-dev
+  '@lynx-js/lynxtron-dev-plugins': 0.0.17-alpha.1-dev
+  '@lynx-js/lynx-library-headers': 0.0.17-alpha.1-dev
+  '@lynx-js/lynxtron-rebuild': 0.0.17-alpha.1-dev
   '@lynx-js/config-rsbuild-plugin': 0.2.0
   '@lynx-js/react': 0.123.1
   '@lynx-js/react-rsbuild-plugin': ^0.18.1

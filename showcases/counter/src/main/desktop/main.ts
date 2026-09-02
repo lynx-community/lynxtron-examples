@@ -1,4 +1,4 @@
-import { app, LynxWindow, dialog, lynxBridge } from '@lynx-js/lynxtron';
+import { app, devtool, LynxWindow, dialog, lynxBridge } from '@lynx-js/lynxtron';
 import { nudgeFramedWindowViewport } from '@lynxtron-examples/config/window';
 import { LYNX_BUNDLE_PATH } from './vendorPaths';
 import path from 'path';
@@ -8,6 +8,7 @@ function asRecord(value: unknown): Record<string, unknown> {
 }
 
 app.whenReady().then(() => {
+  try { devtool.setDevToolEnabled(true); } catch (e) { console.warn('devtool.setDevToolEnabled failed:', e); }
   const w = new LynxWindow({
     width: 400,
     height: 300,

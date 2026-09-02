@@ -1,9 +1,10 @@
-import { app, LynxWindow, lynxBridge } from "@lynx-js/lynxtron";
+import { app, devtool, LynxWindow, lynxBridge } from "@lynx-js/lynxtron";
 import { LYNX_BUNDLE_PATH } from "./vendorPaths";
 
 let mainWindow: LynxWindow | null = null;
 
 app.whenReady().then(() => {
+  try { devtool.setDevToolEnabled(true); } catch (e) { console.warn('devtool.setDevToolEnabled failed:', e); }
   // Register the invoke handler once; it survives across window recreation.
   lynxBridge.handle("close", () => {
     mainWindow?.close();
