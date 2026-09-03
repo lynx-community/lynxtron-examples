@@ -1,7 +1,6 @@
 {
   "platforms": {
     "lynxtron": {
-      "path": "build/Release",
       "binaries": [
         {
           "os": "darwin",

@@ -12,7 +12,8 @@
   },
   "description": "Lynxtron native texture canvas extension",
   "scripts": {
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "test": "node --test test/*.test.js"
   },
   "keywords": [
     "lynx",
