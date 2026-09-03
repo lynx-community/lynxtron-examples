@@ -56,12 +56,16 @@ export default defineConfig({
           to: 'node_modules/lynxtron-native-texture-canvas/package.json',
         },
         {
+          from: './native-texture-extension/lynx.lib.json',
+          to: 'node_modules/lynxtron-native-texture-canvas/lynx.lib.json',
+        },
+        {
           from: './native-texture-extension/build/Release/native_texture_canvas_module.node',
           to: 'node_modules/lynxtron-native-texture-canvas/build/Release/native_texture_canvas_module.node',
         },
       ],
     }),
-    ...(isDev ? [pluginLynxtron({ isDev, entry: path.resolve(__dirname, './dist/desktop') })] : []),
+    pluginLynxtron({ isDev, entry: path.resolve(__dirname, './dist/desktop') }),
   ],
   resolve: { extensions: ['.ts', '.js'] },
 });

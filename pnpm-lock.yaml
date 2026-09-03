@@ -612,12 +612,28 @@ importers:
       cross-env:
         specifier: 'catalog:'
         version: 10.1.0
+      lynxtron-native-texture-canvas:
+        specifier: workspace:*
+        version: link:native-texture-extension
       node-addon-api:
         specifier: ^7.0.0
         version: 7.1.1
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+
+  showcases/native-texture-canvas/native-texture-extension:
+    dependencies:
+      node-addon-api:
+        specifier: ^7.0.0
+        version: 7.1.1
+    devDependencies:
+      '@lynx-js/lynx-library-headers':
+        specifier: 'catalog:'
+        version: 0.0.17-dev(supports-color@8.1.1)
+      cmake-js:
+        specifier: ^7.3.0
+        version: 7.4.0(supports-color@8.1.1)
 
   showcases/pc-mouse-cursor:
     dependencies:

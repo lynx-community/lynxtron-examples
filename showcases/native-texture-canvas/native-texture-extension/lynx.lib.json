@@ -1,0 +1,24 @@
+{
+  "platforms": {
+    "lynxtron": {
+      "path": "build/Release",
+      "binaries": [
+        {
+          "os": "darwin",
+          "arch": "arm64",
+          "path": "build/Release/native_texture_canvas_module.node"
+        },
+        {
+          "os": "darwin",
+          "arch": "x64",
+          "path": "build/Release/native_texture_canvas_module.node"
+        },
+        {
+          "os": "win32",
+          "arch": "x64",
+          "path": "build/Release/native_texture_canvas_module.node"
+        }
+      ]
+    }
+  }
+}
