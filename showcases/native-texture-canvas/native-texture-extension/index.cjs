@@ -12,8 +12,10 @@ if (!target) {
   );
 }
 
-const binaryPaths = target.binaries;
-if (!Array.isArray(binaryPaths) || binaryPaths.length !== 1) {
+const binaryPaths = Array.isArray(target.files)
+  ? target.files.filter((file) => path.extname(file) === '.node')
+  : [];
+if (binaryPaths.length !== 1) {
   throw new Error(
     `lynxtron-native-texture-canvas expected exactly one binary for ${process.platform}/${process.arch}`,
   );

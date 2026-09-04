@@ -3,4 +3,4 @@
 ---
 
 Load the native texture extension through Lynxtron Autolink and declare its
-platform target binaries in `lynx.lib.json`.
+platform target files in `lynx.lib.json`.

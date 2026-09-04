@@ -72,15 +72,16 @@ test('loads and registers the Windows x64 binary selected by lynx.lib.json', () 
             {
               os: 'darwin',
               arch: 'arm64',
-              binaries: [
+              files: [
                 'build/Release/native_texture_canvas_module.node',
               ],
             },
             {
               os: 'win32',
               arch: 'x64',
-              binaries: [
+              files: [
                 'build/Release/native_texture_canvas_module.node',
+                'build/Release/native_texture_canvas_shader.bin',
               ],
             },
           ],
@@ -110,7 +111,7 @@ test('fails clearly when the manifest has no matching Windows binary', () => {
                 {
                   os: 'darwin',
                   arch: 'arm64',
-                  binaries: [
+                  files: [
                     'build/Release/native_texture_canvas_module.node',
                   ],
                 },
