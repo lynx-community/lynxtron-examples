@@ -15,6 +15,7 @@
     "native-texture-extension/scripts/**/*",
     "native-texture-extension/CMakeLists.txt",
     "native-texture-extension/index.cjs",
+    "native-texture-extension/lynx.lib.json",
     "native-texture-extension/package.json",
     "src/**/*",
     "lynx.config.ts",
@@ -55,6 +56,7 @@
     "cmake-js": "^7.3.0",
     "concurrently": "catalog:",
     "cross-env": "catalog:",
+    "lynxtron-native-texture-canvas": "workspace:*",
     "node-addon-api": "^7.0.0",
     "typescript": "catalog:"
   }

@@ -1,6 +1,7 @@
 packages:
   - 'packages/*'
   - 'showcases/*'
+  - 'showcases/*/native-texture-extension'
   - 'lynxtron-go'
   - 'lynxtron-go/scintilla-extension'
 
