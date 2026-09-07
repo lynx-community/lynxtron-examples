@@ -12,6 +12,8 @@ export interface EditorsProps {
   onHideEditor: (id: EditorId) => void;
   onResetLayout: () => void;
   pushContent: (id: EditorId) => void;
+  findBar?: import('@lynx-js/react').ReactNode;
+  findEditorId?: EditorId | null;
   /** Detach every native editor — a full-region surface is replacing them. */
   suppressed?: boolean;
 }
@@ -241,6 +243,7 @@ export function Editors(props: EditorsProps) {
                 onMaximize={handleMaximize}
                 onFocus={props.onSelectEditor}
                 pushContent={props.pushContent}
+                findBar={props.findEditorId === p.id ? props.findBar : null}
                 suppressed={props.suppressed}
                 maximized={p.id === expandedId}
               />

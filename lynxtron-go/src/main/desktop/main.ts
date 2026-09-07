@@ -727,8 +727,13 @@ function buildAppMenu(
       { role: 'copy' },
       createPasteMenuItem(quickPickerOpen, () => sendIde('paste')),
       { role: 'selectAll' },
-      // Find belongs to the IDE's file tree and editor tabs; the Fiddle has no
-      // corresponding surface, so these appear only where they work.
+      ...(!isWorkspace ? [{
+        id: 'fiddleFind',
+        label: 'Find',
+        accelerator: 'CmdOrCtrl+F',
+        registerAccelerator: true,
+        click: () => sendCmd('find'),
+      }] : []),
       ...(isWorkspace
         ? [
             { type: 'separator' },

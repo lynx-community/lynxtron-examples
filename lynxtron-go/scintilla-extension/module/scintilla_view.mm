@@ -53,8 +53,27 @@
                                NSEventModifierFlagControl |
                                NSEventModifierFlagOption |
                                NSEventModifierFlagShift);
+    NSString* characters = event.charactersIgnoringModifiers.lowercaseString;
+    // Selectable Lynx text (including Console) makes FlutterView the first
+    // responder. Its copy handling needs keyDown, not an AppKit menu action.
+    // Forward once and independently of every editor's retained selection.
+    if (shortcutModifiers == NSEventModifierFlagCommand &&
+        ([characters isEqualToString:@"c"] || [characters isEqualToString:@"x"])) {
+        Class flutterViewClass = NSClassFromString(@"FlutterView");
+        for (NSView* ancestor = self.superview; ancestor; ancestor = ancestor.superview) {
+            if (flutterViewClass && [ancestor isKindOfClass:flutterViewClass] &&
+                self.window.firstResponder == ancestor) {
+                [ancestor keyDown:event];
+                return YES;
+            }
+        }
+    }
+
+    // Other native editors must handle their own shortcuts. AppKit also
+    // visits unfocused siblings, whose selection must not control dispatch.
+    if (self.window.firstResponder != self) return NO;
+
     if (shortcutModifiers == NSEventModifierFlagCommand) {
-        NSString* characters = event.charactersIgnoringModifiers.lowercaseString;
         if ([characters isEqualToString:@"c"] || [characters isEqualToString:@"x"]) {
             SEL action = [characters isEqualToString:@"c"] ? @selector(copy:) : @selector(cut:);
             NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:@"" action:action keyEquivalent:@""];

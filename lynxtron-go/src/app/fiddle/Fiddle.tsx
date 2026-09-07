@@ -13,6 +13,8 @@ import { HistoryDialog } from './history/HistoryDialog';
 import './history/HistoryDialog.css';
 import { ToasterHost, AppToaster } from './bp';
 import { useFiddle } from './state/useFiddle';
+import { useFiddleFind } from './state/useFiddleFind';
+import { FiddleFindBar } from './Editors/FiddleFindBar';
 import { pickSaveFolder, writeFiddleToFolder } from './runner/save';
 import { useRunner } from './runner/useRunner';
 import { resolveLocalRuntimeExecutable } from './runner/spawnRuntime';
@@ -88,6 +90,7 @@ export interface FiddlePaletteSource {
 
 export function Fiddle(props: FiddleProps) {
   const fiddle = useFiddle();
+  const find = useFiddleFind(fiddle);
   const runner = useRunner();
   const initialStarterRequested = useRef(false);
   const openRequests = useRef(createLatestOpenRequestGate());
@@ -630,6 +633,10 @@ export function Fiddle(props: FiddleProps) {
     'fiddle:openHello': () => props.onOpenHelloShowcase(),
     'fiddle:openFolder': (data: any) => { const p = data?.path; if (typeof p === 'string' && p) handleOpenFolder(p); },
     'fiddle:save': () => { void handleSave(); },
+    'fiddle:find': () => {
+      if (!props.galleryOpen && !props.overlayActive && !templatePickerOpen &&
+          !settingsOpen && !versionsOpen && !tourOpen && !historyOpen) find.open();
+    },
     'fiddle:publish': () => { void handlePublishGist(); },
     'fiddle:run': () => handleRun(),
     'fiddle:stop': () => {
@@ -823,6 +830,17 @@ export function Fiddle(props: FiddleProps) {
                 onHideEditor={fiddle.hideEditor}
                 onResetLayout={fiddle.resetLayout}
                 pushContent={fiddle.pushContent}
+                findEditorId={find.state?.editorId}
+                findBar={find.state ? <FiddleFindBar
+                  key={find.state.editorId}
+                  query={find.state.query}
+                  index={find.state.index}
+                  total={find.state.matches.length}
+                  focusKey={find.focusKey}
+                  onQuery={find.updateQuery}
+                  onNavigate={find.navigate}
+                  onClose={find.close}
+                /> : null}
                 suppressed={!!props.galleryOpen}
               />
             </SplitContainer>

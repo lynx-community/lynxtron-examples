@@ -65,6 +65,8 @@ export interface UseFiddleResult {
   snap: FiddleSnapshot;
   isEdited: boolean;
   selectEditor: (id: EditorId) => void;
+  getFindEditorId: () => EditorId | null;
+  readEditorText: (id: EditorId) => string | null;
   showEditor: (id: EditorId) => void;
   hideEditor: (id: EditorId) => void;
   toggleEditor: (id: EditorId) => void;
@@ -135,6 +137,22 @@ export function useFiddle(): UseFiddleResult {
   // currentText syncs on explicit flushes (save/run/hide/dialog) and the
   // persist tick folds live text in without touching state.
   const liveText = useRef<Map<EditorId, string>>(new Map());
+
+  // Drain pending native focus notifications before a menu command, including
+  // clicks followed by Cmd+F before the normal 100ms poll has run.
+  const getFindEditorId = useCallback((): EditorId | null => {
+    const snap = snapRef.current;
+    let active = snap.activeEditorId;
+    const api = scintillaApi();
+    for (const id of visibleEditorIds(snap)) {
+      if (api?.consumeFocusGained?.(scintillaIdFor(id))) active = id;
+    }
+    if (active !== snap.activeEditorId) {
+      snapRef.current = { ...snap, activeEditorId: active };
+      setSnap(prev => ({ ...prev, activeEditorId: active }));
+    }
+    return active && snap.files.get(active)?.visible ? active : null;
+  }, []);
 
   /** Current snapshot with live native text folded in — pure, no setState. */
   const snapWithLive = useCallback((): FiddleSnapshot => {
@@ -666,6 +684,8 @@ export function useFiddle(): UseFiddleResult {
     restoredSession: restoredAtBoot.current === true,
     isEdited: isFiddleEdited(snap),
     selectEditor,
+    getFindEditorId,
+    readEditorText: flushEditor,
     showEditor,
     hideEditor,
     toggleEditor,

@@ -15,6 +15,7 @@ export interface EditorPaneProps {
   onMaximize: (id: string) => void;
   onFocus: (id: string) => void;
   pushContent: (id: string) => void;
+  findBar?: import('@lynx-js/react').ReactNode;
   /**
    * Detach the native view. #46 kept this channel open for exactly this: a
    * surface that REPLACES the editors rather than floating over them does not
@@ -134,6 +135,7 @@ export function EditorPane(props: EditorPaneProps) {
           />
         </view>
       </view>
+      {props.findBar}
       <view className="MosaicBody" bindlayoutchange={onBodyLayout}>
         <scintilla-view
           className="MosaicEditor"
