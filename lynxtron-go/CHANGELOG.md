@@ -1,5 +1,12 @@
 # lynxtron-go
 
+## 0.1.9
+
+### Patch Changes
+
+- 894e57c: Fix macOS copy and cut shortcuts being intercepted by an unfocused Fiddle editor with no selection.
+- 894e57c: Open Find with Cmd/Ctrl+F in the focused Fiddle editor and select Unicode matches using native byte offsets.
+
 ## 0.1.8
 
 ### Patch Changes
