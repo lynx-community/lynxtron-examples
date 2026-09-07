@@ -4,6 +4,32 @@ import type { DebugLogger } from './preload-log';
 
 const LYNXTRON_PACKAGE_NAME = '@lynx-js/lynxtron';
 
+// Read the package selected by the same resolver used to launch bundled
+// showcases. Older binaries report a build-time placeholder (1.0.0).
+export function readLynxtronPackageVersion(packageEntryPath: string): string | null {
+  const packageRoot = path.dirname(packageEntryPath);
+  const isVersion = (value: unknown): value is string =>
+    typeof value === 'string' && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(value);
+  try {
+    const version = fs.readFileSync(path.join(packageRoot, 'dist', 'version'), 'utf8').trim();
+    if (isVersion(version)) return version;
+  } catch (_) {}
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
+    if (pkg.name === LYNXTRON_PACKAGE_NAME && isVersion(pkg.version)) return pkg.version;
+  } catch (_) {}
+  return null;
+}
+
+export function resolveBundledLynxtronVersion(dbg: DebugLogger = () => {}): string | null {
+  try {
+    return readLynxtronPackageVersion(resolveLynxtronPackageEntryPath(dbg));
+  } catch (error) {
+    dbg(`Unable to resolve bundled runtime version: ${error}`);
+    return null;
+  }
+}
+
 export function getRuntimeRequire(): NodeRequire {
   return typeof __non_webpack_require__ !== 'undefined'
     ? __non_webpack_require__ as NodeRequire
