@@ -83,6 +83,40 @@ afterEach(() => {
 });
 
 describe('project build and launch matrix', () => {
+  it('cancels an in-flight build before launch and allows the next project to run', async () => {
+    const root = makeProject('custom');
+    write(root, 'build.mjs', "import fs from 'fs'; fs.writeFileSync('.building', 'ready'); setInterval(() => {}, 1000);");
+    const created = service();
+    const pending = created.bridge.runProject(root, runtimeExecutable);
+    const result = pending.then(() => null, error => error);
+    try {
+      await expect.poll(() => fs.existsSync(path.join(root, '.building')), { timeout: 15000 }).toBe(true);
+    } finally {
+      created.bridge.cancelTasks();
+    }
+    expect(await result).toHaveProperty('message', expect.stringMatching(/cancel/i));
+    expect(launchCommandOutput(created).some(entry => entry.source === 'project.launch')).toBe(false);
+    const next = makeProject('custom');
+    const pid = await created.bridge.runProject(next, runtimeExecutable);
+    expect(pid).toBeGreaterThan(0);
+    expect(buildCount(next)).toBe(1);
+  }, 30_000);
+
+  it('stops the running project when its case is cancelled', async () => {
+    const root = makeProject('showcase');
+    addReleaseArtifact(root);
+    write(root, 'dist_precompiled/desktop/main.js', 'setInterval(() => {}, 1000);');
+    writeShowcaseReleaseManifest(root);
+    const created = service();
+    const pid = await created.bridge.runProject(root, runtimeExecutable);
+    expect(created.bridge.isRunning(pid)).toBe(true);
+    created.bridge.cancelTasks();
+    expect(created.bridge.isRunning(pid)).toBe(false);
+    await expect.poll(() => {
+      try { process.kill(pid, 0); return true; } catch { return false; }
+    }).toBe(false);
+  });
+
   it('runs an unchanged case directly from verified dist_precompiled', async () => {
     const root = makeProject('showcase');
     addReleaseArtifact(root);

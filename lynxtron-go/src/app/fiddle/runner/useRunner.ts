@@ -8,6 +8,7 @@ export interface RunnerState {
   runCount: number;
   runProject: (projectRoot: string, runtimeExecutable?: string) => Promise<number | null>;
   stop: () => boolean;
+  cancelTasks: () => void;
 }
 
 export function useRunner(): RunnerState {
@@ -15,6 +16,7 @@ export function useRunner(): RunnerState {
   const [startMs, setStartMs] = useState<number | null>(null);
   const [runCount, setRunCount] = useState<number>(0);
   const pollRef = useRef<any>(null);
+  const generation = useRef(0);
 
   useEffect(() => {
     if (pid == null) return;
@@ -30,8 +32,13 @@ export function useRunner(): RunnerState {
   }, [pid]);
 
   const runProject = useCallback(async (projectRoot: string, runtimeExecutable?: string) => {
+    const current = generation.current;
     try {
       const nextPid = await showcaseApi()?.runProject?.(projectRoot, runtimeExecutable);
+      if (current !== generation.current) {
+        if (typeof nextPid === 'number') showcaseApi()?.stop(nextPid);
+        return null;
+      }
       if (typeof nextPid === 'number' && nextPid > 0) {
         setPid(nextPid);
         setStartMs(Date.now());
@@ -54,5 +61,13 @@ export function useRunner(): RunnerState {
     return ok;
   }, [pid]);
 
-  return { pid, isRunning: pid != null, startMs, runCount, runProject, stop };
+  const cancelTasks = useCallback(() => {
+    generation.current += 1;
+    showcaseApi()?.cancelTasks();
+    if (pollRef.current) clearTimeout(pollRef.current);
+    setPid(null);
+    setStartMs(null);
+  }, []);
+
+  return { pid, isRunning: pid != null, startMs, runCount, runProject, stop, cancelTasks };
 }

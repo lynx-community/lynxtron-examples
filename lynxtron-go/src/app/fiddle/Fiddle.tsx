@@ -105,19 +105,31 @@ export function Fiddle(props: FiddleProps) {
   const [mainRegionHeight, setMainRegionHeight] = useState(0);
   const restoredShowcaseChecked = useRef(false);
   const pendingRunOperationsRef = useRef(0);
+  const taskGeneration = useRef(0);
   const [hasPendingRunOperation, setHasPendingRunOperation] = useState(false);
 
   const beginRunOperation = useCallback(() => {
     pendingRunOperationsRef.current += 1;
     setHasPendingRunOperation(true);
+    return taskGeneration.current;
   }, []);
 
-  const endRunOperation = useCallback(() => {
+  const endRunOperation = useCallback((generation: number) => {
+    if (generation !== taskGeneration.current) return;
     pendingRunOperationsRef.current = Math.max(0, pendingRunOperationsRef.current - 1);
     setHasPendingRunOperation(pendingRunOperationsRef.current > 0);
   }, []);
 
+  const cancelPreviousCase = useCallback(() => {
+    taskGeneration.current += 1;
+    runner.cancelTasks();
+    props.onStopExternalRun?.();
+    pendingRunOperationsRef.current = 0;
+    setHasPendingRunOperation(false);
+  }, [runner.cancelTasks, props.onStopExternalRun]);
+
   const refreshCurrentShowcase = useCallback(async () => {
+    const generation = taskGeneration.current;
     const source = fiddle.snap.source;
     if (source.kind !== 'showcase' || source.fiddleId || !source.ref) {
       return { projectRoot: source.ref ?? null, updated: false };
@@ -136,6 +148,7 @@ export function Fiddle(props: FiddleProps) {
         },
       },
     );
+    if (generation !== taskGeneration.current) throw new Error('Showcase task cancelled');
     if (!projectRoot || !updated) return { projectRoot, updated };
 
     const snapshot = loadShowcaseFiddle(entry, projectRoot);
@@ -154,12 +167,13 @@ export function Fiddle(props: FiddleProps) {
   useEffect(() => {
     if (restoredShowcaseChecked.current || !fiddle.restoredSession) return;
     restoredShowcaseChecked.current = true;
-    beginRunOperation();
+    const operation = beginRunOperation();
     void refreshCurrentShowcase()
       .catch((error: any) => {
+        if (operation !== taskGeneration.current) return;
         appendOutput('error', `[Lynxtron Go] Showcase update failed: ${error?.message ?? String(error)}`);
       })
-      .finally(endRunOperation);
+      .finally(() => endRunOperation(operation));
   }, [beginRunOperation, endRunOperation, fiddle.restoredSession, refreshCurrentShowcase]);
 
   const handleMainRegionLayout = useCallback((e: any) => {
@@ -357,7 +371,7 @@ export function Fiddle(props: FiddleProps) {
       return;
     }
     if (pendingRunOperationsRef.current > 0 || props.externalRunLoading) return;
-    beginRunOperation();
+    const operation = beginRunOperation();
     void (async () => {
       try {
         // A single loaded fiddle builds and runs ITSELF, not its collection.
@@ -383,12 +397,14 @@ export function Fiddle(props: FiddleProps) {
         let updated = false;
         if (fiddle.snap.source.kind === 'showcase' && !loadedFiddleId) {
           const refreshed = await refreshCurrentShowcase();
+          if (operation !== taskGeneration.current) return;
           projectRoot = refreshed.projectRoot;
           updated = refreshed.updated;
           if (updated) values = {};
         }
         if (!projectRoot) {
           projectRoot = await showcaseApi()?.createCustomProject?.(projectOverlayForFiles(values)) ?? null;
+          if (operation !== taskGeneration.current) return;
           if (!projectRoot) throw new Error('Could not create a complete project workspace.');
           const snap = loadProjectFiddle(
             fiddle.snap.title,
@@ -404,15 +420,17 @@ export function Fiddle(props: FiddleProps) {
 
         const runtimeExecutable = resolveLocalRuntimeExecutable(resolveLocalVersionFolder());
         const pid = await runner.runProject(projectRoot, runtimeExecutable ?? undefined);
+        if (operation !== taskGeneration.current) return;
         if (pid) {
           appendOutput('info', `[Lynxtron Go] Run${selectedLocalName ? ` [${selectedLocalName}]` : ''}: pid=${pid} ${projectRoot}`);
         } else {
           appendOutput('error', '[Lynxtron Go] Run failed to spawn.');
         }
       } catch (e: any) {
+        if (operation !== taskGeneration.current) return;
         appendOutput('error', `[Lynxtron Go] Run failed: ${e?.message ?? String(e)}`);
       } finally {
-        endRunOperation();
+        endRunOperation(operation);
       }
     })();
   }, [beginRunOperation, endRunOperation, props.externalRunLoading, props.externalRunPid, props.onRunFiddleSource, props.onStopExternalRun, fiddle, refreshCurrentShowcase, runner, resolveLocalVersionFolder, selectedLocalName]);
@@ -491,11 +509,12 @@ export function Fiddle(props: FiddleProps) {
   // download/extract the package, then surface its source in the mosaic.
   // Run executes the workspace (see handleRun's showcase branch).
   const handlePickShowcase = useCallback((entry: ShowcaseEntry) => {
+    cancelPreviousCase();
     const requestId = openRequests.current.begin();
     setTemplatePickerOpen(false);
     appendOutput('info', `[Lynxtron Go] Fetching showcase "${entry.name}"…`);
     AppToaster.show({ message: `Downloading ${entry.name}…`, intent: 'primary', icon: 'cloud-download' });
-    beginRunOperation();
+    const operation = beginRunOperation();
     void (async () => {
       try {
         const workspaceRoot = await resolveShowcaseWorkspace(entry);
@@ -522,11 +541,11 @@ export function Fiddle(props: FiddleProps) {
         appendOutput('error', `[Lynxtron Go] Showcase open failed: ${e?.message ?? String(e)}`);
         AppToaster.show({ message: `Open failed: ${e?.message ?? 'unknown'}`, intent: 'danger', icon: 'error', timeout: 6000 });
       } finally {
-        endRunOperation();
+        endRunOperation(operation);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [beginRunOperation, endRunOperation, fiddle.loadSnapshot]);
+  }, [beginRunOperation, endRunOperation, fiddle.loadSnapshot, cancelPreviousCase]);
 
   // Gallery "Open" hands its showcase over via props — consume it through the
   // same download→mosaic chain as the TemplatePicker. Declared after
@@ -535,10 +554,11 @@ export function Fiddle(props: FiddleProps) {
   // Electron Fiddle shows a fiddle.
   const handleOpenSingleFiddle = useCallback(
     (req: { entry: ShowcaseEntry; id: string; title: string; upstream: string }) => {
+      cancelPreviousCase();
       const requestId = openRequests.current.begin();
       setTemplatePickerOpen(false);
       appendOutput('info', `[Lynxtron Go] Opening ${req.id}…`);
-      beginRunOperation();
+      const operation = beginRunOperation();
       void (async () => {
         try {
           const workspaceRoot = await resolveShowcaseWorkspace(req.entry);
@@ -559,11 +579,11 @@ export function Fiddle(props: FiddleProps) {
           if (!openRequests.current.isCurrent(requestId)) return;
           appendOutput('error', `[Lynxtron Go] Open ${req.id} failed: ${e?.message ?? String(e)}`);
         } finally {
-          endRunOperation();
+          endRunOperation(operation);
         }
       })();
     },
-    [beginRunOperation, endRunOperation, fiddle],
+    [beginRunOperation, endRunOperation, fiddle, cancelPreviousCase],
   );
 
   useEffect(() => {
@@ -592,7 +612,7 @@ export function Fiddle(props: FiddleProps) {
     props.onCancelPendingOpen?.();
     const requestId = openRequests.current.begin();
     appendOutput('info', `[Lynxtron Go] Loading gist ${id}…`);
-    beginRunOperation();
+    const operation = beginRunOperation();
     void loadGistFiddle(id)
       .then(async gistSnap => {
         if (!openRequests.current.isCurrent(requestId)) return;
@@ -613,7 +633,7 @@ export function Fiddle(props: FiddleProps) {
         if (!openRequests.current.isCurrent(requestId)) return;
         appendOutput('error', `[Lynxtron Go] Gist load failed: ${e?.message ?? String(e)}`);
       })
-      .finally(endRunOperation);
+      .finally(() => endRunOperation(operation));
   }, [beginRunOperation, endRunOperation, fiddle]);
 
   // App-menu events (main.ts buildAppMenu sends `fiddle:*` global events —

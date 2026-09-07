@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { formatInstallEnvironmentHint, runInstallCommand, type ShowcaseProcessOutputEntry } from './preload-showcase-service';
+import { formatInstallEnvironmentHint, runBufferedCommand, runInstallCommand, type ShowcaseProcessOutputEntry } from './preload-showcase-service';
 
 const roots: string[] = [];
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -27,6 +27,23 @@ function makeProject() {
 }
 
 describe('package manager subprocesses', () => {
+  it('cancels the buffered CLI process used for showcase downloads', async () => {
+    const cwd = makeProject();
+    const controller = new AbortController();
+    const pending = runBufferedCommand({ command: process.execPath,
+      args: ['-e', "require('fs').writeFileSync('waiting.pid', String(process.pid)); setInterval(() => {}, 1000)"],
+      cwd, env: process.env, timeoutMs: 10000, source: 'showcase.fetch', signal: controller.signal,
+    });
+    const rejected = expect(pending).rejects.toThrow(/cancel/i);
+    await expect.poll(() => fs.existsSync(path.join(cwd, 'waiting.pid'))).toBe(true);
+    const pid = Number(fs.readFileSync(path.join(cwd, 'waiting.pid'), 'utf8'));
+    controller.abort();
+    await rejected;
+    await expect.poll(() => {
+      try { process.kill(pid, 0); return true; } catch { return false; }
+    }).toBe(false);
+  });
+
   it('identifies disk exhaustion without labelling other failures as disk errors', () => {
     expect(formatInstallEnvironmentHint('npm warn tar TAR_ENTRY_ERROR ENOSPC: no space left on device, write'))
       .toContain('Free space on the project and npm cache drives');
