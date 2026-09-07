@@ -31,6 +31,7 @@
 #include <vector>
 
 #include "scintilla/include/Scintilla.h"
+#include "module/editor_scrollbars_win.h"
 
 extern "C" int Scintilla_RegisterClasses(void* hInstance);
 
@@ -301,7 +302,8 @@ void ConfigureScintilla(HWND hwnd) {
   SciSend(hwnd, SCI_SETSELBACK, 1, 0xBB6A26);
   SciSend(hwnd, SCI_SETTABWIDTH, 4, 0);
   SciSend(hwnd, SCI_SETSCROLLWIDTHTRACKING, 1, 0);
-  SciSend(hwnd, SCI_SETSCROLLWIDTH, 2000, 0);
+  SciSend(hwnd, SCI_SETSCROLLWIDTH, 1, 0);
+
 
   SciSend(hwnd, SCI_SETMOUSEDWELLTIME, 600, 0);
   SciSend(hwnd, SCI_CALLTIPSETBACK, 0x262525, 0);
@@ -319,6 +321,11 @@ void ConfigureScintilla(HWND hwnd) {
 
 void DispatchScintillaNotification(SCNotification* notification) {
   if (!notification) return;
+  if (notification->nmhdr.code == SCN_UPDATEUI ||
+      notification->nmhdr.code == SCN_MODIFIED || notification->nmhdr.code == SCN_ZOOM ||
+      notification->nmhdr.code == SCN_PAINTED) {
+    ::InvalidateRect(::GetParent(static_cast<HWND>(notification->nmhdr.hwndFrom)), nullptr, FALSE);
+  }
 
   ScintillaView* view = nullptr;
   {
@@ -415,18 +422,20 @@ LRESULT CALLBACK ParentWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
 }
 
 LRESULT CALLBACK HostWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
+  if (message == WM_MOUSEWHEEL && !(LOWORD(wparam) & (MK_CONTROL | MK_SHIFT))) {
+    editor_scrollbars::Wheel(hwnd, ::GetWindow(hwnd, GW_CHILD), wparam);
+    return 0;
+  }
+  if (message == WM_MOUSEWHEEL || message == WM_MOUSEHWHEEL) {
+    return ::SendMessageW(::GetWindow(hwnd, GW_CHILD), message, wparam, lparam);
+  }
+  if (editor_scrollbars::Input(hwnd, ::GetWindow(hwnd, GW_CHILD), message, wparam, lparam)) return 0;
   if (message == WM_NOTIFY && lparam != 0) {
     DispatchScintillaNotification(reinterpret_cast<SCNotification*>(lparam));
   } else if (message == WM_SIZE) {
     HWND child = ::GetWindow(hwnd, GW_CHILD);
     if (child) {
-      ::SetWindowPos(child,
-                     nullptr,
-                     0,
-                     0,
-                     LOWORD(lparam),
-                     HIWORD(lparam),
-                     SWP_NOZORDER | SWP_NOACTIVATE);
+      editor_scrollbars::Layout(hwnd, child, LOWORD(lparam), HIWORD(lparam));
       RedrawEditorWindow(child);
     }
   } else if (message == WM_ERASEBKGND) {
@@ -460,8 +469,8 @@ LRESULT CALLBACK HostWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpar
         ::DeleteObject(brush);
       }
     }
+    if (dc) editor_scrollbars::Paint(hwnd, ::GetWindow(hwnd, GW_CHILD), dc);
     ::EndPaint(hwnd, &ps);
-    RedrawEditorWindow(::GetWindow(hwnd, GW_CHILD));
     return 0;
   } else if (message == WM_SETFOCUS) {
     HWND child = ::GetWindow(hwnd, GW_CHILD);
@@ -742,6 +751,8 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
     }
     DebugLog("OnLayoutChanged create scintilla success");
     DebugLog("OnLayoutChanged configure begin");
+    ::SetPropW(hwnd, L"LynxtronExternalScrollbars", reinterpret_cast<HANDLE>(1));
+    ::ShowScrollBar(hwnd, SB_BOTH, FALSE);
     ConfigureScintilla(hwnd);
     DebugLog("OnLayoutChanged configure done");
     win_view_ = hwnd;
@@ -767,7 +778,7 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
   // Mark the themed child visible while its host is still hidden, then reveal
   // the host. Reversing this order exposes the host/default control for a
   // paint between the two SetWindowPos calls.
-  ::SetWindowPos(hwnd, HWND_TOP, 0, 0, w, h, SWP_SHOWWINDOW | SWP_NOACTIVATE);
+  editor_scrollbars::Layout(host, hwnd, w, h);
   PositionChildHost(parent, host, x, y, w, h);
   RedrawHostAndEditor(host);
   std::string text;
@@ -831,13 +842,7 @@ void ScintillaView::RepositionForParentMove() {
 
   HWND hwnd = AsHwnd(win_view_);
   if (hwnd && ::IsWindow(hwnd)) {
-    ::SetWindowPos(hwnd,
-                   HWND_TOP,
-                   0,
-                   0,
-                   width,
-                   height,
-                   SWP_SHOWWINDOW | SWP_NOACTIVATE);
+    editor_scrollbars::Layout(host, hwnd, width, height);
   }
   RedrawHostAndEditor(host);
 }
@@ -1054,6 +1059,7 @@ void ScintillaView::ApplyTheme(bool dark, int size_pt) {
   SciSend(hwnd, SCI_STYLESETFORE, 5, typ);
   SciSend(hwnd, SCI_STYLESETFORE, STYLE_LINENUMBER, lnFore);
   SciSend(hwnd, SCI_STYLESETBACK, STYLE_LINENUMBER, lnBack);
+  ::InvalidateRect(::GetParent(hwnd), nullptr, FALSE);
   RedrawEditorWindow(hwnd);
 }
 
