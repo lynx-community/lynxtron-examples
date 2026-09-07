@@ -24,6 +24,7 @@ asarUnpack:
   - 'node_modules/@lynx-js/lynxtron/dist/**/*'
   - 'node_modules/lynxtron-scintilla-editor/**/*.node'
 npmRebuild: false
+afterPack: scripts/verify-packaged-types.js
 extraResources:
   - from: src/assets
     to: assets

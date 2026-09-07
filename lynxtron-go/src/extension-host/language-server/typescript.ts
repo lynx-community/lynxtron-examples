@@ -6,6 +6,7 @@ declare const __non_webpack_require__: NodeJS.Require | undefined;
 
 // In-memory file entry
 interface FileEntry {
+  filePath: string;
   version: number;
   content: string;
 }
@@ -268,7 +269,12 @@ class LanguageServiceHost implements ts.LanguageServiceHost {
   }
 
   updateFile(filePath: string, content: string, version: number) {
-    this.files.set(filePath, { version, content });
+    this.files.set(this.fileKey(filePath), { filePath, version, content });
+  }
+
+  private fileKey(filePath: string): string {
+    const normalized = path.resolve(filePath).replace(/\\/g, '/');
+    return ts.sys.useCaseSensitiveFileNames ? normalized : normalized.toLowerCase();
   }
 
   setRootFiles(rootFiles: string[]): void {
@@ -276,15 +282,23 @@ class LanguageServiceHost implements ts.LanguageServiceHost {
   }
 
   getScriptFileNames(): string[] {
-    return [...new Set([...this.rootFiles, ...this.files.keys()])];
+    const names = new Map<string, string>();
+    for (const file of [...this.rootFiles, ...Array.from(this.files.values(), entry => entry.filePath)]) {
+      names.set(this.fileKey(file), path.resolve(file).replace(/\\/g, '/'));
+    }
+    return [...names.values()];
+  }
+
+  useCaseSensitiveFileNames(): boolean {
+    return ts.sys.useCaseSensitiveFileNames;
   }
 
   getScriptVersion(fileName: string): string {
-    return String(this.files.get(fileName)?.version ?? 0);
+    return String(this.files.get(this.fileKey(fileName))?.version ?? 0);
   }
 
   getScriptSnapshot(fileName: string): ts.IScriptSnapshot | undefined {
-    const entry = this.files.get(fileName);
+    const entry = this.files.get(this.fileKey(fileName));
     if (entry) return ts.ScriptSnapshot.fromString(entry.content);
     if (ts.sys.fileExists(fileName)) {
       const text = ts.sys.readFile(fileName);
@@ -570,11 +584,13 @@ export class TypeScriptLanguageService {
   }
 
   updateFile(filePath: string, content: string, version: number): void {
+    filePath = path.resolve(filePath).replace(/\\/g, '/');
     const { host } = this.getOrCreateInstance(filePath);
     host.updateFile(filePath, content, version);
   }
 
   getDiagnostics(filePath: string): DiagnosticMarker[] {
+    filePath = path.resolve(filePath).replace(/\\/g, '/');
     const { service } = this.getOrCreateInstance(filePath);
 
     let rawDiags: ts.Diagnostic[];
