@@ -95,16 +95,32 @@ export function resolveProjectRunPlan(projectRoot: string): ProjectRunPlan {
   };
 }
 
-function builtinShowcaseRoots(): string[] {
-  const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
-  const detectedResourcesPath = getAppResourcesPath();
+export function builtinShowcaseRoots({
+  platform = process.platform,
+  executablePath = process.execPath,
+  resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath,
+  detectedResourcesPath = getAppResourcesPath(),
+  moduleDir = __dirname,
+}: {
+  platform?: NodeJS.Platform;
+  executablePath?: string;
+  resourcesPath?: string;
+  detectedResourcesPath?: string | null;
+  moduleDir?: string;
+} = {}): string[] {
+  const platformPath = platform === 'win32' ? path.win32 : path.posix;
   return Array.from(new Set([
-    ...(resourcesPath ? [path.join(resourcesPath, 'builtin-showcases')] : []),
-    ...(detectedResourcesPath ? [path.join(detectedResourcesPath, 'builtin-showcases')] : []),
+    ...(resourcesPath ? [platformPath.join(resourcesPath, 'builtin-showcases')] : []),
+    ...(detectedResourcesPath ? [platformPath.join(detectedResourcesPath, 'builtin-showcases')] : []),
+    // The Windows Lynxtron builder puts extraResources beside the executable,
+    // unlike Electron's resources/ layout. Keep both layouts supported.
+    ...(platform === 'win32'
+      ? [platformPath.join(platformPath.dirname(executablePath), 'builtin-showcases')]
+      : []),
     // Lynxtron 0.0.15 does not expose process.resourcesPath to preload. When
     // __dirname is Resources/app.asar, the external resource folder is beside it.
-    path.join(path.dirname(__dirname), 'builtin-showcases'),
-    path.join(__dirname, 'builtin-showcases'),
+    platformPath.join(platformPath.dirname(moduleDir), 'builtin-showcases'),
+    platformPath.join(moduleDir, 'builtin-showcases'),
   ]));
 }
 
