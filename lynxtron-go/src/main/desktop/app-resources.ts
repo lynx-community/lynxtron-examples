@@ -9,11 +9,31 @@ export interface AppResourceLocation {
   moduleDir: string;
 }
 
-/** Resolve the real directory used for files that native consumers must open. */
+/** True when the app's main process is running from inside an `app.asar` archive. */
+function isAsarModuleDir(moduleDir: string): boolean {
+  return /(^|[\\/])[^\\/]+\.asar([\\/]|$)/.test(moduleDir);
+}
+
+/**
+ * Resolve the real directory used for files that native consumers must open —
+ * gallery thumbnails and brand marks loaded by Lynx `<image>`, and `help.html`.
+ *
+ * `<image>` reads the file:// URL itself and cannot look inside an `app.asar`,
+ * so the directory must be one those files physically exist in AND is readable.
+ *
+ * - Packed in an asar (macOS default): the app dir is `…/Resources/app.asar`,
+ *   unreadable by `<image>`. electron-builder `extraResources` copies the assets
+ *   to the external resources root, so resolve to `resourcesPath`.
+ * - Shipped unpacked (Windows `asar: false`): the app dir (`…/resources/app`) is
+ *   plain and already holds the rspack-copied assets, so resolve there.
+ *   `resourcesPath` points one level too high (`…/resources`, not
+ *   `…/resources/app`), which left every packaged thumbnail blank.
+ */
 export function appResourceDir(location: AppResourceLocation): string {
-  return location.isPackaged && location.resourcesPath
-    ? path.resolve(location.resourcesPath)
-    : path.resolve(location.moduleDir);
+  if (location.isPackaged && location.resourcesPath && isAsarModuleDir(location.moduleDir)) {
+    return path.resolve(location.resourcesPath);
+  }
+  return path.resolve(location.moduleDir);
 }
 
 /**
