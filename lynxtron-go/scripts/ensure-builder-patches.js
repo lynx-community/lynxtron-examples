@@ -12,7 +12,10 @@ function resolveFrom(baseDir, request) {
 function ensureBuilderCliPackageResolution(builderRoot) {
   const cliPath = path.join(builderRoot, 'cli.js');
   const source = fs.readFileSync(cliPath, 'utf8');
-  if (source.includes("'@lynx-js/lynxtron'")) {
+  // Upstream >=0.0.19 already resolves @lynx-js/lynxtron via paths:[projectRoot]
+  // inside getLynxtronPackage(); the legacy single-line resolve is gone and no
+  // patching is needed.
+  if (source.includes('getLynxtronPackage') || source.includes("'@lynx-js/lynxtron'")) {
     return;
   }
 
