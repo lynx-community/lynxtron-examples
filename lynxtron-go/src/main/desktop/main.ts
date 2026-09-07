@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { appFileResourceRoots, appGlobalProps, appResourceDir } from './app-resources';
 import { createPasteMenuItem } from './menu-paste';
+import { createEditMenuItem, type EditCommand } from './menu-edit';
 import { fetchExampleArtifact } from './example-artifact';
 import {
   downloadNativeExtension,
@@ -30,11 +31,25 @@ function getAppResourceLocation() {
     isPackaged: app.isPackaged,
     resourcesPath: typeof packagedResourceDir === 'string' ? packagedResourceDir : undefined,
     moduleDir: __dirname,
+    platform: process.platform,
+    execPath: process.execPath,
   };
 }
 
 function getAppLoadOptions() {
   return { globalProps: appGlobalProps(appResourceDir(getAppResourceLocation())) };
+}
+
+function getWindowIconOptions() {
+  // Windows needs a window icon even when the executable has an embedded icon.
+  // Keep macOS using the application's existing bundle icon.
+  return process.platform === 'win32'
+    ? { icon: path.join(appResourceDir(getAppResourceLocation()), 'brand', 'lynxtron.ico') }
+    : {};
+}
+
+function executeFocusedEditCommand(command: EditCommand): void {
+  require('lynxtron-scintilla-editor').executeFocusedEditCommand(command);
 }
 // The foundation-service thread's `process.versions` has no `lynxtron` key —
 // only the main process sees it. Hand it over via env for the UI's version
@@ -385,7 +400,7 @@ function openHelpPage(): boolean {
 // One shape for all bundle preview windows: create, scope file:// access,
 // track for lifetime, show. The caller only decides what to load.
 function openPreviewWindow(title: string, fileRoots: string[]): LynxWindowInstance {
-  const win = new LynxWindow({ width: 1120, height: 780, title });
+  const win = new LynxWindow({ width: 1120, height: 780, title, ...getWindowIconOptions() });
   installFileResourceFetcher(win, fileRoots);
   previewWindows.push(win);
   win.on('closed', () => {
@@ -720,13 +735,13 @@ function buildAppMenu(
   template.push({
     label: 'Edit',
     submenu: [
-      { role: 'undo' },
-      { role: 'redo' },
+      createEditMenuItem('undo', executeFocusedEditCommand),
+      createEditMenuItem('redo', executeFocusedEditCommand),
       { type: 'separator' },
       { role: 'cut' },
       { role: 'copy' },
       createPasteMenuItem(quickPickerOpen, () => sendIde('paste')),
-      { role: 'selectAll' },
+      createEditMenuItem('selectAll', executeFocusedEditCommand),
       ...(!isWorkspace ? [{
         id: 'fiddleFind',
         label: 'Find',
@@ -857,7 +872,11 @@ function buildAppMenu(
 
   if (process.platform === 'win32') {
     try {
-      w.setAutoHideMenuBar(false);
+      if (!isIdeBootTarget) {
+        require('lynxtron-scintilla-editor').hideWindowMenuBar(w.getNativeWindowHandle());
+      } else {
+        w.setAutoHideMenuBar(false);
+      }
     } catch (e) {
       console.warn('[PC_Host] setAutoHideMenuBar(false) failed:', e);
     }
@@ -905,6 +924,7 @@ if (!hasSingleInstanceLock) {
           : { x: 1180, y: 200 })
       : {};
     const w = new LynxWindow({
+      ...getWindowIconOptions(),
       width: 1200,
       height: 800,
       // Below this size the editor panes stop being useful. The commands bar
@@ -927,6 +947,7 @@ if (!hasSingleInstanceLock) {
         : {
             titleBarStyle: 'hiddenInset' as const,
             trafficLightPosition: { x: 20, y: 17 },
+            ...(process.platform === 'win32' ? { frame: false } : {}),
           }),
       autoHideMenuBar: false,
       lynxPreference: {
@@ -943,6 +964,16 @@ if (!hasSingleInstanceLock) {
       } catch (_) { /* placement is cosmetic */ }
     }
     mainWindow = w;
+    const customWindowControls = process.platform === 'win32' && !isIdeBootTarget;
+    const windowControlState = () => ({
+      enabled: customWindowControls,
+      maximized: w.isMaximized(),
+    });
+    if (customWindowControls) {
+      const reportWindowState = () => w.sendGlobalEvent('go:windowState', windowControlState());
+      w.on('maximize', reportWindowState);
+      w.on('unmaximize', reportWindowState);
+    }
     console.log(
       '[PC_Host] LynxWindow created',
       path.join(__dirname, 'preload.js'),
@@ -1095,6 +1126,35 @@ if (!hasSingleInstanceLock) {
             }
           }
           callback.sendReply({ ok: true, open: menuQuickPickerOpen });
+        } else if (name === 'windowControl') {
+          if (!customWindowControls) {
+            callback.sendReply({ enabled: false, maximized: false });
+            return;
+          }
+          const action = stringParam(params, 'action');
+          if (action === 'minimize') w.minimize();
+          else if (action === 'toggleMaximize') {
+            // This Windows-only frameless window must restore the native show state.
+            // unmaximize() takes the runtime's frameless bounds-only path.
+            if (w.isMaximized()) w.restore();
+            else w.maximize();
+          } else if (action === 'menu') {
+            require('lynxtron-scintilla-editor').showWindowMenu(w.getNativeWindowHandle());
+          } else if (action === 'close') {
+            callback.sendReply(windowControlState());
+            if (menuSurface === 'fiddle') {
+              // Reuse the existing session-flush acknowledgment before quitting.
+              if (!quitFlushTimer) {
+                quitFlushTimer = setTimeout(() => {
+                  quitFlushTimer = null;
+                  app.quit();
+                }, 1000);
+                w.sendGlobalEvent('fiddle:persistNow', {});
+              }
+            } else w.close();
+            return;
+          }
+          callback.sendReply(windowControlState());
         } else if (name === 'setWindowBackground') {
           /**
            * The app's ground lives on the WINDOW, not on a Lynx element.

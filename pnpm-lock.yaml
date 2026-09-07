@@ -89,6 +89,9 @@ importers:
       '@vscode/l10n':
         specifier: ^0.0.18
         version: 0.0.18
+      cross-spawn:
+        specifier: ^7.0.6
+        version: 7.0.6
       chownr:
         specifier: ^3.0.0
         version: 3.0.0
@@ -168,6 +171,9 @@ importers:
       '@testing-library/jest-dom':
         specifier: ^6.9.0
         version: 6.9.1
+      '@types/cross-spawn':
+        specifier: ^6.0.6
+        version: 6.0.6
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.0
@@ -5903,6 +5909,9 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+
+  '@types/cross-spawn@6.0.6':
+    resolution: {integrity: sha512-fXRhhUkG4H3TQk5dBhQ7m/JDdSNHKwR2BBia62lhwEIq9xGiQKLxd6LymNhn47SjXhsUEPmxi+PKw2OkW4LLjA==}
 
 snapshots:
 
@@ -11802,3 +11811,7 @@ snapshots:
       buffer-crc32: 0.2.13
 
   yocto-queue@0.1.0: {}
+
+  '@types/cross-spawn@6.0.6':
+    dependencies:
+      '@types/node': 22.20.0

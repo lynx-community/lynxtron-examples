@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import { TypeScriptLanguageService } from '../language-server/typescript';
 
@@ -30,6 +31,20 @@ describe('TypeScriptLanguageService', () => {
     svc = new TypeScriptLanguageService();
   });
 
+  it('uses unsaved native-path edits instead of the older disk snapshot', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'go-unsaved-types-'));
+    const file = path.join(root, 'App.tsx');
+    try {
+      fs.writeFileSync(file, 'export const value: number = 1;');
+      svc.updateFile(file, "export const value: number = 'bad';", 1);
+      expect(svc.getDiagnostics(file).some(marker => marker.code === 2322)).toBe(true);
+      svc.updateFile(file, 'export const value: number = 2;', 2);
+      expect(svc.getDiagnostics(file)).toHaveLength(0);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('returns no diagnostics for syntactically valid TypeScript', () => {
     const code = `
 const greet = (name: string): string => {
@@ -40,7 +55,7 @@ const greet = (name: string): string => {
     const markers = svc.getDiagnostics(FAKE_TS);
     // No syntax errors expected
     const syntaxErrors = markers.filter(m => m.severity === 'error');
-    expect(syntaxErrors).toHaveLength(0);
+    expect(syntaxErrors).toEqual([]);
   });
 
   it('reports a syntax error for unclosed brace', () => {

@@ -179,6 +179,10 @@ describe('fetch command', () => {
 
     const destDir = path.join(workspaceRoot, 'showcases', 'source-only');
     expect(fs.existsSync(path.join(destDir, 'node_modules', '.bin', 'cross-env'))).toBe(true);
-    expect(() => execFileSync('npm', ['run', 'verify'], { cwd: destDir, stdio: 'pipe' })).not.toThrow();
+    expect(() => execFileSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'verify'], {
+      cwd: destDir,
+      stdio: 'pipe',
+      shell: process.platform === 'win32',
+    })).not.toThrow();
   }, 120_000);
 });

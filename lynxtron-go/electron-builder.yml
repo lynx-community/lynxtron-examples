@@ -24,6 +24,7 @@ asarUnpack:
   - 'node_modules/@lynx-js/lynxtron/dist/**/*'
   - 'node_modules/lynxtron-scintilla-editor/**/*.node'
 npmRebuild: false
+afterPack: scripts/verify-packaged-types.js
 extraResources:
   - from: src/assets
     to: assets
@@ -31,6 +32,8 @@ extraResources:
   # display assets beside app.asar and resolve this root at runtime.
   - from: resources/lynxtron.png
     to: brand/lynxtron.png
+  - from: resources/lynxtron.ico
+    to: brand/lynxtron.ico
   - from: src/assets/lynxtron-on-dark.png
     to: brand/lynxtron-on-dark.png
   - from: thumbnails

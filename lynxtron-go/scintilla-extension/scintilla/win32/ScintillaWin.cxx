@@ -1875,6 +1875,10 @@ sptr_t ScintillaWin::MouseMessage(unsigned int iMessage, uptr_t wParam, sptr_t l
 		return ::DefWindowProc(MainHWND(), iMessage, wParam, lParam);
 
 	case WM_MOUSEWHEEL:
+		if (::GetPropW(MainHWND(), L"LynxtronExternalScrollbars") &&
+			!(LOWORD(wParam) & (MK_CONTROL | MK_SHIFT))) {
+			return ::SendMessageW(::GetParent(MainHWND()), iMessage, wParam, lParam);
+		}
 	case WM_MOUSEHWHEEL:
 		if (!mouseWheelCaptures) {
 			// if the mouse wheel is not captured, test if the mouse
@@ -2740,6 +2744,9 @@ HorizontalScrollRange ScintillaWin::GetHorizontalScrollRange() const {
 }
 
 bool ScintillaWin::ModifyScrollBars(Sci::Line nMax, Sci::Line nPage) {
+	// An embedding host may paint its own scrollbars while retaining Scintilla's
+	// width tracking, wheel handling and scroll range calculations.
+	if (::GetPropW(MainHWND(), L"LynxtronExternalScrollbars")) return false;
 	if (!IsVisible()) {
 		return false;
 	}

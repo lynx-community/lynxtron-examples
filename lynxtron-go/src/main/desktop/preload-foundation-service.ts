@@ -4,6 +4,7 @@ import os from 'os';
 import path from 'path';
 import { DEBUG_LOG } from './preload-log';
 import { readConfig, writeConfig } from './preload-config-store';
+import { resolveBundledLynxtronVersion } from './preload-lynxtron-runtime';
 
 function isBinary(buf: Buffer): boolean {
   for (let index = 0; index < Math.min(buf.length, 512); index += 1) {
@@ -50,16 +51,9 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
     runtime: {
       execPath: process.execPath,
       appDir: __dirname,
-      // Runtime version for the commands-bar version button — only what the
-      // engine itself reports (no package-manifest probing: a manifest found
-      // on disk isn't necessarily the binary that's running). This service
-      // thread's process.versions lacks the lynxtron key, so main.ts hands
-      // the value over via LYNXTRON_RUNTIME_VERSION.
-      version: (() => {
-        const versions = process.versions as Record<string, string | undefined>;
-        return versions.lynxtron ?? versions.electron
-          ?? process.env.LYNXTRON_RUNTIME_VERSION ?? null;
-      })(),
+      // The chooser labels the bundled runtime package, not GO's version or
+      // the engine's historical build-time placeholder. Unknown stays null.
+      version: resolveBundledLynxtronVersion(dbg),
     },
     clipboard: {
       readText: (): string | null => readClipboardText(),

@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { synchronizeRuntimeManifest } = require('./runtime-manifest');
 
 const projectRoot = path.resolve(__dirname, '..');
 const distNodeModules = path.join(projectRoot, 'dist', 'desktop', 'node_modules');
@@ -291,6 +292,7 @@ function main() {
       throw new Error(`Packaged type fallback is missing ${requiredTypeFile}`);
     }
   }
+  synchronizeRuntimeManifest(path.dirname(distNodeModules));
 }
 
 main();

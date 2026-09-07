@@ -13,6 +13,7 @@ const requiredFiles = [
   'main.lynx.bundle',
   'help.html',
   'brand/lynxtron.png',
+  'brand/lynxtron.ico',
   'brand/lynxtron-on-dark.png',
 ];
 const missing = requiredFiles.filter(relativePath =>

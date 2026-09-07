@@ -1,4 +1,5 @@
 import { execFileSync, fork, spawn, type ChildProcess } from 'child_process';
+import crossSpawn from 'cross-spawn';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -95,16 +96,32 @@ export function resolveProjectRunPlan(projectRoot: string): ProjectRunPlan {
   };
 }
 
-function builtinShowcaseRoots(): string[] {
-  const resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath;
-  const detectedResourcesPath = getAppResourcesPath();
+export function builtinShowcaseRoots({
+  platform = process.platform,
+  executablePath = process.execPath,
+  resourcesPath = (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath,
+  detectedResourcesPath = getAppResourcesPath(),
+  moduleDir = __dirname,
+}: {
+  platform?: NodeJS.Platform;
+  executablePath?: string;
+  resourcesPath?: string;
+  detectedResourcesPath?: string | null;
+  moduleDir?: string;
+} = {}): string[] {
+  const platformPath = platform === 'win32' ? path.win32 : path.posix;
   return Array.from(new Set([
-    ...(resourcesPath ? [path.join(resourcesPath, 'builtin-showcases')] : []),
-    ...(detectedResourcesPath ? [path.join(detectedResourcesPath, 'builtin-showcases')] : []),
+    ...(resourcesPath ? [platformPath.join(resourcesPath, 'builtin-showcases')] : []),
+    ...(detectedResourcesPath ? [platformPath.join(detectedResourcesPath, 'builtin-showcases')] : []),
+    // The Windows Lynxtron builder puts extraResources beside the executable,
+    // unlike Electron's resources/ layout. Keep both layouts supported.
+    ...(platform === 'win32'
+      ? [platformPath.join(platformPath.dirname(executablePath), 'builtin-showcases')]
+      : []),
     // Lynxtron 0.0.15 does not expose process.resourcesPath to preload. When
     // __dirname is Resources/app.asar, the external resource folder is beside it.
-    path.join(path.dirname(__dirname), 'builtin-showcases'),
-    path.join(__dirname, 'builtin-showcases'),
+    platformPath.join(platformPath.dirname(moduleDir), 'builtin-showcases'),
+    platformPath.join(moduleDir, 'builtin-showcases'),
   ]));
 }
 
@@ -478,10 +495,11 @@ async function ensureShowcaseDependencies(
       stdout ? `stdout:\n${stdout}` : '',
     ].filter(Boolean).join('\n\n');
     dbg(`showcase.install failed: command=${commandText}${detail ? ` ${detail.replace(/\n/g, ' | ')}` : ''}`);
+    const environmentHint = formatInstallEnvironmentHint(`${error?.message ?? ''}\n${detail}`);
     throw new Error(
-      detail
+      environmentHint + (detail
         ? `Command failed: ${commandText}\n${detail}`
-        : error?.message || `Command failed: ${commandText}`,
+        : error?.message || `Command failed: ${commandText}`),
     );
   }
   const installState = readInstallState();
@@ -491,6 +509,12 @@ async function ensureShowcaseDependencies(
     emitOutputLine(outputBuffer, outputSource, 'info', 'dependencies installed');
   }
   return true;
+}
+
+export function formatInstallEnvironmentHint(detail: string): string {
+  return /\bENOSPC\b|no space left on device/i.test(detail)
+    ? 'Dependency installation stopped because the disk is full. Free space on the project and npm cache drives, then retry Run.\n\n'
+    : '';
 }
 
 
@@ -525,7 +549,7 @@ export function projectLaunchEnv(
   };
 }
 
-function runInstallCommand(options: {
+export function runInstallCommand(options: {
   command: string;
   args: string[];
   cwd: string;
@@ -535,11 +559,14 @@ function runInstallCommand(options: {
   timeoutMs?: number;
 }): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(options.command, options.args, {
+    // npm/pnpm are .cmd shims on Windows. cross-spawn resolves and escapes
+    // those shims while preserving native spawn behaviour on macOS.
+    const child = crossSpawn(options.command, options.args, {
       cwd: options.cwd,
       env: options.env,
       stdio: ['ignore', 'pipe', 'pipe'],
-      detached: true,
+      detached: process.platform !== 'win32',
+      windowsHide: true,
     });
     if (options.outputBuffer) {
       attachProcessOutput(child, options.outputSource ?? 'showcase.install', options.outputBuffer);
