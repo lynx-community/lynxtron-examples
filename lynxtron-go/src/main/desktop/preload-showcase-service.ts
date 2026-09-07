@@ -458,6 +458,7 @@ async function ensureShowcaseDependencies(
   outputBuffer?: ShowcaseProcessOutputEntry[],
   outputSource = 'showcase.install',
   baseEnv: NodeJS.ProcessEnv = showcaseSpawnEnv(showcasePath),
+  signal?: AbortSignal,
 ) {
   const status = getShowcaseDependencyStatus(showcasePath, dbg);
   if (!force && !status.needsInstall) {
@@ -486,6 +487,7 @@ async function ensureShowcaseDependencies(
       env: installEnv,
       outputBuffer,
       outputSource,
+      signal,
     });
   } catch (error: any) {
     const stdout = formatProcessOutput(error?.stdout);
@@ -549,6 +551,16 @@ export function projectLaunchEnv(
   };
 }
 
+function stopProcessTree(child: import('child_process').ChildProcess): void {
+  if (!child.pid || child.exitCode !== null || child.signalCode !== null) return;
+  if (process.platform === 'win32') {
+    // Wait for taskkill to finish before allowing a new task to reuse files.
+    execFileSync('taskkill', ['/pid', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
+  } else {
+    try { process.kill(-child.pid, 'SIGTERM'); } catch (_) { child.kill('SIGTERM'); }
+  }
+}
+
 export function runInstallCommand(options: {
   command: string;
   args: string[];
@@ -557,7 +569,9 @@ export function runInstallCommand(options: {
   outputBuffer?: ShowcaseProcessOutputEntry[];
   outputSource?: string;
   timeoutMs?: number;
+  signal?: AbortSignal;
 }): Promise<void> {
+  options.signal?.throwIfAborted();
   return new Promise((resolve, reject) => {
     // npm/pnpm are .cmd shims on Windows. cross-spawn resolves and escapes
     // those shims while preserving native spawn behaviour on macOS.
@@ -578,6 +592,7 @@ export function runInstallCommand(options: {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      options.signal?.removeEventListener('abort', cancel);
       if (error) {
         error.stdout = stdout;
         error.stderr = stderr;
@@ -596,6 +611,11 @@ export function runInstallCommand(options: {
         stderr,
       }));
     }, timeoutMs);
+    const cancel = () => {
+      try { stopProcessTree(child); } catch (_) { child.kill(); }
+      finish(new Error('Showcase task cancelled'));
+    };
+    options.signal?.addEventListener('abort', cancel, { once: true });
     child.stdout?.on('data', (chunk: Buffer) => {
       stdout = appendProcessOutputTail(stdout, chunk);
     });
@@ -619,7 +639,7 @@ export function runInstallCommand(options: {
   });
 }
 
-function runBufferedCommand(options: {
+export function runBufferedCommand(options: {
   command: string;
   args: string[];
   cwd: string;
@@ -627,7 +647,9 @@ function runBufferedCommand(options: {
   timeoutMs: number;
   source: string;
   outputBuffer?: ShowcaseProcessOutputEntry[];
+  signal?: AbortSignal;
 }): Promise<{ stdout: string; stderr: string }> {
+  options.signal?.throwIfAborted();
   return new Promise((resolve, reject) => {
     const child = spawn(options.command, options.args, {
       cwd: options.cwd,
@@ -645,6 +667,7 @@ function runBufferedCommand(options: {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      options.signal?.removeEventListener('abort', cancel);
       if (error) {
         error.stdout = stdout;
         error.stderr = stderr;
@@ -662,6 +685,11 @@ function runBufferedCommand(options: {
         stderr,
       }));
     }, options.timeoutMs);
+    const cancel = () => {
+      try { stopProcessTree(child); } catch (_) { child.kill(); }
+      finish(new Error('Showcase task cancelled'));
+    };
+    options.signal?.addEventListener('abort', cancel, { once: true });
     child.stdout?.on('data', (chunk: Buffer) => {
       stdout += chunk.toString();
     });
@@ -715,6 +743,7 @@ export interface ShowcaseService {
     readProcessOutput: () => ShowcaseProcessOutputEntry[];
     isRunning: (pid: number) => boolean;
     stop: (pid: number) => boolean;
+    cancelTasks: () => void;
     /** Classify, build when required, and launch any complete Lynx project. */
     runProject: (projectRoot: string, runtimeExecutable?: string) => Promise<number>;
     /** Create a complete editable project from the installer-bundled starter. */
@@ -739,6 +768,15 @@ export interface ShowcaseService {
 export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
   const runningShowcases: RunningShowcaseRecord = new Map();
   const processOutputBuffer: ShowcaseProcessOutputEntry[] = [];
+  let taskController = new AbortController();
+  const cancelTasks = () => {
+    taskController.abort();
+    taskController = new AbortController();
+    for (const child of runningShowcases.values()) {
+      try { stopProcessTree(child); } catch (_) { child.kill(); }
+    }
+    runningShowcases.clear();
+  };
 
   const launchProjectTarget = (
     projectRoot: string,
@@ -769,6 +807,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
     projectRoot: string,
     reason: string,
     runtimeExecutable?: string,
+    signal?: AbortSignal,
   ): Promise<number> => {
     const pkgPath = path.join(projectRoot, 'package.json');
     if (!fs.existsSync(pkgPath)) throw new Error(`Project package.json not found: ${pkgPath}`);
@@ -786,7 +825,10 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       processOutputBuffer,
       'project.install',
       buildEnv,
+      signal,
     );
+
+    signal?.throwIfAborted();
 
     const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
     emitCommandStart(processOutputBuffer, 'project.build', projectRoot, npmCommand, ['run', 'build']);
@@ -797,7 +839,10 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       env: buildEnv,
       outputBuffer: processOutputBuffer,
       outputSource: 'project.build',
+      signal,
     });
+
+    signal?.throwIfAborted();
 
     const desktopPath = path.join(projectRoot, 'dist', 'desktop');
     for (const requiredFile of ['main.js', 'main.lynx.bundle', 'package.json']) {
@@ -816,7 +861,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       emitOutputLine(processOutputBuffer, 'project.classify', 'info', `precompiled showcase: ${plan.reason}`);
       return launchProjectTarget(resolvedRoot, plan.path, 'showcase.precompiled', runtimeExecutable);
     }
-    return runSourceProject(resolvedRoot, plan.reason, runtimeExecutable);
+    return runSourceProject(resolvedRoot, plan.reason, runtimeExecutable, taskController.signal);
   };
 
   const createCustomProject = async (files: Record<string, string> = {}): Promise<string> => {
@@ -833,6 +878,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
 
   return {
     bridge: {
+      cancelTasks,
       materializedPath: (name: string, sourceUrl?: string): string | null => {
         try {
           return resolveMaterializedShowcasePath(
@@ -846,6 +892,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
         }
       },
       fetch: async (url: string): Promise<string> => {
+        const signal = taskController.signal;
         try {
           dbg(`showcase.fetch enter url=${url}`);
           const sourceUrl = resolveBuiltinShowcaseSourceUrl(url);
@@ -867,7 +914,9 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
               timeoutMs: 300000,
               source: 'showcase.fetch',
               outputBuffer: processOutputBuffer,
+              signal,
             });
+            signal.throwIfAborted();
             result = output.stdout;
           } catch (error: any) {
             dbg(`showcase.fetch CLI stderr: ${error.stderr?.toString() || 'none'}`);
@@ -934,6 +983,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       // process. Launching one therefore means assembling+building that project
       // — not building all 44 and opening the collection's home screen.
       runFiddle: async (showcasePath: string, fiddleId: string): Promise<number> => {
+        const signal = taskController.signal;
         if (!/^[a-z0-9][a-z0-9-]*$/.test(fiddleId)) {
           throw new Error(`Invalid fiddle id: ${fiddleId}`);
         }
@@ -952,7 +1002,9 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
             cwd: showcasePath,
             env: { ...process.env, LYNXTRON_RUN_AS_NODE: '1' },
             outputBuffer: processOutputBuffer,
+            signal,
           });
+          signal.throwIfAborted();
           if (!fs.existsSync(path.join(projectDist, 'main.js'))) {
             throw new Error(`Assembling "${fiddleId}" did not produce ${projectDist}/main.js`);
           }
@@ -970,8 +1022,10 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       },
 
       dev: async (showcasePath: string): Promise<number> => {
+        const signal = taskController.signal;
         try {
-          await ensureShowcaseDependencies(showcasePath, dbg, false, processOutputBuffer);
+          await ensureShowcaseDependencies(showcasePath, dbg, false, processOutputBuffer, 'showcase.install', showcaseSpawnEnv(showcasePath), signal);
+          signal.throwIfAborted();
           const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
           dbg(`showcase.dev: cwd=${showcasePath} command=${npmCommand} run dev`);
           emitCommandStart(processOutputBuffer, 'showcase.dev', showcasePath, npmCommand, ['run', 'dev']);
@@ -1031,7 +1085,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
 
       installDependencies: async (showcasePath: string): Promise<boolean> => {
         try {
-          return await ensureShowcaseDependencies(showcasePath, dbg, true, processOutputBuffer);
+          return await ensureShowcaseDependencies(showcasePath, dbg, true, processOutputBuffer, 'showcase.install', showcaseSpawnEnv(showcasePath), taskController.signal);
         } catch (error: any) {
           dbg(`showcase.installDependencies error: ${error.message}`);
           throw error;
@@ -1072,12 +1126,14 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       },
 
       startWeb: async (showcasePath: string): Promise<number> => {
+        const signal = taskController.signal;
         try {
           ensureShowcaseSupportsWeb(showcasePath);
           if (!hasShowcaseScript(showcasePath, 'start:web')) {
             throw new Error('Showcase start:web script not found.');
           }
-          await ensureShowcaseDependencies(showcasePath, dbg, false, processOutputBuffer);
+          await ensureShowcaseDependencies(showcasePath, dbg, false, processOutputBuffer, 'showcase.install', showcaseSpawnEnv(showcasePath), signal);
+          signal.throwIfAborted();
           const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
           emitCommandStart(processOutputBuffer, 'showcase.startWeb', showcasePath, npmCommand, ['run', 'start:web']);
           const child = spawn(npmCommand, ['run', 'start:web'], {
@@ -1096,12 +1152,14 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       },
 
       devWeb: async (showcasePath: string): Promise<number> => {
+        const signal = taskController.signal;
         try {
           ensureShowcaseSupportsWeb(showcasePath);
           if (!hasShowcaseScript(showcasePath, 'dev:web')) {
             throw new Error('Showcase dev:web script not found.');
           }
-          await ensureShowcaseDependencies(showcasePath, dbg, false, processOutputBuffer);
+          await ensureShowcaseDependencies(showcasePath, dbg, false, processOutputBuffer, 'showcase.install', showcaseSpawnEnv(showcasePath), signal);
+          signal.throwIfAborted();
           const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
           emitCommandStart(processOutputBuffer, 'showcase.devWeb', showcasePath, npmCommand, ['run', 'dev:web']);
           const child = spawn(npmCommand, ['run', 'dev:web'], {
@@ -1120,12 +1178,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
       },
     },
     dispose: () => {
-      for (const [, child] of runningShowcases) {
-        try {
-          child.kill();
-        } catch (_) {}
-      }
-      runningShowcases.clear();
+      cancelTasks();
     },
   };
 }
