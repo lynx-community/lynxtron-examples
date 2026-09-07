@@ -3,6 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 #include "module/scintilla_view.h"
+#include "module/document_load.h"
 
 #include "capi/lynx_log_capi.h"
 #include <string>
@@ -535,29 +536,11 @@ void ScintillaView::SetContent(const char* data, size_t length) {
     std::string text(data, length);
 
     auto doSet = ^{
-        // IDEMPOTENT: SCI_SETTEXT wipes every style byte and resets
-        // scroll/caret. The host re-pushes content liberally (dialog-close
-        // reattach, pane first-layout nudge, showEditor) and relies on a
-        // later async setStyles to restore the highlight — when that raced,
-        // the highlight "randomly" came up blank. Identical content must be
-        // a strict no-op so nothing ever clears the style bytes.
-        sptr_t doc_len = [container.scintillaView message:SCI_GETTEXTLENGTH wParam:0 lParam:0];
-        if ((size_t)doc_len == text.size()) {
-            std::string current((size_t)doc_len + 1, '\0');
-            [container.scintillaView message:SCI_GETTEXT wParam:doc_len + 1 lParam:(sptr_t)current.data()];
-            current.resize((size_t)doc_len);
-            if (current == text) return;
-        }
-        [container.scintillaView message:SCI_SETTEXT wParam:0 lParam:(sptr_t)text.c_str()];
-        // Host-driven replacement is a document load, not a user edit.
-        // SCI_SETTEXT records the inserted document in Scintilla's undo
-        // history, so the first Cmd+Z on an untouched editor otherwise
-        // removes the entire file. Also discard history from the previously
-        // displayed IDE tab: applying that history to this document would be
-        // equally incorrect. User edits made after this point are collected
-        // normally and remain undoable.
-        [container.scintillaView message:SCI_EMPTYUNDOBUFFER wParam:0 lParam:0];
-        [container.scintillaView message:SCI_SETSAVEPOINT wParam:0 lParam:0];
+        const bool changed = LoadEditorDocument(text,
+            [&](unsigned int message, uintptr_t wparam, intptr_t lparam) -> intptr_t {
+                return [container.scintillaView message:message wParam:wparam lParam:lparam];
+            });
+        if (!changed) return;
         [container.scintillaView setNeedsDisplay:YES];
     };
     if ([NSThread isMainThread]) {

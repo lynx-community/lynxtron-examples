@@ -7,6 +7,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Scintilla Support (static lib, independent of napi)
 add_subdirectory(scintilla)
 
+option(LYNXTRON_EDITOR_TESTS "Build native editor regression tests" OFF)
+if(WIN32 AND LYNXTRON_EDITOR_TESTS)
+    enable_testing()
+    add_executable(document_load_test module/document_load_win_test.cc)
+    target_include_directories(document_load_test PRIVATE "${CMAKE_SOURCE_DIR}")
+    target_link_libraries(document_load_test PRIVATE scintilla)
+    add_test(NAME document_load COMMAND document_load_test)
+endif()
+
 set(LYNX_HEADERS_INCLUDE "${CMAKE_SOURCE_DIR}/node_modules/@lynx-js/lynx-library-headers/include")
 
 # ---------------------------------------------------------------------------

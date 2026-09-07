@@ -9,6 +9,7 @@
 // exists; do not "mirror" macOS changes into this file without one.
 
 #include "module/scintilla_view.h"
+#include "module/document_load.h"
 #include "module/native_edit_command.h"
 
 #ifndef NOMINMAX
@@ -793,8 +794,7 @@ void ScintillaView::OnLayoutChanged(float left, float top, float width, float he
     }
   }
   if (has_content) {
-    SciSend(hwnd, SCI_SETTEXT, 0, AsLParam(text.c_str()));
-    RedrawEditorWindow(hwnd);
+    SetContent(text.data(), text.size());
     DebugLog("OnLayoutChanged applied pending content after layout length=" +
              std::to_string(text.size()));
   }
@@ -879,25 +879,11 @@ void ScintillaView::SetContent(const char* data, size_t length) {
   if (!hwnd) {
     return;
   }
-  // IDEMPOTENT (mirror macOS): SCI_SETTEXT wipes every style byte and resets
-  // scroll/caret — identical content must be a strict no-op so host re-pushes
-  // can never clear the highlight.
-  {
-    LRESULT doc_len = SciSend(hwnd, SCI_GETTEXTLENGTH, 0, 0);
-    if ((size_t)doc_len == text.size()) {
-      std::string current((size_t)doc_len + 1, '\0');
-      SciSend(hwnd, SCI_GETTEXT, doc_len + 1, AsLParam(current.data()));
-      current.resize((size_t)doc_len);
-      if (current == text) {
-        std::lock_guard<std::mutex> lock(content_mutex_);
-        pending_content_.clear();
-        has_pending_content_ = false;
-        return;
-      }
-    }
-  }
-  SciSend(hwnd, SCI_SETTEXT, 0, AsLParam(text.c_str()));
-  RedrawEditorWindow(hwnd);
+  const bool changed = LoadEditorDocument(text,
+      [hwnd](unsigned int message, uintptr_t wparam, intptr_t lparam) -> intptr_t {
+        return SciSend(hwnd, message, wparam, lparam);
+      });
+  if (changed) RedrawEditorWindow(hwnd);
   {
     std::lock_guard<std::mutex> lock(content_mutex_);
     pending_content_.clear();
