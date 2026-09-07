@@ -30,6 +30,8 @@ function getAppResourceLocation() {
     isPackaged: app.isPackaged,
     resourcesPath: typeof packagedResourceDir === 'string' ? packagedResourceDir : undefined,
     moduleDir: __dirname,
+    platform: process.platform,
+    execPath: process.execPath,
   };
 }
 
