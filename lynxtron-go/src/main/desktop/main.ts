@@ -21,7 +21,7 @@ import {
   type HostDeepLinkPayload,
 } from '../../shared/deep-link';
 
-const { app, LynxWindow, dialog, Menu } =
+const { app, LynxWindow, dialog, Menu, devtool } =
   require('lynxtron') as typeof import('@lynx-js/lynxtron');
 
 function getAppResourceLocation() {
@@ -888,6 +888,7 @@ if (!hasSingleInstanceLock) {
 } else {
   registerDeepLinkLifecycle();
   app.whenReady().then(() => {
+    devtool.setDevToolEnabled(true);
     registerDeepLinkProtocolClient();
 
     // Dev only: a fixed position keeps automated verification (screenshots/

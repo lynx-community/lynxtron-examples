@@ -55,8 +55,8 @@ export function ToasterHost() {
   const dismiss = useCallback((id: string) => AppToaster.dismiss(id), []);
   if (toasts.length === 0) return null;
   return (
-    <PlatformOverlay priority={200}>
-      <view event-through={true} className="bp3-toast-container">
+    <PlatformOverlay priority={200} eventThrough={false}>
+      <view className="bp3-toast-container">
         {toasts.map(t => {
           const cls = 'bp3-toast' + (t.intent && t.intent !== 'none' ? ' bp3-intent-' + t.intent : '');
           return (
