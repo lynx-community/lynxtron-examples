@@ -30,5 +30,7 @@ const setUp = () => {
 
 exports.setUp = setUp;
 if (process.platform === 'win32') {
+  exports.hideWindowMenuBar = (handle) => require(modulePath).hideWindowMenuBar(handle);
+  exports.showWindowMenu = (handle) => require(modulePath).showWindowMenu(handle);
   exports.executeFocusedEditCommand = (command) => require(modulePath).executeFocusedEditCommand(command);
 }

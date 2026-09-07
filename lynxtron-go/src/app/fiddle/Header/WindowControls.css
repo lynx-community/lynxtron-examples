@@ -1,0 +1,58 @@
+.go-window-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  height: 100%;
+  -x-app-region: no-drag;
+}
+.go-window-menu {
+  width: 12px;
+  height: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.go-window-menu view {
+  width: 12px;
+  height: 1px;
+  background-color: var(--text-color-1);
+}
+.go-window-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  height: 51px;
+  background-color: var(--surface-chrome);
+  -x-app-region: drag;
+}
+.go-window-title {
+  flex: 1;
+  padding-left: 16px;
+  color: var(--text-color-1);
+  font-size: 12px;
+}
+.go-window-button {
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  -x-app-region: no-drag;
+}
+.go-window-minimize {
+  width: 10px;
+  height: 1px;
+  background-color: var(--text-color-1);
+}
+.go-window-maximize, .go-window-restore {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--text-color-1);
+}
+.go-window-restore {
+  border-top-width: 3px;
+  border-right-width: 3px;
+}
+.go-window-close {
+  margin-right: 4px;
+}

@@ -864,7 +864,11 @@ function buildAppMenu(
 
   if (process.platform === 'win32') {
     try {
-      w.setAutoHideMenuBar(false);
+      if (!isIdeBootTarget) {
+        require('lynxtron-scintilla-editor').hideWindowMenuBar(w.getNativeWindowHandle());
+      } else {
+        w.setAutoHideMenuBar(false);
+      }
     } catch (e) {
       console.warn('[PC_Host] setAutoHideMenuBar(false) failed:', e);
     }
@@ -934,6 +938,7 @@ if (!hasSingleInstanceLock) {
         : {
             titleBarStyle: 'hiddenInset' as const,
             trafficLightPosition: { x: 20, y: 17 },
+            ...(process.platform === 'win32' ? { frame: false } : {}),
           }),
       autoHideMenuBar: false,
       lynxPreference: {
@@ -950,6 +955,16 @@ if (!hasSingleInstanceLock) {
       } catch (_) { /* placement is cosmetic */ }
     }
     mainWindow = w;
+    const customWindowControls = process.platform === 'win32' && !isIdeBootTarget;
+    const windowControlState = () => ({
+      enabled: customWindowControls,
+      maximized: w.isMaximized(),
+    });
+    if (customWindowControls) {
+      const reportWindowState = () => w.sendGlobalEvent('go:windowState', windowControlState());
+      w.on('maximize', reportWindowState);
+      w.on('unmaximize', reportWindowState);
+    }
     console.log(
       '[PC_Host] LynxWindow created',
       path.join(__dirname, 'preload.js'),
@@ -1102,6 +1117,35 @@ if (!hasSingleInstanceLock) {
             }
           }
           callback.sendReply({ ok: true, open: menuQuickPickerOpen });
+        } else if (name === 'windowControl') {
+          if (!customWindowControls) {
+            callback.sendReply({ enabled: false, maximized: false });
+            return;
+          }
+          const action = stringParam(params, 'action');
+          if (action === 'minimize') w.minimize();
+          else if (action === 'toggleMaximize') {
+            // This Windows-only frameless window must restore the native show state.
+            // unmaximize() takes the runtime's frameless bounds-only path.
+            if (w.isMaximized()) w.restore();
+            else w.maximize();
+          } else if (action === 'menu') {
+            require('lynxtron-scintilla-editor').showWindowMenu(w.getNativeWindowHandle());
+          } else if (action === 'close') {
+            callback.sendReply(windowControlState());
+            if (menuSurface === 'fiddle') {
+              // Reuse the existing session-flush acknowledgment before quitting.
+              if (!quitFlushTimer) {
+                quitFlushTimer = setTimeout(() => {
+                  quitFlushTimer = null;
+                  app.quit();
+                }, 1000);
+                w.sendGlobalEvent('fiddle:persistNow', {});
+              }
+            } else w.close();
+            return;
+          }
+          callback.sendReply(windowControlState());
         } else if (name === 'setWindowBackground') {
           /**
            * The app's ground lives on the WINDOW, not on a Lynx element.

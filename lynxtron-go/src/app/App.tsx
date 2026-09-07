@@ -79,6 +79,7 @@ import { PlatformOverlay, PlatformOverlayHost } from './components/shared/Platfo
 import { IDE } from './components/IDE/IDE';
 import { RouteNavigationControls } from './components/IDE/RouteNavigationControls';
 import { CurrentFileFindBar } from './components/FindBar/CurrentFileFindBar';
+import { WindowControls } from './fiddle/Header/WindowControls';
 import {
   findCurrentFileMatches,
   getWrappedMatchIndex,
@@ -2898,6 +2899,7 @@ export function App(props: { onRender?: () => void } = {}) {
 
   return (
     <view className={'IDE' + (uiThemeDark ? '' : ' theme-light')}>
+      {showLegacyIde && getExposed()?.platform === 'win32' ? <WindowControls standalone /> : null}
       <view className="IDEStage">
         {/* Route chevrons belong to the legacy IDE only — the Fiddle is the
             home page and must carry no route chrome (a floating disabled

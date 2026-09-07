@@ -4,6 +4,7 @@ import { Button, ControlGroup, InputGroup, Spinner } from '../bp';
 import { Tooltip } from '../bp/Tooltip';
 import { resolveRunControlState } from './run-control';
 import './Commands.css';
+import { WindowControls } from './WindowControls';
 
 export interface CommandsProps {
   isConsoleShowing: boolean;
@@ -204,6 +205,7 @@ export function Commands(props: CommandsProps) {
           </Tooltip>
         </view>
       </view>
+      {getExposed()?.platform === 'win32' ? <WindowControls /> : null}
     </view>
   );
 }
