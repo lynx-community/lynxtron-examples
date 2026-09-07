@@ -13,6 +13,8 @@ vi.mock('./preload-config-store', () => ({
 
 import { createShowcaseService } from './preload-showcase-service';
 
+// Fixture main.js files are valid no-op Node scripts on every platform.
+const runtimeExecutable = process.execPath;
 const roots: string[] = [];
 const services: Array<ReturnType<typeof createShowcaseService>> = [];
 
@@ -83,12 +85,12 @@ describe('project build and launch matrix', () => {
     addReleaseArtifact(root);
     const created = service();
 
-    await created.bridge.runProject(root, '/usr/bin/true');
+    await created.bridge.runProject(root, runtimeExecutable);
 
     expect(fs.existsSync(path.join(root, '.build-count'))).toBe(false);
     expect(launchCommandOutput(created)).toContainEqual({
       source: 'showcase.precompiled',
-      message: `$ /usr/bin/true ${path.join(root, 'dist_precompiled', 'desktop')}`,
+      message: `$ ${runtimeExecutable} ${path.join(root, 'dist_precompiled', 'desktop')}`,
     });
   });
 
@@ -98,12 +100,12 @@ describe('project build and launch matrix', () => {
     write(root, 'src/app.tsx', 'export default "modified";\n');
     const created = service();
 
-    await created.bridge.runProject(root, '/usr/bin/true');
+    await created.bridge.runProject(root, runtimeExecutable);
 
     expect(buildCount(root)).toBe(1);
     expect(launchCommandOutput(created)).toContainEqual({
       source: 'project.launch',
-      message: `$ /usr/bin/true ${path.join(root, 'dist', 'desktop')}`,
+      message: `$ ${runtimeExecutable} ${path.join(root, 'dist', 'desktop')}`,
     });
   });
 
@@ -113,12 +115,12 @@ describe('project build and launch matrix', () => {
     write(root, 'dist_precompiled/desktop/main.lynx.bundle', 'corrupt');
     const created = service();
 
-    await created.bridge.runProject(root, '/usr/bin/true');
+    await created.bridge.runProject(root, runtimeExecutable);
 
     expect(buildCount(root)).toBe(1);
     expect(launchCommandOutput(created)).toContainEqual({
       source: 'project.launch',
-      message: `$ /usr/bin/true ${path.join(root, 'dist', 'desktop')}`,
+      message: `$ ${runtimeExecutable} ${path.join(root, 'dist', 'desktop')}`,
     });
   });
 
@@ -130,28 +132,28 @@ describe('project build and launch matrix', () => {
     write(root, 'dist/desktop/package.json', '{"main":"main.js"}\n');
     const created = service();
 
-    await created.bridge.runProject(root, '/usr/bin/true');
+    await created.bridge.runProject(root, runtimeExecutable);
 
     expect(buildCount(root)).toBe(1);
     expect(launchCommandOutput(created)).toContainEqual({
       source: 'project.launch',
-      message: `$ /usr/bin/true ${path.join(root, 'dist', 'desktop')}`,
+      message: `$ ${runtimeExecutable} ${path.join(root, 'dist', 'desktop')}`,
     });
   });
 
   it('rebuilds a custom project after another source edit', async () => {
     const root = makeProject('custom');
     const created = service();
-    await created.bridge.runProject(root, '/usr/bin/true');
+    await created.bridge.runProject(root, runtimeExecutable);
     created.bridge.readProcessOutput();
     write(root, 'src/app.tsx', 'export default "custom changed";\n');
 
-    await created.bridge.runProject(root, '/usr/bin/true');
+    await created.bridge.runProject(root, runtimeExecutable);
 
     expect(buildCount(root)).toBe(2);
     expect(launchCommandOutput(created)).toContainEqual({
       source: 'project.launch',
-      message: `$ /usr/bin/true ${path.join(root, 'dist', 'desktop')}`,
+      message: `$ ${runtimeExecutable} ${path.join(root, 'dist', 'desktop')}`,
     });
   });
 });
