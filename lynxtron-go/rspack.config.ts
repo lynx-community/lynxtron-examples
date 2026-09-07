@@ -89,6 +89,7 @@ const desktopConfig = defineConfig({
         // reason these are copied files rather than URLs: Lynx <image> loads
         // file:// only.
         { from: './resources/lynxtron.png', to: 'brand/lynxtron.png' },
+        { from: './resources/lynxtron.ico', to: 'brand/lynxtron.ico' },
         { from: './src/assets/lynxtron-on-dark.png', to: 'brand/lynxtron-on-dark.png' },
         // Standard showcase artifacts bundled with the installer for offline
         // starters. They stay as tgz files so CLI fetch/cache/verification is

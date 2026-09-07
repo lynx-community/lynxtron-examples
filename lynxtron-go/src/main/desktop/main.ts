@@ -40,6 +40,14 @@ function getAppLoadOptions() {
   return { globalProps: appGlobalProps(appResourceDir(getAppResourceLocation())) };
 }
 
+function getWindowIconOptions() {
+  // Windows needs a window icon even when the executable has an embedded icon.
+  // Keep macOS using the application's existing bundle icon.
+  return process.platform === 'win32'
+    ? { icon: path.join(appResourceDir(getAppResourceLocation()), 'brand', 'lynxtron.ico') }
+    : {};
+}
+
 function executeFocusedEditCommand(command: EditCommand): void {
   require('lynxtron-scintilla-editor').executeFocusedEditCommand(command);
 }
@@ -392,7 +400,7 @@ function openHelpPage(): boolean {
 // One shape for all bundle preview windows: create, scope file:// access,
 // track for lifetime, show. The caller only decides what to load.
 function openPreviewWindow(title: string, fileRoots: string[]): LynxWindowInstance {
-  const win = new LynxWindow({ width: 1120, height: 780, title });
+  const win = new LynxWindow({ width: 1120, height: 780, title, ...getWindowIconOptions() });
   installFileResourceFetcher(win, fileRoots);
   previewWindows.push(win);
   win.on('closed', () => {
@@ -916,6 +924,7 @@ if (!hasSingleInstanceLock) {
           : { x: 1180, y: 200 })
       : {};
     const w = new LynxWindow({
+      ...getWindowIconOptions(),
       width: 1200,
       height: 800,
       // Below this size the editor panes stop being useful. The commands bar
