@@ -36,18 +36,21 @@ export function getRuntimeRequire(): NodeRequire {
     : require;
 }
 
+const LYNXTRON_RUNTIME_VARIANTS = ['devtool', 'release'] as const;
+
 function getLynxtronExecutableRelativePaths(): string[] {
+  let binaryRelativePath: string;
   switch (process.platform) {
     case 'darwin':
-      return [path.join('lynxtron.app', 'Contents', 'MacOS', 'lynxtron')];
+      binaryRelativePath = path.join('lynxtron.app', 'Contents', 'MacOS', 'lynxtron');
+      break;
     case 'win32':
-      return [
-        'lynxtron.exe',
-        path.join('lynxtron.exe'),
-      ];
+      binaryRelativePath = 'lynxtron.exe';
+      break;
     default:
       throw new Error(`Unsupported Lynxtron platform: ${process.platform}`);
   }
+  return LYNXTRON_RUNTIME_VARIANTS.map((variant) => path.join(variant, binaryRelativePath));
 }
 
 function resolveLynxtronPackageRoot(nativeRequire: NodeRequire): string {
@@ -261,7 +264,7 @@ export function resolveLynxtronRuntimePaths(dbg: DebugLogger): LynxtronRuntimePa
   dbg(`executablePath: ${executablePath}`);
   if (!executablePath) {
     const expectedPaths = getLynxtronExecutableRelativePaths()
-      .map((relativePath) => path.join(packageRoot, 'dist', process.platform, process.arch, relativePath))
+      .map((relativePath) => path.join(packageRoot, 'dist', relativePath))
       .join(', ');
     dbg(`Executable not found, expected paths: ${expectedPaths}`);
     throw new Error(`Lynxtron executable not found. Expected one of: ${expectedPaths}`);
