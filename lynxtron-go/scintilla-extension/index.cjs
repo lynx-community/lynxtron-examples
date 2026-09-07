@@ -29,3 +29,6 @@ const setUp = () => {
 }
 
 exports.setUp = setUp;
+if (process.platform === 'win32') {
+  exports.executeFocusedEditCommand = (command) => require(modulePath).executeFocusedEditCommand(command);
+}

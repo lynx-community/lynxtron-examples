@@ -9,6 +9,7 @@
 // exists; do not "mirror" macOS changes into this file without one.
 
 #include "module/scintilla_view.h"
+#include "module/native_edit_command.h"
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -1113,6 +1114,23 @@ void ScintillaView::SetIndicators(const std::vector<std::tuple<int, int, int>>& 
     SciSend(hwnd, SCI_INDICATORFILLRANGE, start, length);
   }
   RedrawEditorWindow(hwnd);
+}
+
+bool ExecuteFocusedEditCommand(const std::string& command) {
+  UINT message = 0;
+  if (command == "undo") message = SCI_UNDO;
+  else if (command == "redo") message = SCI_REDO;
+  else if (command == "selectAll") message = SCI_SELECTALL;
+  else return false;
+
+  HWND focused = ::GetFocus();
+  {
+    std::lock_guard<std::mutex> lock(g_window_mutex);
+    if (g_views_by_hwnd.find(focused) == g_views_by_hwnd.end()) return false;
+  }
+  // Do not hold the registry lock: Scintilla can notify its parent synchronously.
+  SciSend(focused, message);
+  return true;
 }
 
 bool ScintillaRegistry::CaptureWindowToFile(const std::string& output_path) {

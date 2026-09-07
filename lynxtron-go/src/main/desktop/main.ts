@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { appFileResourceRoots, appGlobalProps, appResourceDir } from './app-resources';
 import { createPasteMenuItem } from './menu-paste';
+import { createEditMenuItem, type EditCommand } from './menu-edit';
 import { fetchExampleArtifact } from './example-artifact';
 import {
   downloadNativeExtension,
@@ -37,6 +38,10 @@ function getAppResourceLocation() {
 
 function getAppLoadOptions() {
   return { globalProps: appGlobalProps(appResourceDir(getAppResourceLocation())) };
+}
+
+function executeFocusedEditCommand(command: EditCommand): void {
+  require('lynxtron-scintilla-editor').executeFocusedEditCommand(command);
 }
 // The foundation-service thread's `process.versions` has no `lynxtron` key —
 // only the main process sees it. Hand it over via env for the UI's version
@@ -722,13 +727,13 @@ function buildAppMenu(
   template.push({
     label: 'Edit',
     submenu: [
-      { role: 'undo' },
-      { role: 'redo' },
+      createEditMenuItem('undo', executeFocusedEditCommand),
+      createEditMenuItem('redo', executeFocusedEditCommand),
       { type: 'separator' },
       { role: 'cut' },
       { role: 'copy' },
       createPasteMenuItem(quickPickerOpen, () => sendIde('paste')),
-      { role: 'selectAll' },
+      createEditMenuItem('selectAll', executeFocusedEditCommand),
       ...(!isWorkspace ? [{
         id: 'fiddleFind',
         label: 'Find',
