@@ -55,11 +55,6 @@ catalogs:
       specifier: ~5.9.3
       version: 5.9.3
 
-patchedDependencies:
-  '@lynx-js/lynxtron-rebuild@0.0.19-alpha.1':
-    hash: 6d9bff5f920d3fb1b03cbc40c225b2168370ac30778fe5d45f9aba828e566619
-    path: patches/@lynx-js__lynxtron-rebuild@0.0.19-alpha.1.patch
-
 importers:
 
   .:
@@ -712,7 +707,7 @@ importers:
         version: 0.0.19-alpha.1(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/lynxtron-rebuild':
         specifier: 'catalog:'
-        version: 0.0.19-alpha.1(patch_hash=6d9bff5f920d3fb1b03cbc40c225b2168370ac30778fe5d45f9aba828e566619)
+        version: 0.0.19-alpha.1
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -6570,7 +6565,7 @@ snapshots:
       '@rsbuild/core': 2.1.7(core-js@3.47.0)
       cross-spawn: 7.0.6
 
-  '@lynx-js/lynxtron-rebuild@0.0.19-alpha.1(patch_hash=6d9bff5f920d3fb1b03cbc40c225b2168370ac30778fe5d45f9aba828e566619)':
+  '@lynx-js/lynxtron-rebuild@0.0.19-alpha.1':
     dependencies:
       compressing: 1.10.5
       node-fetch: 3.3.2
