@@ -76,7 +76,10 @@ function buildCount(root: string): number {
 
 afterEach(() => {
   for (const created of services.splice(0)) created.dispose();
-  for (const root of roots.splice(0)) fs.rmSync(root, { recursive: true, force: true });
+  // Windows may release the child's working-directory handle just after kill.
+  for (const root of roots.splice(0)) {
+    fs.rmSync(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  }
 });
 
 describe('project build and launch matrix', () => {
