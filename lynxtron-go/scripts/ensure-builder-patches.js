@@ -12,14 +12,15 @@ function resolveFrom(baseDir, request) {
 function ensureBuilderCliPackageResolution(builderRoot) {
   const cliPath = path.join(builderRoot, 'cli.js');
   const source = fs.readFileSync(cliPath, 'utf8');
-  if (source.includes("'@lynx-js/lynxtron'")) {
+
+  if (source.includes("require.resolve('@lynx-js/lynxtron/package.json'")) {
     return;
   }
 
   const oldResolve = "const lynxtronEntryPath = require.resolve('@lynx-js/lynxtron', { paths: [projectRoot] });";
   const newResolve = `let lynxtronEntryPath;
     try {
-      lynxtronEntryPath = require.resolve('@lynx-js/lynxtron', { paths: [projectRoot] });
+      lynxtronEntryPath = require.resolve('@lynx-js/lynxtron/package.json', { paths: [projectRoot] });
     } catch (_) {
       lynxtronEntryPath = require.resolve('@lynx-js/lynxtron', { paths: [projectRoot] });
     }`;

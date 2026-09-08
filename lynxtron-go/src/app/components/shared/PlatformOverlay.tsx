@@ -73,13 +73,13 @@ export function PlatformOverlayHost() {
 
   return (
     <cover-view
-      event-through={eventThrough}
+      events-pass-through={eventThrough}
       className={'PlatformOverlayHost' + (activeEntries.length === 0 ? ' is-empty' : '')}
     >
       {activeEntries.map(entry => (
         <view
           key={entry.id}
-          event-through={true}
+          event-through={entry.eventThrough}
           className="PlatformOverlayEntry"
           style={{ zIndex: entry.priority }}
         >
