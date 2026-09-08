@@ -127,10 +127,19 @@ for (const packageName of cssLanguageServiceRuntime) {
 
 const releaseTag = process.env.LYNXTRON_RELEASE_TAG;
 if (releaseTag) {
+  // Native showcases ship a `-mac`/`-win` variant per Release, so verify the
+  // baked URL matches the current runner's platform slug.
+  const platformSlug = process.platform === 'win32' ? 'win' : 'mac';
   const expectedArtifactPrefix = `/releases/download/${encodeURIComponent(releaseTag)}/lynxtron-examples-`;
+  const expectedArtifactSuffix = `-${platformSlug}.tgz`;
   if (!bundle.includes(expectedArtifactPrefix)) {
     throw new Error(
       `Release build did not bake showcase artifact URLs for ${releaseTag}; expected ${expectedArtifactPrefix}.`,
+    );
+  }
+  if (!bundle.includes(expectedArtifactSuffix)) {
+    throw new Error(
+      `Release build did not bake per-platform showcase asset names; expected suffix ${expectedArtifactSuffix}.`,
     );
   }
 }

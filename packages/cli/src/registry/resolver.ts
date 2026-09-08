@@ -48,7 +48,11 @@ function tarballName(fileName: string): string {
     .replace(/\.tgz$/i, '')
     .replace(/-\d+\.\d+\.\d+(?:[-+].*)?$/, '')
     // Release assets use pnpm's scoped-package filename without the version.
-    .replace(/^lynxtron-examples-/, '');
+    .replace(/^lynxtron-examples-/, '')
+    // release-installers.yml uploads per-OS variants of native showcases as
+    // `<name>-mac.tgz` / `<name>-win.tgz`; strip that trailing platform slug
+    // so downstream logic sees the bare showcase name.
+    .replace(/-(mac|win)$/i, '');
 }
 
 export function resolveShowcaseUrl(url: string): ResolvedShowcase {
