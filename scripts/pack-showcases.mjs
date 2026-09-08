@@ -11,10 +11,14 @@
 // this script collects every tarball into one folder so the release workflow
 // can glob-upload them in one step.
 //
-// Usage: node scripts/pack-showcases.mjs [--builtin] [--out <dir>]
-//   --builtin  Pack only installer-bundled showcases; public mode excludes them.
-//   --out  Output directory for the packed tarballs.
-//          Defaults to dist/showcase-artifacts.
+// Usage: node scripts/pack-showcases.mjs [--builtin] [--out <dir>] [--platform <slug>]
+//   --builtin   Pack only installer-bundled showcases; public mode excludes them.
+//   --out       Output directory for the packed tarballs.
+//               Defaults to dist/showcase-artifacts.
+//   --platform  Append `-<slug>` to the release tarball basename so per-OS
+//               builds (e.g. .node native addons) can be uploaded side by side
+//               without clobbering one another. Ignored in --builtin mode,
+//               which cache-keys by installer identity instead.
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -37,8 +41,21 @@ function parseOutDir() {
   return path.join(rootDir, 'dist', 'showcase-artifacts');
 }
 
+function parsePlatformSlug() {
+  const flagIndex = process.argv.indexOf('--platform');
+  const explicit = flagIndex !== -1 ? process.argv[flagIndex + 1] : undefined;
+  if (!explicit) return '';
+  if (!/^[a-z0-9][a-z0-9._-]*$/.test(explicit)) {
+    throw new Error(`--platform must be a filename-safe slug, got: ${explicit}`);
+  }
+  return explicit;
+}
+
 const outDir = parseOutDir();
 const builtinOnly = process.argv.includes('--builtin');
+// The platform slug only applies to public/release tarballs — built-in
+// artifacts already encode the installer identity in their filename.
+const platformSlug = builtinOnly ? '' : parsePlatformSlug();
 
 function log(message) {
   console.log(`[pack-showcases] ${message}`);
@@ -161,7 +178,9 @@ async function renamePackedTarball(showcaseDir) {
     .replace(/[^a-zA-Z0-9.+-]/g, '-');
   const destName = builtinOnly
     ? `${scopeless}-${installerIdentity}.tgz`
-    : `${scopeless}.tgz`;
+    : platformSlug
+      ? `${scopeless}-${platformSlug}.tgz`
+      : `${scopeless}.tgz`;
   const dest = path.join(outDir, destName);
   if (!fs.existsSync(src)) {
     throw new Error(`Expected tarball not found: ${src}`);

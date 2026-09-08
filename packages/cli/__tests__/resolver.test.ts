@@ -83,6 +83,21 @@ describe('resolveShowcaseUrl', () => {
     });
   });
 
+  it('strips the per-OS suffix from a native release asset', () => {
+    const macUrl = 'https://github.com/lynx-community/lynxtron-examples/releases/download/lynxtron-go-v0.1.9/lynxtron-examples-todolist-mac.tgz';
+    expect(resolveShowcaseUrl(macUrl)).toEqual({
+      type: 'remote-tarball',
+      url: macUrl,
+      name: 'todolist',
+    });
+    const winUrl = 'https://github.com/lynx-community/lynxtron-examples/releases/download/lynxtron-go-v0.1.9/lynxtron-examples-todolist-win.tgz';
+    expect(resolveShowcaseUrl(winUrl)).toEqual({
+      type: 'remote-tarball',
+      url: winUrl,
+      name: 'todolist',
+    });
+  });
+
   it('restores the bare name from a versioned built-in installer artifact', () => {
     const url = 'file:///Applications/Lynxtron%20Go.app/Contents/Resources/builtin-showcases/lynxtron-examples-hello-lynxtron-0.1.6-64b8f7.tgz';
     expect(resolveShowcaseUrl(url)).toEqual({

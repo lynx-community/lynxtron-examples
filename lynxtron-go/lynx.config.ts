@@ -133,7 +133,14 @@ function buildShowcaseRegistry() {
       } else if (isReleaseArtifacts && gitRemote && s.path?.startsWith('showcases/')) {
         const releaseTag = process.env.LYNXTRON_RELEASE_TAG;
         if (!releaseTag) throw new Error('LYNXTRON_RELEASE_TAG is required for release-artifacts mode');
-        const assetName = `${String(s.name).replace(/^@/, '').replace('/', '-')}.tgz`;
+        // Release showcases can carry native `.node` addons, which are
+        // host-platform specific. release-installers.yml uploads a `-mac`
+        // and `-win` variant of every release tarball; the installer built
+        // on macOS must therefore point every entry at the `-mac` asset,
+        // and the Windows installer at the `-win` asset.
+        const platformSlug = process.platform === 'win32' ? 'win' : 'mac';
+        const bareName = String(s.name).replace(/^@/, '').replace('/', '-');
+        const assetName = `${bareName}-${platformSlug}.tgz`;
         url = `${gitRemote}/releases/download/${encodeURIComponent(releaseTag)}/${assetName}`;
       } else if (gitRemote) {
         url = `${gitRemote}/tree/${gitBranch}/${s.path}`;
