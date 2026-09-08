@@ -1,5 +1,13 @@
 # lynxtron-go
 
+## 0.1.10
+
+### Patch Changes
+
+- b201b9f: Fix Windows packaged display assets, window icons, edit commands, frameless window controls, themed scrollbars and continuous vertical scrolling. Preserve bundled TSX language-service types, report the bundled runtime version, and share document-loading undo boundaries with macOS so an untouched document cannot be undone to an empty editor.
+- b201b9f: Launch Windows package-manager command shims with proper argument escaping and captured build output. Explain disk-space exhaustion when dependency installation fails.
+- b201b9f: Find installer-bundled starter showcases beside the Windows executable so first launch and new Blank projects can load without downloading the starter.
+
 ## 0.1.9
 
 ### Patch Changes
