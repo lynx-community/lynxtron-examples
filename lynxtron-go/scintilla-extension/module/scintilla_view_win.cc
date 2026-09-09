@@ -408,11 +408,25 @@ LRESULT CALLBACK ParentWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
   }
 
   if (message == WM_SIZE &&
-      (wparam == SIZE_RESTORED || wparam == SIZE_MAXIMIZED) &&
-      ConsumeParentWasMinimized(hwnd)) {
-    SetParentRestoreRevealPending(hwnd, true);
-    HideViewsForParent(hwnd);
-    ::SetTimer(hwnd, kRestoreRevealTimerId, kRestoreRevealDelayMs, nullptr);
+      (wparam == SIZE_RESTORED || wparam == SIZE_MAXIMIZED)) {
+    if (ConsumeParentWasMinimized(hwnd)) {
+      // Coming out of a minimize: hold the host hidden across the restore and
+      // reveal it once, after the async layout settles (avoids a stale frame).
+      SetParentRestoreRevealPending(hwnd, true);
+      HideViewsForParent(hwnd);
+      ::SetTimer(hwnd, kRestoreRevealTimerId, kRestoreRevealDelayMs, nullptr);
+    } else {
+      // A plain maximize/restore does not go through the minimize reveal path,
+      // but it still resizes the panes. Lynx delivers the new geometry for the
+      // Scintilla views asynchronously, so the immediate reposition below can
+      // repaint against a frame that the compositor has not finished growing —
+      // the just-exposed area is left filled with the host background only
+      // (blank) until the next input triggers a repaint. Arm the same short
+      // timer to reposition + repaint once the resize has settled, WITHOUT
+      // hiding (hiding here would flash the editor). This replaces the manual
+      // click that users otherwise need to clear the blank strip.
+      ::SetTimer(hwnd, kRestoreRevealTimerId, kRestoreRevealDelayMs, nullptr);
+    }
   }
 
   if (should_reposition) {
