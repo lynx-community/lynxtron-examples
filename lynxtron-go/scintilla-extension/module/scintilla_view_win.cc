@@ -60,6 +60,7 @@ std::map<HWND, std::vector<ScintillaView*>> g_views_by_parent_hwnd;
 std::map<HWND, WNDPROC> g_parent_wndprocs;
 std::map<HWND, bool> g_parent_was_minimized;
 std::map<HWND, bool> g_parent_restore_reveal_pending;
+std::map<HWND, bool> g_parent_interactive_resize;
 bool g_scintilla_classes_registered = false;
 bool g_host_class_registered = false;
 HMODULE g_scintilla_module_handle = nullptr;
@@ -242,10 +243,31 @@ void SetParentRestoreRevealPending(HWND parent, bool value) {
   }
 }
 
+void MarkParentInteractiveResize(HWND parent, bool* was_already_active) {
+  std::lock_guard<std::mutex> lock(g_window_mutex);
+  auto it = g_parent_interactive_resize.find(parent);
+  if (was_already_active) {
+    *was_already_active = it != g_parent_interactive_resize.end() && it->second;
+  }
+  g_parent_interactive_resize[parent] = true;
+}
+
+bool ConsumeParentInteractiveResize(HWND parent) {
+  std::lock_guard<std::mutex> lock(g_window_mutex);
+  auto it = g_parent_interactive_resize.find(parent);
+  const bool active = it != g_parent_interactive_resize.end() && it->second;
+  if (it != g_parent_interactive_resize.end()) {
+    g_parent_interactive_resize.erase(it);
+  }
+  return active;
+}
+
 bool ShouldHoldHostHidden(HWND parent) {
   std::lock_guard<std::mutex> lock(g_window_mutex);
   auto minimized_it = g_parent_was_minimized.find(parent);
   if (minimized_it != g_parent_was_minimized.end() && minimized_it->second) return true;
+  auto resize_it = g_parent_interactive_resize.find(parent);
+  if (resize_it != g_parent_interactive_resize.end() && resize_it->second) return true;
   auto pending_it = g_parent_restore_reveal_pending.find(parent);
   return pending_it != g_parent_restore_reveal_pending.end() && pending_it->second;
 }
@@ -380,6 +402,28 @@ LRESULT CALLBACK ParentWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
     HideViewsForParent(hwnd);
   }
 
+  // An interactive window-edge drag runs a modal loop that fires WM_SIZING on
+  // every tick (only for a resize — never for a move, maximize, or programmatic
+  // SetWindowPos). Lynx delivers the grown pane geometry asynchronously, so the
+  // child host would sit at its stale (smaller) rect while the window frame
+  // grows; the just-exposed strip is clipped out of the renderer (WS_CLIPCHILDREN)
+  // and not yet covered by the child, so it shows through as a transparent tear.
+  //
+  // WM_SIZING arrives BEFORE the size actually changes, so hide the host here —
+  // synchronously, ahead of the original wndproc that applies the resize and
+  // presents the grown frame. Doing this only via the later should_reposition
+  // path left the very first drag frame painted with the editor still visible
+  // at its stale rect (the occasional one-or-two-frame flicker). The region
+  // then falls back to the window ground the renderer paints everywhere else;
+  // reveal once on WM_EXITSIZEMOVE after the async layout settles.
+  if (message == WM_SIZING) {
+    bool was_already_resizing = false;
+    MarkParentInteractiveResize(hwnd, &was_already_resizing);
+    if (!was_already_resizing) {
+      HideViewsForParent(hwnd);
+    }
+  }
+
   WNDPROC original = OriginalParentWndProc(hwnd);
   LRESULT result = original
                        ? ::CallWindowProcW(original, hwnd, message, wparam, lparam)
@@ -391,6 +435,7 @@ LRESULT CALLBACK ParentWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
     g_parent_wndprocs.erase(hwnd);
     g_parent_was_minimized.erase(hwnd);
     g_parent_restore_reveal_pending.erase(hwnd);
+    g_parent_interactive_resize.erase(hwnd);
     ::KillTimer(hwnd, kRestoreRevealTimerId);
     return result;
   }
@@ -405,6 +450,17 @@ LRESULT CALLBACK ParentWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
     }
     RepositionViewsForParent(hwnd);
     return result;
+  }
+
+  // Drag ended. If this WM_EXITSIZEMOVE closes an interactive resize (not a
+  // pure title-bar move), the host has been held hidden throughout. Keep it
+  // hidden across the async layout settle and reveal it exactly once via the
+  // shared timer, so the final frame paints against the grown geometry rather
+  // than a stale rect.
+  if (message == WM_EXITSIZEMOVE && ConsumeParentInteractiveResize(hwnd)) {
+    SetParentRestoreRevealPending(hwnd, true);
+    HideViewsForParent(hwnd);
+    ::SetTimer(hwnd, kRestoreRevealTimerId, kRestoreRevealDelayMs, nullptr);
   }
 
   if (message == WM_SIZE &&
