@@ -13,6 +13,11 @@ import './FiddleSidebar.css';
 // package.json is reserved.
 const VALID_EXT = /\.(cjs|js|mjs|html|css|json|jsx|ts|tsx)$/;
 
+// Prefilled into the Add-file row so confirming (✓ / Enter) without typing
+// creates this file rather than silently cancelling on an empty value. Also
+// the placeholder/glyph fallback so all three stay in sync.
+const DEFAULT_NEW_FILE_NAME = 'file.js';
+
 
 export function validateNewFileName(name: string, existing: string[]): string | null {
   if (!isSafeRelativePath(name)) return 'Path must stay inside the project';
@@ -244,7 +249,7 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
             <text className="FiddleSidebar-SectionTitle">Editors</text>
           </view>
           <view className="FiddleSidebar-SectionActions">
-            <Button icon="add" small minimal title="Add New File" onClick={() => setAddingName('')} />
+            <Button icon="add" small minimal title="Add New File" onClick={() => setAddingName(DEFAULT_NEW_FILE_NAME)} />
             <Button icon="grid-view" small minimal title="Reset Layout" onClick={props.onResetLayout} />
           </view>
         </view>
@@ -254,10 +259,10 @@ export function FiddleSidebar(props: FiddleSidebarProps) {
         {addingName != null ? (
           <view className="FiddleSidebar-AddRow">
             <view className="FiddleSidebar-AddRowInput">
-              <text className="FiddleSidebar-ItemGlyph">{fileIcon(addingName || 'file.js')}</text>
+              <text className="FiddleSidebar-ItemGlyph">{fileIcon(addingName || DEFAULT_NEW_FILE_NAME)}</text>
               <InputGroup
                 fill
-                placeholder="file.js"
+                placeholder={DEFAULT_NEW_FILE_NAME}
                 value={addingName}
                 onChange={setAddingName}
                 onSubmit={commitAdd}
