@@ -59,7 +59,6 @@
   letter-spacing: 0.9px;
   text-transform: none;
   color: var(--bp-text-muted);
-  opacity: 0.75;
 }
 .Version-SectionRow {
   display: flex;
@@ -109,11 +108,10 @@
 }
 /* A path or a date is data. */
 .Version-ItemMeta {
-  font-family: 'SF Mono', Menlo, monospace;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
   font-size: 10px;
   line-height: 14px;
   color: var(--bp-text-muted);
-  opacity: 0.8;
   overflow: hidden;
   text-overflow: ellipsis;
 }
