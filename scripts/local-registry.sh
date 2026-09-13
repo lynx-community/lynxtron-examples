@@ -61,7 +61,7 @@ packages:
     allow_overwrite: true
   '@lynx-js/*':
     access: \$all
-    proxy: bnpm
+    proxy: npmjs
   '**':
     access: \$all
     proxy: npmjs
