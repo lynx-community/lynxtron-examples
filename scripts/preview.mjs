@@ -296,26 +296,69 @@ async function publishWorkspacePackages() {
   await runNpmPublish(path.join(rootDir, 'packages', 'cli'), publishArgs);
 }
 
+// The source monorepo's pnpm catalog, parsed once. `npm publish` copies
+// package.json verbatim (unlike `pnpm publish`, which rewrites `catalog:` to
+// concrete versions when building the publish tarball). A package published to
+// verdaccio with `catalog:` deps intact then breaks every npm consumer with
+// `EUNSUPPORTEDPROTOCOL: Unsupported URL Type "catalog:"`, so resolve those
+// specifiers here the way pnpm would.
+function readWorkspaceCatalog() {
+  const text = fs.readFileSync(path.join(rootDir, 'pnpm-workspace.yaml'), 'utf8');
+  const catalog = {};
+  let inCatalog = false;
+  for (const line of text.split(/\r?\n/)) {
+    if (/^catalog:\s*$/.test(line)) { inCatalog = true; continue; }
+    if (!inCatalog) continue;
+    if (/^\S/.test(line)) break; // dedent to a new top-level key ends the block
+    const match = line.match(/^\s+["']?([^"'\s:]+)["']?\s*:\s*(.+?)\s*$/);
+    if (match) catalog[match[1]] = match[2].replace(/^["']|["']$/g, '');
+  }
+  return catalog;
+}
+
+const workspaceCatalog = readWorkspaceCatalog();
+
+// Rewrite a dependency map's `catalog:` refs (the default catalog is keyed by
+// the dependency name) to concrete versions. `workspace:` refs are unexpected
+// in the published packages and are surfaced loudly rather than shipped broken.
+function resolvePublishSpecifiers(deps) {
+  if (!deps) return;
+  for (const [name, version] of Object.entries(deps)) {
+    if (typeof version !== 'string') continue;
+    if (version === 'catalog:' || version.startsWith('catalog:')) {
+      const resolved = workspaceCatalog[name];
+      if (!resolved) {
+        throw new Error(`No catalog entry for "${name}" in pnpm-workspace.yaml`);
+      }
+      deps[name] = resolved;
+    } else if (version.startsWith('workspace:')) {
+      throw new Error(
+        `Unhandled workspace: specifier for "${name}" in a published package; add resolution in preview.mjs`,
+      );
+    }
+  }
+}
+
 // Publishes a workspace package to the local registry even when it is marked
 // `"private": true`. The private flag is a safeguard against accidental
 // publish to the public npm registry; preview intentionally short-circuits it
-// by writing a stripped copy of package.json for the duration of the publish
-// call and always restoring the original, even on failure.
+// by writing a temporary copy of package.json (private stripped, catalog:
+// resolved) for the duration of the publish call and always restoring the
+// original, even on failure.
 async function runNpmPublish(pkgDir, publishArgs) {
   const pkgJsonPath = path.join(pkgDir, 'package.json');
   const original = await readFile(pkgJsonPath, 'utf8');
   const parsed = JSON.parse(original);
-  const needsStrip = parsed.private === true;
-  if (needsStrip) {
-    const { private: _private, ...rest } = parsed;
-    await writeFile(pkgJsonPath, JSON.stringify(rest, null, 2) + '\n');
-  }
+  resolvePublishSpecifiers(parsed.dependencies);
+  resolvePublishSpecifiers(parsed.devDependencies);
+  resolvePublishSpecifiers(parsed.optionalDependencies);
+  resolvePublishSpecifiers(parsed.peerDependencies);
+  const { private: _private, ...published } = parsed;
+  await writeFile(pkgJsonPath, JSON.stringify(published, null, 2) + '\n');
   try {
     await run('npm', publishArgs, { cwd: pkgDir });
   } finally {
-    if (needsStrip) {
-      await writeFile(pkgJsonPath, original);
-    }
+    await writeFile(pkgJsonPath, original);
   }
 }
 
