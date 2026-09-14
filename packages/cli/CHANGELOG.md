@@ -1,5 +1,11 @@
 # @lynxtron-examples/cli
 
+## 0.0.9
+
+### Patch Changes
+
+- 123b794: Publish per-OS variants of native showcase tarballs (`-mac.tgz` / `-win.tgz`) and bake the matching platform URL into each installer, so Windows users get Windows `.node` builds and macOS users get macOS `.node` builds instead of sharing whichever runner packed first.
+
 ## 0.0.8
 
 ### Patch Changes
