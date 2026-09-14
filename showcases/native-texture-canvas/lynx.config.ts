@@ -2,10 +2,9 @@ import { createShowcaseConfig } from '@lynxtron-examples/config/lynx';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
-const showcaseDir = path.dirname(fileURLToPath(import.meta.url));
-const extensionDir = path.join(showcaseDir, 'native-texture-extension');
+const extensionDir = path.dirname(createRequire(import.meta.url).resolve('lynxtron-native-texture-canvas/package.json'));
 const files = [
   'index.cjs',
   'build/Release/native_texture_canvas_module.node',
@@ -23,7 +22,7 @@ const manifest = {
   entry: 'index.cjs',
   files: files.map((relativePath) => ({
     path: relativePath,
-    url: `node_modules/lynxtron-native-texture-canvas/${relativePath}`,
+    url: `.lynxtron/native/node_modules/lynxtron-native-texture-canvas/${relativePath}`,
     sha256: sha256(path.join(extensionDir, relativePath)),
   })),
 };

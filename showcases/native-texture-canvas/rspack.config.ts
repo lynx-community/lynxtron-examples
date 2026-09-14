@@ -43,25 +43,10 @@ export default defineConfig({
       patterns: [
         { from: './package.json', to: 'package.json' },
         { from: './output/bundle/lynx/', to: '.' },
-        {
-          from: './native-texture-extension/index.cjs',
-          to: 'node_modules/lynxtron-native-texture-canvas/index.cjs',
-          // The SHA-256 embedded in the Lynx bundle is computed from this
-          // source file. Mark it as already minimized so Rspack preserves the
-          // exact bytes copied into the published desktop artifact.
-          info: { minimized: true },
-        },
-        {
-          from: './native-texture-extension/package.json',
-          to: 'node_modules/lynxtron-native-texture-canvas/package.json',
-        },
-        {
-          from: './native-texture-extension/build/Release/native_texture_canvas_module.node',
-          to: 'node_modules/lynxtron-native-texture-canvas/build/Release/native_texture_canvas_module.node',
-        },
       ],
     }),
-    ...(isDev ? [pluginLynxtron({ isDev, entry: path.resolve(__dirname, './dist/desktop') })] : []),
+    // AutoLink must run for release builds too; isDev only controls launching.
+    pluginLynxtron({ isDev, entry: path.resolve(__dirname, './dist/desktop') }),
   ],
   resolve: { extensions: ['.ts', '.js'] },
 });

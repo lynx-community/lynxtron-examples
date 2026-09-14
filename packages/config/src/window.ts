@@ -1,9 +1,9 @@
 /** Minimal shape of a LynxWindow, to avoid a hard dependency on the runtime
     types from this shared package. */
 export interface ResizableWindow {
-  getSize(): [number, number];
+  getSize(): number[];
   setSize(width: number, height: number): void;
-  getPosition?(): [number, number];
+  getPosition?(): number[];
   setPosition?(x: number, y: number): void;
 }
 

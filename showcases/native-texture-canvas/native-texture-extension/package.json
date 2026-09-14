@@ -4,6 +4,11 @@
   "version": "0.0.1",
   "type": "module",
   "main": "index.cjs",
+  "exports": {
+    ".": "./index.cjs",
+    "./lynxtron": "./index.cjs",
+    "./package.json": "./package.json"
+  },
   "description": "Lynxtron native texture canvas extension",
   "scripts": {
     "build": "node scripts/build.js"
@@ -19,6 +24,7 @@
     "bindings/**/*",
     "module/**/*",
     "index.cjs",
+    "lynx.lib.json",
     "CMakeLists.txt",
     "scripts/**/*",
     "build/Release/*.node"

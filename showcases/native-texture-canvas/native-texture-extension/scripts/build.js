@@ -3,11 +3,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const __filename = fileURLToPath(import.meta.url);
-const extensionDir = path.resolve(path.dirname(__filename), '..');
-const showcaseDir = path.resolve(extensionDir, '..');
-const repoRoot = path.resolve(extensionDir, '../../..');
+const sourceDir = path.resolve(path.dirname(__filename), '..');
+const showcaseDir = path.resolve(sourceDir, '..');
+const repoRoot = path.resolve(showcaseDir, '../..');
+// pnpm materializes file: dependencies separately; build the package AutoLink
+// actually resolves, not an unrelated source-side binary.
+const requireFromShowcase = createRequire(path.join(showcaseDir, 'package.json'));
+const extensionDir = path.dirname(requireFromShowcase.resolve('lynxtron-native-texture-canvas/package.json'));
 
 const supportedPlatforms = new Set(['darwin', 'win32']);
 const forceBuild = process.env.LYNXTRON_FORCE_NATIVE_TEXTURE_BUILD === '1';
@@ -28,7 +33,10 @@ const candidates = [
 const command = candidates.find((candidate) => fs.existsSync(candidate)) ?? executableName;
 // On Windows, spawning a `.cmd` shim requires running through a shell.
 // Otherwise Node may throw `spawn EINVAL`.
-const child = spawn(command, ['compile'], {
+const child = spawn(command, ['compile',
+  `--CDLYNX_HEADERS_ROOT=${path.dirname(requireFromShowcase.resolve('@lynx-js/lynx-library-headers/package.json'))}`,
+  `--CDLYNXTRON_ROOT=${path.dirname(requireFromShowcase.resolve('@lynx-js/lynxtron/package.json'))}`,
+], {
   cwd: extensionDir,
   stdio: 'inherit',
   shell: process.platform === 'win32',
