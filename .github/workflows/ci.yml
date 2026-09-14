@@ -34,6 +34,9 @@ jobs:
           corepack enable
           pnpm install
 
+      - name: Test release version contract
+        run: node --test scripts/go-release.test.mjs
+
       - name: Verify no required build scripts were skipped
         run: pnpm ignored-builds
 

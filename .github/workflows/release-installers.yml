@@ -4,44 +4,99 @@ name: Release Installers
 # attach them as assets to a GitHub Release (created on demand if the tag
 # does not exist yet).
 #
-# This workflow is deliberately **manual-only** and independent of the npm
-# publish pipeline in `release.yml`, so a broken installer build can be
-# retried without re-running Changesets, and vice-versa.
+# Called automatically after a Changesets Go version bump. Manual dispatch
+# remains available for previews and retries. Both paths use the same version
+# checks, pinned checkout and build steps.
 
 on:
+  workflow_call:
+    inputs:
+      source-sha:
+        required: true
+        type: string
+      expected-version:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       tag:
         description: >
-          GitHub Release tag to attach assets to. If the tag/Release does
-          not exist yet, it will be created automatically. When left
-          empty, the tag defaults to `lynxtron-go-v<version>` on `main`
-          (tracking Changesets patch bumps), or
-          `lynxtron-go-v<version>-dev.<sha6>` on any other branch.
+          Optional assertion of the generated tag. Must match the Go
+          package version: lynxtron-go-v<version> on main, or
+          lynxtron-go-v<version>-dev.<sha6> on other branches.
         required: false
         type: string
 
 permissions: {}
 
 concurrency:
-  group: ${{ github.workflow }}
+  # A literal group avoids deadlocking with the caller's Release group.
+  group: lynxtron-go-installers
   cancel-in-progress: false
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      prerelease: ${{ steps.tag.outputs.prerelease }}
+      sha: ${{ steps.tag.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source-sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Resolve and validate release identity
+        id: tag
+        env:
+          REQUESTED_TAG: ${{ inputs.tag }}
+          EXPECTED_VERSION: ${{ inputs.expected-version }}
+        run: node scripts/go-release.mjs resolve
+      - name: Refuse to overwrite a tag from another commit
+        uses: actions/github-script@v7
+        env:
+          RELEASE_TAG: ${{ steps.tag.outputs.tag }}
+          SOURCE_SHA: ${{ steps.tag.outputs.sha }}
+        with:
+          script: |
+            let object;
+            try {
+              const { data } = await github.rest.git.getRef({
+                ...context.repo, ref: `tags/${process.env.RELEASE_TAG}`,
+              });
+              object = data.object;
+            } catch (error) {
+              if (error.status === 404) return;
+              throw error;
+            }
+            while (object.type === 'tag') {
+              const { data } = await github.rest.git.getTag({ ...context.repo, tag_sha: object.sha });
+              object = data.object;
+            }
+            if (object.type !== 'commit' || object.sha !== process.env.SOURCE_SHA) {
+              core.setFailed('Release tag belongs to another commit. Bump Go version or rerun the original release run.');
+            }
+
   installers:
     name: Installers (${{ matrix.os }})
+    needs: prepare
     permissions:
-      contents: write
+      contents: read
     strategy:
       fail-fast: false
-      # Serialize so the two OS jobs don't race to create the same release.
-      max-parallel: 1
+      # Builds run independently; only the final publish job creates a Release.
       matrix:
         os: [macos-latest, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -52,34 +107,7 @@ jobs:
         run: |
           npm i -g corepack@latest --force
           corepack enable
-          pnpm install
-
-      - name: Resolve release tag
-        id: tag
-        shell: bash
-        run: |
-          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
-            prerelease=false
-          else
-            prerelease=true
-          fi
-
-          if [ -n "${{ inputs.tag }}" ]; then
-            tag="${{ inputs.tag }}"
-          else
-            version=$(node -p "require('./lynxtron-go/package.json').version")
-            # main: v<version> (stable, tracks Changesets patch bumps)
-            # other branches: v<version>-dev.<sha6> (pre-release; disambiguates
-            # per-commit builds so they don't clobber the stable Release)
-            if [ "$GITHUB_REF" = "refs/heads/main" ]; then
-              tag="lynxtron-go-v${version}"
-            else
-              sha6=$(printf '%s' "$GITHUB_SHA" | cut -c1-6)
-              tag="lynxtron-go-v${version}-dev.${sha6}"
-            fi
-          fi
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+          pnpm install --frozen-lockfile
 
       - name: Import macOS signing certificate
         if: runner.os == 'macOS'
@@ -115,7 +143,7 @@ jobs:
       - name: Build macOS installer
         if: runner.os == 'macOS'
         env:
-          LYNXTRON_RELEASE_TAG: ${{ steps.tag.outputs.tag }}
+          LYNXTRON_RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
           APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
@@ -146,7 +174,7 @@ jobs:
       - name: Build Windows installer
         if: runner.os == 'Windows'
         env:
-          LYNXTRON_RELEASE_TAG: ${{ steps.tag.outputs.tag }}
+          LYNXTRON_RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
         run: pnpm --dir lynxtron-go run pack:win
 
       # Windows: publishable showcase tarballs. Native .node addons are
@@ -157,18 +185,16 @@ jobs:
         if: runner.os == 'Windows'
         run: node scripts/pack-showcases.mjs --platform win
 
-      - name: Upload Release assets
-        uses: softprops/action-gh-release@v2
+      - name: Stage release assets
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          prerelease: ${{ steps.tag.outputs.prerelease }}
-          fail_on_unmatched_files: false
-          files: |
+          name: go-release-${{ matrix.os }}
+          overwrite: true
+          if-no-files-found: error
+          path: |
             lynxtron-go/dist/*.dmg
             lynxtron-go/dist/*.exe
             dist/showcase-artifacts/*.tgz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Clean up macOS signing materials
         if: runner.os == 'macOS' && always()
@@ -176,3 +202,33 @@ jobs:
           security delete-keychain "$RUNNER_TEMP/lynxtron-go-signing.keychain-db" || true
           rm -f "$RUNNER_TEMP/lynxtron-go-signing.p12"
           rm -f "$RUNNER_TEMP/lynxtron-notarization.p8"
+
+  publish:
+    name: Publish complete Go release
+    needs: [prepare, installers]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: go-release-*
+          path: release-assets
+          merge-multiple: true
+      - name: Verify both platforms are present
+        shell: bash
+        run: |
+          test -n "$(find release-assets -name '*.dmg' -print -quit)"
+          test -n "$(find release-assets -name '*.exe' -print -quit)"
+          test -n "$(find release-assets -name '*-mac.tgz' -print -quit)"
+          test -n "$(find release-assets -name '*-win.tgz' -print -quit)"
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          target_commitish: ${{ needs.prepare.outputs.sha }}
+          prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}
+          fail_on_unmatched_files: true
+          files: |
+            release-assets/**/*.dmg
+            release-assets/**/*.exe
+            release-assets/**/*.tgz

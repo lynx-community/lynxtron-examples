@@ -5,10 +5,8 @@ name: Release
 # - Opens/updates the "Version Packages" PR when changesets are pending.
 # - Once that PR is merged, publishes updated packages to npm.
 #
-# Native installers (dmg/exe) and showcase tarballs are handled by the
-# separate `release-installers.yml` workflow, which is triggered manually
-# so that a fresh set of installer/asset builds can be attached to a
-# Release (created on demand) without depending on npm publish state.
+# A Go version bump automatically calls release-installers.yml after this
+# job succeeds. Go is private, so publishedPackages cannot be the trigger.
 #
 # Note: this pipeline runs `changeset publish --no-git-tag` and passes
 # `createGithubReleases: false` to changesets/action, so no git tags or
@@ -31,6 +29,10 @@ jobs:
     name: Release
     runs-on: macos-latest
     environment: npm
+    outputs:
+      go-version: ${{ steps.go.outputs.version }}
+      go-changed: ${{ steps.go.outputs.changed }}
+      has-changesets: ${{ steps.changesets.outputs.hasChangesets }}
     permissions:
       contents: write
       pull-requests: write
@@ -47,6 +49,12 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
+
+      - name: Detect Go version bump
+        id: go
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: node scripts/go-release.mjs detect
 
       - name: Install Dependencies
         run: |
@@ -68,3 +76,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+
+  installers:
+    name: Publish Go installers
+    needs: release
+    if: needs.release.outputs.go-changed == 'true' && needs.release.outputs.has-changesets == 'false'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-installers.yml
+    with:
+      source-sha: ${{ github.sha }}
+      expected-version: ${{ needs.release.outputs.go-version }}
+    secrets: inherit

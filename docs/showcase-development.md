@@ -527,19 +527,41 @@ Merging that PR triggers publishing:
   registry via `changeset publish` using npm **OIDC trusted publishing** (no
   long-lived `NPM_TOKEN`). `@lynxtron-examples/cli` is `private: true` — it is
   bundled inside Lynxtron Go at build time and is not published to npm.
-- **GitHub Release** — a `lynxtron-go-v<version>` release is created with:
+- **GitHub Release** — when the push increases `lynxtron-go/package.json`'s version
+  and no pending changesets remain, the successful Release job automatically calls
+  `release-installers.yml`. A `lynxtron-go-v<version>` release is created with:
   - Lynxtron Go installers: `*.dmg` (macOS) and `*-Setup.exe` (Windows), built via
     `lynxtron-builder`.
   - Every publishable showcase (a package with `showcase` metadata) packed as a
     `.tgz` containing source, `.lynxtron-release.json`, and `dist_precompiled/`.
-    It is built on the macOS runner because native `.node` addons are
-    host-platform specific. Standalone cases without that metadata, such as
+    macOS and Windows tarballs are built on their matching runners because native
+    `.node` addons are host-platform specific. Standalone cases without that metadata, such as
     `codex-demo`, are not included in release artifacts.
 
 Native artifacts (installers + showcase tarballs) are built on their matching OS
 runner. The npm publish requires each `@lynxtron-examples/*` package on npmjs
 to have an OIDC trusted publisher configured, pointing at this repository's
 `Release` workflow (`.github/workflows/release.yml`).
+
+Go is private: its version bump, **not** Changesets' `publishedPackages` output,
+triggers installers. Include a `lynxtron-go` changeset for runtime upgrades or
+other changes that need a new app distribution. A normal main push without a Go
+version bump does not publish installers. Merging the version PR is the release
+approval point; no subsequent manual dispatch is needed.
+
+The Go package version is the single source for the app version and stable tag.
+Both OS builds check out the exact publishing commit, use the frozen lockfile,
+and bake the same release tag into showcase download URLs. This does not force
+the separately versioned Lynxtron runtime or showcase packages to share Go's
+version number. A Release is uploaded only after both platforms succeed.
+
+For a failed installer build, use **Re-run failed jobs** on the original run;
+this retains the original SHA even if main has advanced and does not require a
+new changeset. Manual `Release Installers` dispatch is still available for branch
+previews or deliberate retries. Leave `tag` empty, or supply the exact generated
+tag as an assertion; arbitrary tags are rejected. An existing tag pointing at
+another commit is rejected rather than having its assets replaced. Do not run
+from a newer main commit with the same Go version to retry an older release.
 
 ### Building release artifacts locally
 
