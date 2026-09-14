@@ -1,5 +1,13 @@
 # @lynxtron-examples/native-texture-canvas
 
+## 0.0.5
+
+### Patch Changes
+
+- 9487e4a: Upgrade the shared Lynxtron toolchain to 0.0.22. Migrate Native Texture Canvas
+  to target-based AutoLink registration and staging for development and release
+  builds, while keeping the Go preview declaration aligned with staged artifacts.
+
 ## 0.0.4
 
 ### Patch Changes

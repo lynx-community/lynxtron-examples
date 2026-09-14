@@ -1,5 +1,35 @@
 # lynxtron-go
 
+## 0.1.10
+
+### Patch Changes
+
+- b201b9f: Fix Windows packaged display assets, window icons, edit commands, frameless window controls, themed scrollbars and continuous vertical scrolling. Preserve bundled TSX language-service types, report the bundled runtime version, and share document-loading undo boundaries with macOS so an untouched document cannot be undone to an empty editor.
+- 97ace61: Register the public lynxtron-go URL protocol during Windows installation. Cancel downloads, builds and running showcases when switching cases, and prevent superseded tasks from changing the new case or its loading state.
+- 4f09329: Fix the Add-file row in the Fiddle sidebar silently failing when confirmed without typing. The `file.js` shown in the input was only a placeholder, so the value was empty and confirming (✓ / Enter) hit the empty-name guard that treats it as cancel. Prefill the default name into the input so confirming creates `file.js`, while typing still overrides it and the existing name validation applies live.
+- ee328be: Bump `@lynx-js/lynxtron` and its sibling packages (`lynxtron-builder`, `lynxtron-dev-plugins`, `lynx-library-headers`, `lynxtron-rebuild`) in the workspace catalog to `0.0.20`, and adapt the host runtime resolver to the new install layout (`dist/<variant>/lynxtron.app/Contents/MacOS/lynxtron` on macOS, `dist/<variant>/lynxtron.exe` on Windows, where variant is `devtool` or `release`) which replaces the old `dist/<platform>/<arch>/` layout. Route platform overlay input through the aggregated `eventThrough` so toaster/dialog/alert close buttons can be tapped again, enable the DevTool on app ready, and switch the `build:cli` / `build:scintilla-extension` scripts to `npm --prefix` so they run from the packed tarball where pnpm is not present.
+- 9487e4a: Upgrade the shared Lynxtron toolchain to 0.0.22. Migrate Native Texture Canvas
+  to target-based AutoLink registration and staging for development and release
+  builds, while keeping the Go preview declaration aligned with staged artifacts.
+- 123b794: Publish per-OS variants of native showcase tarballs (`-mac.tgz` / `-win.tgz`) and bake the matching platform URL into each installer, so Windows users get Windows `.node` builds and macOS users get macOS `.node` builds instead of sharing whichever runner packed first.
+- 4f09329: Download selectable Lynxtron runtimes directly as the platform release archive
+  (`lynxtron-v<version>-<platform>-<arch>-devtool.zip` from GitHub releases) and
+  unpack it flat into `<versionDir>/runtime/`, instead of fetching the
+  `@lynx-js/lynxtron` npm launcher package and reproducing its postinstall
+  download. The launch resolver now looks for the executable at that flat root
+  first (`lynxtron.exe` on Windows, `lynxtron.app/Contents/MacOS/lynxtron` on
+  macOS), keeping the older `dist/<variant>/` layout as a fallback. Run child
+  processes through `cross-spawn` so `npm`/`curl` resolve on Windows and a spawn
+  failure surfaces as an error instead of crashing. The top-bar version chip now
+  reflects the runtime that will actually launch (the selected local runtime,
+  falling back to bundled), and catalog rows for versions already present show a
+  passive `bundled`/`downloaded` status rather than an actionable Download button.
+- b201b9f: Launch Windows package-manager command shims with proper argument escaping and captured build output. Explain disk-space exhaustion when dependency installation fails.
+- b201b9f: Find installer-bundled starter showcases beside the Windows executable so first launch and new Blank projects can load without downloading the starter.
+- 2ccbb99: Automatically publish Go installers after Changesets versioning, using one package version and pinned source commit for the release tag, installers and showcase assets. Reject mismatched tags and publish only after both platforms build successfully.
+- Updated dependencies [123b794]
+  - @lynxtron-examples/cli@0.0.9
+
 ## 0.1.9
 
 ### Patch Changes
