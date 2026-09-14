@@ -1,4 +1,5 @@
 import { execFileSync, spawn } from 'child_process';
+import crossSpawn from 'cross-spawn';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -37,6 +38,7 @@ export function readClipboardText(
 export function createFoundationBridge(dbg?: (msg: string) => void) {
   return {
     platform: process.platform,
+    arch: process.arch,
     config: {
       get: (key: string) => readConfig()[key] ?? null,
       set: (key: string, value: any) => {
@@ -185,6 +187,30 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
         }
       },
     },
+    // The Lynx macOS runtime's background-thread `fetch` has been observed
+    // to hang forever against public https endpoints (e.g. registry.npmjs.org)
+    // while Node's fetch to the same URL returns in <1s. Routing UI network
+    // calls through the host avoids that hang without polyfilling anything
+    // inside Lynx.
+    net: {
+      fetchJson: async (url: string, opts: { timeoutMs?: number } = {}): Promise<unknown> => {
+        const timeoutMs = opts.timeoutMs ?? 15000;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const response = await fetch(url, {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status} from ${url}`);
+          }
+          return await response.json();
+        } finally {
+          clearTimeout(timer);
+        }
+      },
+    },
     search: {
       findInFiles: (
         rootPath: string,
@@ -286,13 +312,32 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
           env?: Record<string, string>;
           onLine?: (stream: 'stdout' | 'stderr', line: string) => void;
           onExit?: (code: number | null) => void;
+          onError?: (err: Error) => void;
         } = {},
       ) => {
-        const child = spawn(cmd, args, {
-          cwd: opts.cwd,
-          env: { ...process.env, ...(opts.env ?? {}) },
-          stdio: ['ignore', 'pipe', 'pipe'],
-        });
+        // npm/npx/pnpm are `.cmd` shims on Windows. A bare `spawn('npm')`
+        // raises ENOENT, and a bare `spawn('npm.cmd')` raises EINVAL on Node
+        // versions with the CVE-2024-27980 fix — either way the unhandled
+        // 'error' event (or a synchronous throw) would take down the whole
+        // host process. cross-spawn resolves and escapes those shims while
+        // preserving native spawn behaviour elsewhere; it is what
+        // preload-showcase-service.ts already uses for the same reason.
+        let child: ReturnType<typeof crossSpawn>;
+        try {
+          child = crossSpawn(cmd, args, {
+            cwd: opts.cwd,
+            env: { ...process.env, ...(opts.env ?? {}) },
+            stdio: ['ignore', 'pipe', 'pipe'],
+            windowsHide: true,
+          });
+        } catch (err) {
+          // cross-spawn can still throw synchronously (e.g. EINVAL) before a
+          // ChildProcess exists. Route it through the same failure path.
+          dbg?.(`[exec.runAsync] spawn threw cmd=${cmd}: ${(err as Error).message}`);
+          if (opts.onError) opts.onError(err as Error);
+          else opts.onExit?.((err as NodeJS.ErrnoException).errno ?? -1);
+          return { pid: undefined, kill: () => {} };
+        }
         const emit = (stream: 'stdout' | 'stderr') => {
           let buf = '';
           return (chunk: Buffer) => {
@@ -305,9 +350,24 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
             }
           };
         };
+        // A single settled latch so a spawn failure ('error' then possibly
+        // 'close') never runs the caller's completion path twice.
+        let settled = false;
+        const settle = (fn: () => void) => {
+          if (settled) return;
+          settled = true;
+          fn();
+        };
         child.stdout?.on('data', emit('stdout'));
         child.stderr?.on('data', emit('stderr'));
-        child.on('close', (code) => opts.onExit?.(code));
+        child.on('error', (err: Error) => {
+          dbg?.(`[exec.runAsync] spawn failed cmd=${cmd}: ${err.message}`);
+          settle(() => {
+            if (opts.onError) opts.onError(err);
+            else opts.onExit?.((err as NodeJS.ErrnoException).errno ?? -1);
+          });
+        });
+        child.on('close', (code) => settle(() => opts.onExit?.(code)));
         return {
           pid: child.pid,
           kill: () => { try { child.kill('SIGTERM'); } catch (_) {} },

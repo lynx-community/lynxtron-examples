@@ -59,7 +59,6 @@
   letter-spacing: 0.9px;
   text-transform: none;
   color: var(--bp-text-muted);
-  opacity: 0.75;
 }
 .Version-SectionRow {
   display: flex;
@@ -109,11 +108,10 @@
 }
 /* A path or a date is data. */
 .Version-ItemMeta {
-  font-family: 'SF Mono', Menlo, monospace;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
   font-size: 10px;
   line-height: 14px;
   color: var(--bp-text-muted);
-  opacity: 0.8;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -133,6 +131,15 @@
   color: var(--bp-text-muted);
 }
 .Version-ItemAction:hover .Version-ItemActionText { color: var(--bp-text); }
+
+/* A catalog row for a version already on disk states a fact, so it reads as
+   passive text — no box, no hover — set apart from the tappable action. */
+.Version-ItemStatus {
+  flex-shrink: 0;
+  padding: 3px 2px;
+  font-size: 11px;
+  color: var(--bp-text-muted);
+}
 
 /* The brand, on the mark that says which one is live. */
 .Version-Check {

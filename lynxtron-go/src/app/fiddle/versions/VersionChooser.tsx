@@ -54,6 +54,14 @@ export function VersionChooser(props: VersionChooserProps) {
     ? catalog.filter(v => showPrereleases || !v.isPrerelease)
     : [];
 
+  // The download flow names a local runtime `Lynxtron <version>` (see
+  // handleDownload); the bundled row carries the same shape via currentVersion.
+  // A catalog row for a version we already have is not an action — it is a
+  // status, so it shows a passive tag instead of a Download button.
+  const isBundledVersion = (version: string) => props.currentVersion === `Lynxtron ${version}`;
+  const isDownloadedVersion = (version: string) =>
+    localVersions.some(v => v.name === `Lynxtron ${version}`);
+
   const handleAdd = (name: string, folder: string) => {
     const next = [...localVersions, { name, folder }];
     setLocalVersions(next);
@@ -71,7 +79,7 @@ export function VersionChooser(props: VersionChooserProps) {
   const handleDownload = async (v: CatalogVersion) => {
     setInstallingVersion(v.version);
     AppToaster.show({
-      message: `Installing @lynx-js/lynxtron@${v.version}…`,
+      message: `Downloading Lynxtron ${v.version}…`,
       intent: 'primary',
       icon: 'cloud-download',
       timeout: 3000,
@@ -182,6 +190,10 @@ export function VersionChooser(props: VersionChooserProps) {
                   </view>
                   {installingVersion === v.version ? (
                     <Spinner size={14} intent="primary" />
+                  ) : isBundledVersion(v.version) ? (
+                    <Tag intent="success" minimal>bundled</Tag>
+                  ) : isDownloadedVersion(v.version) ? (
+                    <text className="Version-ItemStatus">downloaded</text>
                   ) : (
                     <view
                       className="Version-ItemAction"
