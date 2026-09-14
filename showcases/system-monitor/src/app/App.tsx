@@ -14,7 +14,7 @@ interface SystemInfo {
 
 declare const NativeModules: {
   bridge: {
-    call: (method: string, data?: any) => Promise<any>;
+    call: (method: 'getSystemInfo', data: object, callback: (info: SystemInfo) => void) => void;
     send: (method: string, data?: any) => void;
   };
 };
@@ -31,7 +31,9 @@ export function App() {
 
   const loadSystemInfo = useCallback(async () => {
     try {
-      const info = await NativeModules.bridge.call('getSystemInfo');
+      const info = await new Promise<SystemInfo>((resolve) => {
+        NativeModules.bridge.call('getSystemInfo', {}, resolve);
+      });
       setSystemInfo(info);
       setIsLoading(false);
     } catch (error) {
