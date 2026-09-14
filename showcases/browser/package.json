@@ -1,0 +1,76 @@
+{
+  "name": "@lynxtron-examples/browser",
+  "version": "0.0.1",
+  "description": "A tabbed browser built with Lynx UI and CEF webviews",
+  "license": "Apache-2.0",
+  "main": "main.js",
+  "files": [
+    "AGENTS.md",
+    "src",
+    "resources",
+    "lynx.config.ts",
+    "rspack.config.ts",
+    "electron-builder.yml",
+    "tsconfig.base.json",
+    "tsconfig.tools.json",
+    "vitest.config.ts",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lynx-community/lynxtron-examples",
+    "directory": "showcases/browser"
+  },
+  "scripts": {
+    "build": "rspeedy build --environment lynx && rspack build",
+    "dev": "cross-env NODE_ENV=development concurrently -k --raw \"rspeedy dev --environment lynx\" \"dev-ready-rspeedy && rspack dev\"",
+    "start": "npm run build && lynxtron ./dist/desktop",
+    "test": "vitest run",
+    "typecheck": "tsc -p src/app/tsconfig.json --noEmit && tsc -p src/main/desktop/tsconfig.json --noEmit",
+    "build:web": "rspeedy build --environment web && cross-env TARGET_ENV=web rspack build",
+    "dev:web": "cross-env TARGET_ENV=web NODE_ENV=development concurrently -k --raw \"rspeedy dev --environment web\" \"rspack serve\"",
+    "start:web": "npm run build:web && npx serve ./dist/web",
+    "pack": "npm run build && lynxtron-builder --publish never"
+  },
+  "showcase": {
+    "description": "Tabbed CEF browser with navigation, a custom title bar, and independent pages",
+    "tags": [
+      "advanced",
+      "webview",
+      "browser"
+    ],
+    "minToolchainVersion": "0.0.1",
+    "targets": [
+      "desktop"
+    ]
+  },
+  "dependencies": {
+    "@lynx-js/lynxtron": "catalog:",
+    "@lynx-js/cef-webview": "0.0.22"
+  },
+  "devDependencies": {
+    "@lynxtron-examples/config": "workspace:*",
+    "@lynx-js/lynxtron-builder": "catalog:",
+    "@lynx-js/lynxtron-dev-plugins": "catalog:",
+    "@lynx-js/react": "catalog:",
+    "@lynx-js/rspeedy": "catalog:",
+    "@lynx-js/types": "catalog:",
+    "@lynx-js/web-core": "^0.26.1",
+    "@lynx-js/web-elements": "^0.12.11",
+    "@rspack/cli": "catalog:",
+    "@rspack/core": "catalog:",
+    "concurrently": "catalog:",
+    "cross-env": "catalog:",
+    "typescript": "catalog:",
+    "@types/node": "^22.0.0",
+    "vitest": "^3.2.4",
+    "@testing-library/jest-dom": "^6.9.0",
+    "jsdom": "^26.1.0"
+  },
+  "engines": {
+    "node": "^22.18.0 || ^24.0.0 || ^26.0.0"
+  }
+}

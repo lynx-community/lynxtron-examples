@@ -26,6 +26,7 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@lynx-js/cef-webview",
       "@lynx-js/lynxtron",
       "@lynx-js/lynxtron-builder",
       "better-sqlite3"

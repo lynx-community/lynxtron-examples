@@ -1,0 +1,22 @@
+productName: Lynxtron Browser
+appId: org.lynxtron.examples.browser
+directories:
+  buildResources: resources
+  output: installers
+  app: dist/desktop
+files:
+  - '**/*'
+asar: true
+asarUnpack:
+  - '.lynxtron/native/**/*'
+npmRebuild: false
+icon: lynxtron.png
+mac:
+  identity: null
+  artifactName: LynxtronBrowser-${version}-mac-${arch}.${ext}
+win:
+  target: nsis
+  artifactName: LynxtronBrowser-${version}-win-${arch}.${ext}
+nsis:
+  oneClick: true
+  perMachine: false
