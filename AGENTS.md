@@ -150,13 +150,15 @@ verification, so nobody later "fixes" it back.
   - `ci.yml` — PR validation (install, build tooling, test, typecheck, `changeset status`)
   - `release.yml` — on push to `main`, opens a "Version Packages" PR; merging it publishes
     updated `@lynxtron-examples/*` packages to npm (token-based, `NPM_CONFIG_PROVENANCE: true`)
-  - `release-installers.yml` — **manual only** (`workflow_dispatch`); builds mac dmg + win exe
-    + showcase `.tgz` and attaches them to a Release (created on demand if the tag does
-    not exist yet). Tag defaults to `lynxtron-go-v<version>` on `main` (tracks Changesets
-    patch bumps in `lynxtron-go/package.json`) and `lynxtron-go-v<version>-dev.<sha6>` on
-    any other branch (per-commit GitHub Pre-release, does not clobber the stable Release).
-    Runs independently of `release.yml` so installer/asset failures don't block npm publish
-    and vice-versa.
+  - `release-installers.yml` — automatically called after a successful Release job
+    when the push bumps Go's version and no pending changesets remain. Go is private,
+    so the trigger does not depend on npm's published package list. Builds mac dmg,
+    win exe and per-platform showcase `.tgz`; publishes only after both platforms pass.
+    All builds and the tag target use the same commit. The stable tag must be
+    `lynxtron-go-v<version>` from `lynxtron-go/package.json`; branch previews use
+    `lynxtron-go-v<version>-dev.<sha6>`. An existing tag at another commit is rejected.
+    Manual dispatch remains available; retry a failed release using its original run
+    so advancing main cannot silently replace an older version's assets.
 - Showcases and `lynxtron-go` are `private` but still versioned/changelogged
   (`.changeset/config.json` → `privatePackages.version: true`); they are not published to npm.
 - See [docs/showcase-development.md](docs/showcase-development.md) "Release" for the full flow.
