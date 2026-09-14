@@ -192,6 +192,11 @@ export function Fiddle(props: FiddleProps) {
     (foundationApi()?.config?.get?.('fiddle.selectedLocalVersion') as string | null) ?? null,
   );
 
+  // `currentVersion` always names the bundled runtime (the chooser's "Bundled"
+  // row shows it). The top-bar chip must instead reflect what will actually
+  // launch, so a selected local runtime wins there.
+  const displayVersion = selectedLocalName ?? currentVersion;
+
   const handleSelectLocalVersion = useCallback((name: string | null) => {
     setSelectedLocalName(name);
     foundationApi()?.config?.set?.('fiddle.selectedLocalVersion', name);
@@ -801,7 +806,7 @@ export function Fiddle(props: FiddleProps) {
         fullScreen={fullScreen}
         overflowOpen={overflowOpen}
         onToggleOverflow={() => setOverflowOpen(v => !v)}
-        currentVersion={currentVersion}
+        currentVersion={displayVersion}
         gistId={fiddle.snap.source.kind === 'gist' ? fiddle.snap.source.gistId ?? null : null}
         isConsoleShowing={isConsoleShowing}
         title={fiddle.snap.title}
