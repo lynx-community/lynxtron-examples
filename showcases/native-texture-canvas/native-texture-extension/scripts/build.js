@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
@@ -8,7 +9,6 @@ import { createRequire } from 'node:module';
 const __filename = fileURLToPath(import.meta.url);
 const sourceDir = path.resolve(path.dirname(__filename), '..');
 const showcaseDir = path.resolve(sourceDir, '..');
-const repoRoot = path.resolve(showcaseDir, '../..');
 // pnpm materializes file: dependencies separately; build the package AutoLink
 // actually resolves, not an unrelated source-side binary.
 const requireFromShowcase = createRequire(path.join(showcaseDir, 'package.json'));
@@ -22,25 +22,21 @@ if (!supportedPlatforms.has(process.platform) && !forceBuild) {
   process.exit(0);
 }
 
-const executableName = process.platform === 'win32' ? 'cmake-js.cmd' : 'cmake-js';
-const candidates = [
-  path.join(extensionDir, 'node_modules', '.bin', executableName),
-  path.join(showcaseDir, 'node_modules', '.bin', executableName),
-  path.join(repoRoot, 'node_modules', '.bin', executableName),
-  path.join(repoRoot, 'lynxtron-go', 'scintilla-extension', 'node_modules', '.bin', executableName),
-];
-
-const command = candidates.find((candidate) => fs.existsSync(candidate)) ?? executableName;
-// On Windows, spawning a `.cmd` shim requires running through a shell.
-// Otherwise Node may throw `spawn EINVAL`.
-const child = spawn(command, ['compile',
+// MSBuild's tracking files exceed MAX_PATH inside pnpm's virtual store.
+// Keep intermediate files short, but publish the binary to the package that
+// AutoLink resolves. A unique directory also keeps concurrent builds separate.
+const buildDir = process.platform === 'win32'
+  ? fs.mkdtempSync(path.join(os.tmpdir(), 'lynx-texture-'))
+  : null;
+// Run the JS entry directly so paths containing spaces need no shell quoting.
+const child = spawn(process.execPath, [requireFromShowcase.resolve('cmake-js/bin/cmake-js'), 'compile',
+  ...(buildDir ? ['--out', buildDir] : []),
   `--CDLYNX_HEADERS_ROOT=${path.dirname(requireFromShowcase.resolve('@lynx-js/lynx-library-headers/package.json'))}`,
   `--CDLYNXTRON_ROOT=${path.dirname(requireFromShowcase.resolve('@lynx-js/lynxtron/package.json'))}`,
 ], {
   cwd: extensionDir,
   stdio: 'inherit',
-  shell: process.platform === 'win32',
-  windowsHide: false,
+  windowsHide: true,
 });
 
 child.on('error', (error) => {
@@ -50,11 +46,21 @@ child.on('error', (error) => {
 
 child.on('close', (code, signal) => {
   if (code === 0) {
+    if (buildDir) {
+      const releaseDir = path.join(extensionDir, 'build', 'Release');
+      fs.mkdirSync(releaseDir, { recursive: true });
+      fs.copyFileSync(path.join(buildDir, 'Release', 'native_texture_canvas_module.node'),
+        path.join(releaseDir, 'native_texture_canvas_module.node'));
+      fs.rmSync(buildDir, { recursive: true, force: true });
+    }
     process.exit(0);
     return;
   }
   if (signal) {
     console.error(`[lynxtron-native-texture-canvas] cmake-js exited with signal ${signal}`);
+  }
+  if (buildDir) {
+    console.error(`[lynxtron-native-texture-canvas] Build diagnostics retained at ${buildDir}`);
   }
   process.exit(code ?? 1);
 });
