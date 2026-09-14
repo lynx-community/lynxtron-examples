@@ -5,6 +5,7 @@
   "license": "Apache-2.0",
   "main": "main.js",
   "files": [
+    "AGENTS.md",
     "src",
     "resources",
     "lynx.config.ts",
@@ -41,7 +42,7 @@
       "webview",
       "browser"
     ],
-    "minToolchainVersion": "0.0.22",
+    "minToolchainVersion": "0.0.1",
     "targets": [
       "desktop"
     ]
