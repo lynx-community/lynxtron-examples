@@ -187,6 +187,30 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
         }
       },
     },
+    // The Lynx macOS runtime's background-thread `fetch` has been observed
+    // to hang forever against public https endpoints (e.g. registry.npmjs.org)
+    // while Node's fetch to the same URL returns in <1s. Routing UI network
+    // calls through the host avoids that hang without polyfilling anything
+    // inside Lynx.
+    net: {
+      fetchJson: async (url: string, opts: { timeoutMs?: number } = {}): Promise<unknown> => {
+        const timeoutMs = opts.timeoutMs ?? 15000;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const response = await fetch(url, {
+            headers: { Accept: 'application/json' },
+            signal: controller.signal,
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status} from ${url}`);
+          }
+          return await response.json();
+        } finally {
+          clearTimeout(timer);
+        }
+      },
+    },
     search: {
       findInFiles: (
         rootPath: string,
