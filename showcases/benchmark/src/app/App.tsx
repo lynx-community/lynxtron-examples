@@ -181,19 +181,30 @@ export function App() {
       // ignore
     }
 
-    // Initial memory read
     refreshStartupTime();
-    refreshMemory();
     refreshSecondWindowDelta();
 
-    // Poll memory every 2 seconds
+    // Read cached host metrics without collecting memory during startup.
     const interval = setInterval(() => {
       refreshStartupTime();
-      refreshMemory();
       refreshSecondWindowDelta();
     }, 2000);
     return () => clearInterval(interval);
-  }, [refreshMemory, refreshSecondWindowDelta, refreshStartupTime]);
+  }, [refreshSecondWindowDelta, refreshStartupTime]);
+
+  useEffect(() => {
+    if (startupTime <= 0) return;
+    // Memory collection can synchronously invoke OS tools. Keep it out of startup.
+    let interval: ReturnType<typeof setInterval> | undefined;
+    const timeout = setTimeout(() => {
+      refreshMemory();
+      interval = setInterval(refreshMemory, 2000);
+    }, 1000);
+    return () => {
+      clearTimeout(timeout);
+      if (interval !== undefined) clearInterval(interval);
+    };
+  }, [startupTime, refreshMemory]);
 
   const memHeapInfo =
     memory != null

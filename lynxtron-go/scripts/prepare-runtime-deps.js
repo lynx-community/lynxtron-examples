@@ -189,7 +189,7 @@ function sanitizeManifest(packageRoot) {
   fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
-function main() {
+async function main() {
   if (!fs.existsSync(path.join(projectRoot, 'dist', 'desktop', 'package.json'))) {
     throw new Error('dist/desktop/package.json is missing; run the desktop build first.');
   }
@@ -200,6 +200,14 @@ function main() {
   fs.rmSync(path.join(projectRoot, 'dist', 'desktop', 'runtime'), { recursive: true, force: true });
 
   const lynxtronPackageJson = require(path.join(resolvePackageDir('@lynx-js/lynxtron'), 'package.json'));
+  // Bundle both variants so performance showcases can run release without
+  // downloading an executable at launch or falling back to a devtool runtime.
+  const { pathToFileURL } = require('url');
+  const { ensureRuntime } = await import(pathToFileURL(path.join(
+    resolvePackageDir('@lynx-js/lynxtron'), 'runtime-manager.js',
+  )).href);
+  await ensureRuntime({ variant: 'devtool' });
+  await ensureRuntime({ variant: 'release' });
   const lynxtronEntries = [...new Set([...(lynxtronPackageJson.files ?? []), 'package.json', 'dist'])];
   const lynxtronTarget = copyPackageEntries('@lynx-js/lynxtron', lynxtronEntries);
   sanitizeManifest(lynxtronTarget);
@@ -295,4 +303,7 @@ function main() {
   synchronizeRuntimeManifest(path.dirname(distNodeModules));
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

@@ -38,7 +38,9 @@ export function getRuntimeRequire(): NodeRequire {
 
 const LYNXTRON_RUNTIME_VARIANTS = ['devtool', 'release'] as const;
 
-function getLynxtronExecutableRelativePaths(): string[] {
+export type RuntimeVariant = 'release' | 'devtool';
+
+function getLynxtronExecutableRelativePaths(variant?: RuntimeVariant): string[] {
   let binaryRelativePath: string;
   switch (process.platform) {
     case 'darwin':
@@ -50,7 +52,7 @@ function getLynxtronExecutableRelativePaths(): string[] {
     default:
       throw new Error(`Unsupported Lynxtron platform: ${process.platform}`);
   }
-  return LYNXTRON_RUNTIME_VARIANTS.map((variant) => path.join(variant, binaryRelativePath));
+  return (variant ? [variant] : LYNXTRON_RUNTIME_VARIANTS).map((variant) => path.join(variant, binaryRelativePath));
 }
 
 function resolveLynxtronPackageRoot(nativeRequire: NodeRequire): string {
@@ -78,9 +80,9 @@ export interface LynxtronRuntimePaths {
   packageEntryPath: string;
 }
 
-function findLynxtronExecutable(packageRoot: string, dbg?: DebugLogger): string | null {
+export function findLynxtronExecutable(packageRoot: string, dbg?: DebugLogger, variant?: RuntimeVariant): string | null {
   dbg?.(`findLynxtronExecutable called with packageRoot: ${packageRoot}`);
-  const relativePaths = getLynxtronExecutableRelativePaths();
+  const relativePaths = getLynxtronExecutableRelativePaths(variant);
   dbg?.(`Looking for executables at relative paths: ${JSON.stringify(relativePaths)}`);
   
   for (const executableRelativePath of relativePaths) {
@@ -190,7 +192,7 @@ export function getAppResourcesPath(dbg?: DebugLogger): string | null {
   return resourcesPath;
 }
 
-function tryFindAsarUnpackedExecutable(dbg?: DebugLogger): LynxtronRuntimePaths | null {
+function tryFindAsarUnpackedExecutable(dbg?: DebugLogger, variant?: RuntimeVariant): LynxtronRuntimePaths | null {
   const resourcesPath = getAppResourcesPath(dbg);
   if (!resourcesPath) {
     return null;
@@ -205,7 +207,7 @@ function tryFindAsarUnpackedExecutable(dbg?: DebugLogger): LynxtronRuntimePaths 
     return null;
   }
 
-  const executablePath = findLynxtronExecutable(asarUnpackedPath, dbg);
+  const executablePath = findLynxtronExecutable(asarUnpackedPath, dbg, variant);
   if (executablePath) {
     dbg?.(`Found asar.unpacked executable at: ${executablePath}`);
     return {
@@ -218,7 +220,7 @@ function tryFindAsarUnpackedExecutable(dbg?: DebugLogger): LynxtronRuntimePaths 
   return null;
 }
 
-export function resolveLynxtronRuntimePaths(dbg: DebugLogger): LynxtronRuntimePaths {
+export function resolveLynxtronRuntimePaths(dbg: DebugLogger, variant?: RuntimeVariant): LynxtronRuntimePaths {
   dbg(`resolveLynxtronRuntimePaths called`);
   dbg(`process.platform: ${process.platform}, process.arch: ${process.arch}`);
   const localRoot = process.env.LYNXTRON_LOCAL_ROOT;
@@ -226,7 +228,7 @@ export function resolveLynxtronRuntimePaths(dbg: DebugLogger): LynxtronRuntimePa
   if (localRoot) {
     const localPackageRoot = path.join(localRoot, 'src', 'packages', 'lynxtron');
     dbg(`Looking for local executable at: ${localPackageRoot}`);
-    const localExecutablePath = findLynxtronExecutable(localPackageRoot, dbg);
+    const localExecutablePath = findLynxtronExecutable(localPackageRoot, dbg, variant);
     dbg(`Local executable found: ${localExecutablePath}`);
     if (localExecutablePath) {
       dbg(`Using local executable`);
@@ -240,7 +242,11 @@ export function resolveLynxtronRuntimePaths(dbg: DebugLogger): LynxtronRuntimePa
 
   const bundledPackageRoot = resolveBundledLynxtronPackageRoot();
   const bundledExecutablePath = resolveBundledLynxtronExecutable();
-  if (bundledPackageRoot && bundledExecutablePath) {
+  if (bundledPackageRoot && variant) {
+    const executablePath = findLynxtronExecutable(bundledPackageRoot, dbg, variant);
+    if (executablePath) return { executablePath, packageEntryPath: path.join(bundledPackageRoot, 'lynxtron.js') };
+  }
+  if (!variant && bundledPackageRoot && bundledExecutablePath) {
     dbg(`Using bundled Windows Lynxtron executable`);
     return {
       executablePath: bundledExecutablePath,
@@ -250,7 +256,7 @@ export function resolveLynxtronRuntimePaths(dbg: DebugLogger): LynxtronRuntimePa
 
   // Try asar.unpacked first (packaged app)
   dbg(`Checking for asar.unpacked...`);
-  const asarUnpackedResult = tryFindAsarUnpackedExecutable(dbg);
+  const asarUnpackedResult = tryFindAsarUnpackedExecutable(dbg, variant);
   if (asarUnpackedResult) {
     dbg(`Using asar.unpacked executable`);
     return asarUnpackedResult;
@@ -260,10 +266,10 @@ export function resolveLynxtronRuntimePaths(dbg: DebugLogger): LynxtronRuntimePa
   dbg(`Resolving installed package...`);
   const packageRoot = resolveLynxtronPackageRoot(getRuntimeRequire());
   dbg(`packageRoot: ${packageRoot}`);
-  const executablePath = findLynxtronExecutable(packageRoot, dbg);
+  const executablePath = findLynxtronExecutable(packageRoot, dbg, variant);
   dbg(`executablePath: ${executablePath}`);
   if (!executablePath) {
-    const expectedPaths = getLynxtronExecutableRelativePaths()
+    const expectedPaths = getLynxtronExecutableRelativePaths(variant)
       .map((relativePath) => path.join(packageRoot, 'dist', relativePath))
       .join(', ');
     dbg(`Executable not found, expected paths: ${expectedPaths}`);
@@ -278,9 +284,9 @@ export function resolveLynxtronRuntimePaths(dbg: DebugLogger): LynxtronRuntimePa
   return result;
 }
 
-export function resolveLynxtronExecutablePath(dbg: DebugLogger): string {
+export function resolveLynxtronExecutablePath(dbg: DebugLogger, variant?: RuntimeVariant): string {
   dbg(`resolveLynxtronExecutablePath called`);
-  const result = resolveLynxtronRuntimePaths(dbg).executablePath;
+  const result = resolveLynxtronRuntimePaths(dbg, variant).executablePath;
   dbg(`resolveLynxtronExecutablePath returning: ${result}`);
   return result;
 }

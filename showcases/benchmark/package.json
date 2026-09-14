@@ -16,6 +16,7 @@
     "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop"
   },
   "showcase": {
+    "runtimeVariant": "release",
     "description": "Lynxtron runtime benchmarks — startup time and memory usage",
     "thumbnail": "thumbnail.png",
     "tags": [
