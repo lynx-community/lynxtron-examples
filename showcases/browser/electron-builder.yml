@@ -2,7 +2,7 @@ productName: Lynxtron Browser
 appId: org.lynxtron.examples.browser
 directories:
   buildResources: resources
-  output: dist/installers
+  output: installers
   app: dist/desktop
 files:
   - '**/*'
