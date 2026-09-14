@@ -45,5 +45,9 @@ test('production build stages the manifest, entry and selected binary without ma
     assert.ok(fs.existsSync(path.join(staged, file)), `Missing ${file}; run build before this test`);
   }
   assert.equal(fs.readFileSync(path.join(staged, 'index.cjs'), 'utf8'), fs.readFileSync(path.join(extension, 'index.cjs'), 'utf8'));
+  const installed = path.dirname(require.resolve('lynxtron-native-texture-canvas/package.json'));
+  const binary = 'build/Release/native_texture_canvas_module.node';
+  assert.deepEqual(fs.readFileSync(path.join(staged, binary)), fs.readFileSync(path.join(installed, binary)),
+    'AutoLink must stage the binary built in the installed dependency');
   assert.ok(!fs.existsSync(path.join(__dirname, 'dist/desktop/node_modules/lynxtron-native-texture-canvas')));
 });
