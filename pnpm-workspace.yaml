@@ -9,11 +9,13 @@ packages:
 # downloads the runtime binary, and skipping it yields an install that looks
 # fine and an app that cannot start.
 onlyBuiltDependencies:
+  - '@lynx-js/cef-webview'
   - '@lynx-js/lynxtron'
   - '@lynx-js/lynxtron-builder'
   - 'better-sqlite3'
 
 allowBuilds:
+  '@lynx-js/cef-webview': true
   '@lynx-js/lynxtron': true
   '@lynx-js/lynxtron-builder': true
   core-js: true

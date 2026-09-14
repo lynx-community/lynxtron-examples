@@ -16,6 +16,21 @@
       "distribution": "release"
     },
     {
+      "name": "@lynxtron-examples/browser",
+      "description": "Tabbed CEF browser with navigation, a custom title bar, and independent pages",
+      "path": "showcases/browser",
+      "thumbnail": null,
+      "tags": [
+        "advanced",
+        "webview",
+        "browser"
+      ],
+      "targets": [
+        "desktop"
+      ],
+      "distribution": "release"
+    },
+    {
       "name": "@lynxtron-examples/counter",
       "description": "Minimal counter example demonstrating state management",
       "path": "showcases/counter",
