@@ -399,13 +399,13 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15))
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
       '@lynx-js/web-core':
-        specifier: 0.20.4
-        version: 0.20.4(tslib@2.8.1)
+        specifier: 0.26.1
+        version: 0.26.1(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)
       '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -599,7 +599,7 @@ importers:
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15))
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
       '@lynx-js/types':
         specifier: 'catalog:'
         version: 4.1.0
@@ -1270,6 +1270,9 @@ packages:
   '@lynx-js/css-serializer@0.1.7':
     resolution: {integrity: sha512-k8J/zZdYvsxqSZxT25dWBT4leOvYSpAanC5NmpYmf0EkSDWbQohensPSMOnEvEmP9R97gDO7K+eA6vgv8IYWGg==}
 
+  '@lynx-js/css-serializer@0.1.9':
+    resolution: {integrity: sha512-O4wthGp3eBcE9mX+A7Ojla8mRJwucBhRJthEha5dgtvBfcx+P8GI6A0VvhvNwjclTaLnqNNbBRd+ClJQtirptA==}
+
   '@lynx-js/debug-metadata-rsbuild-plugin@0.2.1':
     resolution: {integrity: sha512-uvpX41tk7TxkIs8fJqIHqOUyOhRC5BVTH4ri+B1rZI6k3yclYIKA7lSnDirgEL+92GmkInerO3Zwg9y3Zyg5hA==}
     engines: {node: '>=18'}
@@ -1385,20 +1388,6 @@ packages:
     peerDependencies:
       '@lynx-js/react': '*'
 
-  '@lynx-js/web-core@0.20.4':
-    resolution: {integrity: sha512-n0lLAjUeK1ndJE7xzCzkccYQE42C1qDMOvRSxqSZ5JdcBaY4pG0ZWswXC6jiL0gaksiY5Y31wZOIWHMlRRotPw==}
-    peerDependencies:
-      '@lynx-js/css-serializer': 0.1.6
-      '@lynx-js/lynx-core': 0.1.3
-      tslib: ^2.5.0
-    peerDependenciesMeta:
-      '@lynx-js/css-serializer':
-        optional: true
-      '@lynx-js/lynx-core':
-        optional: true
-      tslib:
-        optional: true
-
   '@lynx-js/web-core@0.23.0':
     resolution: {integrity: sha512-ip/yMNgWzdaFOEA7HPrBGH8m278EAmJF7Z1Npcnobtci9i/yz4UaSOYhF2ruDFYKNU9AauHAgvSYRg3PngyqhQ==}
     peerDependencies:
@@ -1413,8 +1402,22 @@ packages:
       tslib:
         optional: true
 
-  '@lynx-js/web-elements@0.12.2':
-    resolution: {integrity: sha512-k6eblA01RUIt09/GRXpRx1eL4n4Ztzs4v81RAE8Pkix8MyRArwjHb5qbV9O64VWuSk/R6h6ZJjen0cfzrBZdzw==}
+  '@lynx-js/web-core@0.26.1':
+    resolution: {integrity: sha512-/AM5xUxfYfCv9WrsLuFtI5ryzQvKTENHBfYBlbrgA2ljHft97VyNWNXygQOY+p/tgydfqn8oP8TTeX567hcVtQ==}
+    peerDependencies:
+      '@lynx-js/animax': 0.1.0-alpha.0
+      '@lynx-js/lynx-core': 0.1.4
+      tslib: ^2.5.0
+    peerDependenciesMeta:
+      '@lynx-js/animax':
+        optional: true
+      '@lynx-js/lynx-core':
+        optional: true
+      tslib:
+        optional: true
+
+  '@lynx-js/web-elements@0.12.11':
+    resolution: {integrity: sha512-wlEHchfKPNIsWi2mEBfYFPTNf1FAa7ebRsHoRH5YgYIB6AcVHWB/HKquJ0ZI5Hxi+Wcv89UAi6HECpEv3kOi4g==}
     peerDependencies:
       tslib: ^2.5.0
 
@@ -1426,11 +1429,11 @@ packages:
   '@lynx-js/web-rsbuild-server-middleware@0.23.0':
     resolution: {integrity: sha512-0obM4CLuQESQNZ58s/1TB/OxjQ/BlJHWOM70rZHNRA5jfic1BnH0i8CeZPOg9MNGClvOVv9Bbcq/2JoUqDZ5RA==}
 
-  '@lynx-js/web-worker-rpc@0.20.4':
-    resolution: {integrity: sha512-i4RV8f397nl02zB1wjFfEJDo/bM0c+dvzd9nIPY9gksf2lX8aSOpkXn6Kyou+05qdJAXm2EZIl8SKYiTMi/P6w==}
-
   '@lynx-js/web-worker-rpc@0.23.0':
     resolution: {integrity: sha512-nrWLMjjOmb4uMg9MITX3nyaEPO61QGGUvCvl0IIH/yxgQKtzS7qITVQlzxaBHbajZqXtRr8vnzPYBFGfUSr6dw==}
+
+  '@lynx-js/web-worker-rpc@0.26.1':
+    resolution: {integrity: sha512-ub7fpbd4JiyR1P4D+VHWyGKbCCmsZDPJGsndjpVb459QI6s8ogBW5FcAH/gIYHmh4eU05YhIs5sH6knEDzNKaA==}
 
   '@lynx-js/webpack-dev-transport@0.3.0':
     resolution: {integrity: sha512-vpa0X/eqb50DhNhXEEfCi6gEd/ti32bFJtkt9zkPv6dTTsd2HJkYnCiKSUWpHpqPbnRbVLf/UacAY6h1uTtZeA==}
@@ -2303,6 +2306,9 @@ packages:
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
 
+  argparse@3.0.2:
+    resolution: {integrity: sha512-mFdDM6WqWKraGLsVb+C9CahPnzTXOefAOLq3jYcca2YZ8bEWpr++Tzj+zSaKW9+X9L5uSxcm1AZ3Y6aZJ09OhQ==}
+
   aria-query@5.3.2:
     resolution: {integrity: sha512-COROpnaoap1E2F000S62r6A60uHZnmlvomhfyT2DlTcrY1OrBKn2UhH7qn5wTC9zMvD0AY7csdPSNwKP+7WiQw==}
     engines: {node: '>= 0.4'}
@@ -3012,6 +3018,9 @@ packages:
   dompurify@3.4.12:
     resolution: {integrity: sha512-zQvGet8Z2sWbQhCmfFz/T5QWH2oBmjnqK3qvOjaqaNLrLEF912WamU+ohnTp0TCep/MFVHpdJuCZEdFOdTnEFg==}
 
+  dompurify@3.4.15:
+    resolution: {integrity: sha512-EUBjM+B+lkDE41iE82DDSCfkoPGfXx8IxFxPMjNzm/Uk4xDet77rTN9wqlxlVg71kK7XGuUMv6wUxJUwwv+Xyw==}
+
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
 
@@ -3107,6 +3116,10 @@ packages:
   entities@6.0.1:
     resolution: {integrity: sha512-aN97NXWF6AWBTahfVOIrB/NShkzi5H7F9r1s9mD3cDj4Ko5f2qhhVoYMibXF7GlLveb/D2ioWay8lxI97Ven3g==}
     engines: {node: '>=0.12'}
+
+  entities@8.1.0:
+    resolution: {integrity: sha512-kxL7msIffSuh9aaFAMD7rxAIuTRMAHMeBtgHW2yUdWw732ZNh4MehkF2gdjvtdmikkaIP9bFDDJOPlsvm7avrA==}
+    engines: {node: '>=20.19.0'}
 
   env-paths@2.2.1:
     resolution: {integrity: sha512-+h1lkLKhZMTYjog1VEpJNG7NZJWcuc2DDk/qsqSTRRCOXiLjeQ1d1/udrUGhqMxUgAlwKNZ0cf2uqan5GLuS2A==}
@@ -3963,6 +3976,9 @@ packages:
   linkify-it@5.0.2:
     resolution: {integrity: sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q==}
 
+  linkify-it@6.1.0:
+    resolution: {integrity: sha512-wJ/TwpSDTLepCrQoYWYIExIKg5Zchex2Nn5yk2mFnB+6PtdkHtyLx742md9csRjjOnGkKIS/RrbY7l8D6gT9Vw==}
+
   loader-runner@4.3.2:
     resolution: {integrity: sha512-DFEqQ3ihfS9blba08cLfYf1NRAIEm+dDjic073DRDc3/JspI/8wYmtDsHwd3+4hwvdxSK7PGaElfTmm0awWJ4w==}
     engines: {node: '>=6.11.5'}
@@ -4054,6 +4070,10 @@ packages:
     resolution: {integrity: sha512-RCEsPjR+sr0x+AuYp601tKTkgFG4YEPLCzHST3cQ/fhlJkqAkz1L2/Qbp1j9qw5SBwQHFBoW8+hoN5xssOF0Tw==}
     hasBin: true
 
+  markdown-it@15.0.2:
+    resolution: {integrity: sha512-q4IGxMv56jCqT4OCRCADBoDP3LO4MhmTXjFbphHPXs4g3j9Xg5RDnxqN8IF/3vIWEU+VCnUq+7JUg/cfy2E6Qw==}
+    hasBin: true
+
   matcher@3.0.0:
     resolution: {integrity: sha512-OkeDaAZ/bQCxeFAozM55PKcKU0yJMPGifLwV4Qgjitu+5MoAfSQN4lsLJeXZ1b8w0x+/Emda6MZgXS1jvsapng==}
     engines: {node: '>=10'}
@@ -4070,6 +4090,9 @@ packages:
 
   mdurl@2.0.0:
     resolution: {integrity: sha512-Lf+9+2r+Tdp5wXDXC4PcIBjTDtq4UKjCPMQhKIuzpJNW0b96kVqSwW0bT7FhRSfmAiFYgP+SCRvdrDozfh0U5w==}
+
+  mdurl@2.1.0:
+    resolution: {integrity: sha512-1+HBaOx0zi/dQWht8rNv9MYf9qqpqL/kxI0hXImU6Y547zM6Sni8BQibt7ifgMcYtQg41ao3Ivd6cnSM86inpg==}
 
   media-typer@0.3.0:
     resolution: {integrity: sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==}
@@ -5558,6 +5581,9 @@ packages:
   uc.micro@2.1.0:
     resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
 
+  uc.micro@3.0.0:
+    resolution: {integrity: sha512-U3PppEkleoTnIfi8BozMx3yju3qc/L6SwqWo2Sw+54PX+PX0q9I+r1Um5HCmqD7n9VDX5/v3vQH/AjA6deDdtw==}
+
   uglify-js@3.19.3:
     resolution: {integrity: sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ==}
     engines: {node: '>=0.8.0'}
@@ -6548,6 +6574,11 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
+  '@lynx-js/css-serializer@0.1.9':
+    dependencies:
+      css-tree: 3.2.1
+      pathe: 2.0.3
+
   '@lynx-js/debug-metadata-rsbuild-plugin@0.2.1':
     dependencies:
       '@lynx-js/debug-metadata': 0.1.0
@@ -6723,14 +6754,6 @@ snapshots:
     dependencies:
       '@lynx-js/react': 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
 
-  '@lynx-js/web-core@0.20.4(tslib@2.8.1)':
-    dependencies:
-      '@lynx-js/web-elements': 0.12.2(tslib@2.8.1)
-      '@lynx-js/web-worker-rpc': 0.20.4
-      wasm-feature-detect: 1.8.0
-    optionalDependencies:
-      tslib: 2.8.1
-
   '@lynx-js/web-core@0.23.0(@lynx-js/css-serializer@0.1.7)(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)':
     dependencies:
       '@lynx-js/web-elements': 0.12.7(tslib@2.8.1)
@@ -6741,10 +6764,20 @@ snapshots:
       '@lynx-js/lynx-core': 0.1.4
       tslib: 2.8.1
 
-  '@lynx-js/web-elements@0.12.2(tslib@2.8.1)':
+  '@lynx-js/web-core@0.26.1(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)':
     dependencies:
-      dompurify: 3.4.12
-      markdown-it: 14.3.0
+      '@lynx-js/css-serializer': 0.1.9
+      '@lynx-js/web-elements': 0.12.11(tslib@2.8.1)
+      '@lynx-js/web-worker-rpc': 0.26.1
+      wasm-feature-detect: 1.8.0
+    optionalDependencies:
+      '@lynx-js/lynx-core': 0.1.4
+      tslib: 2.8.1
+
+  '@lynx-js/web-elements@0.12.11(tslib@2.8.1)':
+    dependencies:
+      dompurify: 3.4.15
+      markdown-it: 15.0.2
       tslib: 2.8.1
 
   '@lynx-js/web-elements@0.12.7(tslib@2.8.1)':
@@ -6755,9 +6788,9 @@ snapshots:
 
   '@lynx-js/web-rsbuild-server-middleware@0.23.0': {}
 
-  '@lynx-js/web-worker-rpc@0.20.4': {}
-
   '@lynx-js/web-worker-rpc@0.23.0': {}
+
+  '@lynx-js/web-worker-rpc@0.26.1': {}
 
   '@lynx-js/webpack-dev-transport@0.3.0': {}
 
@@ -7913,6 +7946,8 @@ snapshots:
 
   argparse@2.0.1: {}
 
+  argparse@3.0.2: {}
+
   aria-query@5.3.2: {}
 
   array-buffer-byte-length@1.0.2:
@@ -8683,6 +8718,10 @@ snapshots:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
 
+  dompurify@3.4.15:
+    optionalDependencies:
+      '@types/trusted-types': 2.0.7
+
   domutils@3.2.2:
     dependencies:
       dom-serializer: 2.0.0
@@ -8829,6 +8868,8 @@ snapshots:
   entities@4.5.0: {}
 
   entities@6.0.1: {}
+
+  entities@8.1.0: {}
 
   env-paths@2.2.1: {}
 
@@ -9855,6 +9896,10 @@ snapshots:
     dependencies:
       uc.micro: 2.1.0
 
+  linkify-it@6.1.0:
+    dependencies:
+      uc.micro: 3.0.0
+
   loader-runner@4.3.2: {}
 
   locate-path@5.0.0:
@@ -9949,6 +9994,15 @@ snapshots:
       punycode.js: 2.3.1
       uc.micro: 2.1.0
 
+  markdown-it@15.0.2:
+    dependencies:
+      argparse: 3.0.2
+      entities: 8.1.0
+      linkify-it: 6.1.0
+      mdurl: 2.1.0
+      punycode.js: 2.3.1
+      uc.micro: 3.0.0
+
   matcher@3.0.0:
     dependencies:
       escape-string-regexp: 4.0.0
@@ -9961,6 +10015,8 @@ snapshots:
   mdn-data@2.27.1: {}
 
   mdurl@2.0.0: {}
+
+  mdurl@2.1.0: {}
 
   media-typer@0.3.0: {}
 
@@ -11524,6 +11580,8 @@ snapshots:
   typescript@5.9.3: {}
 
   uc.micro@2.1.0: {}
+
+  uc.micro@3.0.0: {}
 
   uglify-js@3.19.3:
     optional: true
