@@ -10,6 +10,12 @@ import {
 
 const WINDOW_SETTLE_MS = 800;
 
+// Use the OS process creation time, not the time this JS module or preload runs.
+const processCreatedAt = (process as NodeJS.Process & {
+  getCreationTime(): number | null;
+}).getCreationTime();
+let startupTime: number | null = null;
+
 let mainWindow: LynxWindow | null = null;
 let secondWindow: LynxWindow | null = null;
 let secondWindowDelta: MemoryUsageDelta | null = null;
@@ -28,6 +34,7 @@ function createBenchmarkWindow(title: string, width: number, height: number) {
 }
 
 function registerBridgeHandlers() {
+  lynxBridge.handle('getStartupTime', () => startupTime);
   lynxBridge.handle('openSecondWindowAndMeasure', () => {
     if (secondWindow) {
       secondWindow.show();
@@ -61,6 +68,15 @@ function registerBridgeHandlers() {
 app.whenReady().then(() => {
   registerBridgeHandlers();
   mainWindow = createBenchmarkWindow('Benchmark Dashboard', 700, 520);
+  // on-first-screen reports first-screen layout completion, not display presentation.
+  // Measure only the initial main window; reloads and extra windows must not reset it.
+  mainWindow.once('on-first-screen', () => {
+    const firstScreenAt = Date.now();
+    if (processCreatedAt != null && processCreatedAt > 0 && processCreatedAt <= firstScreenAt) {
+      startupTime = Math.round(firstScreenAt - processCreatedAt);
+      console.log(`[Benchmark] Process creation to first-screen layout: ${startupTime} ms`);
+    }
+  });
   mainWindow.show();
   mainWindow.loadFile(LYNX_BUNDLE_PATH);
 });

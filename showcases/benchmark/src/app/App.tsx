@@ -2,14 +2,6 @@ import { useState, useEffect, useCallback } from '@lynx-js/react';
 import '@lynxtron-examples/config/tokens.css';
 import './App.css';
 import { MetricCard } from './components/MetricCard';
-import { SizeBreakdown } from './components/SizeBreakdown';
-
-interface AppSize {
-  runtime: number;
-  business: number;
-  extensions: number;
-  total: number;
-}
 
 interface MemoryUsage {
   primary: number;
@@ -89,7 +81,6 @@ function startupColor(ms: number): string {
 }
 
 export function App() {
-  const [appSize, setAppSize] = useState<AppSize | null>(null);
   const [startupTime, setStartupTime] = useState<number>(0);
   const [memory, setMemory] = useState<MemoryUsage | null>(null);
   const [platform, setPlatform] = useState<PlatformInfo | null>(null);
@@ -104,6 +95,14 @@ export function App() {
   const memoryPrimaryLabel = memory?.primaryLabel ?? fallbackMemoryLabels.primaryLabel;
   const memorySecondaryLabel = memory?.secondaryLabel ?? fallbackMemoryLabels.secondaryLabel;
   const memoryLabelText = formatMemoryLabels(memoryPrimaryLabel, memorySecondaryLabel);
+
+  const refreshStartupTime = useCallback(() => {
+    // The host caches the first-screen result, so bridge latency is not measured.
+    // @ts-ignore — bridge is a Lynx global
+    NativeModules.bridge.call('getStartupTime', {}, (ms: number | null) => {
+      if (typeof ms === 'number' && ms >= 0) setStartupTime(ms);
+    });
+  }, []);
 
   const refreshMemory = useCallback(() => {
     try {
@@ -175,14 +174,6 @@ export function App() {
       const api = getBenchmarkApi();
       if (!api) return;
 
-      // Load app size
-      const size: AppSize = api.getAppSize();
-      setAppSize(size);
-
-      // Load startup time
-      const ms: number = api.getStartupTime();
-      setStartupTime(ms);
-
       // Load platform info
       const info: PlatformInfo = api.getPlatformInfo();
       setPlatform(info);
@@ -191,16 +182,18 @@ export function App() {
     }
 
     // Initial memory read
+    refreshStartupTime();
     refreshMemory();
     refreshSecondWindowDelta();
 
     // Poll memory every 2 seconds
     const interval = setInterval(() => {
+      refreshStartupTime();
       refreshMemory();
       refreshSecondWindowDelta();
     }, 2000);
     return () => clearInterval(interval);
-  }, [refreshMemory, refreshSecondWindowDelta]);
+  }, [refreshMemory, refreshSecondWindowDelta, refreshStartupTime]);
 
   const memHeapInfo =
     memory != null
@@ -230,7 +223,7 @@ export function App() {
       <scroll-view scroll-y className="scroll-content">
         <text className="page-title">Runtime benchmark</text>
         <text className="page-copy">
-          Minimal runtime baseline for a Lynxtron app: package size, startup latency, physical
+          Minimal runtime baseline for a Lynxtron app: startup latency, physical
           memory counters, and JS heap without extra stress widgets layered on top.
         </text>
 
@@ -252,14 +245,9 @@ export function App() {
 
         <view className="cards-row" style={{ flexDirection: 'row' }}>
           <MetricCard
-            title="App size"
-            value={appSize != null ? formatMB(appSize.total) : '—'}
-            subtitle="Total on disk"
-          />
-          <MetricCard
             title="Startup"
             value={startupTime > 0 ? formatMS(startupTime) : '—'}
-            subtitle="Preload to first call"
+            subtitle="Process start to first-screen layout"
             accentColor={startupTime > 0 ? startupColor(startupTime) : '#f5f8fa'}
           />
           <MetricCard
@@ -281,14 +269,6 @@ export function App() {
             accentColor={secondWindowDelta != null ? '#48aff0' : '#f5f8fa'}
           />
         </view>
-
-        {appSize != null ? (
-          <SizeBreakdown
-            runtime={appSize.runtime}
-            business={appSize.business}
-            extensions={appSize.extensions}
-          />
-        ) : null}
 
         <text className="footer">{footerText}</text>
       </scroll-view>
