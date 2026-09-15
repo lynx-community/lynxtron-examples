@@ -31,6 +31,17 @@ When implementing or reviewing a feature, explicitly identify:
 
 ## Key Constraints
 
+- **Distinguish MTS from BTS.** MTS means Main Thread Script, not all frontend
+  JavaScript. Lynx can synchronously render initial content through MTS on the
+  main thread (IFR); BTS is Background Thread Script. For this Benchmark's
+  synchronous LynxWindow.loadFile path, the owner-confirmed contract is that
+  MTS execution and on-screen rendering operations complete before return.
+  Measure Lynx FCP from OS process creation to that return; do not substitute
+  browser-style asynchronous paint assumptions or wait for BTS. This does not
+  include later network-driven content. References:
+  https://lynxjs.org/guide/interaction/ifr and
+  https://lynxjs.org/living-spec/index.html (Main Thread Script).
+
 - Lynx is **not a browser**. No HTML elements (`div`, `span`). Use `<view>`, `<text>`, `<image>`.
 - Events use `bindtap` (not `onClick`), `bindinput` (not `onChange`).
 - Import React hooks from `@lynx-js/react` (not `react`).
