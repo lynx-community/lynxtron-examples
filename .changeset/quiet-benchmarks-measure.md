@@ -2,7 +2,7 @@
 "@lynxtron-examples/benchmark": patch
 ---
 
-Remove the misleading app size metric and its filesystem scanning. A showcase running inside Lynxtron Go shares the host runtime and cannot report a standalone application size.
+Replace the misleading installed app size metric with the latest stable Lynxtron release ZIP download size for the current platform and architecture, fetched from GitHub asset metadata without downloading the archive or scanning disk. Exclude devtool, debug symbols and CEF; label the compressed runtime metric separately from installed app size.
 
 Measure startup from OS process creation to the main window's first-screen layout event instead of from preload execution to a UI bridge call.
 

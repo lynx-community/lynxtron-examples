@@ -81,6 +81,8 @@ function startupColor(ms: number): string {
 }
 
 export function App() {
+  const [releaseSize, setReleaseSize] = useState<{ bytes: number; tag: string } | null>(null);
+  const [releaseSizeStatus, setReleaseSizeStatus] = useState('Loading latest release metadata…');
   const [startupTime, setStartupTime] = useState<number>(0);
   const [memory, setMemory] = useState<MemoryUsage | null>(null);
   const [platform, setPlatform] = useState<PlatformInfo | null>(null);
@@ -206,6 +208,33 @@ export function App() {
     };
   }, [startupTime, refreshMemory]);
 
+  useEffect(() => {
+    if (startupTime <= 0) return;
+    let active = true;
+    const timeout = setTimeout(() => {
+      if (active) setReleaseSizeStatus('GitHub metadata request timed out');
+    }, 15000);
+    const start = setTimeout(() => {
+      try {
+        // @ts-ignore — bridge is a Lynx global
+        NativeModules.bridge.call('getReleaseSize', {}, (result: any) => {
+          if (!active) return;
+          clearTimeout(timeout);
+          if (result?.ok && typeof result.bytes === 'number' && result.bytes > 0) {
+            setReleaseSize(result);
+            setReleaseSizeStatus(`Latest ${result.tag} · release ZIP`);
+          } else {
+            setReleaseSizeStatus(result?.error || 'Release size unavailable');
+          }
+        });
+      } catch (_) {
+        clearTimeout(timeout);
+        if (active) setReleaseSizeStatus('Release size unavailable');
+      }
+    }, 1000);
+    return () => { active = false; clearTimeout(start); clearTimeout(timeout); };
+  }, [startupTime]);
+
   const memHeapInfo =
     memory != null
       ? `Heap ${formatMB(memory.heapUsed)} / ${formatMB(memory.heapTotal)}`
@@ -235,7 +264,9 @@ export function App() {
         <text className="page-title">Runtime benchmark</text>
         <text className="page-copy">
           Minimal runtime baseline for a Lynxtron app: startup latency, physical
-          memory counters, and JS heap without extra stress widgets layered on top.
+          memory counters, JS heap, and the latest release runtime ZIP download size.
+          ZIP size is compressed runtime only, not installed app size; devtool,
+          debug symbols and CEF are excluded. No local disk scanning.
         </text>
 
         <text className="section-label">Second window probe</text>
@@ -255,6 +286,11 @@ export function App() {
         <text className="section-label">Live metrics</text>
 
         <view className="cards-row" style={{ flexDirection: 'row' }}>
+          <MetricCard
+            title="Runtime ZIP"
+            value={releaseSize ? `${(releaseSize.bytes / (1024 * 1024)).toFixed(1)} MiB` : '—'}
+            subtitle={releaseSizeStatus}
+          />
           <MetricCard
             title="Startup"
             value={startupTime > 0 ? formatMS(startupTime) : '—'}
