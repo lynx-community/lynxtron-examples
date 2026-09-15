@@ -11,12 +11,14 @@
     "directory": "showcases/benchmark"
   },
   "scripts": {
+    "test": "node --experimental-strip-types --test release-size.test.mjs",
     "build": "rspeedy build && rspack build",
     "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
     "start": "cross-env TARGET_ENV=desktop npm run build && lynxtron ./dist/desktop"
   },
   "showcase": {
-    "description": "Lynxtron runtime benchmarks — app size, startup time, and memory usage",
+    "runtimeVariant": "release",
+    "description": "Lynxtron runtime benchmarks — startup, memory, and latest release ZIP download size (not installed app size)",
     "thumbnail": "thumbnail.png",
     "tags": [
       "benchmark",

@@ -96,6 +96,7 @@ mkdir -p showcases/my-app/src/main/desktop
 
 **Fields:**
 - `showcase.description` — shown in Lynxtron Go's showcase list
+- `showcase.runtimeVariant` — optional `"release"` or `"devtool"` for full desktop launches, including URL-opened showcases. Benchmark requests `"release"` so debug instrumentation is excluded. An explicit selection never falls back to another variant; Go installers bundle both. Omitting it preserves the existing runtime preference. This does not change the development-server command.
 - `showcase.tags` — used for filtering (`beginner`, `advanced`, `animation`, etc.)
 - `showcase.minToolchainVersion` — minimum `@lynxtron-examples/*` version required
 - `showcase.distribution` — omit for a GitHub Release asset; use `"builtin"`
