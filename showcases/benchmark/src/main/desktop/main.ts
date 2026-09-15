@@ -94,10 +94,13 @@ app.whenReady().then(() => {
   mainWindow.show();
   markStartup('show-end');
   markStartup('loadFile-start');
-  // This benchmark defines Lynx FCP as OS process creation -> completion of the
-  // initial main window's loadFile. LynxWindow.loadFile executes synchronously
-  // on the main thread: capture its return, not an on-first-screen callback or
-  // actual display presentation. Extra windows/reloads must not reset the metric.
+  // Lynx architecture: LynxWindow.loadFile synchronously executes the frontend
+  // code AND the on-screen rendering operations on the main thread. Its return
+  // is therefore the end of those operations, not just a request being queued.
+  // Measure Lynx FCP from OS process creation to this synchronous return for the
+  // initial main window. Do not substitute a browser-style asynchronous paint
+  // assumption or wait for an on-first-screen callback. Extra windows/reloads
+  // must not reset the metric.
   mainWindow.loadFile(LYNX_BUNDLE_PATH);
   const loadFileCompletedAt = Date.now();
   markStartup('loadFile-return');
