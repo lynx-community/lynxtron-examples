@@ -99,7 +99,8 @@ export function App() {
   const memoryLabelText = formatMemoryLabels(memoryPrimaryLabel, memorySecondaryLabel);
 
   const refreshStartupTime = useCallback(() => {
-    // The host caches the first-screen result, so bridge latency is not measured.
+    // The host caches process-start -> synchronous loadFile completion;
+    // bridge latency is not part of this benchmark's Lynx FCP metric.
     // @ts-ignore — bridge is a Lynx global
     NativeModules.bridge.call('getStartupTime', {}, (ms: number | null) => {
       if (typeof ms === 'number' && ms >= 0) setStartupTime(ms);
@@ -292,9 +293,9 @@ export function App() {
             subtitle={releaseSizeStatus}
           />
           <MetricCard
-            title="Startup"
+            title="Lynx FCP"
             value={startupTime > 0 ? formatMS(startupTime) : '—'}
-            subtitle="Process start to first-screen layout"
+            subtitle="Process start to loadFile completion"
             accentColor={startupTime > 0 ? startupColor(startupTime) : '#f5f8fa'}
           />
           <MetricCard

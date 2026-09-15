@@ -34,6 +34,13 @@ export default defineConfig({
     ],
   },
   plugins: [
+    // Diagnostic boundary before bundled module imports execute; no logging I/O.
+    new rspack.BannerPlugin({
+      banner: 'globalThis.__benchmarkBundleEntryAt = Date.now();',
+      raw: true,
+      entryOnly: true,
+      test: /main\.js$/,
+    }),
     // Prevent bundlers from baking the build machine's absolute `import.meta.url`
     // (e.g. `file:///Users/runner/...`) into the CommonJS output. The `@lynx-js/lynxtron`
     // ESM shim calls `createRequire(import.meta.url)`, which crashes on other machines

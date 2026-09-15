@@ -11,7 +11,7 @@ import {
 
 const WINDOW_SETTLE_MS = 800;
 
-// Main body starts after imports. Buffer in memory; print after first screen.
+// Main body starts after imports. Buffer in memory; print after loadFile returns.
 const startupMarks: { stage: string; wallMs: number; monoMs: number }[] = [];
 function markStartup(stage: string) {
   startupMarks.push({ stage, wallMs: Date.now(), monoMs: performance.now() });
@@ -90,28 +90,29 @@ app.whenReady().then(() => {
   markStartup('window-create-start');
   mainWindow = createBenchmarkWindow('Benchmark Dashboard', 700, 520);
   markStartup('window-create-end');
-  // on-first-screen reports first-screen layout completion, not display presentation.
-  // Measure only the initial main window; reloads and extra windows must not reset it.
-  mainWindow.once('on-first-screen', () => {
-    markStartup('first-screen');
-    const firstScreenAt = Date.now();
-    if (processCreatedAt != null && processCreatedAt > 0 && processCreatedAt <= firstScreenAt) {
-      startupTime = Math.round(firstScreenAt - processCreatedAt);
-      console.log(`[Benchmark] Process creation to first-screen layout: ${startupTime} ms`);
-    }
-    console.log('[BenchmarkStartup] ' + JSON.stringify({
-      pid: process.pid, processCreatedAt, totalMs: startupTime,
-      marks: startupMarks.map((mark, index) => ({
-        stage: mark.stage,
-        sinceProcessMs: processCreatedAt == null ? null : mark.wallMs - processCreatedAt,
-        sincePreviousMs: index === 0 ? null : Number((mark.monoMs - startupMarks[index - 1].monoMs).toFixed(2)),
-      })),
-    }));
-  });
   markStartup('show-start');
   mainWindow.show();
   markStartup('show-end');
   markStartup('loadFile-start');
+  // This benchmark defines Lynx FCP as OS process creation -> completion of the
+  // initial main window's loadFile. LynxWindow.loadFile executes synchronously
+  // on the main thread: capture its return, not an on-first-screen callback or
+  // actual display presentation. Extra windows/reloads must not reset the metric.
   mainWindow.loadFile(LYNX_BUNDLE_PATH);
+  const loadFileCompletedAt = Date.now();
   markStartup('loadFile-return');
+  if (processCreatedAt != null && processCreatedAt > 0 && processCreatedAt <= loadFileCompletedAt) {
+    startupTime = Math.round(loadFileCompletedAt - processCreatedAt);
+    console.log(`[Benchmark] Process creation to synchronous loadFile completion: ${startupTime} ms`);
+  }
+  console.log('[BenchmarkStartup] ' + JSON.stringify({
+    pid: process.pid, processCreatedAt, totalMs: startupTime,
+    bundleEntrySinceProcessMs: processCreatedAt == null ? null :
+      (globalThis as typeof globalThis & { __benchmarkBundleEntryAt: number }).__benchmarkBundleEntryAt - processCreatedAt,
+    marks: startupMarks.map((mark, index) => ({
+      stage: mark.stage,
+      sinceProcessMs: processCreatedAt == null ? null : mark.wallMs - processCreatedAt,
+      sincePreviousMs: index === 0 ? null : Number((mark.monoMs - startupMarks[index - 1].monoMs).toFixed(2)),
+    })),
+  }));
 });
