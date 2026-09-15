@@ -74,12 +74,6 @@ function getDefaultMemoryLabels(platform: PlatformInfo | null): Pick<
   };
 }
 
-function startupColor(ms: number): string {
-  if (ms < 200) return '#3dd68c';
-  if (ms < 500) return '#f5f8fa';
-  return '#df3434';
-}
-
 export function App() {
   const [releaseSize, setReleaseSize] = useState<{ bytes: number; tag: string } | null>(null);
   const [releaseSizeStatus, setReleaseSizeStatus] = useState('Loading latest release metadata…');
@@ -296,7 +290,6 @@ export function App() {
             title="Lynx FCP"
             value={startupTime > 0 ? formatMS(startupTime) : '—'}
             subtitle="Process start to loadFile completion"
-            accentColor={startupTime > 0 ? startupColor(startupTime) : '#f5f8fa'}
           />
           <MetricCard
             title="Memory"
