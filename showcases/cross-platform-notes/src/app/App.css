@@ -135,11 +135,13 @@
   display: flex;
   flex: 1;
   min-height: 0;
+  min-width: 0;
   flex-direction: column;
   padding: 14px;
 }
 
 .title-input {
+  flex-shrink: 0;
   height: 36px;
   border-radius: 3px;
   padding-left: 10px;
@@ -154,6 +156,7 @@
 }
 
 .editor-input {
+  flex-shrink: 0;
   min-height: 120px;
   border-radius: 3px;
   padding-left: 10px;
@@ -173,7 +176,9 @@
 
 .editor-preview {
   display: flex;
-  flex: 1;
+  flex-grow: 1;
+  flex-shrink: 0;
+  flex-basis: auto;
   min-height: 0;
   flex-direction: column;
   padding: 12px;
@@ -203,6 +208,7 @@
 }
 
 .editor-actions {
+  flex-shrink: 0;
   display: flex;
   flex-direction: row;
   margin-top: 12px;
@@ -224,4 +230,32 @@
 .footer-status {
   font-size: 11px;
   color: var(--dim);
+}
+
+/* Respond to the actual host width, including an embedded Web preview. */
+.notes-root-compact {
+  padding: 8px;
+}
+
+.notes-root-compact .notes-shell {
+  flex-direction: column;
+}
+
+.notes-root-compact .notes-sidebar {
+  width: 100%;
+  height: 210px;
+  flex-shrink: 0;
+  padding: 8px;
+  border-right-width: 0;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--hairline);
+}
+
+.notes-root-compact .notes-editor {
+  padding: 8px;
+}
+
+.notes-root-compact .editor-input {
+  min-height: 80px;
 }

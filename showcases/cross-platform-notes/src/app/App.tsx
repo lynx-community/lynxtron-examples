@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from '@lynx-js/react';
+import type { LayoutChangeEvent } from '@lynx-js/types';
 import '@lynxtron-examples/config/tokens.css';
 import './App.css';
 import { getNotesApi, type NoteSummary, type PlatformInfo } from './api';
@@ -11,6 +12,10 @@ function formatTimestamp(value: string): string {
 }
 
 export function App() {
+  const [compact, setCompact] = useState(true);
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    setCompact(event.detail.width < 600);
+  }, []);
   const [notes, setNotes] = useState<NoteSummary[]>([]);
   const [activeId, setActiveId] = useState<string>('');
   const [title, setTitle] = useState('');
@@ -201,7 +206,10 @@ export function App() {
     notes.find((note) => note.id === activeId) ?? null;
 
   return (
-    <view className="notes-root">
+    <view
+      className={`notes-root${compact ? ' notes-root-compact' : ''}`}
+      bindlayoutchange={handleLayout}
+    >
       <view className="notes-shell">
         <view className="notes-sidebar">
           <text className="sidebar-title">Notes</text>
@@ -245,7 +253,7 @@ export function App() {
           </scroll-view>
         </view>
 
-        <view className="notes-editor">
+        <scroll-view scroll-y className="notes-editor">
           <input
             className="title-input"
             {...inputValueProp(title)}
@@ -281,7 +289,7 @@ export function App() {
               <text className="notes-button-text-error">Delete</text>
             </view>
           </view>
-        </view>
+        </scroll-view>
       </view>
 
       <view className="notes-footer">
