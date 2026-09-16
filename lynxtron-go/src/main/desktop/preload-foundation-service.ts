@@ -87,9 +87,12 @@ export function createFoundationBridge(dbg?: (msg: string) => void) {
       },
       readdirStat: (dir: string) => {
         try {
-          return fs.readdirSync(dir).map(name => ({
-            name,
-            isDirectory: fs.statSync(path.join(dir, name)).isDirectory(),
+          return fs.readdirSync(dir, { withFileTypes: true }).map(entry => ({
+            name: entry.name,
+            isDirectory: entry.isSymbolicLink()
+              ? fs.statSync(path.join(dir, entry.name)).isDirectory()
+              : entry.isDirectory(),
+            isSymbolicLink: entry.isSymbolicLink(),
           }));
         } catch (error) {
           console.error('[Preload] readdirStat error:', error);

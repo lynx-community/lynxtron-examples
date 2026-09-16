@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { loadShowcaseFiddle, projectOverlayForFiles } from './showcase-open';
+import { loadProjectFiddle, loadShowcaseFiddle, projectOverlayForFiles } from './showcase-open';
 
 const temporaryRoots: string[] = [];
 
@@ -19,6 +19,15 @@ function makeWorkspace(): string {
   fs.writeFileSync(path.join(root, 'src', 'app', 'App.tsx'), 'export function App() { return <view />; }');
   fs.writeFileSync(path.join(root, 'dist_precompiled', 'desktop', 'main.js'), '// artifact host');
   fs.writeFileSync(path.join(root, 'dist_precompiled', 'desktop', 'main.lynx.bundle'), 'artifact');
+  (globalThis as any).NativeModules = {
+    nodejs: { exposed: { fs: {
+      readdirStat: (target: string) => fs.readdirSync(target, { withFileTypes: true }).map(entry => ({
+        name: entry.name, isDirectory: entry.isDirectory(), isSymbolicLink: entry.isSymbolicLink(),
+      })),
+      readFile: (target: string) => fs.readFileSync(target, 'utf8'),
+      join: (...parts: string[]) => path.join(...parts),
+    } } },
+  };
   return root;
 }
 
@@ -53,17 +62,6 @@ describe('projectOverlayForFiles', () => {
 describe('loadShowcaseFiddle', () => {
   it('surfaces editable source and never opens immutable precompiled files', () => {
     const root = makeWorkspace();
-    (globalThis as any).NativeModules = {
-      nodejs: {
-        exposed: {
-          fs: {
-            readdir: (target: string) => fs.readdirSync(target),
-            readFile: (target: string) => fs.readFileSync(target, 'utf8'),
-            join: (...parts: string[]) => path.join(...parts),
-          },
-        },
-      },
-    };
 
     const snapshot = loadShowcaseFiddle({
       name: '@lynxtron-examples/hello-lynxtron',
@@ -76,5 +74,35 @@ describe('loadShowcaseFiddle', () => {
     expect(snapshot).not.toBeNull();
     expect([...snapshot!.files.keys()]).toContain('src/app/App.tsx');
     expect([...snapshot!.files.keys()].some(file => file.startsWith('dist_precompiled/'))).toBe(false);
+  });
+
+  it('includes deep host files, more than 14 files and large source files', () => {
+    const root = makeWorkspace();
+    const expected = new Map<string, string>();
+    for (let i = 0; i < 20; i++) expected.set(`scripts/test-${i}.mjs`, `// script ${i}`);
+    expected.set('src/main/desktop/main.ts', '// host');
+    expected.set('src/main/desktop/preload.ts', '// preload');
+    expected.set('src/app/components/deep/nested/view.tsx', '// nested');
+    expected.set('src/app/large.ts', '// large\n'.repeat(20000));
+    for (const [rel, content] of expected) {
+      fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+      fs.writeFileSync(path.join(root, rel), content);
+    }
+    for (const dir of ['node_modules', 'dist', 'output', 'build', 'coverage', '.git']) {
+      fs.mkdirSync(path.join(root, dir));
+      fs.writeFileSync(path.join(root, dir, 'ignored.js'), '// excluded');
+    }
+    const snapshot = loadProjectFiddle('full project', root, { kind: 'showcase', ref: root })!;
+    expect(snapshot.files.size).toBe(expected.size + 2);
+    for (const [rel, content] of expected) expect(snapshot.files.get(rel)?.currentText).toBe(content);
+    expect([...snapshot.files.values()].filter(file => file.visible)).toHaveLength(4);
+  });
+
+  it.skipIf(process.platform === 'win32')('does not follow cyclic or external symlinks', () => {
+    const root = makeWorkspace();
+    fs.symlinkSync(root, path.join(root, 'src', 'loop'));
+    fs.symlinkSync(path.join(root, 'package.json'), path.join(root, 'linked.json'));
+    const snapshot = loadProjectFiddle('links', root, { kind: 'showcase', ref: root })!;
+    expect([...snapshot.files.keys()]).toEqual(['package.json', 'src/app/App.tsx']);
   });
 });

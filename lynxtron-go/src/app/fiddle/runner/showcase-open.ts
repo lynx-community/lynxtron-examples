@@ -27,10 +27,8 @@ const SKIP_DIRS = new Set([
   'coverage',
 ]);
 const SKIP_FILES = new Set(['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'tsconfig.tsbuildinfo']);
-const MAX_FILES = 14;
-const MAX_FILE_BYTES = 120 * 1024;
 
-/** Collect the showcase's source files (root + up to 2 levels) into a snapshot. */
+/** Collect editable source without truncating by depth, file count or size. */
 export function loadProjectFiddle(
   title: string,
   workspaceRoot: string,
@@ -41,33 +39,32 @@ export function loadProjectFiddle(
 
   const collected: Array<{ rel: string; content: string }> = [];
 
-  const walk = (dir: string, relPrefix: string, depth: number) => {
-    if (collected.length >= MAX_FILES || depth > 2) return;
-    let entries: string[] = [];
-    try { entries = fs.readdir?.(dir) ?? []; } catch (_) { return; }
-    entries.sort();
-    // files first so shallow files win the MAX_FILES budget over deep ones
-    for (const name of entries) {
-      if (collected.length >= MAX_FILES) return;
+  if (typeof fs.readdirStat !== 'function') throw new Error('Source tree requires fs.readdirStat');
+  // Iterative traversal avoids a call-stack depth limit. Do not follow links:
+  // they can loop back to an ancestor or leave the project entirely.
+  const pending = [{ dir: workspaceRoot, relPrefix: '' }];
+  while (pending.length) {
+    const { dir, relPrefix } = pending.pop()!;
+    const entries: Array<{ name: string; isDirectory: boolean; isSymbolicLink?: boolean }> = fs.readdirStat(dir);
+    entries.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+    for (const { name, isDirectory, isSymbolicLink } of entries) {
+      if (isDirectory || isSymbolicLink) continue;
       if (SKIP_FILES.has(name) || name.startsWith('.')) continue;
       if (!CODE_FILE.test(name)) continue;
       const p = fs.join?.(dir, name) ?? dir + '/' + name;
       try {
-        const content: string = fs.readFile?.(p) ?? '';
-        if (content.length > MAX_FILE_BYTES) continue;
+        const content: string | null = fs.readFile?.(p);
+        if (typeof content !== 'string') continue;
         collected.push({ rel: relPrefix + name, content });
       } catch (_) {}
     }
-    for (const name of entries) {
-      if (collected.length >= MAX_FILES) return;
+    for (const { name, isDirectory, isSymbolicLink } of [...entries].reverse()) {
+      if (!isDirectory || isSymbolicLink) continue;
       if (SKIP_DIRS.has(name) || name.startsWith('.')) continue;
       const p = fs.join?.(dir, name) ?? dir + '/' + name;
-      try {
-        if (fs.readdir?.(p) != null) walk(p, relPrefix + name + '/', depth + 1);
-      } catch (_) { /* not a directory */ }
+      pending.push({ dir: p, relPrefix: relPrefix + name + '/' });
     }
-  };
-  walk(workspaceRoot, '', 0);
+  }
 
   if (collected.length === 0) return null;
 

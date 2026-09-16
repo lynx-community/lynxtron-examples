@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import * as tar from 'tar';
 import {
   SHOWCASE_PRECOMPILED_ROOT,
   SHOWCASE_RELEASE_MANIFEST_FILE,
@@ -132,6 +133,27 @@ describe('showcase release format', () => {
     expect(fs.existsSync(path.join(root, SHOWCASE_PRECOMPILED_ROOT, 'desktop', 'main.js'))).toBe(true);
     expect(fs.existsSync(path.join(root, SHOWCASE_RELEASE_MANIFEST_FILE))).toBe(true);
     expect(verifyShowcaseRelease(root).status).toBe('verified');
+  });
+
+  it.skipIf(process.platform === 'win32')('preserves framework symlinks across packing and relocation', async () => {
+    const root = makeShowcase();
+    writeDesktop(root, 'dist', 'framework');
+    const framework = 'desktop/CEF.framework';
+    writeFile(root, `dist/${framework}/Versions/A/CEF`, 'native binary');
+    fs.symlinkSync('A', path.join(root, 'dist', framework, 'Versions/Current'));
+    fs.symlinkSync('Versions/Current/CEF', path.join(root, 'dist', framework, 'CEF'));
+    prepareShowcasePackageForRelease(root, path.join(root, 'dist'));
+    const relocated = fs.mkdtempSync(path.join(os.tmpdir(), 'lynxtron-relocated-'));
+    temporaryRoots.push(relocated);
+    const archive = path.join(relocated, 'payload.tgz');
+    await tar.c({ file: archive, gzip: true, cwd: root }, fs.readdirSync(root));
+    const destination = path.join(relocated, 'package');
+    fs.mkdirSync(destination);
+    await tar.x({ file: archive, cwd: destination });
+    const installed = path.join(destination, SHOWCASE_PRECOMPILED_ROOT, framework);
+    expect(fs.readlinkSync(path.join(installed, 'Versions/Current'))).toBe('A');
+    expect(fs.readFileSync(path.join(installed, 'CEF'), 'utf8')).toBe('native binary');
+    expect(verifyShowcaseRelease(destination).status).toBe('verified');
   });
 
   it('rejects published showcase scripts that require pnpm', () => {
