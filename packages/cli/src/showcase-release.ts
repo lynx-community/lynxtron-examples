@@ -228,7 +228,9 @@ export function prepareShowcasePackageForRelease(
   }
   const precompiledPath = path.join(packedShowcasePath, SHOWCASE_PRECOMPILED_ROOT);
   fs.rmSync(precompiledPath, { recursive: true, force: true });
-  fs.cpSync(localDistPath, precompiledPath, { recursive: true, force: true });
+  // Preserve relative framework links: cpSync otherwise rewrites them to
+  // absolute build-machine paths, which tar sanitizes and breaks on install.
+  fs.cpSync(localDistPath, precompiledPath, { recursive: true, force: true, verbatimSymlinks: true });
   return finalizeShowcasePackageRoot(packedShowcasePath);
 }
 

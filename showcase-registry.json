@@ -16,6 +16,21 @@
       "distribution": "release"
     },
     {
+      "name": "@lynxtron-examples/browser",
+      "description": "Multi-tab browser with a Lynx UI and CEF WebViews",
+      "path": "showcases/browser",
+      "thumbnail": null,
+      "tags": [
+        "browser",
+        "webview",
+        "native"
+      ],
+      "targets": [
+        "desktop"
+      ],
+      "distribution": "release"
+    },
+    {
       "name": "@lynxtron-examples/counter",
       "description": "Minimal counter example demonstrating state management",
       "path": "showcases/counter",

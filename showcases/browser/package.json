@@ -1,0 +1,44 @@
+{
+  "name": "@lynxtron-examples/browser",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0",
+  "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lynx-community/lynxtron-examples",
+    "directory": "showcases/browser"
+  },
+  "files": ["src", "scripts", "dist/desktop", "lynx.config.ts", "rspack.config.ts", "tsconfig.base.json", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "rspeedy build && rspack build && node scripts/check-dist.mjs",
+    "start": "npm run build && lynxtron ./dist/desktop",
+    "dev": "cross-env NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
+    "test": "node --test scripts/*.test.mjs",
+    "typecheck": "tsc --noEmit -p src/app && tsc --noEmit -p src/main/desktop",
+    "prepack": "node scripts/check-release.mjs"
+  },
+  "showcase": {
+    "description": "Multi-tab browser with a Lynx UI and CEF WebViews",
+    "tags": ["browser", "webview", "native"],
+    "targets": ["desktop"],
+    "minToolchainVersion": "0.0.1"
+  },
+  "dependencies": {
+    "@lynx-js/lynxtron": "catalog:",
+    "@lynx-js/cef-webview": "catalog:"
+  },
+  "devDependencies": {
+    "@lynxtron-examples/config": "workspace:*",
+    "@lynx-js/react": "catalog:",
+    "@lynx-js/rspeedy": "catalog:",
+    "@lynx-js/types": "catalog:",
+    "@lynx-js/lynxtron-dev-plugins": "catalog:",
+    "@rspack/cli": "catalog:",
+    "@rspack/core": "catalog:",
+    "@types/node": "^22.20.0",
+    "concurrently": "catalog:",
+    "cross-env": "catalog:",
+    "typescript": "catalog:"
+  }
+}
