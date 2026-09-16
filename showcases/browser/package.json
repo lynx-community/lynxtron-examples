@@ -1,6 +1,6 @@
 {
   "name": "@lynxtron-examples/browser",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
   "main": "main.js",
@@ -9,7 +9,16 @@
     "url": "https://github.com/lynx-community/lynxtron-examples",
     "directory": "showcases/browser"
   },
-  "files": ["src", "scripts", "dist/desktop", "lynx.config.ts", "rspack.config.ts", "tsconfig.base.json", "README.md", "LICENSE"],
+  "files": [
+    "src",
+    "scripts",
+    "dist/desktop",
+    "lynx.config.ts",
+    "rspack.config.ts",
+    "tsconfig.base.json",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "rspeedy build && rspack build && node scripts/check-dist.mjs",
     "start": "npm run build && lynxtron ./dist/desktop",
@@ -20,8 +29,14 @@
   },
   "showcase": {
     "description": "Multi-tab browser with a Lynx UI and CEF WebViews",
-    "tags": ["browser", "webview", "native"],
-    "targets": ["desktop"],
+    "tags": [
+      "browser",
+      "webview",
+      "native"
+    ],
+    "targets": [
+      "desktop"
+    ],
     "minToolchainVersion": "0.0.1"
   },
   "dependencies": {

@@ -1,5 +1,11 @@
 # @lynxtron-examples/system-monitor
 
+## 0.0.6
+
+### Patch Changes
+
+- b0275e7: Fix System Monitor's initial data request to use the callback-based native bridge, so the first reading does not depend on the periodic update event.
+
 ## 0.0.5
 
 ### Patch Changes

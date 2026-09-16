@@ -1,5 +1,11 @@
 # @lynxtron-examples/cli
 
+## 0.0.10
+
+### Patch Changes
+
+- bfae767: Preserve relative native framework symlinks in precompiled showcase tarballs so relocated Browser artifacts pass verification and launch without a source rebuild.
+
 ## 0.0.9
 
 ### Patch Changes
