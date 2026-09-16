@@ -1,5 +1,17 @@
 # lynxtron-go
 
+## 0.1.12
+
+### Patch Changes
+
+- bfae767: Upgrade the coordinated Lynxtron runtime, CEF and build tooling to 0.0.23 for the Browser showcase distribution.
+- bfae767: Remove depth, file count and file size truncation from the showcase source tree. Keep build outputs excluded and avoid following symlinks; limit only the initially visible editor panes.
+- 93694f9: Upgrade Notes to Web Core 0.26.1 so input events are enabled after lazy-loaded input components are registered. This restores title and content updates, previews, and saved edits in the web showcase.
+- bfae767: Preserve relative native framework symlinks in precompiled showcase tarballs so relocated Browser artifacts pass verification and launch without a source rebuild.
+- b0275e7: Fix System Monitor's initial data request to use the callback-based native bridge, so the first reading does not depend on the periodic update event.
+- Updated dependencies [bfae767]
+  - @lynxtron-examples/cli@0.0.10
+
 ## 0.1.11
 
 ### Patch Changes

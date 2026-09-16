@@ -1,5 +1,11 @@
 # @lynxtron-examples/cross-platform-notes
 
+## 0.0.4
+
+### Patch Changes
+
+- 93694f9: Upgrade Notes to Web Core 0.26.1 so input events are enabled after lazy-loaded input components are registered. This restores title and content updates, previews, and saved edits in the web showcase.
+
 ## 0.0.3
 
 ### Patch Changes
