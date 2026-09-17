@@ -104,6 +104,14 @@ jobs:
           path: release-assets
           merge-multiple: true
       - name: Publish immutable revision then advance compatible Go channel
+        id: publication
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/showcase-channel.mjs publish
+        run: |
+          node scripts/verify-go-latest.mjs snapshot "$RUNNER_TEMP/latest-go-before-showcases.txt"
+          node scripts/showcase-channel.mjs publish
+      - name: Verify showcase publication did not replace Latest
+        if: ${{ !cancelled() && steps.publication.outcome != 'skipped' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/verify-go-latest.mjs unchanged "$RUNNER_TEMP/latest-go-before-showcases.txt"

@@ -130,7 +130,7 @@ jobs:
           pnpm install --frozen-lockfile
 
       - name: Verify Changesets to distribution triggers
-        run: node --test scripts/changeset-release.test.mjs scripts/showcase-channel.test.mjs
+        run: node --test scripts/changeset-release.test.mjs scripts/showcase-channel.test.mjs scripts/verify-go-latest.test.mjs
 
       - name: Import macOS signing certificate
         if: runner.os == 'macOS'
@@ -276,6 +276,7 @@ jobs:
           tag_name: ${{ needs.prepare.outputs.tag }}
           target_commitish: ${{ needs.prepare.outputs.sha }}
           prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}
+          make_latest: ${{ needs.prepare.outputs.prerelease == 'false' && 'true' || 'false' }}
           fail_on_unmatched_files: true
           files: |
             release-assets/**/*.dmg
@@ -288,6 +289,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SHOWCASE_ASSETS_DIR: release-assets/dist/showcase-artifacts
         run: node scripts/showcase-channel.mjs seed
+      - name: Verify stable Latest includes every installer after channel initialization
+        if: needs.prepare.outputs.prerelease == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_GO_TAG: ${{ needs.prepare.outputs.tag }}
+        run: node scripts/verify-go-latest.mjs expected "$EXPECTED_GO_TAG"
 
   validate-showcases:
     if: inputs.validate-showcases == true
