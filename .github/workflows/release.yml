@@ -20,20 +20,74 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: ${{ github.workflow }}
-  cancel-in-progress: false
-
 jobs:
-  release:
-    name: Release
-    runs-on: macos-latest
-    environment: npm
+  prepare:
+    name: Detect release changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       go-version: ${{ steps.go.outputs.version }}
       go-changed: ${{ steps.go.outputs.changed }}
       showcases-changed: ${{ steps.go.outputs.showcases-changed }}
-      has-changesets: ${{ steps.changesets.outputs.hasChangesets }}
+      has-changesets: ${{ steps.pending.outputs.has-changesets }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Detect version bumps
+        id: go
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: node scripts/go-release.mjs detect
+      - name: Detect pending changesets
+        id: pending
+        run: node scripts/pending-changesets.mjs
+
+  version-pr:
+    name: Update Version Packages PR
+    needs: prepare
+    if: needs.prepare.outputs.has-changesets == 'true'
+    runs-on: macos-latest
+    concurrency:
+      group: release-version-pr-${{ github.ref }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # A queued version job must update the PR against current main.
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Dependencies
+        run: |
+          npm i -g corepack@latest --force
+          corepack enable
+          pnpm install --frozen-lockfile
+      - name: Create or update Version Packages PR
+        uses: changesets/action@v1
+        with:
+          createGithubReleases: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish to npm
+    needs: prepare
+    if: needs.prepare.outputs.has-changesets == 'false'
+    runs-on: macos-latest
+    environment: npm
+    concurrency:
+      group: release-npm-publish
+      cancel-in-progress: false
     permissions:
       contents: write
       pull-requests: write
@@ -51,12 +105,6 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - name: Detect Go version bump
-        id: go
-        env:
-          BEFORE_SHA: ${{ github.event.before }}
-        run: node scripts/go-release.mjs detect
-
       - name: Install Dependencies
         run: |
           # OIDC trusted publishing requires npm >=11.5.1; Node 22 ships with
@@ -68,7 +116,7 @@ jobs:
           corepack enable
           pnpm install
 
-      - name: Create Release Pull Request or Publish to npm
+      - name: Publish to npm
         id: changesets
         uses: changesets/action@v1
         with:
@@ -80,23 +128,23 @@ jobs:
 
   installers:
     name: Publish Go installers
-    needs: release
-    if: needs.release.outputs.go-changed == 'true' && needs.release.outputs.has-changesets == 'false'
+    needs: [prepare, publish]
+    if: needs.prepare.outputs.go-changed == 'true'
     permissions:
       contents: write
     uses: ./.github/workflows/release-installers.yml
     with:
       source-sha: ${{ github.sha }}
-      expected-version: ${{ needs.release.outputs.go-version }}
+      expected-version: ${{ needs.prepare.outputs.go-version }}
     secrets: inherit
 
   showcases:
     name: Publish showcase updates for current Go
-    needs: release
-    if: needs.release.outputs.go-changed == 'false' && needs.release.outputs.showcases-changed == 'true' && needs.release.outputs.has-changesets == 'false'
+    needs: [prepare, publish]
+    if: needs.prepare.outputs.go-changed == 'false' && needs.prepare.outputs.showcases-changed == 'true'
     permissions:
       contents: write
     uses: ./.github/workflows/release-showcases.yml
     with:
       source-sha: ${{ github.sha }}
-      expected-version: ${{ needs.release.outputs.go-version }}
+      expected-version: ${{ needs.prepare.outputs.go-version }}
