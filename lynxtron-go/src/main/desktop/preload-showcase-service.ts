@@ -803,7 +803,12 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
     if (!fs.existsSync(mainJsPath)) {
       throw new Error(`Desktop output is missing main.js: ${targetPath}`);
     }
-    const executable = runtimeExecutable || resolveLynxtronExecutablePath(dbg);
+    const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
+    const variant = pkg.showcase?.runtimeVariant;
+    if (variant !== undefined && variant !== 'release' && variant !== 'devtool') {
+      throw new Error(`Invalid showcase runtimeVariant: ${variant}`);
+    }
+    const executable = runtimeExecutable || resolveLynxtronExecutablePath(dbg, variant);
     if (!fs.existsSync(executable)) {
       throw new Error(`Lynxtron runtime not found: ${executable}`);
     }

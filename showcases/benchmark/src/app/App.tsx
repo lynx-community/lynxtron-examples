@@ -2,14 +2,6 @@ import { useState, useEffect, useCallback } from '@lynx-js/react';
 import '@lynxtron-examples/config/tokens.css';
 import './App.css';
 import { MetricCard } from './components/MetricCard';
-import { SizeBreakdown } from './components/SizeBreakdown';
-
-interface AppSize {
-  runtime: number;
-  business: number;
-  extensions: number;
-  total: number;
-}
 
 interface MemoryUsage {
   primary: number;
@@ -82,14 +74,9 @@ function getDefaultMemoryLabels(platform: PlatformInfo | null): Pick<
   };
 }
 
-function startupColor(ms: number): string {
-  if (ms < 200) return '#3dd68c';
-  if (ms < 500) return '#f5f8fa';
-  return '#df3434';
-}
-
 export function App() {
-  const [appSize, setAppSize] = useState<AppSize | null>(null);
+  const [releaseSize, setReleaseSize] = useState<{ bytes: number; tag: string } | null>(null);
+  const [releaseSizeStatus, setReleaseSizeStatus] = useState('Loading latest release metadata…');
   const [startupTime, setStartupTime] = useState<number>(0);
   const [memory, setMemory] = useState<MemoryUsage | null>(null);
   const [platform, setPlatform] = useState<PlatformInfo | null>(null);
@@ -104,6 +91,15 @@ export function App() {
   const memoryPrimaryLabel = memory?.primaryLabel ?? fallbackMemoryLabels.primaryLabel;
   const memorySecondaryLabel = memory?.secondaryLabel ?? fallbackMemoryLabels.secondaryLabel;
   const memoryLabelText = formatMemoryLabels(memoryPrimaryLabel, memorySecondaryLabel);
+
+  const refreshStartupTime = useCallback(() => {
+    // The host caches process-start -> synchronous loadFile completion;
+    // bridge latency is not part of this benchmark's Lynx FCP metric.
+    // @ts-ignore — bridge is a Lynx global
+    NativeModules.bridge.call('getStartupTime', {}, (ms: number | null) => {
+      if (typeof ms === 'number' && ms >= 0) setStartupTime(ms);
+    });
+  }, []);
 
   const refreshMemory = useCallback(() => {
     try {
@@ -175,14 +171,6 @@ export function App() {
       const api = getBenchmarkApi();
       if (!api) return;
 
-      // Load app size
-      const size: AppSize = api.getAppSize();
-      setAppSize(size);
-
-      // Load startup time
-      const ms: number = api.getStartupTime();
-      setStartupTime(ms);
-
       // Load platform info
       const info: PlatformInfo = api.getPlatformInfo();
       setPlatform(info);
@@ -190,17 +178,57 @@ export function App() {
       // ignore
     }
 
-    // Initial memory read
-    refreshMemory();
+    refreshStartupTime();
     refreshSecondWindowDelta();
 
-    // Poll memory every 2 seconds
+    // Read cached host metrics without collecting memory during startup.
     const interval = setInterval(() => {
-      refreshMemory();
+      refreshStartupTime();
       refreshSecondWindowDelta();
     }, 2000);
     return () => clearInterval(interval);
-  }, [refreshMemory, refreshSecondWindowDelta]);
+  }, [refreshSecondWindowDelta, refreshStartupTime]);
+
+  useEffect(() => {
+    if (startupTime <= 0) return;
+    // Memory collection can synchronously invoke OS tools. Keep it out of startup.
+    let interval: ReturnType<typeof setInterval> | undefined;
+    const timeout = setTimeout(() => {
+      refreshMemory();
+      interval = setInterval(refreshMemory, 2000);
+    }, 1000);
+    return () => {
+      clearTimeout(timeout);
+      if (interval !== undefined) clearInterval(interval);
+    };
+  }, [startupTime, refreshMemory]);
+
+  useEffect(() => {
+    if (startupTime <= 0) return;
+    let active = true;
+    const timeout = setTimeout(() => {
+      if (active) setReleaseSizeStatus('GitHub metadata request timed out');
+    }, 15000);
+    const start = setTimeout(() => {
+      try {
+        // @ts-ignore — bridge is a Lynx global
+        NativeModules.bridge.call('getReleaseSize', {}, (result: any) => {
+          if (!active) return;
+          clearTimeout(timeout);
+          if (result?.ok && typeof result.bytes === 'number' && result.bytes > 0) {
+            setReleaseSize(result);
+            setReleaseSizeStatus(`Latest ${result.tag} · release ZIP`);
+          } else {
+            setReleaseSizeStatus(result?.error || 'Release size unavailable');
+          }
+        });
+      } catch (_) {
+        clearTimeout(timeout);
+        if (active) setReleaseSizeStatus('Release size unavailable');
+      }
+    }, 1000);
+    return () => { active = false; clearTimeout(start); clearTimeout(timeout); };
+  }, [startupTime]);
 
   const memHeapInfo =
     memory != null
@@ -230,8 +258,10 @@ export function App() {
       <scroll-view scroll-y className="scroll-content">
         <text className="page-title">Runtime benchmark</text>
         <text className="page-copy">
-          Minimal runtime baseline for a Lynxtron app: package size, startup latency, physical
-          memory counters, and JS heap without extra stress widgets layered on top.
+          Minimal runtime baseline for a Lynxtron app: startup latency, physical
+          memory counters, JS heap, and the latest release runtime ZIP download size.
+          ZIP size is compressed runtime only, not installed app size; devtool,
+          debug symbols and CEF are excluded. No local disk scanning.
         </text>
 
         <text className="section-label">Second window probe</text>
@@ -252,15 +282,14 @@ export function App() {
 
         <view className="cards-row" style={{ flexDirection: 'row' }}>
           <MetricCard
-            title="App size"
-            value={appSize != null ? formatMB(appSize.total) : '—'}
-            subtitle="Total on disk"
+            title="Runtime ZIP"
+            value={releaseSize ? `${(releaseSize.bytes / (1024 * 1024)).toFixed(1)} MiB` : '—'}
+            subtitle={releaseSizeStatus}
           />
           <MetricCard
-            title="Startup"
+            title="Lynx FCP"
             value={startupTime > 0 ? formatMS(startupTime) : '—'}
-            subtitle="Preload to first call"
-            accentColor={startupTime > 0 ? startupColor(startupTime) : '#f5f8fa'}
+            subtitle="Process start to loadFile completion"
           />
           <MetricCard
             title="Memory"
@@ -281,14 +310,6 @@ export function App() {
             accentColor={secondWindowDelta != null ? '#48aff0' : '#f5f8fa'}
           />
         </view>
-
-        {appSize != null ? (
-          <SizeBreakdown
-            runtime={appSize.runtime}
-            business={appSize.business}
-            extensions={appSize.extensions}
-          />
-        ) : null}
 
         <text className="footer">{footerText}</text>
       </scroll-view>
