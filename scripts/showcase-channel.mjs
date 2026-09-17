@@ -4,6 +4,14 @@ import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 export const slugs = ['mac-arm64', 'mac-x64', 'win-x64'];
+export function runtimeVersionFromWorkspace(yaml) {
+  // The same key also occurs under allowBuilds with the value `true`.
+  // Read only the top-level catalog, and fail closed unless it is pinned.
+  const catalog = /^catalog:[ \t]*\r?\n((?:[ \t]+[^\r\n]*\r?\n?|\r?\n)*)/m.exec(yaml)?.[1] ?? '';
+  const version = /^[ \t]+['"]@lynx-js\/lynxtron['"]:[ \t]*['"]?(\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?)['"]?[ \t]*\r?$/m.exec(catalog)?.[1];
+  if (!version) throw Error('Expected pinned Lynxtron runtime in workspace catalog');
+  return version;
+}
 export function identity(version, sha) {
   if (!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)
     || !/^[a-f0-9]{40}$/.test(sha)) throw Error('Invalid showcase release identity');
@@ -12,6 +20,7 @@ export function identity(version, sha) {
 }
 export function buildIndex({ version, sha, runtimeVersion, packages, assets, artifactRelease = 'showcases' }) {
   identity(version, sha);
+  if (!/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(runtimeVersion ?? '')) throw Error('Invalid runtime version');
   if (!['go', 'showcases'].includes(artifactRelease)) throw Error('Invalid artifact release');
   const showcases = packages.filter(pkg => pkg.showcase && pkg.showcase.distribution !== 'builtin').map(pkg => {
     if (!/^@lynxtron-examples\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(pkg.name)) throw Error('Invalid showcase name');
@@ -34,7 +43,7 @@ const output = values => fs.appendFileSync(process.env.GITHUB_OUTPUT,
   Object.entries(values).map(([k,v]) => `${k}=${v}\n`).join(''));
 const runtimeAt = ref => {
   const yaml = git('show', `${ref}:pnpm-workspace.yaml`);
-  return /^\s*'@lynx-js\/lynxtron':\s*(\S+)\s*$/m.exec(yaml)?.[1];
+  return runtimeVersionFromWorkspace(yaml);
 };
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
