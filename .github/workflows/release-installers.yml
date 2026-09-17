@@ -293,7 +293,9 @@ jobs:
     if: inputs.validate-showcases == true
     needs: [prepare, publish]
     permissions:
-      contents: read
+      # Reusable workflow declares publishing permissions even though validation
+      # skips that job. GitHub checks the permission ceiling before evaluating if.
+      contents: write
     uses: ./.github/workflows/release-showcases.yml
     with:
       source-sha: ${{ needs.prepare.outputs.sha }}
