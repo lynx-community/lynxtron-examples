@@ -150,6 +150,7 @@ describe('fetch command', () => {
       expect(readShowcaseCacheMetadata(destDir)).toEqual({
         schemaVersion: 1,
         cacheKey: createShowcaseCacheKey(url),
+        sourceUrl: url,
       });
     } finally {
       await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));

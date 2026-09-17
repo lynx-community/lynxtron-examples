@@ -1,0 +1,109 @@
+name: Release Showcases
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      validation-only:
+        type: boolean
+        default: false
+      source-sha:
+        required: true
+        type: string
+      expected-version:
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  # Share the distribution lock: a new Go release must not race an old lane update.
+  group: ${{ inputs.validation-only && format('showcase-validation-{0}', github.run_id) || 'lynxtron-go-installers' }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      sha: ${{ steps.identity.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source-sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_VERSION: ${{ inputs.expected-version }}
+          VALIDATION_ONLY: ${{ inputs.validation-only }}
+        run: node scripts/showcase-channel.mjs prepare
+
+  build:
+    needs: prepare
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            slug: mac-arm64
+          - os: macos-15-intel
+            slug: mac-x64
+          - os: windows-2022
+            slug: win-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: |
+          npm i -g corepack@latest --force
+          corepack enable
+          pnpm install --frozen-lockfile
+      - name: Build tooling and showcase archives (no installer)
+        run: |
+          pnpm --filter @lynxtron-examples/config --filter @lynxtron-examples/cli run build
+          node scripts/pack-showcases.mjs --platform ${{ matrix.slug }}
+      - name: Accept every produced archive on its native runner
+        env:
+          SHOWCASE_ACCEPTANCE_DIR: ${{ github.workspace }}/dist/showcase-artifacts
+        run: pnpm --dir lynxtron-go exec vitest run scripts/showcase-artifacts.acceptance.test.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: showcases-${{ matrix.slug }}
+          path: dist/showcase-artifacts/*.tgz
+          if-no-files-found: error
+
+  publish:
+    if: inputs.validation-only != true
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: showcases-*
+          path: release-assets
+          merge-multiple: true
+      - name: Publish immutable revision then advance compatible Go channel
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/showcase-channel.mjs publish
