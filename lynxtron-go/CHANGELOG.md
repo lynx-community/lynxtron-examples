@@ -1,5 +1,14 @@
 # lynxtron-go
 
+## 0.1.14
+
+### Patch Changes
+
+- 97bc5b8: Resolve stable showcase updates within the installed Go version, with architecture-specific immutable archives, cached offline fallback and recoverable workspace updates. Publish showcase-only version bumps independently without rebuilding Go installers.
+- 60be5a7: Honor showcase.runtimeVariant when launching complete projects, including URL-opened showcases. Ship release and devtool runtimes and require the requested variant without silently falling back to another build.
+- Updated dependencies [97bc5b8]
+  - @lynxtron-examples/cli@0.0.12
+
 ## 0.1.13
 
 ### Patch Changes

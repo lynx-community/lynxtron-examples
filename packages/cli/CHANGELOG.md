@@ -1,5 +1,11 @@
 # @lynxtron-examples/cli
 
+## 0.0.12
+
+### Patch Changes
+
+- 97bc5b8: Resolve stable showcase updates within the installed Go version, with architecture-specific immutable archives, cached offline fallback and recoverable workspace updates. Publish showcase-only version bumps independently without rebuilding Go installers.
+
 ## 0.0.11
 
 ### Patch Changes
