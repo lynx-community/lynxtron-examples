@@ -52,7 +52,7 @@ function tarballName(fileName: string): string {
     // release-installers.yml uploads per-OS variants of native showcases as
     // `<name>-mac.tgz` / `<name>-win.tgz`; strip that trailing platform slug
     // so downstream logic sees the bare showcase name.
-    .replace(/-(mac|win)$/i, '');
+    .replace(/-(mac|win)(?:-(arm64|x64))?$/i, '');
 }
 
 export function resolveShowcaseUrl(url: string): ResolvedShowcase {

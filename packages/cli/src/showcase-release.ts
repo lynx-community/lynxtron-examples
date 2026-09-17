@@ -33,6 +33,8 @@ export interface ShowcaseReleaseManifest {
     hash: string;
   };
   artifact: {
+    platform?: string;
+    arch?: string;
     root: typeof SHOWCASE_PRECOMPILED_ROOT;
     hash: string;
     files: string[];
@@ -175,6 +177,8 @@ export function createShowcaseReleaseManifest(showcasePath: string): ShowcaseRel
     hashAlgorithm: SHOWCASE_TREE_HASH_ALGORITHM,
     source: { hash: calculateShowcaseSourceHash(showcasePath) },
     artifact: {
+      platform: process.platform,
+      arch: process.arch,
       root: SHOWCASE_PRECOMPILED_ROOT,
       hash: calculateShowcaseArtifactHash(showcasePath),
       files: getShowcaseArtifactFiles(showcasePath),
@@ -270,6 +274,10 @@ export function verifyShowcaseRelease(showcasePath: string): ShowcaseReleaseVeri
   const manifest = readShowcaseReleaseManifest(showcasePath);
   if (!manifest) {
     return { status: 'invalid-manifest', reason: `${SHOWCASE_RELEASE_MANIFEST_FILE} is invalid` };
+  }
+  if ((manifest.artifact.platform && manifest.artifact.platform !== process.platform)
+    || (manifest.artifact.arch && manifest.artifact.arch !== process.arch)) {
+    return { status: 'artifact-invalid', reason: `Precompiled artifact targets ${manifest.artifact.platform}-${manifest.artifact.arch}, not ${process.platform}-${process.arch}` };
   }
 
   const actualSourceHash = calculateShowcaseSourceHash(showcasePath);

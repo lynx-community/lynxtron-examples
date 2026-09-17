@@ -74,6 +74,15 @@ describe('showcase release format', () => {
     expect(calculateShowcaseSourceHash(root)).toBe(before);
   });
 
+  it('rejects precompiled binaries from another architecture', () => {
+    const root = makeShowcase();
+    const manifest = writeShowcaseReleaseManifest(root);
+    manifest.artifact.arch = process.arch === 'x64' ? 'arm64' : 'x64';
+    writeFile(root, '.lynxtron-release.json', JSON.stringify(manifest));
+    expect(verifyShowcaseRelease(root)).toMatchObject({ status: 'artifact-invalid' });
+    expect(resolveShowcaseRunTarget(root, 'desktop').kind).not.toBe('precompiled');
+  });
+
   it('hashes source content and relative paths, not mtimes', () => {
     const root = makeShowcase();
     const sourceFile = path.join(root, 'src', 'app.tsx');

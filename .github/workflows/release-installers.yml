@@ -90,7 +90,19 @@ jobs:
       fail-fast: false
       # Builds run independently; only the final publish job creates a Release.
       matrix:
-        os: [macos-latest, windows-2022]
+        include:
+          - os: macos-15
+            platform: darwin
+            arch: arm64
+            slug: mac-arm64
+          - os: macos-15-intel
+            platform: darwin
+            arch: x64
+            slug: mac-x64
+          - os: windows-2022
+            platform: win32
+            arch: x64
+            slug: win-x64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Repo
@@ -104,7 +116,11 @@ jobs:
           node-version: 22
 
       - name: Install Dependencies
+        env:
+          RELEASE_PLATFORM: ${{ matrix.platform }}
+          RELEASE_ARCH: ${{ matrix.arch }}
         run: |
+          node -e "if(process.platform!==process.env.RELEASE_PLATFORM || process.arch!==process.env.RELEASE_ARCH) throw Error('Runner architecture mismatch')"
           npm i -g corepack@latest --force
           corepack enable
           pnpm install --frozen-lockfile
@@ -161,6 +177,7 @@ jobs:
         run: |
           app_path=$(find lynxtron-go/dist -type d -name 'Lynxtron Go.app' -print -quit)
           test -n "$app_path"
+          node scripts/verify-native-arch.cjs "$app_path"
           codesign --verify --deep --strict --verbose=2 "$app_path"
           codesign --display --verbose=4 "$app_path"
           xcrun stapler validate "$app_path"
@@ -168,7 +185,7 @@ jobs:
 
       - name: Pack showcases
         if: runner.os == 'macOS'
-        run: node scripts/pack-showcases.mjs --platform mac
+        run: node scripts/pack-showcases.mjs --platform ${{ matrix.slug }}
 
       # Windows: nsis installer.
       - name: Build Windows installer
@@ -183,7 +200,7 @@ jobs:
       # points at its matching platform slug.
       - name: Pack showcases (Windows)
         if: runner.os == 'Windows'
-        run: node scripts/pack-showcases.mjs --platform win
+        run: node scripts/pack-showcases.mjs --platform ${{ matrix.slug }}
 
       - name: Stage release assets
         uses: actions/upload-artifact@v4
@@ -215,13 +232,21 @@ jobs:
           pattern: go-release-*
           path: release-assets
           merge-multiple: true
-      - name: Verify both platforms are present
+      - name: Verify all architectures are present
         shell: bash
         run: |
-          test -n "$(find release-assets -name '*.dmg' -print -quit)"
-          test -n "$(find release-assets -name '*.exe' -print -quit)"
-          test -n "$(find release-assets -name '*-mac.tgz' -print -quit)"
-          test -n "$(find release-assets -name '*-win.tgz' -print -quit)"
+          # upload-artifact preserves paths relative to the common ancestor
+          # of lynxtron-go/dist and dist/showcase-artifacts (the repo root).
+          # merge-multiple merges artifact roots; it does not flatten files.
+          test -f release-assets/lynxtron-go/dist/lynxtron-go-darwin-arm64.dmg
+          test -f release-assets/lynxtron-go/dist/lynxtron-go-darwin-x64.dmg
+          test -n "$(find release-assets/lynxtron-go/dist -name '*.exe' -print -quit)"
+          for asset in release-assets/dist/showcase-artifacts/*-mac-arm64.tgz; do
+            test -f "$asset"
+            name=${asset%-mac-arm64.tgz}
+            test -f "${name}-mac-x64.tgz"
+            test -f "${name}-win-x64.tgz"
+          done
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}

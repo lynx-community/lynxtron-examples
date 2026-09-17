@@ -10,7 +10,7 @@ export interface ShowcaseCacheMetadata {
 }
 
 export function createShowcaseCacheKey(sourceUrl: string): string {
-  return createHash('sha256').update(sourceUrl).digest('hex');
+  return createHash('sha256').update(`${process.platform}\0${process.arch}\0${sourceUrl}`).digest('hex');
 }
 
 export function readShowcaseCacheMetadata(showcasePath: string): ShowcaseCacheMetadata | null {

@@ -15,7 +15,8 @@
 //   --builtin   Pack only installer-bundled showcases; public mode excludes them.
 //   --out       Output directory for the packed tarballs.
 //               Defaults to dist/showcase-artifacts.
-//   --platform  Append `-<slug>` to the release tarball basename so per-OS
+//   --platform  Assert the native slug (mac-arm64/mac-x64/win-x64), defaulting
+//               to Node's platform/arch. Append it so native
 //               builds (e.g. .node native addons) can be uploaded side by side
 //               without clobbering one another. Ignored in --builtin mode,
 //               which cache-keys by installer identity instead.
@@ -28,6 +29,7 @@ import {
   finalizeShowcaseTarball,
 } from './showcase-release-pack.mjs';
 import { moveFile } from './move-file.mjs';
+import { releasePlatform } from './release-platform.cjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,9 +46,10 @@ function parseOutDir() {
 function parsePlatformSlug() {
   const flagIndex = process.argv.indexOf('--platform');
   const explicit = flagIndex !== -1 ? process.argv[flagIndex + 1] : undefined;
-  if (!explicit) return '';
-  if (!/^[a-z0-9][a-z0-9._-]*$/.test(explicit)) {
-    throw new Error(`--platform must be a filename-safe slug, got: ${explicit}`);
+  const nativeTarget = releasePlatform();
+  if (!explicit) return nativeTarget;
+  if (explicit !== nativeTarget) {
+    throw new Error(`Cannot label ${nativeTarget} binaries as ${explicit}; use a matching native runner`);
   }
   return explicit;
 }
@@ -120,6 +123,14 @@ async function buildAndPackShowcase(dir) {
   const name = path.basename(dir);
   log(`Building ${name} desktop target...`);
   await run('pnpm', ['run', 'build'], { cwd: dir });
+  // The architecture scan only validates binaries that exist. Also exercise
+  // Canvas AutoLink staging: an omitted target otherwise publishes an empty
+  // native payload that passes the scan and renders "Native pending" at runtime.
+  if (name === 'native-texture-canvas') {
+    // Use the executable directly: the package-manager helper appends .cmd on
+    // Windows, but Node is node.exe, not node.cmd. Avoid shell path quoting too.
+    await run(process.execPath, ['--test', 'autolink.test.cjs'], { cwd: dir, shell: false });
+  }
   assertPortableDesktopOutput(dir);
 
   if (await hasWebTarget(dir)) {
@@ -177,7 +188,7 @@ async function renamePackedTarball(showcaseDir) {
     : `${appVersion}-${rawIdentity}`)
     .replace(/[^a-zA-Z0-9.+-]/g, '-');
   const destName = builtinOnly
-    ? `${scopeless}-${installerIdentity}.tgz`
+    ? `${scopeless}-${installerIdentity}-${releasePlatform()}.tgz`
     : platformSlug
       ? `${scopeless}-${platformSlug}.tgz`
       : `${scopeless}.tgz`;

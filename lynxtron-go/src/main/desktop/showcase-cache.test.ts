@@ -28,7 +28,7 @@ describe('showcase cache resolution', () => {
       'utf-8',
     );
     if (sourceUrl) {
-      const cacheKey = createHash('sha256').update(sourceUrl).digest('hex');
+      const cacheKey = createHash('sha256').update(`${process.platform}\0${process.arch}\0${sourceUrl}`).digest('hex');
       fs.writeFileSync(
         path.join(showcasePath, '.lynxtron-go-cache.json'),
         JSON.stringify({ schemaVersion: 1, cacheKey }),
@@ -67,5 +67,14 @@ describe('showcase cache resolution', () => {
       '@lynxtron-examples/floating-clock',
       'https://example.com/releases/v2/floating-clock.tgz',
     )).toBeNull();
+  });
+
+  it('invalidates the same URL materialized by another architecture', () => {
+    const url = 'https://example.com/app.tgz';
+    const root = makeWorkspace(url);
+    const otherArch = process.arch === 'arm64' ? 'x64' : 'arm64';
+    const cacheKey = createHash('sha256').update(`${process.platform}\0${otherArch}\0${url}`).digest('hex');
+    fs.writeFileSync(path.join(root, 'showcases/floating-clock/.lynxtron-go-cache.json'), JSON.stringify({schemaVersion: 1, cacheKey}));
+    expect(resolveMaterializedShowcasePath(root, 'floating-clock', url)).toBeNull();
   });
 });
