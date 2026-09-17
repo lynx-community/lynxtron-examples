@@ -127,7 +127,9 @@ async function buildAndPackShowcase(dir) {
   // Canvas AutoLink staging: an omitted target otherwise publishes an empty
   // native payload that passes the scan and renders "Native pending" at runtime.
   if (name === 'native-texture-canvas') {
-    await run('node', ['--test', 'autolink.test.cjs'], { cwd: dir });
+    // Use the executable directly: the package-manager helper appends .cmd on
+    // Windows, but Node is node.exe, not node.cmd. Avoid shell path quoting too.
+    await run(process.execPath, ['--test', 'autolink.test.cjs'], { cwd: dir, shell: false });
   }
   assertPortableDesktopOutput(dir);
 
