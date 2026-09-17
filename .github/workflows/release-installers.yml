@@ -19,6 +19,10 @@ on:
         type: string
   workflow_dispatch:
     inputs:
+      validate-showcases:
+        description: Also exercise standalone showcase builds without publishing a stable channel
+        type: boolean
+        default: false
       tag:
         description: >
           Optional assertion of the generated tag. Must match the Go
@@ -125,6 +129,9 @@ jobs:
           corepack enable
           pnpm install --frozen-lockfile
 
+      - name: Verify Changesets to distribution triggers
+        run: node --test scripts/changeset-release.test.mjs scripts/showcase-channel.test.mjs scripts/verify-go-latest.test.mjs
+
       - name: Import macOS signing certificate
         if: runner.os == 'macOS'
         env:
@@ -203,6 +210,11 @@ jobs:
         run: node scripts/pack-showcases.mjs --platform ${{ matrix.slug }}
 
       - name: Stage release assets
+        env:
+          SHOWCASE_ACCEPTANCE_DIR: ${{ github.workspace }}/dist/showcase-artifacts
+        run: pnpm --dir lynxtron-go exec vitest run scripts/showcase-artifacts.acceptance.test.ts
+
+      - name: Upload release assets
         uses: actions/upload-artifact@v4
         with:
           name: go-release-${{ matrix.os }}
@@ -227,6 +239,13 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - uses: actions/download-artifact@v4
         with:
           pattern: go-release-*
@@ -247,13 +266,45 @@ jobs:
             test -f "${name}-mac-x64.tgz"
             test -f "${name}-win-x64.tgz"
           done
+      - name: Build initial full showcase index
+        env:
+          SHOWCASE_ASSETS_DIR: release-assets/dist/showcase-artifacts
+          INITIAL_RELEASE: 'true'
+        run: node scripts/showcase-channel.mjs index
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
           target_commitish: ${{ needs.prepare.outputs.sha }}
           prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}
+          make_latest: ${{ needs.prepare.outputs.prerelease == 'false' && 'true' || 'false' }}
           fail_on_unmatched_files: true
           files: |
             release-assets/**/*.dmg
             release-assets/**/*.exe
             release-assets/**/*.tgz
+            release-assets/**/showcase-index.json
+      - name: Initialize stable Go showcase channel
+        if: needs.prepare.outputs.prerelease == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHOWCASE_ASSETS_DIR: release-assets/dist/showcase-artifacts
+        run: node scripts/showcase-channel.mjs seed
+      - name: Verify stable Latest includes every installer after channel initialization
+        if: needs.prepare.outputs.prerelease == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_GO_TAG: ${{ needs.prepare.outputs.tag }}
+        run: node scripts/verify-go-latest.mjs expected "$EXPECTED_GO_TAG"
+
+  validate-showcases:
+    if: inputs.validate-showcases == true
+    needs: [prepare, publish]
+    permissions:
+      # Reusable workflow declares publishing permissions even though validation
+      # skips that job. GitHub checks the permission ceiling before evaluating if.
+      contents: write
+    uses: ./.github/workflows/release-showcases.yml
+    with:
+      source-sha: ${{ needs.prepare.outputs.sha }}
+      expected-version: ''
+      validation-only: true

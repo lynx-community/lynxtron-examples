@@ -53,19 +53,23 @@ export async function resolveShowcaseWorkspacePath(
     }
   } catch (_) { /* fall through to the remote paths */ }
 
+  // Resolve the version lane BEFORE testing the cache, otherwise an installed
+  // workspace would permanently mask newly published showcase revisions.
+  const sourceUrl = await api?.resolveSource?.(entry.url) ?? entry.url;
+
   try {
-    const existing = api?.materializedPath?.(entry.name, entry.url);
+    const existing = api?.materializedPath?.(entry.name, sourceUrl);
     if (existing) {
       hooks.onReuse?.(entry, existing);
       return existing;
     }
   } catch (_) { /* an unreadable cache is just a cache miss */ }
 
-  if (!entry.url) return null;
+  if (!sourceUrl) return null;
   const fetchFn = api?.fetch;
   if (typeof fetchFn !== 'function') return null;
   hooks.onFetchStart?.(entry);
-  const fetched = await fetchFn(entry.url);
+  const fetched = await fetchFn(sourceUrl);
   return fetched || null;
 }
 

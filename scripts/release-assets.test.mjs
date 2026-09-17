@@ -7,7 +7,9 @@ import { spawnSync } from 'node:child_process';
 
 test('publish validation accepts nested upload-artifact paths and rejects missing architectures', () => {
   const workflow = fs.readFileSync(new URL('../.github/workflows/release-installers.yml', import.meta.url), 'utf8');
-  const block = workflow.split('      - name: Verify all architectures are present\n')[1].split('      - uses:')[0];
+  // Stop at any sibling step (name, uses, id...), not only an action step.
+  // Otherwise a following named run step becomes part of the shell script.
+  const block = workflow.split('      - name: Verify all architectures are present\n')[1].split(/^      - /m)[0];
   const script = block.split('        run: |\n')[1].replace(/^          /gm, '');
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'go-release-assets-test-'));
   const installer = path.join(root, 'release-assets/lynxtron-go/dist');
@@ -23,7 +25,8 @@ test('publish validation accepts nested upload-artifact paths and rejects missin
     for (const arch of ['mac-arm64', 'mac-x64', 'win-x64']) {
       fs.writeFileSync(path.join(showcases, `lynxtron-examples-browser-${arch}.tgz`), '');
     }
-    assert.equal(run().status, 0, 'all architectures in nested paths should pass');
+    const complete = run();
+    assert.equal(complete.status, 0, `all architectures in nested paths should pass: ${complete.stderr}`);
     fs.unlinkSync(path.join(showcases, 'lynxtron-examples-browser-mac-x64.tgz'));
     assert.notEqual(run().status, 0, 'missing x64 showcase must fail');
     fs.writeFileSync(path.join(showcases, 'lynxtron-examples-browser-mac-x64.tgz'), '');

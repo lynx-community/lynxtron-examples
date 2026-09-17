@@ -7,6 +7,7 @@ export const SHOWCASE_CACHE_METADATA_FILE = '.lynxtron-go-cache.json';
 export interface ShowcaseCacheMetadata {
   schemaVersion: 1;
   cacheKey: string;
+  sourceUrl?: string;
 }
 
 export function createShowcaseCacheKey(sourceUrl: string): string {
@@ -33,6 +34,7 @@ export function writeShowcaseCacheMetadata(showcasePath: string, sourceUrl: stri
   const metadata: ShowcaseCacheMetadata = {
     schemaVersion: 1,
     cacheKey: createShowcaseCacheKey(sourceUrl),
+    sourceUrl,
   };
   fs.writeFileSync(temporaryPath, `${JSON.stringify(metadata, null, 2)}\n`, 'utf-8');
   fs.renameSync(temporaryPath, metadataPath);

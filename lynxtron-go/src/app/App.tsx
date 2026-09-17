@@ -57,6 +57,7 @@ import {
 } from './shared/workspace-session';
 import { getDeepLinkBridge } from './shared/deep-link-bridge';
 import { registerShowcaseCommands } from './commands/showcase-commands';
+import { refreshShowcaseCatalog, useShowcaseCatalog } from './shared/showcase-catalog';
 import {
   resolveDeepLinkDispatchAction,
   type DeepLinkDispatchAction,
@@ -195,6 +196,7 @@ function loadLayoutValue<T>(key: string, defaultValue: T): T {
 }
 
 export function App(props: { onRender?: () => void } = {}) {
+  useShowcaseCatalog();
   // Test-harness hook (see __tests__/index.test.tsx): fires once after the
   // first background-thread render.
   useEffect(() => { props.onRender?.(); }, []);
@@ -2130,7 +2132,9 @@ export function App(props: { onRender?: () => void } = {}) {
     deepLinkApplyRetryTimeoutRef.current = setTimeout(drainPendingDeepLinkAction, DEEP_LINK_APPLY_RETRY_DELAY_MS);
   }, [applyResolvedDeepLinkAction, clearDeepLinkApplyRetry]);
 
-  const queueHostDeepLinkPayload = useCallback((payload: HostDeepLinkPayload | null, source: string) => {
+  const queueHostDeepLinkPayload = useCallback(async (payload: HostDeepLinkPayload | null, source: string) => {
+    // A newly published showcase may not exist in the baked registry yet.
+    if (payload?.kind === 'intent' && payload.intent.kind === 'showcase-open') await refreshShowcaseCatalog();
     const action = resolveDeepLinkDispatchAction(payload, SHOWCASE_REGISTRY);
     if (!action) {
       log(`[IDE] deep link payload empty [${source}]`);

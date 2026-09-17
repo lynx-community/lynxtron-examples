@@ -65,6 +65,23 @@ test('CLI detects the push version delta and resolves the actual checkout', () =
     assert.match(run('resolve', { EXPECTED_VERSION: '0.1.10' }), new RegExp(`tag=lynxtron-go-v0.1.10\\nprerelease=false\\nsha=${before}`));
     assert.throws(() => run('resolve', { EXPECTED_VERSION: '0.1.9' }));
     assert.throws(() => run('detect', { BEFORE_SHA: '0'.repeat(40) }));
+    writeVersion('0.1.9');
+    mkdirSync(join(cwd, 'showcases/demo'), { recursive: true });
+    const showcase = join(cwd, 'showcases/demo/package.json');
+    writeFileSync(showcase, JSON.stringify({ version: '0.1.0', showcase: { distribution: 'builtin' } }));
+    git('add', 'showcases');
+    git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-qm', 'builtin');
+    assert.match(run('detect'), /showcases-changed=false/);
+    const builtin = git('rev-parse', 'HEAD');
+    writeFileSync(showcase, JSON.stringify({ version: '0.1.1', showcase: { description: 'public' } }));
+    git('add', 'showcases');
+    git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-qm', 'showcase bump');
+    assert.match(run('detect', { BEFORE_SHA: builtin }), /changed=false\nshowcases-changed=true/);
+    const bumped = git('rev-parse', 'HEAD');
+    writeFileSync(showcase, JSON.stringify({ version: '0.1.1', showcase: { description: 'metadata only' } }));
+    git('add', 'showcases');
+    git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-qm', 'metadata');
+    assert.match(run('detect', { BEFORE_SHA: bumped }), /showcases-changed=false/);
   } finally {
     rmSync(cwd, { recursive: true, force: true });
   }

@@ -32,6 +32,7 @@ jobs:
     outputs:
       go-version: ${{ steps.go.outputs.version }}
       go-changed: ${{ steps.go.outputs.changed }}
+      showcases-changed: ${{ steps.go.outputs.showcases-changed }}
       has-changesets: ${{ steps.changesets.outputs.hasChangesets }}
     permissions:
       contents: write
@@ -88,3 +89,14 @@ jobs:
       source-sha: ${{ github.sha }}
       expected-version: ${{ needs.release.outputs.go-version }}
     secrets: inherit
+
+  showcases:
+    name: Publish showcase updates for current Go
+    needs: release
+    if: needs.release.outputs.go-changed == 'false' && needs.release.outputs.showcases-changed == 'true' && needs.release.outputs.has-changesets == 'false'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release-showcases.yml
+    with:
+      source-sha: ${{ github.sha }}
+      expected-version: ${{ needs.release.outputs.go-version }}

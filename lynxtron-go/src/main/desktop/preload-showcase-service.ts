@@ -19,6 +19,8 @@ import type { DebugLogger } from './preload-log';
 import { getAppResourcesPath, getRuntimeRequire, resolveLynxtronExecutablePath } from './preload-lynxtron-runtime';
 import { resolveMaterializedShowcasePath } from './showcase-cache';
 import { resolveShowcaseArtifactUrl } from './showcase-artifact';
+import { createShowcaseChannel } from './showcase-channel';
+import { preserveShowcaseUpdate, compatibleOfflineWorkspace } from './showcase-update';
 import {
   resolveShowcaseRunTarget,
   verifyShowcaseRelease,
@@ -731,6 +733,8 @@ function formatProcessOutput(output: unknown): string {
 
 export interface ShowcaseService {
   bridge: {
+    catalog: (entries: Array<{ name: string; url: string; distribution?: string }>) => Promise<any[]>;
+    resolveSource: (url: string) => Promise<string>;
     fetch: (url: string) => Promise<string>;
     /**
      * Where a showcase would already be sitting if it has been fetched before,
@@ -767,6 +771,16 @@ export interface ShowcaseService {
 }
 
 export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
+  const channel = createShowcaseChannel({
+    runtimeVersion: getRuntimeRequire()('@lynx-js/lynxtron/package.json').version,
+    cacheDir: path.join(os.homedir(), '.lynxtron-go', 'showcase-channels'), log: dbg,
+  });
+  const resolveSource = async (url: string): Promise<string> => {
+    const selected = resolveShowcaseArtifactUrl(resolveBuiltinShowcaseSourceUrl(url));
+    const entries = await channel.entries(selected);
+    const bare = /\/lynxtron-examples-([a-z0-9-]+)-(?:mac-(?:arm64|x64)|win-x64)\.tgz$/.exec(selected)?.[1];
+    return entries.find(entry => entry.name === `@lynxtron-examples/${bare}`)?.url ?? selected;
+  };
   const runningShowcases: RunningShowcaseRecord = new Map();
   const processOutputBuffer: ShowcaseProcessOutputEntry[] = [];
   let taskController = new AbortController();
@@ -879,6 +893,11 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
 
   return {
     bridge: {
+      resolveSource,
+      catalog: async (entries) => {
+        const anchor = entries.find(entry => entry.distribution !== 'builtin' && /\/lynxtron-go-v\d+\.\d+\.\d+\//.test(entry.url));
+        return anchor ? channel.entries(anchor.url) : [];
+      },
       cancelTasks,
       materializedPath: (name: string, sourceUrl?: string): string | null => {
         try {
@@ -896,18 +915,19 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
         const signal = taskController.signal;
         try {
           dbg(`showcase.fetch enter url=${url}`);
-          const sourceUrl = resolveShowcaseArtifactUrl(resolveBuiltinShowcaseSourceUrl(url));
+          const sourceUrl = await resolveSource(url);
           if (sourceUrl !== url) dbg(`showcase.fetch resolved built-in url=${sourceUrl}`);
           const cliPath = resolveCliPath();
           const appRoot = path.resolve(__dirname, '..', '..');
           const lynxtronExecutable = resolveLynxtronExecutablePath(dbg);
           const workspacePath = path.join(os.homedir(), '.lynxtron-go');
+          const offlineWorkspace = compatibleOfflineWorkspace(workspacePath, sourceUrl);
           dbg(`showcase.fetch: cliPath=${cliPath} url=${sourceUrl} ws=${workspacePath}`);
-          let result: string;
           try {
             const args = [cliPath, 'fetch', sourceUrl];
             emitCommandStart(processOutputBuffer, 'showcase.fetch', appRoot, lynxtronExecutable, args);
-            const output = await runBufferedCommand({
+            return await preserveShowcaseUpdate(workspacePath, sourceUrl, async () => {
+              const output = await runBufferedCommand({
               command: lynxtronExecutable,
               args,
               cwd: appRoot,
@@ -916,21 +936,25 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
               source: 'showcase.fetch',
               outputBuffer: processOutputBuffer,
               signal,
+              });
+              signal.throwIfAborted();
+              dbg(`showcase.fetch raw result: ${output.stdout.trim() || '(empty)'}`);
+              const events = output.stdout.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
+              const success = events.find((event: any) => event.type === 'fetch-success');
+              if (success && typeof success.path === 'string') return success.path;
+              const failed = events.find((event: any) => event.type === 'fetch-error');
+              throw new Error(failed?.error || 'Fetch failed');
             });
-            signal.throwIfAborted();
-            result = output.stdout;
           } catch (error: any) {
             dbg(`showcase.fetch CLI stderr: ${error.stderr?.toString() || 'none'}`);
             dbg(`showcase.fetch CLI stdout: ${error.stdout?.toString() || 'none'}`);
             dbg(`showcase.fetch CLI error: ${error?.message || String(error)}`);
+            if (offlineWorkspace && !signal.aborted) {
+              dbg('Showcase update unavailable; using restored compatible workspace.');
+              return offlineWorkspace;
+            }
             throw error;
           }
-          dbg(`showcase.fetch raw result: ${result.trim() || '(empty)'}`);
-          const events = result.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
-          const success = events.find((event: any) => event.type === 'fetch-success');
-          if (success) return success.path;
-          const failed = events.find((event: any) => event.type === 'fetch-error');
-          throw new Error(failed?.error || 'Fetch failed');
         } catch (error: any) {
           dbg(`showcase.fetch error: ${error?.message || String(error)}`);
           if (error?.stack) {

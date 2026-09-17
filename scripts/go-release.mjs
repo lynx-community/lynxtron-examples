@@ -42,7 +42,18 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       throw new Error('Missing push base SHA; refusing to guess a release');
     }
     const previous = JSON.parse(execFileSync('git', ['show', `${before}:lynxtron-go/package.json`], { encoding: 'utf8' })).version;
-    output({ version, changed: versionBumped(previous, version) });
+    const changedFiles = execFileSync('git', ['diff', '--name-only', before, 'HEAD', '--', 'showcases'], { encoding: 'utf8' })
+      .trim().split('\n').filter(file => /^showcases\/[^/]+\/package\.json$/.test(file));
+    const showcaseChanged = changedFiles.some(file => {
+      let current;
+      try { current = JSON.parse(readFileSync(file, 'utf8')); } catch { return true; }
+      if (!current.showcase || current.showcase.distribution === 'builtin') return false;
+      try {
+        const old = JSON.parse(execFileSync('git', ['show', `${before}:${file}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }));
+        return current.version !== old.version;
+      } catch { return true; }
+    });
+    output({ version, changed: versionBumped(previous, version), 'showcases-changed': showcaseChanged });
   } else if (process.argv[2] === 'resolve') {
     output(releaseMetadata({
       version, ref: process.env.GITHUB_REF,

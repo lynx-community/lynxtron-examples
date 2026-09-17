@@ -17,6 +17,19 @@ afterEach(() => {
 });
 
 describe('current showcase workspace resolution', () => {
+  it('resolves the channel before checking a previously installed workspace', async () => {
+    const updated = 'https://example.com/new-revision/canvas.tgz';
+    const resolveSource = vi.fn(async () => updated);
+    const materializedPath = vi.fn(() => null);
+    const fetch = vi.fn(async () => '/cache/native-texture-canvas');
+    (globalThis as any).NativeModules = {
+      nodejs: { exposed: { showcase: { resolveSource, materializedPath, fetch } } },
+    };
+    await resolveCurrentShowcaseWorkspacePath('/cache/native-texture-canvas', [canvas]);
+    expect(resolveSource).toHaveBeenCalledWith(canvas.url);
+    expect(materializedPath).toHaveBeenCalledWith(canvas.name, updated);
+    expect(fetch).toHaveBeenCalledWith(updated);
+  });
   it('resolves the standard workspace directory to its registry entry', () => {
     expect(findShowcaseEntryForWorkspace('/cache/native-texture-canvas', [canvas])).toBe(canvas);
   });
