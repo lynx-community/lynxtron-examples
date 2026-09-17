@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { moveFile } from './move-file.mjs';
+import { verifyNativeArch } from './verify-native-arch.cjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -33,6 +34,7 @@ export async function finalizeShowcaseTarball(tarballPath, localDistPath) {
     // snapshot. Only dist_precompiled/ has release artifact identity.
     const { prepareShowcasePackageForRelease } = await releaseFormat();
     prepareShowcasePackageForRelease(packageRoot, localDistPath);
+    verifyNativeArch(path.join(packageRoot, 'dist_precompiled'));
 
     await tar.c({ gzip: true, file: rewrittenTarball, cwd: temporaryRoot }, ['package']);
     await moveFile(rewrittenTarball, tarballPath);

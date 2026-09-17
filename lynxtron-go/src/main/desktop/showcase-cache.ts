@@ -5,7 +5,7 @@ import { createHash } from 'crypto';
 const SHOWCASE_CACHE_METADATA_FILE = '.lynxtron-go-cache.json';
 
 function createShowcaseCacheKey(sourceUrl: string): string {
-  return createHash('sha256').update(sourceUrl).digest('hex');
+  return createHash('sha256').update(`${process.platform}\0${process.arch}\0${sourceUrl}`).digest('hex');
 }
 
 export function resolveMaterializedShowcasePath(

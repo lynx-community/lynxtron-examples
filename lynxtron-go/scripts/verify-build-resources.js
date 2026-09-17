@@ -5,6 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const tar = require('tar');
+const { releasePlatform } = require('../../scripts/release-platform.cjs');
 
 const projectRoot = path.resolve(__dirname, '..');
 const desktopDir = path.join(projectRoot, 'dist', 'desktop');
@@ -127,9 +128,8 @@ for (const packageName of cssLanguageServiceRuntime) {
 
 const releaseTag = process.env.LYNXTRON_RELEASE_TAG;
 if (releaseTag) {
-  // Native showcases ship a `-mac`/`-win` variant per Release, so verify the
-  // baked URL matches the current runner's platform slug.
-  const platformSlug = process.platform === 'win32' ? 'win' : 'mac';
+  // Verify the baked URL includes the native runner's platform AND architecture.
+  const platformSlug = releasePlatform();
   const expectedArtifactPrefix = `/releases/download/${encodeURIComponent(releaseTag)}/lynxtron-examples-`;
   const expectedArtifactSuffix = `-${platformSlug}.tgz`;
   if (!bundle.includes(expectedArtifactPrefix)) {

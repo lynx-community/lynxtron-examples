@@ -18,6 +18,7 @@ import { readInstallState, writeInstallState } from './preload-config-store';
 import type { DebugLogger } from './preload-log';
 import { getAppResourcesPath, getRuntimeRequire, resolveLynxtronExecutablePath } from './preload-lynxtron-runtime';
 import { resolveMaterializedShowcasePath } from './showcase-cache';
+import { resolveShowcaseArtifactUrl } from './showcase-artifact';
 import {
   resolveShowcaseRunTarget,
   verifyShowcaseRelease,
@@ -884,7 +885,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
           return resolveMaterializedShowcasePath(
             path.join(os.homedir(), '.lynxtron-go'),
             name,
-            sourceUrl ? resolveBuiltinShowcaseSourceUrl(sourceUrl) : undefined,
+            sourceUrl ? resolveShowcaseArtifactUrl(resolveBuiltinShowcaseSourceUrl(sourceUrl)) : undefined,
           );
         } catch (error: any) {
           dbg(`showcase.materializedPath error: ${error?.message || String(error)}`);
@@ -895,7 +896,7 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
         const signal = taskController.signal;
         try {
           dbg(`showcase.fetch enter url=${url}`);
-          const sourceUrl = resolveBuiltinShowcaseSourceUrl(url);
+          const sourceUrl = resolveShowcaseArtifactUrl(resolveBuiltinShowcaseSourceUrl(url));
           if (sourceUrl !== url) dbg(`showcase.fetch resolved built-in url=${sourceUrl}`);
           const cliPath = resolveCliPath();
           const appRoot = path.resolve(__dirname, '..', '..');

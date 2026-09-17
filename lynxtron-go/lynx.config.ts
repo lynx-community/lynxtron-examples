@@ -8,6 +8,7 @@ import { pluginRspeedyDevReady } from '@lynx-js/lynxtron-dev-plugins/rspeedy';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
+import { releasePlatform } from '../scripts/release-platform.cjs';
 import { execSync, execFileSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -134,11 +135,10 @@ function buildShowcaseRegistry() {
         const releaseTag = process.env.LYNXTRON_RELEASE_TAG;
         if (!releaseTag) throw new Error('LYNXTRON_RELEASE_TAG is required for release-artifacts mode');
         // Release showcases can carry native `.node` addons, which are
-        // host-platform specific. release-installers.yml uploads a `-mac`
-        // and `-win` variant of every release tarball; the installer built
-        // on macOS must therefore point every entry at the `-mac` asset,
-        // and the Windows installer at the `-win` asset.
-        const platformSlug = process.platform === 'win32' ? 'win' : 'mac';
+        // platform/architecture specific. Every showcase, not just Canvas or
+        // Browser, is packed on the matching native runner. Go's download
+        // boundary also selects the process architecture (including Rosetta).
+        const platformSlug = releasePlatform();
         const bareName = String(s.name).replace(/^@/, '').replace('/', '-');
         const assetName = `${bareName}-${platformSlug}.tgz`;
         url = `${gitRemote}/releases/download/${encodeURIComponent(releaseTag)}/${assetName}`;

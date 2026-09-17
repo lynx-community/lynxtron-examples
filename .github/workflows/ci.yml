@@ -35,7 +35,7 @@ jobs:
           pnpm install
 
       - name: Test release version contract
-        run: node --test scripts/go-release.test.mjs
+        run: node --test scripts/go-release.test.mjs scripts/release-platform.test.mjs scripts/verify-native-arch.test.mjs
 
       - name: Verify no required build scripts were skipped
         run: pnpm ignored-builds
