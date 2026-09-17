@@ -1,5 +1,13 @@
 # lynxtron-go
 
+## 0.1.13
+
+### Patch Changes
+
+- ca72af6: Publish macOS Intel installers and architecture-specific showcase archives. Select native release downloads using the running Go architecture and invalidate cross-architecture caches.
+- Updated dependencies [ca72af6]
+  - @lynxtron-examples/cli@0.0.11
+
 ## 0.1.12
 
 ### Patch Changes

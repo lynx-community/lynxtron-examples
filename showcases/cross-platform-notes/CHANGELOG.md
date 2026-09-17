@@ -1,5 +1,11 @@
 # @lynxtron-examples/cross-platform-notes
 
+## 0.0.5
+
+### Patch Changes
+
+- 090ebbe: Adapt Notes to narrow hosts and embedded Web previews with stacked panes and a scrollable editor.
+
 ## 0.0.4
 
 ### Patch Changes
