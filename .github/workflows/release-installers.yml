@@ -235,10 +235,13 @@ jobs:
       - name: Verify all architectures are present
         shell: bash
         run: |
-          test -f release-assets/lynxtron-go-darwin-arm64.dmg
-          test -f release-assets/lynxtron-go-darwin-x64.dmg
-          test -n "$(find release-assets -name '*.exe' -print -quit)"
-          for asset in release-assets/*-mac-arm64.tgz; do
+          # upload-artifact preserves paths relative to the common ancestor
+          # of lynxtron-go/dist and dist/showcase-artifacts (the repo root).
+          # merge-multiple merges artifact roots; it does not flatten files.
+          test -f release-assets/lynxtron-go/dist/lynxtron-go-darwin-arm64.dmg
+          test -f release-assets/lynxtron-go/dist/lynxtron-go-darwin-x64.dmg
+          test -n "$(find release-assets/lynxtron-go/dist -name '*.exe' -print -quit)"
+          for asset in release-assets/dist/showcase-artifacts/*-mac-arm64.tgz; do
             test -f "$asset"
             name=${asset%-mac-arm64.tgz}
             test -f "${name}-mac-x64.tgz"
