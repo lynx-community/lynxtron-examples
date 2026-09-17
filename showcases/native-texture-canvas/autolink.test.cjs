@@ -11,7 +11,7 @@ test('manifest declares literal supported platform artifacts and an AutoLink ent
   const pkg = require('./native-texture-extension/package.json');
   assert.equal(pkg.exports['./lynxtron'], './index.cjs');
   assert.deepEqual(manifest.platforms.lynxtron.targets.map(t => [t.os, t.arch]),
-    [['darwin', 'arm64'], ['win32', 'x64']]);
+    [['darwin', 'arm64'], ['darwin', 'x64'], ['win32', 'x64']]);
   for (const target of manifest.platforms.lynxtron.targets) {
     assert.deepEqual(target.files, ['build/Release/native_texture_canvas_module.node']);
   }

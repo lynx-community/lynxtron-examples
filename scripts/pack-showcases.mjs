@@ -123,6 +123,12 @@ async function buildAndPackShowcase(dir) {
   const name = path.basename(dir);
   log(`Building ${name} desktop target...`);
   await run('pnpm', ['run', 'build'], { cwd: dir });
+  // The architecture scan only validates binaries that exist. Also exercise
+  // Canvas AutoLink staging: an omitted target otherwise publishes an empty
+  // native payload that passes the scan and renders "Native pending" at runtime.
+  if (name === 'native-texture-canvas') {
+    await run('node', ['--test', 'autolink.test.cjs'], { cwd: dir });
+  }
   assertPortableDesktopOutput(dir);
 
   if (await hasWebTarget(dir)) {
