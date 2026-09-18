@@ -23,6 +23,9 @@ async function main() {
         process.exit(1);
       }
       await fetch(url, workspaceRoot);
+      // The embedded runtime can retain native handles even in Node mode.
+      // Flush the terminal fetch event, then let Go observe process completion.
+      process.stdout.write('', () => process.exit(0));
       break;
     }
 

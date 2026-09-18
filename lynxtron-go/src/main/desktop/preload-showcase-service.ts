@@ -20,7 +20,8 @@ import { getAppResourcesPath, getRuntimeRequire, resolveLynxtronExecutablePath }
 import { resolveMaterializedShowcasePath } from './showcase-cache';
 import { resolveShowcaseArtifactUrl } from './showcase-artifact';
 import { createShowcaseChannel } from './showcase-channel';
-import { preserveShowcaseUpdate, compatibleOfflineWorkspace } from './showcase-update';
+import { compatibleOfflineWorkspace } from './showcase-update';
+import { createSessionSourceResolver } from './showcase-source-session';
 import {
   resolveShowcaseRunTarget,
   verifyShowcaseRelease,
@@ -35,6 +36,7 @@ export interface ShowcaseProcessOutputEntry {
 }
 
 const INSTALL_TIMEOUT_MS = 300000;
+export const SHOWCASE_FETCH_TIMEOUT_MS = 15 * 60 * 1000;
 const PROCESS_OUTPUT_TAIL_LIMIT = 4000;
 const PROCESS_OUTPUT_BUFFER_LIMIT = 1000;
 const BUILTIN_SHOWCASE_URL_PREFIX = 'builtin-showcase://';
@@ -681,7 +683,7 @@ export function runBufferedCommand(options: {
     };
     const timer = setTimeout(() => {
       try {
-        child.kill();
+        stopProcessTree(child);
       } catch (_) {}
       finish(Object.assign(new Error(`Command timed out after ${options.timeoutMs}ms: ${formatCommand(options.command, options.args)}`), {
         stdout,
@@ -775,12 +777,12 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
     runtimeVersion: getRuntimeRequire()('@lynx-js/lynxtron/package.json').version,
     cacheDir: path.join(os.homedir(), '.lynxtron-go', 'showcase-channels'), log: dbg,
   });
-  const resolveSource = async (url: string): Promise<string> => {
+  const resolveSource = createSessionSourceResolver(async (url: string): Promise<string> => {
     const selected = resolveShowcaseArtifactUrl(resolveBuiltinShowcaseSourceUrl(url));
     const entries = await channel.entries(selected);
     const bare = /\/lynxtron-examples-([a-z0-9-]+)-(?:mac-(?:arm64|x64)|win-x64)\.tgz$/.exec(selected)?.[1];
     return entries.find(entry => entry.name === `@lynxtron-examples/${bare}`)?.url ?? selected;
-  };
+  });
   const runningShowcases: RunningShowcaseRecord = new Map();
   const processOutputBuffer: ShowcaseProcessOutputEntry[] = [];
   let taskController = new AbortController();
@@ -931,31 +933,31 @@ export function createShowcaseService(dbg: DebugLogger): ShowcaseService {
           try {
             const args = [cliPath, 'fetch', sourceUrl];
             emitCommandStart(processOutputBuffer, 'showcase.fetch', appRoot, lynxtronExecutable, args);
-            return await preserveShowcaseUpdate(workspacePath, sourceUrl, async () => {
-              const output = await runBufferedCommand({
+            // The CLI stages the replacement and commits it only on success.
+            // Do not move the existing workspace away while downloading.
+            const output = await runBufferedCommand({
               command: lynxtronExecutable,
               args,
               cwd: appRoot,
               env: { ...process.env, LYNXTRON_WORKSPACE: workspacePath, LYNXTRON_RUN_AS_NODE: '1' },
-              timeoutMs: 300000,
+              timeoutMs: SHOWCASE_FETCH_TIMEOUT_MS,
               source: 'showcase.fetch',
               outputBuffer: processOutputBuffer,
               signal,
-              });
-              signal.throwIfAborted();
-              dbg(`showcase.fetch raw result: ${output.stdout.trim() || '(empty)'}`);
-              const events = output.stdout.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
-              const success = events.find((event: any) => event.type === 'fetch-success');
-              if (success && typeof success.path === 'string') return success.path;
-              const failed = events.find((event: any) => event.type === 'fetch-error');
-              throw new Error(failed?.error || 'Fetch failed');
             });
+            signal.throwIfAborted();
+            dbg(`showcase.fetch raw result: ${output.stdout.trim() || '(empty)'}`);
+            const events = output.stdout.trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
+            const success = events.find((event: any) => event.type === 'fetch-success');
+            if (success && typeof success.path === 'string') return success.path;
+            const failed = events.find((event: any) => event.type === 'fetch-error');
+            throw new Error(failed?.error || 'Fetch failed');
           } catch (error: any) {
             dbg(`showcase.fetch CLI stderr: ${error.stderr?.toString() || 'none'}`);
             dbg(`showcase.fetch CLI stdout: ${error.stdout?.toString() || 'none'}`);
             dbg(`showcase.fetch CLI error: ${error?.message || String(error)}`);
             if (offlineWorkspace && !signal.aborted) {
-              dbg('Showcase update unavailable; using restored compatible workspace.');
+              dbg('Showcase update unavailable; using preserved compatible workspace.');
               return offlineWorkspace;
             }
             throw error;
