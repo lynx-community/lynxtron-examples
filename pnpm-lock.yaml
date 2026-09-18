@@ -7,26 +7,26 @@ settings:
 catalogs:
   default:
     '@lynx-js/cef-webview':
-      specifier: 0.0.23
-      version: 0.0.23
+      specifier: 0.0.25
+      version: 0.0.25
     '@lynx-js/config-rsbuild-plugin':
       specifier: 0.2.0
       version: 0.2.0
     '@lynx-js/lynx-library-headers':
-      specifier: 0.0.23
-      version: 0.0.23
+      specifier: 0.0.25
+      version: 0.0.25
     '@lynx-js/lynxtron':
-      specifier: 0.0.23
-      version: 0.0.23
+      specifier: 0.0.25
+      version: 0.0.25
     '@lynx-js/lynxtron-builder':
-      specifier: 0.0.23
-      version: 0.0.23
+      specifier: 0.0.25
+      version: 0.0.25
     '@lynx-js/lynxtron-dev-plugins':
-      specifier: 0.0.23
-      version: 0.0.23
+      specifier: 0.0.25
+      version: 0.0.25
     '@lynx-js/lynxtron-rebuild':
-      specifier: 0.0.23
-      version: 0.0.23
+      specifier: 0.0.25
+      version: 0.0.25
     '@lynx-js/react':
       specifier: 0.123.1
       version: 0.123.1
@@ -85,7 +85,7 @@ importers:
         version: 4.0.1
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
       '@lynxtron-examples/cli':
         specifier: workspace:*
         version: link:../packages/cli
@@ -134,16 +134,16 @@ importers:
     devDependencies:
       '@lynx-js/config-rsbuild-plugin':
         specifier: 'catalog:'
-        version: 0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2))
+        version: 0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15)))
       '@lynx-js/lynx-core':
         specifier: latest
         version: 0.1.4
       '@lynx-js/lynxtron-builder':
         specifier: 'catalog:'
-        version: 0.0.23(electron-builder-squirrel-windows@26.13.0)
+        version: 0.0.25(electron-builder-squirrel-windows@26.13.0)
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -152,7 +152,7 @@ importers:
         version: 0.18.1(@lynx-js/lynx-core@0.1.4)(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(tslib@2.8.1)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15))
       '@lynx-js/type-config':
         specifier: 'catalog:'
         version: 4.1.3
@@ -219,7 +219,7 @@ importers:
     devDependencies:
       '@lynx-js/lynx-library-headers':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
       cmake-js:
         specifier: ^7.3.0
         version: 7.4.0
@@ -244,13 +244,13 @@ importers:
     dependencies:
       '@lynx-js/config-rsbuild-plugin':
         specifier: 'catalog:'
-        version: 0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15)))
+        version: 0.2.0(@lynx-js/rspeedy@0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2))
       '@lynx-js/react-rsbuild-plugin':
         specifier: 'catalog:'
         version: 0.18.1(@lynx-js/lynx-core@0.1.4)(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(tslib@2.8.1)
       '@lynx-js/rspeedy':
         specifier: 'catalog:'
-        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15))
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
       '@lynx-js/type-config':
         specifier: 'catalog:'
         version: 4.1.3
@@ -263,11 +263,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -300,14 +300,14 @@ importers:
     dependencies:
       '@lynx-js/cef-webview':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -343,7 +343,7 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
       markdown-it:
         specifier: 14.3.0
         version: 14.3.0
@@ -356,7 +356,7 @@ importers:
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -398,11 +398,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -435,11 +435,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -475,11 +475,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -518,11 +518,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -555,11 +555,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -592,11 +592,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -629,17 +629,17 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
       lynxtron-native-texture-canvas:
         specifier: file:./native-texture-extension
         version: file:showcases/native-texture-canvas/native-texture-extension
     devDependencies:
       '@lynx-js/lynx-library-headers':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -681,11 +681,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -718,11 +718,11 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -755,17 +755,17 @@ importers:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
       sqlite3:
         specifier: ^6.0.1
         version: 6.0.1
     devDependencies:
       '@lynx-js/lynxtron-dev-plugins':
         specifier: 'catalog:'
-        version: 0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))
+        version: 0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))
       '@lynx-js/lynxtron-rebuild':
         specifier: 'catalog:'
-        version: 0.0.23
+        version: 0.0.25
       '@lynx-js/react':
         specifier: 'catalog:'
         version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
@@ -1297,8 +1297,8 @@ packages:
     resolution: {integrity: sha512-f903x00MMmWB9yIyvACAoe4im0T58JHpKnypV/ccI2gp477RJoCgXPne2x8Obgo3fTOIMHpmNMdnxFW1ej9olQ==}
     engines: {node: '>=18'}
 
-  '@lynx-js/cef-webview@0.0.23':
-    resolution: {integrity: sha512-UlA9QXh64mQsxwvIwQYXRtEN9BP0OGX6d0YretEBiWmDELoZkYRacl6ZJDzL0LLl9jEg2zg4IyYUUSmg2SU+fw==}
+  '@lynx-js/cef-webview@0.0.25':
+    resolution: {integrity: sha512-awx3S6aBwDlfRlo2zQpinJhlTNhX4bJ8ZzCM53fWiXaHEvcekMPWdEvR5uSvfF2sZPeICiw6wR/YwU7xUM1VgA==}
     engines: {node: ^22.18.0 || ^24.0.0 || ^26.0.0}
 
   '@lynx-js/chunk-loading-webpack-plugin@0.4.1':
@@ -1338,29 +1338,29 @@ packages:
   '@lynx-js/lynx-core@0.1.4':
     resolution: {integrity: sha512-JxpAoDhpR8dJ6PFR2KOsFQyWt6SKiU+Bp701/miy5exqZHd+SlCd3UCfMtJy3nRlz3gy1O1xsObK7+x+jArdAQ==}
 
-  '@lynx-js/lynx-library-headers@0.0.23':
-    resolution: {integrity: sha512-3V/zG+E6nXc1XfFMSQb3B+2JnFzYlvxg01cgt5Dt/BlFprmZPfIAC6gIzaUfl4aQqS94FAjwKpoAzIpJGRsHsA==}
+  '@lynx-js/lynx-library-headers@0.0.25':
+    resolution: {integrity: sha512-PeRAZBlNTVeCejGAZcReO8CUNDvJzsLTaCBG2+TR90AjAl4s1yPCZrH6OB/c+H52BdwRJ7hpOO/ojaMqrhFVcQ==}
     engines: {node: ^22.18.0 || ^24.0.0 || ^26.0.0}
 
-  '@lynx-js/lynxtron-builder@0.0.23':
-    resolution: {integrity: sha512-4QngTPN6ENjOqeKR92D5Vwe0CTiRePIIbGpsz2xRlgpIrZ5l2ZFDHKZwu8WElhOYtNl5y6gjYRVAIG6sJs9BVQ==}
+  '@lynx-js/lynxtron-builder@0.0.25':
+    resolution: {integrity: sha512-EogGIocClsMMqegIDLpYPq5+P2uDPY+KQh3ghG2tdVUagG/+QPeH9NEpaCktEN0zDUWELwetVtDk/+5Pt4sSSQ==}
     engines: {node: ^22.18.0 || ^24.0.0 || ^26.0.0}
     hasBin: true
 
-  '@lynx-js/lynxtron-dev-plugins@0.0.23':
-    resolution: {integrity: sha512-YNbhdMWzSwYXiSd4iRBA/THdStwxLuj/j6XycGMn71SrkpsmmLF+8jlnXK9tWa2WArBILXOILH6iPkXFY+2cJQ==}
+  '@lynx-js/lynxtron-dev-plugins@0.0.25':
+    resolution: {integrity: sha512-wQlm9wtZSuvrsowth7ClCqYpOVPmqOWFJnCt/Q25KM/NI1K7ZfeJVwTqnlpQ3M3MniHZ+wBfj8mRx6XYd57S8A==}
     engines: {node: ^22.18.0 || ^24.0.0 || ^26.0.0}
     hasBin: true
     peerDependencies:
       '@rsbuild/core': ^2.1.5
 
-  '@lynx-js/lynxtron-rebuild@0.0.23':
-    resolution: {integrity: sha512-y0LodDhB+uLrA18HNtN+nfY8otAo7Q8mM0RZHFxxoyU2tAZkPeBbYdNWucHKSjze/m3RoV60GuXUgks2k48Hfw==}
+  '@lynx-js/lynxtron-rebuild@0.0.25':
+    resolution: {integrity: sha512-Jn0KCXnco0WpkC6PqWmNwg44x7RuNp/JLdbivX1Utk1B8j4Gh2Lp5iTGWF49xp+gjBFqn1rBqfu+cIuixI17jw==}
     engines: {node: ^22.18.0 || ^24.0.0 || ^26.0.0}
     hasBin: true
 
-  '@lynx-js/lynxtron@0.0.23':
-    resolution: {integrity: sha512-KfBhoJPufd2PjOBhVS9zIlrsP8q542ok3kaPiJ92td4UKf/tGioekNC8nVIH21kqCyIr5Z9kt1/+uh5axUkQTQ==}
+  '@lynx-js/lynxtron@0.0.25':
+    resolution: {integrity: sha512-K5CevpEv3FQ0C/WdQjmbQHJK6MFAGT0DM1N4l/i0uWtpL715KRRqsrr0f5PWXJhqwSoWt2uc/YEeUM3ZQiXXww==}
     engines: {node: ^22.18.0 || ^24.0.0 || ^26.0.0}
     hasBin: true
 
@@ -6584,7 +6584,7 @@ snapshots:
     dependencies:
       '@lynx-js/webpack-runtime-globals': 0.0.7
 
-  '@lynx-js/cef-webview@0.0.23':
+  '@lynx-js/cef-webview@0.0.25':
     dependencies:
       js-yaml: 4.2.0
       node-fetch: 3.3.2
@@ -6605,7 +6605,7 @@ snapshots:
       '@lynx-js/rspeedy': 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2)
       '@lynx-js/type-config': 4.1.1
 
-  '@lynx-js/css-extract-webpack-plugin@0.10.0(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))':
+  '@lynx-js/css-extract-webpack-plugin@0.10.0(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))':
     dependencies:
       '@lynx-js/template-webpack-plugin': 0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)
 
@@ -6628,11 +6628,11 @@ snapshots:
 
   '@lynx-js/lynx-core@0.1.4': {}
 
-  '@lynx-js/lynx-library-headers@0.0.23':
+  '@lynx-js/lynx-library-headers@0.0.25':
     dependencies:
-      '@lynx-js/lynxtron': 0.0.23
+      '@lynx-js/lynxtron': 0.0.25
 
-  '@lynx-js/lynxtron-builder@0.0.23(electron-builder-squirrel-windows@26.13.0)':
+  '@lynx-js/lynxtron-builder@0.0.25(electron-builder-squirrel-windows@26.13.0)':
     dependencies:
       '@electron/universal': 1.5.1
       app-builder-lib: 26.13.0(dmg-builder@26.13.0)(electron-builder-squirrel-windows@26.13.0)
@@ -6644,18 +6644,18 @@ snapshots:
       - electron-builder-squirrel-windows
       - supports-color
 
-  '@lynx-js/lynxtron-dev-plugins@0.0.23(@rsbuild/core@2.1.7(core-js@3.47.0))':
+  '@lynx-js/lynxtron-dev-plugins@0.0.25(@rsbuild/core@2.1.7(core-js@3.47.0))':
     dependencies:
       '@rsbuild/core': 2.1.7(core-js@3.47.0)
       cross-spawn: 7.0.6
 
-  '@lynx-js/lynxtron-rebuild@0.0.23':
+  '@lynx-js/lynxtron-rebuild@0.0.25':
     dependencies:
       compressing: 1.10.5
       node-fetch: 3.3.2
       node-gyp: 12.4.0
 
-  '@lynx-js/lynxtron@0.0.23':
+  '@lynx-js/lynxtron@0.0.25':
     dependencies:
       node-fetch: 3.3.2
       proper-lockfile: 4.1.2
@@ -6663,16 +6663,16 @@ snapshots:
 
   '@lynx-js/react-alias-rsbuild-plugin@0.18.1': {}
 
-  '@lynx-js/react-refresh-webpack-plugin@0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)))':
+  '@lynx-js/react-refresh-webpack-plugin@0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1)))':
     dependencies:
-      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))
+      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))
 
   '@lynx-js/react-rsbuild-plugin@0.18.1(@lynx-js/lynx-core@0.1.4)(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(tslib@2.8.1)':
     dependencies:
-      '@lynx-js/css-extract-webpack-plugin': 0.10.0(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))
+      '@lynx-js/css-extract-webpack-plugin': 0.10.0(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))
       '@lynx-js/react-alias-rsbuild-plugin': 0.18.1
-      '@lynx-js/react-refresh-webpack-plugin': 0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)))
-      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))
+      '@lynx-js/react-refresh-webpack-plugin': 0.4.1(@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1)))
+      '@lynx-js/react-webpack-plugin': 0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))
       '@lynx-js/runtime-wrapper-webpack-plugin': 0.2.3
       '@lynx-js/template-webpack-plugin': 0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)
       '@lynx-js/use-sync-external-store': 1.5.0(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))
@@ -6684,7 +6684,7 @@ snapshots:
       - '@lynx-js/lynx-core'
       - tslib
 
-  '@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1))':
+  '@lynx-js/react-webpack-plugin@0.10.1(@lynx-js/react@0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31))(@lynx-js/template-webpack-plugin@0.14.0(tslib@2.8.1))':
     dependencies:
       '@lynx-js/debug-metadata': 0.1.0
       '@lynx-js/template-webpack-plugin': 0.14.0(@lynx-js/lynx-core@0.1.4)(tslib@2.8.1)
