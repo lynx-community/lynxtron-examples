@@ -1,0 +1,38 @@
+<svg width="640" height="360" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="360" fill="#1d2427"/>
+  <rect x="0.5" y="0.5" width="639" height="359" fill="none" stroke="#ffffff" stroke-opacity="0.1"/>
+
+  <!-- Multi-tab native browser, using the gallery's flat dark palette. -->
+  <rect x="56" y="48" width="528" height="232" rx="6" fill="#21232d" stroke="#ffffff" stroke-opacity="0.1"/>
+  <path d="M62 48H578Q584 48 584 54V88H56V54Q56 48 62 48Z" fill="#2c2e3b"/>
+  <rect x="72" y="60" width="140" height="28" rx="3" fill="#394b59"/>
+  <circle cx="88" cy="74" r="4" fill="#48aff0"/>
+  <rect x="102" y="71" width="76" height="6" rx="2" fill="#a7b6c2"/>
+  <path d="M196 71L202 77M202 71L196 77" stroke="#a7b6c2" stroke-width="1.5"/>
+  <rect x="224" y="71" width="86" height="6" rx="2" fill="#608291"/>
+  <path d="M338 69V79M333 74H343" stroke="#a7b6c2" stroke-width="1.5"/>
+  <path d="M56 88H584" stroke="#ffffff" stroke-opacity="0.1"/>
+
+  <!-- Navigation and address bar remain readable at gallery-card size. -->
+  <path d="M86 101L79 108L86 115M80 108H96M110 101L117 108L110 115" fill="none" stroke="#a7b6c2" stroke-width="2"/>
+  <rect x="136" y="96" width="428" height="24" rx="3" fill="#1d2427" stroke="#ffffff" stroke-opacity="0.1"/>
+  <circle cx="151" cy="108" r="3" fill="#3dd68c"/>
+  <rect x="164" y="105" width="138" height="6" rx="2" fill="#608291"/>
+  <path d="M56 130H584" stroke="#ffffff" stroke-opacity="0.1"/>
+
+  <!-- Web content: a globe and a restrained page skeleton. -->
+  <g fill="none" stroke="#48aff0" stroke-width="2">
+    <circle cx="156" cy="204" r="40"/>
+    <ellipse cx="156" cy="204" rx="17" ry="40"/>
+    <path d="M116 204H196M124 180H188M124 228H188"/>
+  </g>
+  <rect x="232" y="166" width="186" height="10" rx="2" fill="#f5f8fa"/>
+  <rect x="232" y="190" width="288" height="6" rx="2" fill="#608291"/>
+  <rect x="232" y="206" width="248" height="6" rx="2" fill="#608291"/>
+  <rect x="232" y="228" width="88" height="24" rx="3" fill="#137cbd" fill-opacity="0.16" stroke="#48aff0" stroke-opacity="0.4"/>
+  <rect x="248" y="237" width="56" height="6" rx="2" fill="#48aff0"/>
+  <rect x="332" y="228" width="88" height="24" rx="3" fill="#394b59"/>
+  <rect x="348" y="237" width="56" height="6" rx="2" fill="#a7b6c2"/>
+
+  <text x="56" y="322" fill="#a7b6c2" font-size="16" letter-spacing="2" font-family="Menlo, monospace">BROWSER</text>
+</svg>

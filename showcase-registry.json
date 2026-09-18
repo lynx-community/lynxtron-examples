@@ -19,7 +19,7 @@
       "name": "@lynxtron-examples/browser",
       "description": "Multi-tab browser with a Lynx UI and CEF WebViews",
       "path": "showcases/browser",
-      "thumbnail": null,
+      "thumbnail": "showcases/browser/thumbnail.png",
       "tags": [
         "browser",
         "webview",
