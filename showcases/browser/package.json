@@ -17,6 +17,8 @@
     "rspack.config.ts",
     "tsconfig.base.json",
     "README.md",
+    "thumbnail.png",
+    "thumbnail.svg",
     "LICENSE"
   ],
   "scripts": {
@@ -28,6 +30,7 @@
     "prepack": "node scripts/check-release.mjs"
   },
   "showcase": {
+    "thumbnail": "thumbnail.png",
     "description": "Multi-tab browser with a Lynx UI and CEF WebViews",
     "tags": [
       "browser",
