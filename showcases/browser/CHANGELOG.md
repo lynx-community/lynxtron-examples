@@ -1,5 +1,12 @@
 # @lynxtron-examples/browser
 
+## 0.1.1
+
+### Patch Changes
+
+- 963e0e2: Add a Browser gallery thumbnail matching the existing showcase style, bundle it in Lynxtron Go, and include the PNG and editable SVG in the Browser package.
+- 9756505: Fix the Browser maximize/restore button to use native window state and unmaximize, preserving native restore bounds and respecting changes made through system window controls.
+
 ## 0.1.0
 
 ### Minor Changes
