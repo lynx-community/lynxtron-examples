@@ -18,9 +18,6 @@ app.whenReady().then(() => {
   });
 
   let isFullScreen = false;
-  let isMaximized = false;
-  let prevWidth = 0;
-  let prevHeight = 0;
 
   // Handle bridge calls from Lynx UI
   // @ts-ignore
@@ -53,27 +50,11 @@ app.whenReady().then(() => {
         callback.sendReply(null);
         w.close();
       } else if (name === 'maximizeWindow') {
-        if (!isMaximized) {
-          const size = w.getSize();
-          if (Array.isArray(size)) {
-            prevWidth = typeof size[0] === 'number' ? size[0] : 0;
-            prevHeight = typeof size[1] === 'number' ? size[1] : 0;
-          } else if (size && typeof size === 'object') {
-            prevWidth =
-              typeof (size as any).width === 'number' ? (size as any).width : 0;
-            prevHeight =
-              typeof (size as any).height === 'number'
-                ? (size as any).height
-                : 0;
-          }
-          w.maximize();
-          isMaximized = true;
-        } else {
-          if (prevWidth > 0 && prevHeight > 0) {
-            w.setSize(prevWidth, prevHeight);
-          }
-          isMaximized = false;
-        }
+        // Read native state on every click: OS actions can change it too.
+        // unmaximize restores native bounds/state; setSize only resizes and
+        // cannot correctly undo maximize or restore the original position.
+        if (w.isMaximized()) w.unmaximize();
+        else w.maximize();
         callback.sendReply(null);
       }
     }
