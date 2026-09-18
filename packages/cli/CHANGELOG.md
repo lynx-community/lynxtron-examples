@@ -1,5 +1,13 @@
 # @lynxtron-examples/cli
 
+## 0.0.13
+
+### Patch Changes
+
+- 74b8f4c: Allow 15 minutes for showcase fetches, retain the selected artifact across Open
+  and Run, stage replacements without removing the usable workspace, and settle
+  failed or completed download processes reliably. No download resumption is added.
+
 ## 0.0.12
 
 ### Patch Changes
