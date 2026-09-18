@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ShowcaseEntry } from '../store';
+import { createSessionSourceResolver } from '../../main/desktop/showcase-source-session';
 import {
   findShowcaseEntryForWorkspace,
   resolveCurrentShowcaseWorkspacePath,
@@ -17,6 +18,23 @@ afterEach(() => {
 });
 
 describe('current showcase workspace resolution', () => {
+  it('reuses the artifact opened earlier when Run resolves the workspace again', async () => {
+    const lookup = vi.fn().mockResolvedValueOnce(canvas.url).mockResolvedValue('https://example.com/new-snapshot.tgz');
+    const resolveSource = createSessionSourceResolver(lookup);
+    let cachedSource: string | undefined;
+    const fetch = vi.fn(async (url: string) => {
+      cachedSource = await resolveSource(url);
+      return '/cache/native-texture-canvas';
+    });
+    const materializedPath = vi.fn((_name, url) => url === cachedSource ? '/cache/native-texture-canvas' : null);
+    (globalThis as any).NativeModules = {
+      nodejs: { exposed: { showcase: { resolveSource, materializedPath, fetch } } },
+    };
+    await resolveCurrentShowcaseWorkspacePath('/cache/native-texture-canvas', [canvas]);
+    await resolveCurrentShowcaseWorkspacePath('/cache/native-texture-canvas', [canvas]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(lookup).toHaveBeenCalledTimes(1);
+  });
   it('resolves the channel before checking a previously installed workspace', async () => {
     const updated = 'https://example.com/new-revision/canvas.tgz';
     const resolveSource = vi.fn(async () => updated);

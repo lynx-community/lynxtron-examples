@@ -37,6 +37,32 @@ describe('fetch command', () => {
     return dir;
   }
 
+  it.each(['http-error', 'truncated', 'invalid-archive'])('preserves the old workspace on %s', async failure => {
+    const root = makeTempDir('lynxtron-fetch-failure-');
+    const destination = path.join(root, 'showcases', 'browser');
+    fs.mkdirSync(destination, { recursive: true });
+    fs.writeFileSync(path.join(destination, 'edited.ts'), 'user edits');
+    const server = http.createServer((_request, response) => {
+      // Old contents must remain available even while the new fetch is active.
+      expect(fs.readFileSync(path.join(destination, 'edited.ts'), 'utf8')).toBe('user edits');
+      if (failure === 'http-error') { response.writeHead(503); response.end(); }
+      else if (failure === 'truncated') {
+        response.writeHead(200, { 'content-length': 1000 });
+        response.write('partial');
+        setTimeout(() => response.destroy(), 10);
+      } else { response.end('not a gzip archive'); }
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    try {
+      const address = server.address() as { port: number };
+      await expect(fetch(`http://127.0.0.1:${address.port}/lynxtron-examples-browser.tgz`, root)).rejects.toThrow();
+      expect(fs.readFileSync(path.join(destination, 'edited.ts'), 'utf8')).toBe('user edits');
+      expect(fs.readdirSync(path.join(root, 'showcases'))).toEqual(['browser']);
+    } finally {
+      await new Promise<void>(resolve => server.close(() => resolve()));
+    }
+  });
+
   it('clears an existing fetch destination before reuse', () => {
     const root = makeTempDir('lynxtron-fetch-clear-');
     const destDir = path.join(root, 'showcases', 'counter');
@@ -102,6 +128,9 @@ describe('fetch command', () => {
     expect(fs.existsSync(path.join(destDir, 'package.json'))).toBe(true);
     expect(fs.existsSync(path.join(destDir, 'dist'))).toBe(false);
     expect(fs.existsSync(path.join(destDir, 'dist_precompiled', 'desktop', 'main.js'))).toBe(true);
+    const backups = fs.readdirSync(path.join(workspaceRoot, 'showcase-backups'));
+    expect(backups).toHaveLength(1);
+    expect(fs.readFileSync(path.join(workspaceRoot, 'showcase-backups', backups[0], 'stale.txt'), 'utf8')).toBe('stale');
   });
 
   it('downloads a packed release artifact and runs it without installing', async () => {

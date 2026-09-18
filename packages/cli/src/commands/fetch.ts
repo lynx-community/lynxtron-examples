@@ -8,6 +8,8 @@ import * as path from 'path';
 import * as tar from 'tar';
 import { execSync, type ExecSyncOptions } from 'child_process';
 import { createRequire } from 'module';
+import { randomUUID } from 'node:crypto';
+import { pipeline } from 'node:stream/promises';
 import {
   writeShowcaseCacheMetadata,
 } from '../showcase-cache.js';
@@ -117,21 +119,47 @@ export async function fetch(url: string, workspaceRoot: string): Promise<void> {
   const destination = resolved.type === 'external'
     ? manager.getExternalPath(resolved.name)
     : manager.getShowcasePath(resolved.name);
-  clearFetchDestination(destination);
+  // Source repositories retain their existing in-place install/build path:
+  // their build output can embed absolute paths and cannot be relocated.
+  if (resolved.type === 'repo' || resolved.type === 'external') {
+    clearFetchDestination(destination);
+    emit({ type: 'fetch-start', name: resolved.name });
+    try {
+      if (resolved.type === 'repo') await fetchRepoShowcase(resolved, manager);
+      else await fetchExternal(resolved, manager);
+      writeShowcaseCacheMetadata(destination, url);
+      emit({ type: 'fetch-success', name: resolved.name, path: destination });
+    } catch (error) {
+      emit({ type: 'fetch-error', name: resolved.name, error: error instanceof Error ? error.message : String(error) });
+      throw error;
+    }
+    return;
+  }
+  // Download and prepare beside the destination. A killed/failed fetch must
+  // never remove the last usable workspace (or its user's edits).
+  const staging = `${destination}.fetch-${randomUUID()}`;
 
   emit({ type: 'fetch-start', name: resolved.name });
 
   try {
-    if (resolved.type === 'repo') {
-      await fetchRepoShowcase(resolved, manager);
-    } else if (resolved.type === 'local') {
-      await fetchLocalTarball(resolved, manager);
-    } else if (resolved.type === 'remote-tarball') {
-      await fetchRemoteTarball(resolved, manager);
+    if (resolved.type === 'local') {
+      await fetchLocalTarball(resolved, manager, staging);
     } else {
-      await fetchExternal(resolved, manager);
+      await fetchRemoteTarball(resolved, manager, staging);
     }
-    writeShowcaseCacheMetadata(destination, url);
+    writeShowcaseCacheMetadata(staging, url);
+    const backup = path.join(workspaceRoot, 'showcase-backups', `${resolved.name}-${randomUUID()}`);
+    const hadDestination = fs.existsSync(destination);
+    if (hadDestination) {
+      fs.mkdirSync(path.dirname(backup), { recursive: true });
+      fs.renameSync(destination, backup);
+    }
+    try {
+      fs.renameSync(staging, destination);
+    } catch (error) {
+      if (hadDestination) fs.renameSync(backup, destination);
+      throw error;
+    }
     emit({
       type: 'fetch-success',
       name: resolved.name,
@@ -141,6 +169,9 @@ export async function fetch(url: string, workspaceRoot: string): Promise<void> {
     const message = err instanceof Error ? err.message : String(err);
     emit({ type: 'fetch-error', name: resolved.name, error: message });
     throw err;
+  } finally {
+    physicalFilesystem().rmSync(staging, { recursive: true, force: true });
+    physicalFilesystem().rmSync(`${staging}.tgz`, { force: true });
   }
 }
 
@@ -148,13 +179,13 @@ export async function fetch(url: string, workspaceRoot: string): Promise<void> {
 
 async function fetchLocalTarball(
   resolved: Extract<ReturnType<typeof resolveShowcaseUrl>, { type: 'local' }>,
-  manager: WorkspaceManager
+  manager: WorkspaceManager,
+  destDir: string,
 ): Promise<void> {
   const { filePath, name } = resolved;
 
   log(`Extracting local tarball: ${filePath}`);
 
-  const destDir = manager.getShowcasePath(name);
   fs.mkdirSync(destDir, { recursive: true });
   await extractPackedShowcase(filePath, destDir);
   await preparePackedShowcase(name, destDir, manager);
@@ -189,7 +220,7 @@ async function preparePackedShowcase(
     fs.rmSync(path.join(destDir, SHOWCASE_LOCAL_BUILD_ROOT), { recursive: true, force: true });
     log(`Precompiled artifact unavailable (${release.reason}) — installing for local build fallback...`);
     try {
-      await manager.rewriteWorkspaceRefs(name);
+      await manager.rewriteWorkspaceRefs(name, destDir);
     } catch (_) {}
     emit({ type: 'install-start', name });
     installSourceShowcase(destDir, path.join(manager.getRootPath(), '.npm-cache'));
@@ -200,10 +231,10 @@ async function preparePackedShowcase(
 async function fetchRemoteTarball(
   resolved: Extract<ReturnType<typeof resolveShowcaseUrl>, { type: 'remote-tarball' }>,
   manager: WorkspaceManager,
+  destDir: string,
 ): Promise<void> {
   const { url, name } = resolved;
-  const destDir = manager.getShowcasePath(name);
-  const tmpTar = path.join(manager.getRootPath(), `${name}.download.tgz`);
+  const tmpTar = `${destDir}.tgz`;
   fs.mkdirSync(destDir, { recursive: true });
 
   log(`Downloading packed showcase: ${url}`);
@@ -292,7 +323,7 @@ function downloadFile(url: string, dest: string, redirectsRemaining = 5): Promis
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https:') ? https : http;
     client
-      .get(url, { headers: getAuthHeaders(url) }, (response) => {
+      .get(url, { headers: getAuthHeaders(url), timeout: 15 * 60 * 1000 }, (response) => {
         if (response.statusCode === 302 || response.statusCode === 301) {
           response.resume();
           if (redirectsRemaining <= 0) {
@@ -313,12 +344,12 @@ function downloadFile(url: string, dest: string, redirectsRemaining = 5): Promis
           return;
         }
         const file = fs.createWriteStream(dest);
-        response.pipe(file);
-        file.on('finish', () => {
-          file.close();
-          resolve();
-        });
-        file.on('error', reject);
+        // pipeline rejects aborted/truncated responses as well as file errors,
+        // rather than leaving the CLI (and Go's Loading state) pending forever.
+        pipeline(response, file).then(resolve, reject);
+      })
+      .on('timeout', function (this: http.ClientRequest) {
+        this.destroy(new Error('Showcase download timed out after 15 minutes of inactivity'));
       })
       .on('error', reject);
   });

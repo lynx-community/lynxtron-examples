@@ -153,8 +153,8 @@ export class WorkspaceManager {
     }
   }
 
-  async rewriteWorkspaceRefs(showcaseName: string): Promise<void> {
-    const pkgPath = path.join(this.root, 'showcases', showcaseName, 'package.json');
+  async rewriteWorkspaceRefs(showcaseName: string, directory = this.getShowcasePath(showcaseName)): Promise<void> {
+    const pkgPath = path.join(directory, 'package.json');
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
     const rootPkg = JSON.parse(
       fs.readFileSync(path.join(this.root, 'package.json'), 'utf-8')
