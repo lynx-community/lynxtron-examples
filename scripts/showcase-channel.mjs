@@ -4,6 +4,25 @@ import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 export const slugs = ['mac-arm64', 'mac-x64', 'win-x64'];
+export function releaseExists(repo, tag, run = execFileSync) {
+  const options = { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] };
+  let result;
+  try {
+    // Query one tag and project inside gh: release history (and asset metadata)
+    // must not grow the subprocess output past execFileSync's buffer limit.
+    result = run('gh', ['api', `repos/${repo}/releases/tags/${encodeURIComponent(tag)}`,
+      '--jq', '.tag_name'], options).trim();
+  } catch (error) {
+    // Only a confirmed HTTP 404 means absence. Auth, rate-limit, network and
+    // buffer errors must stop publication, not enter the release-create path.
+    if (error.status !== 1 || !/^gh: Not Found \(HTTP 404\)\r?$/m.test(String(error.stderr ?? ''))) throw error;
+    // GitHub also masks inaccessible repositories as 404; verify access first.
+    run('gh', ['api', `repos/${repo}`, '--silent'], options);
+    return false;
+  }
+  if (result !== tag) throw Error(`Unexpected release tag response for ${tag}`);
+  return true;
+}
 export function runtimeVersionFromWorkspace(yaml) {
   // The same key also occurs under allowBuilds with the value `true`.
   // Read only the top-level catalog, and fail closed unless it is pinned.
@@ -88,11 +107,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const indexFile = path.join(assetsDir, 'showcase-index.json');
     fs.writeFileSync(indexFile, `${JSON.stringify(index, null, 2)}\n`);
     if (process.argv[2] === 'index') process.exit(0);
-    const exists = tag => {
-      // Distinguish absence from auth/network/server errors; never overwrite on an ambiguous failure.
-      const pages = JSON.parse(gh('api', '--paginate', '--slurp', `repos/${repo}/releases?per_page=100`));
-      return pages.flat().some(release => release.tag_name === tag);
-    };
+    const exists = tag => releaseExists(repo, tag);
     if (initial) {
       const release = JSON.parse(gh('api', `repos/${repo}/releases/tags/lynxtron-go-v${version}`));
       if (release.draft || release.prerelease || !assets.every(name => release.assets.some(a => a.name === name))) {
