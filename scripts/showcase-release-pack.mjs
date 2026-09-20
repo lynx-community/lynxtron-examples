@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { moveFile } from './move-file.mjs';
 import { verifyNativeArch } from './verify-native-arch.cjs';
+import { bundleLocalDependencies } from './showcase-bundle-dependencies.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -33,6 +34,7 @@ export async function finalizeShowcaseTarball(tarballPath, localDistPath) {
     // Build intermediates and local output are not part of the public source
     // snapshot. Only dist_precompiled/ has release artifact identity.
     const { prepareShowcasePackageForRelease } = await releaseFormat();
+    await bundleLocalDependencies(packageRoot, path.dirname(localDistPath));
     prepareShowcasePackageForRelease(packageRoot, localDistPath);
     verifyNativeArch(path.join(packageRoot, 'dist_precompiled'));
 

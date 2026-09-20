@@ -15,7 +15,8 @@ export async function resolveShowcaseWorkspace(entry: ShowcaseEntry): Promise<st
   return resolveShowcaseWorkspacePath(entry);
 }
 
-const CODE_FILE = /\.(cjs|mjs|js|jsx|ts|tsx|css|scss|less|json|html)$/;
+const CODE_FILE = /\.(cjs|mjs|js|jsx|ts|tsx|css|scss|less|json|html|c|cc|cpp|cxx|h|hh|hpp|hxx|m|mm|cmake)$/i;
+const CODE_FILENAMES = new Set(['CMakeLists.txt', 'Makefile']);
 const SKIP_DIRS = new Set([
   'node_modules',
   'dist',
@@ -50,7 +51,7 @@ export function loadProjectFiddle(
     for (const { name, isDirectory, isSymbolicLink } of entries) {
       if (isDirectory || isSymbolicLink) continue;
       if (SKIP_FILES.has(name) || name.startsWith('.')) continue;
-      if (!CODE_FILE.test(name)) continue;
+      if (!CODE_FILE.test(name) && !CODE_FILENAMES.has(name)) continue;
       const p = fs.join?.(dir, name) ?? dir + '/' + name;
       try {
         const content: string | null = fs.readFile?.(p);
