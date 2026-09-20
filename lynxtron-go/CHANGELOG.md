@@ -1,5 +1,16 @@
 # lynxtron-go
 
+## 0.1.16
+
+### Patch Changes
+
+- 963e0e2: Add a Browser gallery thumbnail matching the existing showcase style, bundle it in Lynxtron Go, and include the PNG and editable SVG in the Browser package.
+- 74b8f4c: Allow 15 minutes for showcase fetches, retain the selected artifact across Open
+  and Run, stage replacements without removing the usable workspace, and settle
+  failed or completed download processes reliably. No download resumption is added.
+- Updated dependencies [74b8f4c]
+  - @lynxtron-examples/cli@0.0.13
+
 ## 0.1.15
 
 ### Patch Changes
