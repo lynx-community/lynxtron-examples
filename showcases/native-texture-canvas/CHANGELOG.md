@@ -1,5 +1,11 @@
 # @lynxtron-examples/native-texture-canvas
 
+## 0.0.7
+
+### Patch Changes
+
+- ae06ecb: Display native source and build definitions in Go. Bundle local showcase runtime dependencies into release archives so isolated npm and pnpm consumers can install them without workspace overrides.
+
 ## 0.0.6
 
 ### Patch Changes
