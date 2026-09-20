@@ -69,8 +69,8 @@ test('publication requires every architecture and excludes builtin showcases', (
 });
 test('reads actual workspace catalog, never allowBuilds boolean', () => {
   const yaml = fs.readFileSync(new URL('../pnpm-workspace.yaml', import.meta.url), 'utf8');
-  assert.equal(runtimeVersionFromWorkspace(yaml), '0.0.25');
-  assert.equal(runtimeVersionFromWorkspace(yaml.replace("'@lynx-js/lynxtron': 0.0.25", "'@lynx-js/lynxtron': 0.0.26")), '0.0.26');
+  assert.equal(runtimeVersionFromWorkspace(yaml), '0.0.28');
+  assert.equal(runtimeVersionFromWorkspace(yaml.replace("'@lynx-js/lynxtron': 0.0.28", "'@lynx-js/lynxtron': 0.0.29")), '0.0.29');
   assert.throws(() => runtimeVersionFromWorkspace("allowBuilds:\n  '@lynx-js/lynxtron': true\n"));
   assert.throws(() => buildIndex({ version, sha, runtimeVersion: 'true', packages: [pkg], assets }), /runtime version/);
 });
