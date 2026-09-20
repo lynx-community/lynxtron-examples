@@ -1,5 +1,11 @@
 # lynxtron-go
 
+## 0.1.18
+
+### Patch Changes
+
+- ae06ecb: Display native source and build definitions in Go. Bundle local showcase runtime dependencies into release archives so isolated npm and pnpm consumers can install them without workspace overrides.
+
 ## 0.1.17
 
 ### Patch Changes
