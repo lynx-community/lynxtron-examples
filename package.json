@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "build": "pnpm -r --filter=!@lynxtron-examples/codex-demo run build",
-    "test": "pnpm -r run test",
+    "test": "node --test scripts/showcase-bundle-dependencies.test.mjs && pnpm -r run test",
     "lint": "pnpm -r run lint",
     "changeset": "changeset",
     "version-packages": "changeset version",

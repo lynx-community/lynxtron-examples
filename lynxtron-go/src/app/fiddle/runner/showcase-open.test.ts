@@ -98,6 +98,23 @@ describe('loadShowcaseFiddle', () => {
     expect([...snapshot.files.values()].filter(file => file.visible)).toHaveLength(4);
   });
 
+  it('includes native sources and build definitions, but not compiled binaries', () => {
+    const root = makeWorkspace();
+    const sources = ['module/canvas.cc', 'module/canvas.h', 'module/surface.mm',
+      'bindings/bind_napi.cc', 'CMakeLists.txt', 'cmake/options.cmake'];
+    for (const file of [...sources, 'canvas.node', 'thumbnail.png']) {
+      const target = path.join(root, 'native-texture-extension', file);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, `// ${file}`);
+    }
+    const snapshot = loadProjectFiddle('native project', root, { kind: 'showcase', ref: root })!;
+    for (const file of sources) {
+      expect(snapshot.files.get(`native-texture-extension/${file}`)?.currentText).toBe(`// ${file}`);
+    }
+    expect(snapshot.files.has('native-texture-extension/canvas.node')).toBe(false);
+    expect(snapshot.files.has('native-texture-extension/thumbnail.png')).toBe(false);
+  });
+
   it.skipIf(process.platform === 'win32')('does not follow cyclic or external symlinks', () => {
     const root = makeWorkspace();
     fs.symlinkSync(root, path.join(root, 'src', 'loop'));
