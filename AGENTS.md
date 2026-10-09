@@ -170,8 +170,10 @@ verification, so nobody later "fixes" it back.
     `lynxtron-go-v<version>-dev.<sha6>`. An existing tag at another commit is rejected.
     Manual dispatch remains available; retry a failed release using its original run
     so advancing main cannot silently replace an older version's assets.
-- Showcases and `lynxtron-go` are `private` but still versioned/changelogged
-  (`.changeset/config.json` → `privatePackages.version: true`); they are not published to npm.
+- Public showcases, including Browser, Cross-platform Notes and Native Texture
+  Canvas, are published to npm by Changesets. Packages still marked `private`
+  (including `lynxtron-go`) are versioned/changelogged but not published to npm.
+  GitHub Release showcase archives are a separate, per-platform distribution.
 - See [docs/showcase-development.md](docs/showcase-development.md) "Release" for the full flow.
 
 ### pnpm install verification

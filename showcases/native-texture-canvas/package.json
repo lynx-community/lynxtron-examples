@@ -2,7 +2,7 @@
   "name": "@lynxtron-examples/native-texture-canvas",
   "version": "0.0.7",
   "main": "main.js",
-  "private": true,
+  "publishConfig": { "access": "public" },
   "repository": {
     "type": "git",
     "url": "https://github.com/lynx-community/lynxtron-examples",
