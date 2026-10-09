@@ -1,5 +1,11 @@
 # @lynxtron-examples/native-texture-canvas
 
+## 0.0.8
+
+### Patch Changes
+
+- 835a472: Publish Browser, Cross-platform Notes and Native Texture Canvas to npm so documentation sites can consume versioned showcase packages without downloading GitHub Release archives.
+
 ## 0.0.7
 
 ### Patch Changes
