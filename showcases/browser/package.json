@@ -1,7 +1,7 @@
 {
   "name": "@lynxtron-examples/browser",
   "version": "0.1.1",
-  "private": true,
+  "publishConfig": { "access": "public" },
   "license": "Apache-2.0",
   "main": "main.js",
   "repository": {
