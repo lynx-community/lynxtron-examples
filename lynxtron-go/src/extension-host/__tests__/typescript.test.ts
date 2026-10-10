@@ -355,6 +355,9 @@ import { useState } from '@lynx-js/react';
 
 export function App() {
   const [count] = useState(1);
+  const interval = setInterval(() => console.log(count), 1000);
+  const timeout = setTimeout(() => clearInterval(interval), 1000);
+  clearTimeout(timeout);
   return <view><text>{count}</text></view>;
 }
 `);
@@ -371,6 +374,11 @@ root.render(<App />);
 
       expect(markers.some(m => m.code === 2875)).toBe(false);
       expect(markers.some(m => m.code === 2307)).toBe(false);
+      expect(markers.some(m => m.message.includes("Cannot find name 'setInterval'"))).toBe(false);
+      expect(markers.some(m => m.message.includes("Cannot find name 'clearInterval'"))).toBe(false);
+      expect(markers.some(m => m.message.includes("Cannot find name 'setTimeout'"))).toBe(false);
+      expect(markers.some(m => m.message.includes("Cannot find name 'clearTimeout'"))).toBe(false);
+      expect(markers.some(m => m.message.includes("Cannot find name 'console'"))).toBe(false);
       expect(markers.filter(m => m.severity === 'error')).toHaveLength(0);
 
       const nodeLeakPath = path.join(appRoot, 'node-leak.ts');
