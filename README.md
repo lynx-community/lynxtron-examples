@@ -24,7 +24,17 @@ lynxtron-show-cases/
 
 - Node.js >= 22
 - pnpm 10.x
+- CMake available on `PATH`
+- A platform C/C++ toolchain: Xcode Command Line Tools on macOS or Visual
+  Studio Build Tools with Desktop C++ on Windows
 - If you use `nvm`, run `nvm use 22` before installing dependencies
+
+On macOS, install and verify CMake before running the full workspace build:
+
+```bash
+brew install cmake
+cmake --version
+```
 
 ## Install Notes
 

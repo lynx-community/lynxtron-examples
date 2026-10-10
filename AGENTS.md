@@ -146,6 +146,9 @@ verification, so nobody later "fixes" it back.
 ## Commands
 
 - Use Node.js `>=22` for installs and builds. If needed, run `nvm use 22` before `pnpm install`.
+- `pnpm build` compiles native extensions and requires CMake plus the platform
+  C/C++ toolchain (Xcode Command Line Tools on macOS or Visual Studio Build
+  Tools with Desktop C++ on Windows).
 - `pnpm install` — install all dependencies
 - `pnpm build` — build all packages
 - `pnpm test` — run all tests (209 total: 14 CLI + 195 lynxtron-go)
