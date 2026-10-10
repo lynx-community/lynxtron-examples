@@ -10,6 +10,19 @@
     "url": "https://github.com/lynx-community/lynxtron-examples",
     "directory": "showcases/cross-platform-notes"
   },
+  "files": [
+    "src",
+    "scripts",
+    "dist/desktop",
+    "dist/web",
+    "lynx.config.ts",
+    "rspack.config.ts",
+    "tsconfig.tools.json",
+    "README.md",
+    "preview-image.png",
+    "thumbnail.png",
+    "thumbnail.svg"
+  ],
   "scripts": {
     "build": "cross-env TARGET_ENV=desktop rspeedy build && rspack build",
     "build:web": "cross-env TARGET_ENV=web rspeedy build && cross-env TARGET_ENV=web rspack build",

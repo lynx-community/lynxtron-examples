@@ -10,6 +10,15 @@
     "url": "https://github.com/lynx-community/lynxtron-examples",
     "directory": "showcases/floating-clock"
   },
+  "files": [
+    "src",
+    "dist/desktop",
+    "lynx.config.ts",
+    "rspack.config.ts",
+    "tsconfig.tools.json",
+    "thumbnail.png",
+    "thumbnail.svg"
+  ],
   "scripts": {
     "build": "rspeedy build && rspack build",
     "dev": "cross-env TARGET_ENV=desktop NODE_ENV=development concurrently -k --raw \"rspeedy dev\" \"dev-ready-rspeedy && rspack dev\"",
