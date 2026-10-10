@@ -5,7 +5,16 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-const PUBLIC_SHOWCASES = ['browser', 'cross-platform-notes', 'native-texture-canvas'];
+const PUBLIC_SHOWCASES = [
+  'benchmark',
+  'browser',
+  'cross-platform-notes',
+  'file-explorer',
+  'floating-clock',
+  'native-texture-canvas',
+  'system-monitor',
+  'todolist',
+];
 
 function readShowcasePackage(name) {
   return JSON.parse(fs.readFileSync(new URL(`../showcases/${name}/package.json`, import.meta.url)));
@@ -59,6 +68,9 @@ test('npm packs retain release files and exclude intermediate output', () => {
       if (name === 'native-texture-canvas') {
         fixtureFiles.push('native-texture-extension/CMakeLists.txt');
       }
+      if (name === 'benchmark') {
+        fixtureFiles.push('release-size.test.mjs');
+      }
       for (const file of fixtureFiles) {
         const filePath = path.join(root, file);
         fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -84,6 +96,10 @@ test('npm packs retain release files and exclude intermediate output', () => {
       if (name === 'native-texture-canvas') {
         assert.ok(packedFiles.includes('native-texture-extension/CMakeLists.txt'),
           `${name} must pack native extension sources`);
+      }
+      if (name === 'benchmark') {
+        assert.ok(packedFiles.includes('release-size.test.mjs'),
+          `${name} must pack its release test`);
       }
     } finally {
       rmSync(root, { recursive: true, force: true });
