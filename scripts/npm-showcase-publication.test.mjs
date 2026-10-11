@@ -34,6 +34,16 @@ const NATIVE_TEXTURE_CANVAS_RELEASE_FILES = [
   'dist/desktop/.lynxtron/native/node_modules/lynxtron-native-texture-canvas/build/Release/native_texture_canvas_module.node',
 ];
 
+const PRIVATE_SHOWCASES = [
+  'codex-demo',
+  'counter',
+  'electron-fiddles',
+  'hello-lynxtron',
+  'pc-mouse-cursor',
+];
+
+const REPOSITORY_URL = 'git+https://github.com/lynx-community/lynxtron-examples.git';
+
 function readShowcasePackage(name) {
   return JSON.parse(fs.readFileSync(new URL(`../showcases/${name}/package.json`, import.meta.url)));
 }
@@ -47,6 +57,12 @@ for (const name of PUBLIC_SHOWCASES) {
     assert.ok(pkg.showcase);
   });
 }
+
+test('all showcases use the canonical Git repository URL', () => {
+  for (const name of [...PUBLIC_SHOWCASES, ...PRIVATE_SHOWCASES]) {
+    assert.equal(readShowcasePackage(name).repository?.url, REPOSITORY_URL);
+  }
+});
 
 test('public showcases define allowlists for their runnable distributions', () => {
   for (const name of PUBLIC_SHOWCASES) {
