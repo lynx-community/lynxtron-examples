@@ -1,5 +1,11 @@
 # @lynxtron-examples/browser
 
+## 0.1.3
+
+### Patch Changes
+
+- 097a2ab: Use canonical Git repository URLs in public showcase package metadata.
+
 ## 0.1.2
 
 ### Patch Changes
