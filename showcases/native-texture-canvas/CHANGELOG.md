@@ -1,5 +1,11 @@
 # @lynxtron-examples/native-texture-canvas
 
+## 0.0.9
+
+### Patch Changes
+
+- 097a2ab: Use canonical Git repository URLs in public showcase package metadata.
+
 ## 0.0.8
 
 ### Patch Changes

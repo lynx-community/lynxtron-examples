@@ -1,5 +1,12 @@
 # @lynxtron-examples/file-explorer
 
+## 0.0.5
+
+### Patch Changes
+
+- 097a2ab: Exclude intermediate build output from published showcase packages.
+- 097a2ab: Use canonical Git repository URLs in public showcase package metadata.
+
 ## 0.0.4
 
 ### Patch Changes

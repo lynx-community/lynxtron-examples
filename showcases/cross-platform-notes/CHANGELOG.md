@@ -1,5 +1,12 @@
 # @lynxtron-examples/cross-platform-notes
 
+## 0.0.7
+
+### Patch Changes
+
+- 097a2ab: Exclude intermediate build output from published showcase packages.
+- 097a2ab: Use canonical Git repository URLs in public showcase package metadata.
+
 ## 0.0.6
 
 ### Patch Changes
