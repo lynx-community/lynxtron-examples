@@ -7,9 +7,18 @@
   "main": "main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lynx-community/lynxtron-examples",
+    "url": "git+https://github.com/lynx-community/lynxtron-examples.git",
     "directory": "showcases/todolist"
   },
+  "files": [
+    "src",
+    "dist/desktop",
+    "lynx.config.ts",
+    "rspack.config.ts",
+    "tsconfig.tools.json",
+    "thumbnail.png",
+    "thumbnail.svg"
+  ],
   "scripts": {
     "postinstall": "lynxtron-rebuild",
     "build": "rspeedy build && rspack build",

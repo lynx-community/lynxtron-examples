@@ -5,7 +5,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/lynx-community/lynxtron-examples",
+    "url": "git+https://github.com/lynx-community/lynxtron-examples.git",
     "directory": "showcases/pc-mouse-cursor"
   },
   "scripts": {

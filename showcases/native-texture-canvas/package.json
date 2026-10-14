@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/lynx-community/lynxtron-examples",
+    "url": "git+https://github.com/lynx-community/lynxtron-examples.git",
     "directory": "showcases/native-texture-canvas"
   },
   "files": [

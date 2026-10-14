@@ -7,9 +7,20 @@
   "main": "main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lynx-community/lynxtron-examples",
+    "url": "git+https://github.com/lynx-community/lynxtron-examples.git",
     "directory": "showcases/benchmark"
   },
+  "files": [
+    "src",
+    "dist/desktop",
+    "lynx.config.ts",
+    "rspack.config.ts",
+    "tsconfig.tools.json",
+    "release-size.test.mjs",
+    "preview-image.png",
+    "thumbnail.png",
+    "thumbnail.svg"
+  ],
   "scripts": {
     "test": "node --experimental-strip-types --test release-size.test.mjs",
     "build": "rspeedy build && rspack build",
