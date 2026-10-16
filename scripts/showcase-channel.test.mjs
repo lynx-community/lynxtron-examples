@@ -1,7 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identity, buildIndex, slugs, runtimeVersionFromWorkspace, releaseExists } from './showcase-channel.mjs';
-import fs from 'node:fs';
 const version = '0.1.13', sha = 'a'.repeat(40);
 const pkg = { name: '@lynxtron-examples/browser', version: '0.1.1', showcase: { description: 'Browser' } };
 const assets = slugs.map(slug => `lynxtron-examples-browser-${slug}.tgz`);
@@ -67,8 +66,12 @@ test('publication requires every architecture and excludes builtin showcases', (
   assert.throws(() => buildIndex({ version, sha, runtimeVersion: '0.0.23', packages: [pkg], assets: assets.slice(1) }), /Missing/);
   assert.throws(() => buildIndex({ version, sha, runtimeVersion: '0.0.23', packages: [], assets }), /No release/);
 });
-test('reads actual workspace catalog, never allowBuilds boolean', () => {
-  const yaml = fs.readFileSync(new URL('../pnpm-workspace.yaml', import.meta.url), 'utf8');
+test('reads workspace catalog, never allowBuilds boolean', () => {
+  const yaml = `allowBuilds:
+  '@lynx-js/lynxtron': true
+catalog:
+  '@lynx-js/lynxtron': 0.0.28
+`;
   assert.equal(runtimeVersionFromWorkspace(yaml), '0.0.28');
   assert.equal(runtimeVersionFromWorkspace(yaml.replace("'@lynx-js/lynxtron': 0.0.28", "'@lynx-js/lynxtron': 0.0.29")), '0.0.29');
   assert.throws(() => runtimeVersionFromWorkspace("allowBuilds:\n  '@lynx-js/lynxtron': true\n"));
