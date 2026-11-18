@@ -1,0 +1,19 @@
+{
+  "name": "@lynxtron-examples/system-webview-macos",
+  "private": true,
+  "version": "0.0.0",
+  "main": "main.cjs",
+  "scripts": {
+    "build:macos": "node build-native.cjs && rspeedy build",
+    "start": "lynxtron ."
+  },
+  "dependencies": {
+    "@lynx-js/lynxtron": "catalog:",
+    "@lynx-js/react": "catalog:"
+  },
+  "devDependencies": {
+    "@lynx-js/lynx-library-headers": "catalog:",
+    "@lynx-js/rspeedy": "catalog:",
+    "@lynxtron-examples/config": "workspace:*"
+  }
+}
