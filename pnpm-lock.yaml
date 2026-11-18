@@ -78,6 +78,28 @@ importers:
         specifier: 6.3.2
         version: 6.3.2(encoding@0.1.13)(typanion@3.14.0)
 
+  examples/system-webview:
+    dependencies:
+      '@lynx-js/lynxtron':
+        specifier: 'catalog:'
+        version: 0.0.28
+      '@lynx-js/react':
+        specifier: 'catalog:'
+        version: 0.123.1(@lynx-js/types@4.1.0)(@types/react@18.3.31)
+    devDependencies:
+      '@lynx-js/lynx-library-headers':
+        specifier: 'catalog:'
+        version: 0.0.28
+      '@lynx-js/rspeedy':
+        specifier: 'catalog:'
+        version: 0.16.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@rspack/core@2.1.7(@swc/helpers@0.5.23))(core-js@3.47.0)(typescript@5.9.3)(webpack@5.107.2(postcss@8.5.15))
+      '@lynxtron-examples/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
   lynxtron-go:
     dependencies:
       '@isaacs/fs-minipass':
