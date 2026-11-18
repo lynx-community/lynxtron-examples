@@ -1,8 +1,8 @@
 # Embed the system WebView
 
 The same Lynx custom element hosts WKWebView on macOS and the installed
-Evergreen WebView2 Runtime on Windows x64. Lynx renders the compact engine toolbar. The native WebView opens the
-[Lynxtron homepage](https://lynxjs.org/lynxtron/index.html) and fills the remaining window.
+Evergreen WebView2 Runtime on Windows x64. Lynx renders the window controls and the frame around the embedded WebView. The WebView opens the
+[Lynxtron homepage](https://lynxjs.org/lynxtron/index.html).
 
 ## Run from the repository root
 
@@ -19,7 +19,7 @@ pnpm --filter @lynxtron-examples/system-webview run build:native-ui
 pnpm --filter @lynxtron-examples/system-webview start
 ```
 
-Try **Quick Start** or **Browse APIs** inside the WebView, or resize the window. WebView2 keeps its
+The WebView starts narrow. Use **Expand WebView** to widen the embedded page, then **Narrow WebView** to restore its initial width. Try **Quick Start** or **Browse APIs** inside the WebView, or resize the window. WebView2 keeps its
 profile in `%LOCALAPPDATA%\LynxtronSystemWebViewExample`.
 
 [The UI](src/app/index.tsx) passes the homepage URL to the custom element.
