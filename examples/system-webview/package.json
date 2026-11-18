@@ -1,6 +1,6 @@
 {
   "name": "@lynxtron-examples/system-webview",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "main": "main.cjs",
   "scripts": {
     "build:native-ui": "node build-native.cjs && rspeedy build",
