@@ -20,6 +20,14 @@ class SystemWebView final : public lynx::pub::LynxNativeView {
 
   void OnPropertiesChanged(const lynx::pub::LynxValue& attrs,
                            const lynx::pub::LynxValue&) override {
+    auto src = attrs.GetProperty("src");
+    if (src.Type() == lynx_value_string) {
+      NSURL* url = [NSURL URLWithString:[NSString stringWithUTF8String:src.StdString().c_str()]];
+      if ([url.scheme.lowercaseString isEqualToString:@"https"]) {
+        [web_ loadRequest:[NSURLRequest requestWithURL:url]];
+      }
+      return;
+    }
     auto html = attrs.GetProperty("html");
     if (html.Type() == lynx_value_string) {
       [web_ loadHTMLString:[NSString stringWithUTF8String:html.StdString().c_str()]

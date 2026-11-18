@@ -1,7 +1,7 @@
 packages:
   - 'packages/*'
   - 'showcases/*'
-  - 'examples/system-webview-macos'
+  - 'examples/system-webview'
   - 'lynxtron-go'
   - 'lynxtron-go/scintilla-extension'
 

@@ -78,7 +78,7 @@ importers:
         specifier: 6.3.2
         version: 6.3.2(encoding@0.1.13)(typanion@3.14.0)
 
-  examples/system-webview-macos:
+  examples/system-webview:
     dependencies:
       '@lynx-js/lynxtron':
         specifier: 'catalog:'

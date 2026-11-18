@@ -20,7 +20,7 @@ lynxtron-show-cases/
     generate-registry.ts  auto-generate showcase-registry.json
 ```
 
-See the [macOS system WebView example](examples/system-webview-macos/) for a standalone Lynx custom element backed by WKWebView.
+See the [system WebView example](examples/system-webview/) for a standalone Lynx custom element backed by WKWebView on macOS or WebView2 on Windows.
 
 ## Prerequisites
 
