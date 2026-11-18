@@ -4,6 +4,8 @@ The same Lynx custom element hosts WKWebView on macOS and the installed
 Evergreen WebView2 Runtime on Windows x64. Lynx renders the window controls and the frame around the embedded WebView. The WebView opens the
 [Lynxtron homepage](https://lynxjs.org/lynxtron/index.html).
 
+![Lynxtron homepage inside a narrow macOS system WebView](preview.webp)
+
 ## Run from the repository root
 
 Use Xcode Command Line Tools on macOS. On Windows use x64 Node.js, Visual Studio
@@ -26,3 +28,5 @@ profile in `%LOCALAPPDATA%\LynxtronSystemWebViewExample`.
 [The host](main.cjs) loads the compiled extension before opening a window.
 The [macOS](system_webview.mm) and [Windows](system_webview_win.cc) implementations
 register the same element and apply Lynx property, layout, and visibility updates.
+
+The npm package contains the example source. To run it outside this workspace, unpack the npm tarball, run `npm install --include=dev` in its package directory, then `npm run build:native-ui` and `npm start`.

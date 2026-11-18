@@ -1,6 +1,5 @@
 {
   "name": "@lynxtron-examples/system-webview",
-  "private": true,
   "version": "0.0.0",
   "main": "main.cjs",
   "scripts": {
@@ -15,5 +14,24 @@
     "@lynx-js/lynx-library-headers": "catalog:",
     "@lynx-js/rspeedy": "catalog:",
     "@lynxtron-examples/config": "workspace:*"
-  }
+  },
+  "description": "Embed the system WebView in a Lynxtron window on macOS and Windows.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lynx-community/lynxtron-examples.git",
+    "directory": "examples/system-webview"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "main.cjs",
+    "build-native.cjs",
+    "system_webview.mm",
+    "system_webview_win.cc",
+    "CMakeLists.txt",
+    "lynx.config.ts",
+    "src",
+    "preview.webp"
+  ]
 }
