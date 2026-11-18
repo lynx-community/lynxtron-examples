@@ -96,6 +96,9 @@ importers:
       '@lynxtron-examples/config':
         specifier: workspace:*
         version: link:../../packages/config
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   lynxtron-go:
     dependencies:

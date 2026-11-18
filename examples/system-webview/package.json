@@ -13,7 +13,8 @@
   "devDependencies": {
     "@lynx-js/lynx-library-headers": "catalog:",
     "@lynx-js/rspeedy": "catalog:",
-    "@lynxtron-examples/config": "workspace:*"
+    "@lynxtron-examples/config": "workspace:*",
+    "typescript": "catalog:"
   },
   "description": "Embed the system WebView in a Lynxtron window on macOS and Windows.",
   "repository": {
