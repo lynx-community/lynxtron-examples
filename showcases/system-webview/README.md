@@ -21,6 +21,14 @@ pnpm --filter @lynxtron-examples/system-webview run build:native-ui
 pnpm --filter @lynxtron-examples/system-webview start
 ```
 
+To produce the showcase layout that Lynxtron Go runs (`dist/desktop`), build it
+instead:
+
+```sh
+pnpm --filter @lynxtron-examples/system-webview run build
+pnpm --filter @lynxtron-examples/system-webview run start:showcase
+```
+
 The WebView starts narrow. Use **Expand WebView** to widen the embedded page, then **Narrow WebView** to restore its initial width. Try **Quick Start** or **Browse APIs** inside the WebView, or resize the window. WebView2 keeps its
 profile in `%LOCALAPPDATA%\LynxtronSystemWebViewExample`.
 

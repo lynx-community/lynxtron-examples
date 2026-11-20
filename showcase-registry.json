@@ -3,7 +3,7 @@
   "showcases": [
     {
       "name": "@lynxtron-examples/benchmark",
-      "description": "Lynxtron runtime benchmarks — app size, startup time, and memory usage",
+      "description": "Lynxtron runtime benchmarks — startup, memory, and latest release ZIP download size (not installed app size)",
       "path": "showcases/benchmark",
       "thumbnail": "showcases/benchmark/thumbnail.png",
       "tags": [
@@ -157,6 +157,22 @@
         "intermediate",
         "nodejs",
         "communication"
+      ],
+      "targets": [
+        "desktop"
+      ],
+      "distribution": "release"
+    },
+    {
+      "name": "@lynxtron-examples/system-webview",
+      "description": "Embed the system WebView as a Lynx element: WKWebView on macOS, WebView2 on Windows",
+      "path": "showcases/system-webview",
+      "thumbnail": "showcases/system-webview/thumbnail.png",
+      "tags": [
+        "webview",
+        "native",
+        "system",
+        "intermediate"
       ],
       "targets": [
         "desktop"
