@@ -1,5 +1,11 @@
 # @lynxtron-examples/system-webview
 
+## 0.1.1
+
+### Patch Changes
+
+- a2a0875: Fix release packaging by emitting the system WebView showcase's desktop entry as `main.js`.
+
 ## 0.1.0
 
 ### Minor Changes
