@@ -216,6 +216,10 @@ export function App(props: { onRender?: () => void } = {}) {
   const [status, setStatus] = useState('Ready');
   const [exampleArtifactLoading, setExampleArtifactLoading] = useState<ExampleArtifactLoadingState | null>(null);
   const [showcaseLoading, setShowcaseLoading] = useState<ShowcaseLoadingState | null>(null);
+  // Covers the launch itself, not just workspace preparation: `runProject` builds
+  // before it returns a pid, and the header must stay in Loading until then so the
+  // Run button never looks clickable while a click would be ignored or duplicated.
+  const [runStarting, setRunStarting] = useState(false);
   // Quick file picker state
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState('');
@@ -2213,6 +2217,7 @@ export function App(props: { onRender?: () => void } = {}) {
       
       showOutput('info', `Preparing project: ${showcasePath}`);
       setStatus('Classifying and launching project...');
+      setRunStarting(true);
       const pid = await api.runProject(showcasePath);
       setRunningPid(pid);
       showOutput('info', `Project launched (pid ${pid})`);
@@ -2225,6 +2230,7 @@ export function App(props: { onRender?: () => void } = {}) {
       appendProcessLine('stderr', `Run failed: ${e.message}`);
       setStatus('Run failed');
     } finally {
+      setRunStarting(false);
       clearShowcaseLoading();
     }
   }, [clearShowcaseLoading, resolveShowcaseEntryWorkspacePath, showOutput, startShowcaseLoading, log]);
@@ -2455,6 +2461,7 @@ export function App(props: { onRender?: () => void } = {}) {
 
       showOutput('info', `Preparing project: ${resolvedRoot}`);
       setStatus('Classifying and launching project...');
+      setRunStarting(true);
       try {
         const pid = await api.runProject(resolvedRoot);
         setRunningPid(pid);
@@ -2463,6 +2470,8 @@ export function App(props: { onRender?: () => void } = {}) {
       } catch (e: any) {
         showOutput('error', `Run failed: ${e.message}`);
         setStatus('Run failed');
+      } finally {
+        setRunStarting(false);
       }
       return;
     }
@@ -2848,7 +2857,7 @@ export function App(props: { onRender?: () => void } = {}) {
       gallery={galleryNode}
       onCloseGallery={() => setGalleryOpen(false)}
       externalRunPid={runningPid}
-      externalRunLoading={!!showcaseLoading}
+      externalRunLoading={!!showcaseLoading || runStarting}
       onStopExternalRun={stopGalleryRun}
       onThemeChange={() => setUiThemeDark(isDarkTheme())}
       onPaletteSourceChange={setFiddlePalette}
