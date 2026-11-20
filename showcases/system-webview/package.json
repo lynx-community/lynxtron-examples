@@ -1,0 +1,55 @@
+{
+  "name": "@lynxtron-examples/system-webview",
+  "version": "0.0.1",
+  "main": "main.cjs",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lynx-community/lynxtron-examples.git",
+    "directory": "showcases/system-webview"
+  },
+  "files": [
+    "main.cjs",
+    "assemble-desktop.cjs",
+    "build-native.cjs",
+    "system_webview.mm",
+    "system_webview_win.cc",
+    "CMakeLists.txt",
+    "lynx.config.ts",
+    "src",
+    "dist/desktop/**/*",
+    "preview.webp",
+    "thumbnail.png"
+  ],
+  "scripts": {
+    "build:native-ui": "node build-native.cjs && rspeedy build",
+    "start": "lynxtron .",
+    "build": "node build-native.cjs && cross-env SHOWCASE_LAYOUT=1 rspeedy build && node assemble-desktop.cjs",
+    "start:showcase": "npm run build && lynxtron ./dist/desktop"
+  },
+  "showcase": {
+    "description": "Embed the system WebView as a Lynx element: WKWebView on macOS, WebView2 on Windows",
+    "thumbnail": "thumbnail.png",
+    "tags": [
+      "webview",
+      "native",
+      "system",
+      "intermediate"
+    ],
+    "minToolchainVersion": "0.0.1"
+  },
+  "dependencies": {
+    "@lynx-js/lynxtron": "catalog:",
+    "@lynx-js/react": "catalog:"
+  },
+  "devDependencies": {
+    "@lynx-js/lynx-library-headers": "catalog:",
+    "@lynx-js/rspeedy": "catalog:",
+    "@lynxtron-examples/config": "workspace:*",
+    "cross-env": "catalog:",
+    "typescript": "catalog:"
+  },
+  "description": "Embed the system WebView in a Lynxtron window on macOS and Windows."
+}
