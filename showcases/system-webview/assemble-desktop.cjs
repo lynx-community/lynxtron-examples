@@ -21,7 +21,7 @@ for (const [label, file] of [
 fs.rmSync(outDir, { recursive: true, force: true });
 fs.mkdirSync(path.join(outDir, 'build'), { recursive: true });
 
-fs.copyFileSync(path.join(root, 'main.cjs'), path.join(outDir, 'main.cjs'));
+fs.copyFileSync(path.join(root, 'main.cjs'), path.join(outDir, 'main.js'));
 fs.copyFileSync(bundlePath, path.join(outDir, 'main.lynx.bundle'));
 fs.copyFileSync(nativePath, path.join(outDir, 'build', 'system_webview.node'));
 
@@ -33,7 +33,7 @@ fs.writeFileSync(
       name: pkg.name,
       version: pkg.version,
       private: true,
-      main: 'main.cjs',
+      main: 'main.js',
     },
     null,
     2,
